@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_model.dart';
@@ -20,11 +21,16 @@ class InventarioScreen extends ConsumerStatefulWidget {
 
 class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   final _busquedaController = TextEditingController();
+  final _focusNode = FocusNode();
   String? _filaSeleccionada;
+  String? _columnaOrden;
+  bool _ordenAscendente = false;
+  List<ProductoModel> _listaActual = [];
 
   @override
   void dispose() {
     _busquedaController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -52,6 +58,69 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _abrirHistorialMovimientos(ProductoModel producto, String tipo) {
     showDialog(context: context, builder: (context) => HistorialMovimientosDialog(producto: producto, tipo: tipo));
+  }
+
+  void _alternarOrden(String columna) {
+    setState(() {
+      if (_columnaOrden == columna) {
+        _ordenAscendente = !_ordenAscendente;
+      } else {
+        _columnaOrden = columna;
+        _ordenAscendente = false;
+      }
+    });
+  }
+
+  List<ProductoModel> _ordenarLista(List<ProductoModel> lista) {
+    if (_columnaOrden == null) return lista;
+    final copia = [...lista];
+    copia.sort((a, b) {
+      int comparacion;
+      switch (_columnaOrden) {
+        case 'codigo':
+          comparacion = a.codigo.compareTo(b.codigo);
+          break;
+        case 'nombre':
+          comparacion = a.nombre.compareTo(b.nombre);
+          break;
+        case 'existencia':
+          comparacion = a.stock.compareTo(b.stock);
+          break;
+        case 'precioVenta':
+          comparacion = a.precioVenta.compareTo(b.precioVenta);
+          break;
+        case 'precioCompra':
+          comparacion = a.precioCompra.compareTo(b.precioCompra);
+          break;
+        default:
+          comparacion = 0;
+      }
+      return _ordenAscendente ? comparacion : -comparacion;
+    });
+    return copia;
+  }
+
+  void _moverSeleccion(int delta) {
+    if (_listaActual.isEmpty) return;
+    final indiceActual = _filaSeleccionada == null ? -1 : _listaActual.indexWhere((p) => p.id == _filaSeleccionada);
+    var nuevoIndice = indiceActual + delta;
+    if (nuevoIndice < 0) nuevoIndice = 0;
+    if (nuevoIndice >= _listaActual.length) nuevoIndice = _listaActual.length - 1;
+    setState(() => _filaSeleccionada = _listaActual[nuevoIndice].id);
+  }
+
+  KeyEventResult _manejarTeclado(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        _moverSeleccion(1);
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        _moverSeleccion(-1);
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -136,47 +205,33 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         if (vista == 'bajo') {
                           lista = lista.where((p) => p.stock < 3).toList();
                         } else if (vista == 'filtrados') {
-                          lista = busqueda.isEmpty
-                              ? []
-                              : lista
-                                  .where(
-                                    (p) => coincideFuzzy(
-                                      p.textoBusqueda,
-                                      busqueda,
-                                    ),
-                                  )
-                                  .toList();
+                          lista = busqueda.isEmpty ? [] : lista.where((p) => coincideFuzzy(p.textoBusqueda, busqueda)).toList();
                         }
+                        lista = _ordenarLista(lista);
+                        _listaActual = lista;
 
                         if (lista.isEmpty) {
                           return Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 56,
-                                  color: Colors.grey.shade300,
-                                ),
+                                Icon(Icons.inventory_2_outlined, size: 56, color: Colors.grey.shade300),
                                 const SizedBox(height: 12),
                                 Text(
-                                  vista == 'filtrados' && busqueda.isEmpty
-                                      ? 'Escribí algo y presioná buscar'
-                                      : 'No hay productos encontrados',
+                                  vista == 'filtrados' && busqueda.isEmpty ? 'Escribí algo y presioná buscar' : 'No hay productos encontrados',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade500,
-                                  ),
+                                  style: GoogleFonts.poppins(color: Colors.grey.shade500),
                                 ),
                               ],
                             ),
                           );
                         }
 
-                                                return _tabla(
-                          lista,
-                          mapaCategorias,
-                          constraints.maxWidth,
+                        return Focus(
+                          focusNode: _focusNode,
+                          autofocus: true,
+                          onKeyEvent: _manejarTeclado,
+                          child: esMovil ? _tarjetas(lista, mapaCategorias) : _tabla(lista, mapaCategorias),
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
@@ -192,12 +247,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-   
-      Widget _tabla(
-    List<ProductoModel> lista,
-    Map<String, String> mapaCategorias,
-    double anchoDisponible,
-  ) {
+  Widget _tabla(List<ProductoModel> lista, Map<String, String> mapaCategorias) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final ancho = constraints.maxWidth;
@@ -210,51 +260,19 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               height: 48,
               decoration: BoxDecoration(
                 color: const Color(0xFFECEEF3),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade300,
-                  ),
-                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
               ),
               child: Row(
                 children: [
-                  _celdaHeader(
-                    texto: 'CÓDIGO',
-                    flex: 12,
-                  ),
-                  _celdaHeader(
-                    texto: 'NOMBRE',
-                    flex: 24,
-                  ),
-                  if (mostrarDescripcion)
-                    _celdaHeader(
-                      texto: 'DESCRIPCIÓN',
-                      flex: 20,
-                    ),
-                  if (mostrarCategoria)
-                    _celdaHeader(
-                      texto: 'CATEGORÍA',
-                      flex: 17,
-                    ),
-                  _celdaHeader(
-                    texto: 'EXISTENCIA',
-                    flex: 12,
-                  ),
-                  _celdaHeader(
-                    texto: 'P. VENTA',
-                    flex: 14,
-                  ),
-                  _celdaHeader(
-                    texto: 'P. COMPRA',
-                    flex: 14,
-                  ),
-                  _celdaHeader(
-                    texto: 'ESTADO',
-                    flex: 11,
-                  ),
+                  _celdaHeader(texto: 'CÓDIGO', flex: 12, columnaOrdenKey: 'codigo'),
+                  _celdaHeader(texto: 'NOMBRE', flex: 24, columnaOrdenKey: 'nombre'),
+                  if (mostrarDescripcion) _celdaHeader(texto: 'DESCRIPCIÓN', flex: 20),
+                  if (mostrarCategoria) _celdaHeader(texto: 'CATEGORÍA', flex: 17),
+                  _celdaHeader(texto: 'EXISTENCIA', flex: 12, columnaOrdenKey: 'existencia'),
+                  _celdaHeader(texto: 'P. VENTA', flex: 14, columnaOrdenKey: 'precioVenta'),
+                  _celdaHeader(texto: 'P. COMPRA', flex: 14, columnaOrdenKey: 'precioCompra'),
+                  _celdaHeader(texto: 'ESTADO', flex: 11),
                   _celdaHeaderAcciones(),
                 ],
               ),
@@ -262,44 +280,25 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             Expanded(
               child: ListView.separated(
                 itemCount: lista.length,
-                separatorBuilder: (context, index) {
-                  return Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Colors.grey.shade200,
-                  );
-                },
+                separatorBuilder: (context, index) => Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
                 itemBuilder: (context, index) {
                   final producto = lista[index];
                   final bajoStock = producto.stock < 3;
-                  final seleccionada =
-                      _filaSeleccionada == producto.id;
+                  final seleccionada = _filaSeleccionada == producto.id;
 
                   return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _filaSeleccionada =
-                            seleccionada ? null : producto.id;
-                      });
-                    },
+                    onTap: () => setState(() => _filaSeleccionada = seleccionada ? null : producto.id),
                     child: Container(
                       height: 72,
                       color: seleccionada
                           ? const Color(0xFFFBEAEA)
                           : Colors.white,
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           _celdaTabla(
                             flex: 12,
-                            child: Text(
-                              producto.codigo,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                color: const Color(0xFF3F434A),
-                              ),
-                            ),
+                            child: Text(producto.codigo, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A))),
                           ),
                           _celdaTabla(
                             flex: 24,
@@ -332,103 +331,41 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                           if (mostrarCategoria)
                             _celdaTabla(
                               flex: 17,
-                              child: Text(
-                                mapaCategorias[
-                                        producto.idCategoria] ??
-                                    '-',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.5,
-                                  color: const Color(0xFF3F434A),
-                                ),
-                              ),
+                              child: Text(mapaCategorias[producto.idCategoria] ?? '-', maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A))),
                             ),
                           _celdaTabla(
                             flex: 12,
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: bajoStock
-                                      ? const Color(0xFFFCE4E4)
-                                      : const Color(0xFFEFF4FF),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(color: bajoStock ? const Color(0xFFFCE4E4) : const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(8)),
                                 child: Text(
                                   producto.stock.toString(),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: bajoStock
-                                        ? const Color(0xFFC62828)
-                                        : const Color(0xFF3B82F6),
-                                  ),
+                                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: bajoStock ? const Color(0xFFC62828) : const Color(0xFF3B82F6)),
                                 ),
                               ),
                             ),
                           ),
                           _celdaTabla(
                             flex: 14,
-                            child: Text(
-                              formatearMoneda(
-                                producto.precioVenta,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                color: const Color(0xFF3F434A),
-                              ),
-                            ),
+                            child: Text(formatearMoneda(producto.precioVenta), maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A))),
                           ),
                           _celdaTabla(
                             flex: 14,
-                            child: Text(
-                              formatearMoneda(
-                                producto.precioCompra,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                color: const Color(0xFF3F434A),
-                              ),
-                            ),
+                            child: Text(formatearMoneda(producto.precioCompra), maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A))),
                           ),
                           _celdaTabla(
                             flex: 11,
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: producto.estado
-                                      ? const Color(0xFFE8F8EE)
-                                      : Colors.grey.shade200,
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                decoration: BoxDecoration(color: producto.estado ? const Color(0xFFE8F8EE) : Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
                                 child: Text(
-                                  producto.estado
-                                      ? 'Activo'
-                                      : 'Inactivo',
+                                  producto.estado ? 'Activo' : 'Inactivo',
                                   maxLines: 1,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: producto.estado
-                                        ? const Color(0xFF16A34A)
-                                        : Colors.grey.shade600,
-                                  ),
+                                  style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: producto.estado ? const Color(0xFF16A34A) : Colors.grey.shade600),
                                 ),
                               ),
                             ),
@@ -446,33 +383,117 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       },
     );
   }
-      Widget _celdaHeader({
-    required String texto,
-    required int flex,
-  }) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        height: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: const BoxDecoration(
-          border: Border(
-            right: BorderSide(
-              color: Color(0xFFD6D9E0),
-              width: 1,
+
+  Widget _tarjetas(List<ProductoModel> lista, Map<String, String> mapaCategorias) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(14),
+      itemCount: lista.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final p = lista[index];
+        final bajoStock = p.stock < 3;
+        final seleccionada = _filaSeleccionada == p.id;
+        return InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => setState(() => _filaSeleccionada = seleccionada ? null : p.id),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFE5E7EC)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    ),
+                    _celdaAccionesMovil(p),
+                  ],
+                ),
+                if (p.descripcion.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(p.descripcion, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                ],
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chipInfo('Código', p.codigo),
+                    _chipInfo('Categoría', mapaCategorias[p.idCategoria] ?? '-'),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(color: bajoStock ? const Color(0xFFFCE4E4) : const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(8)),
+                      child: Text('Existencia: ${p.stock}', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: bajoStock ? const Color(0xFFC62828) : const Color(0xFF3B82F6))),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(color: p.estado ? const Color(0xFFE8F8EE) : Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
+                      child: Text(p.estado ? 'Activo' : 'Inactivo', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: p.estado ? const Color(0xFF16A34A) : Colors.grey.shade600)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 4,
+                  children: [
+                    Text('Venta: ${formatearMoneda(p.precioVenta)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    Text('Compra: ${formatearMoneda(p.precioCompra)}', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
-        alignment: Alignment.centerLeft,
-        child: Text(
-          texto,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF666A72),
-            letterSpacing: 0.35,
+        );
+      },
+    );
+  }
+
+  Widget _chipInfo(String label, String valor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(8)),
+      child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
+    );
+  }
+
+  Widget _celdaHeader({required String texto, required int flex, String? columnaOrdenKey}) {
+    final activa = columnaOrdenKey != null && _columnaOrden == columnaOrdenKey;
+    return Expanded(
+      flex: flex,
+      child: InkWell(
+        onTap: columnaOrdenKey == null ? null : () => _alternarOrden(columnaOrdenKey),
+        child: Container(
+          height: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: const BoxDecoration(border: Border(right: BorderSide(color: Color(0xFFD6D9E0), width: 1))),
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  texto,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: activa ? const Color(0xFFC62828) : const Color(0xFF666A72), letterSpacing: 0.35),
+                ),
+              ),
+              if (columnaOrdenKey != null) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  activa ? (_ordenAscendente ? Icons.arrow_upward : Icons.arrow_downward) : Icons.unfold_more,
+                  size: 13,
+                  color: activa ? const Color(0xFFC62828) : Colors.grey.shade400,
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -484,16 +505,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       width: 76,
       height: double.infinity,
       alignment: Alignment.center,
-      child: Text(
-        'ACCIONES',
-        maxLines: 1,
-        style: GoogleFonts.poppins(
-          fontSize: 9.5,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
-          letterSpacing: 0.25,
-        ),
-      ),
+      child: Text('ACCIONES', maxLines: 1, style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF666A72), letterSpacing: 0.25)),
     );
   }
 
@@ -504,10 +516,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     return Expanded(
       flex: flex,
       child: Container(
-        height: double.infinity,
+        height: 72,
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 10,
+          vertical: 8,
         ),
         decoration: const BoxDecoration(
           border: Border(
@@ -523,122 +535,107 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _celdaAcciones(ProductoModel producto) {
-    return Container(
+    Widget _celdaAcciones(ProductoModel producto) {
+    return SizedBox(
       width: 76,
-      height: double.infinity,
-      alignment: Alignment.center,
-      child: PopupMenuButton<String>(
-        tooltip: 'Más acciones',
-        padding: EdgeInsets.zero,
-        icon: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: const Color(0xFFDFE1E6),
+      height: 72,
+      child: Center(
+        child: PopupMenuButton<String>(
+          tooltip: 'Más acciones',
+          padding: EdgeInsets.zero,
+          icon: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: const Color(0xFFDFE1E6),
+              ),
+            ),
+            child: const Icon(
+              Icons.more_vert,
+              size: 21,
+              color: Color(0xFF454950),
             ),
           ),
-          child: const Icon(
-            Icons.more_vert,
-            size: 21,
-            color: Color(0xFF454950),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 8,
+          onSelected: (valor) {
+            _manejarAccion(valor, producto);
+          },
+          itemBuilder: (context) {
+            return _opcionesMenu();
+          },
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 8,
-        position: PopupMenuPosition.under,
-        onSelected: (valor) {
-          switch (valor) {
-            case 'editar':
-              _abrirFormulario(producto);
-              break;
-            case 'ajustar':
-              _abrirAjusteStock(producto);
-              break;
-            case 'historial_stock':
-              _abrirHistorial(producto);
-              break;
-            case 'historial_ventas':
-              _abrirHistorialMovimientos(
-                producto,
-                'ventas',
-              );
-              break;
-            case 'historial_compras':
-              _abrirHistorialMovimientos(
-                producto,
-                'compras',
-              );
-              break;
-          }
-        },
-        itemBuilder: (context) {
-          return [
-            _opcionMenu(
-              valor: 'editar',
-              icono: Icons.edit_outlined,
-              texto: 'Editar producto',
-            ),
-            _opcionMenu(
-              valor: 'ajustar',
-              icono: Icons.tune,
-              texto: 'Ajustar existencia',
-            ),
-            const PopupMenuDivider(),
-            _opcionMenu(
-              valor: 'historial_stock',
-              icono: Icons.history,
-              texto: 'Historial de existencia',
-            ),
-            _opcionMenu(
-              valor: 'historial_ventas',
-              icono: Icons.point_of_sale_outlined,
-              texto: 'Historial de ventas',
-            ),
-            _opcionMenu(
-              valor: 'historial_compras',
-              icono: Icons.shopping_cart_outlined,
-              texto: 'Historial de compras',
-            ),
-          ];
-        },
       ),
     );
   }
 
-  PopupMenuItem<String> _opcionMenu({
-    required String valor,
-    required IconData icono,
-    required String texto,
-  }) {
+  Widget _celdaAccionesMovil(ProductoModel producto) {
+    return PopupMenuButton<String>(
+      tooltip: 'Más acciones',
+      padding: EdgeInsets.zero,
+      icon: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(9), border: Border.all(color: const Color(0xFFDFE1E6))),
+        child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 8,
+      position: PopupMenuPosition.under,
+      onSelected: (valor) => _manejarAccion(valor, producto),
+      itemBuilder: (context) => _opcionesMenu(),
+    );
+  }
+
+  void _manejarAccion(String valor, ProductoModel producto) {
+    switch (valor) {
+      case 'editar':
+        _abrirFormulario(producto);
+        break;
+      case 'ajustar':
+        _abrirAjusteStock(producto);
+        break;
+      case 'historial_stock':
+        _abrirHistorial(producto);
+        break;
+      case 'historial_ventas':
+        _abrirHistorialMovimientos(producto, 'ventas');
+        break;
+      case 'historial_compras':
+        _abrirHistorialMovimientos(producto, 'compras');
+        break;
+    }
+  }
+
+  List<PopupMenuEntry<String>> _opcionesMenu() {
+    return [
+      _opcionMenu(valor: 'editar', icono: Icons.edit_outlined, texto: 'Editar producto'),
+      _opcionMenu(valor: 'ajustar', icono: Icons.tune, texto: 'Ajustar existencia'),
+      const PopupMenuDivider(),
+      _opcionMenu(valor: 'historial_stock', icono: Icons.history, texto: 'Historial de existencia'),
+      _opcionMenu(valor: 'historial_ventas', icono: Icons.point_of_sale_outlined, texto: 'Historial de ventas'),
+      _opcionMenu(valor: 'historial_compras', icono: Icons.shopping_cart_outlined, texto: 'Historial de compras'),
+    ];
+  }
+
+  PopupMenuItem<String> _opcionMenu({required String valor, required IconData icono, required String texto}) {
     return PopupMenuItem<String>(
       value: valor,
       height: 44,
       child: Row(
         children: [
-          Icon(
-            icono,
-            size: 19,
-            color: const Color(0xFF4B4F58),
-          ),
+          Icon(icono, size: 19, color: const Color(0xFF4B4F58)),
           const SizedBox(width: 12),
-          Text(
-            texto,
-            style: GoogleFonts.poppins(
-              fontSize: 12.5,
-              color: const Color(0xFF25272B),
-            ),
-          ),
+          Text(texto, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF25272B))),
         ],
       ),
     );
   }
-
 
   Widget _selectorVista(String vista) {
     return Container(
@@ -686,8 +683,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               onSubmitted: (_) => _buscar(),
             ),
           ),
-          if (busqueda.isNotEmpty)
-            IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),
+          if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),
           IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),
         ],
       ),
