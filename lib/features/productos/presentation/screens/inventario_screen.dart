@@ -108,7 +108,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     if (_listaActual.isEmpty) return;
     final campos = await showDialog<Set<String>>(context: context, builder: (context) => const TicketOpcionesDialog());
     if (campos == null || !mounted) return;
-    final negocio = await ref.read(negocioStreamProvider.future);
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
     final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
     await Future<void>.delayed(const Duration(milliseconds: 150));
@@ -125,7 +125,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   }
 
   Future<void> _abrirCodigoBarras(ProductoModel producto) async {
-    final negocio = await ref.read(negocioStreamProvider.future);
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
     final impresora = negocio.impresoraEtiquetasUrl.isEmpty ? null : Printer(url: negocio.impresoraEtiquetasUrl, name: negocio.impresoraEtiquetasNombre);
     showDialog(

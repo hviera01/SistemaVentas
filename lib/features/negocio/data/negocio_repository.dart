@@ -15,6 +15,23 @@ class NegocioRepository {
     return _doc.snapshots().map((snap) => NegocioModel.fromMap(snap.data()));
   }
 
+  /// Lectura única (no suscripción en vivo) de la configuración del negocio.
+  /// Se usa antes de acciones puntuales (registrar venta, imprimir, pedir
+  /// clave especial) en vez de `negocioStreamProvider.future`: ese depende
+  /// de que el listener en vivo llegue a emitir su primer valor, lo cual en
+  /// algunas redes (sobre todo en la versión web) puede tardar mucho o no
+  /// llegar nunca y dejaba la acción "cargando" para siempre. Acá, si no
+  /// responde rápido, se sigue con la configuración por defecto en vez de
+  /// trabar la acción.
+  Future<NegocioModel> obtenerNegocioActual() async {
+    try {
+      final snap = await _doc.get().timeout(const Duration(seconds: 8));
+      return NegocioModel.fromMap(snap.data());
+    } catch (_) {
+      return const NegocioModel();
+    }
+  }
+
   Future<void> actualizarDatosGenerales({
     required String nombre,
     required String correo,

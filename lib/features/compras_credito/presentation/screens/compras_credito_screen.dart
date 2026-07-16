@@ -72,7 +72,7 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
       builder: (context) => RegistrarAbonoCompraDialog(compra: compra),
     );
     if (abono == null || !mounted) return;
-    final negocio = await ref.read(negocioStreamProvider.future);
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
     final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
     await Future<void>.delayed(const Duration(milliseconds: 150));

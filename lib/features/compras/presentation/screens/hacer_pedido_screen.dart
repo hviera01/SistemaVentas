@@ -97,7 +97,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     }
     setState(() => _generando = true);
     try {
-      final negocio = await ref.read(negocioStreamProvider.future);
+      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
       if (!mounted) return;
       await showDialog(
         context: context,

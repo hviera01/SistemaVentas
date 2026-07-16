@@ -70,7 +70,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       builder: (context) => RegistrarAbonoDialog(credito: credito),
     );
     if (abono == null || !mounted) return;
-    final negocio = await ref.read(negocioStreamProvider.future);
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
     final impresora = negocio.impresoraTermicaUrl.isEmpty
         ? null

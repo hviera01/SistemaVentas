@@ -164,7 +164,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
     );
     if (tipo == null || !mounted) return;
 
-    final negocio = await ref.read(negocioStreamProvider.future);
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
 
     if (tipo == 'termico' || tipo == 'ambos') {

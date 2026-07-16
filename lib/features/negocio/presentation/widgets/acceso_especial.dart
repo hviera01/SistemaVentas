@@ -8,7 +8,7 @@ import '../../providers/negocio_provider.dart';
 /// pide la clave antes de continuar. Si no está activado (o no hay clave configurada),
 /// retorna true de inmediato sin mostrar nada.
 Future<bool> verificarAccesoEspecial(BuildContext context, WidgetRef ref, String permisoKey) async {
-  final negocio = await ref.read(negocioStreamProvider.future);
+  final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
   if (!negocio.tieneClaveEspecial || !negocio.tienePermiso(permisoKey)) {
     return true;
   }

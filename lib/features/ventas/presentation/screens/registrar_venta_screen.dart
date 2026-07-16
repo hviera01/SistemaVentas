@@ -385,7 +385,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           montoCambio = resultado.cambio;
         }
 
-        final negocio = await ref.read(negocioStreamProvider.future);
+        final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
         if (!mounted) return;
         if (carrito.tipoDocumento == 'Factura' || carrito.tipoDocumento == 'Boleta') {
           final continuar = await _validarRangoYFecha(negocio, carrito.tipoDocumento);
@@ -425,7 +425,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _limpiarTodo();
 
       if (esFacturable) {
-        final negocio = await ref.read(negocioStreamProvider.future);
+        final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
         if (!mounted) return;
         final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
         await Future<void>.delayed(const Duration(milliseconds: 150));

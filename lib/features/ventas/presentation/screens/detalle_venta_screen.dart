@@ -120,7 +120,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     if (venta == null) return;
     setState(() => _procesandoPdf = true);
     try {
-      final negocio = await ref.read(negocioStreamProvider.future);
+      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
       if (!mounted) return;
       final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
       await showDialog(
@@ -146,7 +146,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     if (venta == null) return;
     setState(() => _procesandoPdf = true);
     try {
-      final negocio = await ref.read(negocioStreamProvider.future);
+      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
       if (!mounted) return;
       await showDialog(
         context: context,
