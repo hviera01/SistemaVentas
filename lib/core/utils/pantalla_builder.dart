@@ -18,6 +18,7 @@ import '../../features/ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../features/ventas/providers/carrito_provider.dart';
 import '../../features/compras/presentation/screens/registrar_compra_screen.dart';
 import '../../features/compras/presentation/screens/detalle_compra_screen.dart';
+import '../../features/compras/presentation/screens/hacer_pedido_screen.dart';
 import '../../features/compras/providers/carrito_compra_provider.dart';
 import '../../features/caja/presentation/screens/cierre_caja_screen.dart';
 import '../../features/egresos/presentation/screens/ingresos_egresos_screen.dart';
@@ -44,6 +45,8 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono) {
       );
     case 'compras_detalle':
       return const DetalleCompraScreen(esDialogo: false);
+    case 'compras_pedido':
+      return const HacerPedidoScreen();
     case 'categorias':
       return const CategoriasScreen();
     case 'inventario':

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:excel/excel.dart' as xls;
 import 'package:intl/intl.dart';
@@ -7,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'venta_model.dart';
 import 'numero_a_letras.dart';
 import '../../../core/utils/formato_moneda.dart';
+import '../../../core/utils/logo_pdf.dart';
 import '../../negocio/data/negocio_model.dart';
 
 class VentaExportService {
@@ -20,14 +20,7 @@ class VentaExportService {
   /// de venta).
   Future<Uint8List> generarPdfDetalleVenta(VentaModel venta, NegocioModel negocio) async {
     final doc = pw.Document();
-    pw.MemoryImage? logo;
-    if (negocio.logoColorBase64.isNotEmpty) {
-      try {
-        logo = pw.MemoryImage(base64Decode(negocio.logoColorBase64));
-      } catch (_) {
-        logo = null;
-      }
-    }
+    final logo = decodificarLogoPdf(negocio.logoColorBase64);
     final formatoDia = DateFormat('dd/MM/yyyy');
     final esCotizacion = venta.tipoDocumento == 'Cotizacion';
 
@@ -294,14 +287,7 @@ class VentaExportService {
 
   Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio) async {
     final doc = pw.Document();
-    pw.MemoryImage? logo;
-    if (negocio.logoBnBase64.isNotEmpty) {
-      try {
-        logo = pw.MemoryImage(base64Decode(negocio.logoBnBase64));
-      } catch (_) {
-        logo = null;
-      }
-    }
+    final logo = decodificarLogoPdf(negocio.logoBnBase64);
 
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false));
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true));

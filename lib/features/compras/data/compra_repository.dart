@@ -35,17 +35,24 @@ class CompraRepository {
 
     late String numeroDocumento;
 
+    // Timeout corto (el default del SDK es 30s): en cajas con internet
+    // lento/intermitente es mejor que se vea rápido que falló y se pueda
+    // reintentar, a que la pantalla quede "cargando" media hora.
     await _db.runTransaction((transaction) async {
       final contadorSnap = await transaction.get(contadorRef);
       final actual = ((contadorSnap.data()?['ultimo'] ?? 0) as num).toInt();
       final nuevo = actual + 1;
       numeroDocumento = _formatearCorrelativo(nuevo);
 
+      // Lecturas en paralelo (Future.wait) en vez de una por una: con varios
+      // productos en la compra, esperar cada round-trip en serie hacía que
+      // registrar una compra se sintiera colgado con internet lento.
       final stocksActuales = <String, double>{};
-      for (final item in items) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final snap = await transaction.get(ref);
-        stocksActuales[item.idProducto] = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+      final snapsStock = await Future.wait(
+        items.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+      );
+      for (var i = 0; i < items.length; i++) {
+        stocksActuales[items[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
 
       transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
@@ -131,7 +138,7 @@ class CompraRepository {
           'fecha': FieldValue.serverTimestamp(),
         });
       }
-    });
+    }, timeout: const Duration(seconds: 12));
 
     return CompraModel(
       id: compraRef.id,
@@ -215,10 +222,11 @@ class CompraRepository {
 
     await _db.runTransaction((transaction) async {
       final stocksActuales = <String, double>{};
-      for (final item in items) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final snap = await transaction.get(ref);
-        stocksActuales[item.idProducto] = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+      final snapsStock = await Future.wait(
+        items.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+      );
+      for (var i = 0; i < items.length; i++) {
+        stocksActuales[items[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
 
       transaction.update(_colCompras.doc(id), {
@@ -246,6 +254,6 @@ class CompraRepository {
           'fecha': FieldValue.serverTimestamp(),
         });
       }
-    });
+    }, timeout: const Duration(seconds: 12));
   }
 }

@@ -86,7 +86,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     try {
       final repo = ref.read(productoRepositoryProvider);
       if (widget.producto == null) {
-        await repo.crear(
+        final creado = await repo.crear(
           codigo: _codigoController.text,
           codigoBarras: _codigoBarrasController.text,
           nombre: nombre,
@@ -99,6 +99,8 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
           precioVenta3: _parseDouble(_precioVenta3Controller.text),
           estado: _activo,
         );
+        if (mounted) Navigator.pop(context, creado);
+        return;
       } else {
         await repo.actualizar(
           id: widget.producto!.id,

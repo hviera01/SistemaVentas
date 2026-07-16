@@ -11,6 +11,19 @@ import 'core/widgets/app_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Sin esto, un error al construir cualquier pantalla deja esa área
+  // completamente en blanco (en release Flutter oculta el detalle);
+  // con esto al menos se ve un mensaje en vez de un blanco silencioso.
+  ErrorWidget.builder = (details) => Container(
+        color: Colors.white,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Ocurrió un error al mostrar esta pantalla:\n${details.exception}',
+          style: const TextStyle(color: Colors.red, fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+      );
   // Evita que google_fonts intente descargar variantes de Poppins por red en
   // cada pantalla nueva (esta app corre en cajas/POS con internet lento o
   // intermitente) — si la variante no está en caché local, cae al font del

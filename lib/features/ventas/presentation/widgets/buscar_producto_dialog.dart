@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
+import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
@@ -28,7 +29,7 @@ class BuscarProductoDialog extends ConsumerStatefulWidget {
 class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   final _busquedaController = TextEditingController();
   final _focusNodeLista = FocusNode();
-  String _busqueda = '';
+  String _busquedaAplicada = '';
   List<ProductoModel> _listaActual = [];
   String? _filaSeleccionada;
   int _nivelActivo = 1;
@@ -110,6 +111,30 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     _confirmarSeleccion(resaltado.isNotEmpty ? resaltado.first : _listaActual.first);
   }
 
+  /// La búsqueda no filtra en vivo: solo se aplica al presionar Enter o
+  /// tocar el botón de buscar. Si el texto tiene una sola coincidencia (por
+  /// ejemplo, un código exacto leído con lector de código de barras) se
+  /// agrega directo, sin necesidad de un segundo Enter para confirmar.
+  void _buscar() {
+    final texto = _busquedaController.text.trim();
+    setState(() {
+      _busquedaAplicada = texto;
+      _filaSeleccionada = null;
+    });
+    if (texto.isEmpty) return;
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    final coincidencias = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, texto)).toList();
+    if (coincidencias.length == 1) {
+      _confirmarSeleccion(coincidencias.first);
+    }
+  }
+
+  Future<void> _crearProductoNuevo() async {
+    final nuevo = await showDialog<ProductoModel>(context: context, builder: (context) => const ProductoFormDialog());
+    if (nuevo == null || !mounted) return;
+    _confirmarSeleccion(nuevo);
+  }
+
   @override
   Widget build(BuildContext context) {
     final productosAsync = ref.watch(productosStreamProvider);
@@ -141,7 +166,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
               Padding(
                 padding: EdgeInsets.only(left: esMovil ? 0 : 54),
                 child: Text(
-                  'Doble clic o Enter agrega el producto resaltado',
+                  'Enter en el buscador busca · doble clic o Enter en la lista agrega el producto resaltado',
                   style: GoogleFonts.poppins(fontSize: esMovil ? 11.5 : 12.5, color: Colors.grey.shade500),
                 ),
               ),
@@ -167,23 +192,31 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                               autofocus: true,
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: InputDecoration(
-                                hintText: 'Buscar por código, nombre o descripción...',
+                                hintText: 'Escribí y presioná Enter para buscar...',
                                 hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              onChanged: (v) => setState(() {
-                                _busqueda = v.trim();
-                                _filaSeleccionada = null;
-                              }),
-                              onSubmitted: (_) => _seleccionarAlPresionarEnter(),
+                              onSubmitted: (_) => _buscar(),
                             ),
                           ),
+                          IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),
                         ],
                       ),
                     ),
                   ),
                   _selectorNivelPrecio(),
+                  OutlinedButton.icon(
+                    onPressed: _crearProductoNuevo,
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: Text('Producto Nuevo', style: GoogleFonts.poppins(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC62828),
+                      side: const BorderSide(color: Color(0xFFC62828)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -201,7 +234,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     onKeyEvent: _manejarTeclado,
                     child: productosAsync.when(
                     data: (productos) {
-                      if (_busqueda.isEmpty) {
+                      if (_busquedaAplicada.isEmpty) {
                         _listaActual = [];
                         return Center(
                           child: Column(
@@ -209,13 +242,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                             children: [
                               Icon(Icons.search, size: 48, color: Colors.grey.shade300),
                               const SizedBox(height: 12),
-                              Text('Escribí algo para buscar un producto', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                              Text('Escribí algo y presioná Enter para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                             ],
                           ),
                         );
                       }
 
-                      final lista = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, _busqueda)).toList();
+                      final lista = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
                       _listaActual = lista;
                       if (lista.isEmpty) {
                         return Center(

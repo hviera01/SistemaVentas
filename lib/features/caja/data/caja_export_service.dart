@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'cierre_caja_model.dart';
 import '../../../core/utils/formato_moneda.dart';
+import '../../../core/utils/logo_pdf.dart';
 import '../../negocio/data/negocio_model.dart';
 
 class CajaExportService {
@@ -14,14 +14,7 @@ class CajaExportService {
 
   Future<Uint8List> generarTicketCierre(CierreCajaModel cierre, NegocioModel negocio) async {
     final doc = pw.Document();
-    pw.MemoryImage? logo;
-    if (negocio.logoBnBase64.isNotEmpty) {
-      try {
-        logo = pw.MemoryImage(base64Decode(negocio.logoBnBase64));
-      } catch (_) {
-        logo = null;
-      }
-    }
+    final logo = decodificarLogoPdf(negocio.logoBnBase64);
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     const fSmall = 7.5;
     const fNormal = 8.0;

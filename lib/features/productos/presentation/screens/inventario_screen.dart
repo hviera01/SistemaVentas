@@ -10,6 +10,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/exportador.dart';
 import '../widgets/producto_form_dialog.dart';
+import '../widgets/importar_inventario_dialog.dart';
 import '../widgets/ajuste_stock_dialog.dart';
 import '../widgets/historial_stock_dialog.dart';
 import '../widgets/historial_movimientos_dialog.dart';
@@ -79,6 +80,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _abrirHistorialMovimientos(ProductoModel producto, String tipo) {
     showDialog(context: context, builder: (context) => HistorialMovimientosDialog(producto: producto, tipo: tipo));
+  }
+
+  void _abrirImportar() {
+    showDialog(context: context, builder: (context) => const ImportarInventarioDialog());
   }
 
   Future<void> _exportarExcel(Map<String, String> mapaCategorias) async {
@@ -264,6 +269,12 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       OutlinedButton.icon(
+                        onPressed: _abrirImportar,
+                        icon: const Icon(Icons.upload_file_outlined, size: 18),
+                        label: Text('Importar', style: GoogleFonts.poppins(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      ),
+                      OutlinedButton.icon(
                         onPressed: () => _exportarExcel(mapaCategorias),
                         icon: const Icon(Icons.grid_on_outlined, size: 18),
                         label: Text('Excel', style: GoogleFonts.poppins(fontSize: 13)),
@@ -400,14 +411,18 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     },
                     child: Container(
                       color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
-                      child: IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+                      // Alto fijo en vez de IntrinsicHeight: con alto fijo, Flutter
+                      // no necesita un segundo pase de layout por fila para saber
+                      // cuánto "estirar" cada celda (lo que exigía IntrinsicHeight),
+                      // así que desplazarse por listas largas queda mucho más fluido.
+                      height: 64,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           _celdaTabla(flex: 12, child: Text(producto.codigo, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A)))),
-                          _celdaTabla(flex: 24, child: Text(producto.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)))),
+                          _celdaTabla(flex: 24, child: Text(producto.nombre, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)))),
                           if (mostrarDescripcion)
-                            _celdaTabla(flex: 20, child: Text(producto.descripcion.isEmpty ? '-' : producto.descripcion, softWrap: true, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
+                            _celdaTabla(flex: 20, child: Text(producto.descripcion.isEmpty ? '-' : producto.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
                           if (mostrarCategoria)
                             _celdaTabla(flex: 17, child: Text(mapaCategorias[producto.idCategoria] ?? '-', maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A)))),
                           _celdaTabla(
@@ -434,9 +449,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                               ),
                             ),
                           ),
-                         _celdaAcciones(producto),
-                          ],
-                        ),
+                          _celdaAcciones(producto),
+                        ],
                       ),
                     ),
                   );

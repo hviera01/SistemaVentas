@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Archivos de ejemplo/reales subidos para probar el importador — nunca deben
+# subirse al repo (datos reales del negocio: inventario, precios, clientes).
+/excel_importar/

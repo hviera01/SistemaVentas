@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -198,7 +199,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _limpiarTodo();
       _mostrarMensaje('Compra registrada: ${compra.numeroDocumento}');
     } catch (e) {
-      _mostrarMensaje('Error al registrar: $e');
+      _mostrarMensaje(e is TimeoutException
+          ? 'No se pudo guardar: se agotó el tiempo de espera. Revisá la conexión a internet e intentá de nuevo.'
+          : 'Error al registrar: $e');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -643,6 +646,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      onChanged: (_) => confirmar(),
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => confirmar(),
     );

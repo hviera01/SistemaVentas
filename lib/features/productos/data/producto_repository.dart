@@ -1,11 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'producto_model.dart';
+import 'producto_import_service.dart';
 import 'historial_stock_model.dart';
 import 'historial_precio_compra_model.dart';
 import 'historial_venta_producto_model.dart';
 
+class ResumenImportacionProductos {
+  final int creados;
+  final int actualizados;
+  final int categoriasCreadas;
+
+  ResumenImportacionProductos({required this.creados, required this.actualizados, required this.categoriasCreadas});
+}
+
 class ProductoRepository {
   final _col = FirebaseFirestore.instance.collection('productos');
+  final _colCategorias = FirebaseFirestore.instance.collection('categorias');
 
   Stream<List<ProductoModel>> obtenerProductos() {
     return _col.orderBy('nombre').snapshots().map((snap) {
@@ -18,7 +28,7 @@ class ProductoRepository {
     return 'PROD-${ahora.substring(ahora.length - 8)}';
   }
 
-  Future<void> crear({
+  Future<ProductoModel> crear({
     required String codigo,
     required String codigoBarras,
     required String nombre,
@@ -40,7 +50,7 @@ class ProductoRepository {
         throw Exception('Ya existe un producto con ese código');
       }
     }
-    await _col.add({
+    final ref = await _col.add({
       'codigo': codigoFinal,
       'codigoBarras': codigoBarras.trim(),
       'nombre': nombre.trim(),
@@ -54,6 +64,20 @@ class ProductoRepository {
       'estado': estado,
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
+    return ProductoModel(
+      id: ref.id,
+      codigo: codigoFinal,
+      codigoBarras: codigoBarras.trim(),
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      idCategoria: idCategoria,
+      stock: stock,
+      precioCompra: precioCompra,
+      precioVenta: precioVenta,
+      precioVenta2: precioVenta2,
+      precioVenta3: precioVenta3,
+      estado: estado,
+    );
   }
 
   Future<void> actualizar({
@@ -91,6 +115,96 @@ class ProductoRepository {
 
   Future<void> eliminar(String id) async {
     await _col.doc(id).delete();
+  }
+
+  /// Crea o actualiza en lote los productos de una importación desde Excel.
+  /// Empareja por [FilaImportacionProducto.codigo]: si ya existe un producto
+  /// con ese código se actualiza (sin tocar código de barras ni niveles de
+  /// precio extra, que el Excel no trae); si no hay código o no coincide con
+  /// ninguno existente, se crea un producto nuevo. Las categorías que no
+  /// existan todavía se crean automáticamente.
+  Future<ResumenImportacionProductos> importarProductos(List<FilaImportacionProducto> filas) async {
+    final productosSnap = await _col.get();
+    final idPorCodigo = <String, String>{};
+    for (final d in productosSnap.docs) {
+      final codigo = (d.data()['codigo'] as String? ?? '').trim().toLowerCase();
+      if (codigo.isNotEmpty) idPorCodigo[codigo] = d.id;
+    }
+
+    final categoriasSnap = await _colCategorias.get();
+    final idCategoriaPorNombre = <String, String>{};
+    for (final d in categoriasSnap.docs) {
+      final descripcion = (d.data()['descripcion'] as String? ?? '').trim().toLowerCase();
+      if (descripcion.isNotEmpty) idCategoriaPorNombre[descripcion] = d.id;
+    }
+
+    var creados = 0, actualizados = 0, categoriasCreadas = 0;
+    var batch = FirebaseFirestore.instance.batch();
+    var operacionesEnBatch = 0;
+
+    Future<void> descargarBatch() async {
+      if (operacionesEnBatch == 0) return;
+      await batch.commit();
+      batch = FirebaseFirestore.instance.batch();
+      operacionesEnBatch = 0;
+    }
+
+    for (final fila in filas) {
+      final nombreCategoriaNorm = fila.categoria.trim().toLowerCase();
+      var idCategoria = idCategoriaPorNombre[nombreCategoriaNorm];
+      if (idCategoria == null) {
+        final ref = _colCategorias.doc();
+        batch.set(ref, {
+          'descripcion': fila.categoria.trim(),
+          'estado': true,
+          'fechaRegistro': FieldValue.serverTimestamp(),
+        });
+        idCategoria = ref.id;
+        idCategoriaPorNombre[nombreCategoriaNorm] = idCategoria;
+        categoriasCreadas++;
+        operacionesEnBatch++;
+      }
+
+      final codigoNorm = fila.codigo.trim().toLowerCase();
+      final idExistente = codigoNorm.isEmpty ? null : idPorCodigo[codigoNorm];
+
+      final datosComunes = {
+        'nombre': fila.nombre.trim(),
+        'descripcion': fila.descripcion.trim(),
+        'idCategoria': idCategoria,
+        'stock': fila.stock,
+        'precioCompra': fila.precioCompra,
+        'precioVenta': fila.precioVenta,
+        'estado': fila.estado,
+      };
+
+      if (idExistente != null) {
+        batch.update(_col.doc(idExistente), {...datosComunes, 'codigo': fila.codigo.trim()});
+        actualizados++;
+      } else {
+        final ref = _col.doc();
+        // Sin código en el Excel: se usa el id del documento (único
+        // garantizado) en vez de un generador basado en la hora, que podría
+        // repetirse entre varias filas sin código procesadas en el mismo
+        // milisegundo dentro de este mismo lote.
+        final codigoFinal = fila.codigo.trim().isEmpty ? 'PROD-${ref.id.substring(0, 8).toUpperCase()}' : fila.codigo.trim();
+        batch.set(ref, {
+          ...datosComunes,
+          'codigo': codigoFinal,
+          'codigoBarras': '',
+          'precioVenta2': 0.0,
+          'precioVenta3': 0.0,
+          'fechaRegistro': FieldValue.serverTimestamp(),
+        });
+        if (codigoNorm.isNotEmpty) idPorCodigo[codigoNorm] = ref.id;
+        creados++;
+      }
+      operacionesEnBatch++;
+      if (operacionesEnBatch >= 400) await descargarBatch();
+    }
+    await descargarBatch();
+
+    return ResumenImportacionProductos(creados: creados, actualizados: actualizados, categoriasCreadas: categoriasCreadas);
   }
 
   Future<void> ajustarStock({
@@ -135,7 +249,7 @@ class ProductoRepository {
           'motivo': motivo,
           'fecha': FieldValue.serverTimestamp(),
         });
-      });
+      }, timeout: const Duration(seconds: 12));
       return true;
     } catch (_) {
       return false;

@@ -1,6 +1,14 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
+
+/// El plugin `printing` solo implementa listado de impresoras del sistema
+/// operativo en Windows/macOS/Linux; en Android/iOS/web no hay method
+/// channel para esto, así que ni se intenta.
+bool get _listadoImpresorasDisponible =>
+    !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
 class SelectorImpresora extends StatefulWidget {
   final String titulo;
@@ -32,6 +40,7 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
   }
 
   Future<void> _cargarImpresoras() async {
+    if (!_listadoImpresorasDisponible) return;
     setState(() {
       _cargando = true;
       _error = null;
@@ -60,13 +69,14 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
         Row(
           children: [
             Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)))),
-            IconButton(
-              tooltip: 'Actualizar lista',
-              onPressed: _cargando ? null : _cargarImpresoras,
-              icon: _cargando
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.refresh, size: 18),
-            ),
+            if (_listadoImpresorasDisponible)
+              IconButton(
+                tooltip: 'Actualizar lista',
+                onPressed: _cargando ? null : _cargarImpresoras,
+                icon: _cargando
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.refresh, size: 18),
+              ),
           ],
         ),
         const SizedBox(height: 4),
@@ -88,7 +98,10 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
             ),
           ),
         ),
-        if (_error != null) ...[
+        if (!_listadoImpresorasDisponible) ...[
+          const SizedBox(height: 4),
+          Text('No disponible en este dispositivo', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+        ] else if (_error != null) ...[
           const SizedBox(height: 4),
           Text(_error!, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade700)),
         ] else if (!_cargando && _impresoras.isEmpty) ...[

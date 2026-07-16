@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:excel/excel.dart' as xls;
 import 'package:intl/intl.dart';
@@ -7,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'venta_credito_model.dart';
 import 'abono_model.dart';
 import '../../../core/utils/formato_moneda.dart';
+import '../../../core/utils/logo_pdf.dart';
 import '../../negocio/data/negocio_model.dart';
 
 class VentaCreditoExportService {
@@ -93,14 +93,7 @@ class VentaCreditoExportService {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final doc = pw.Document();
 
-    pw.MemoryImage? logo;
-    if (negocio.logoBnBase64.isNotEmpty) {
-      try {
-        logo = pw.MemoryImage(base64Decode(negocio.logoBnBase64));
-      } catch (_) {
-        logo = null;
-      }
-    }
+    final logo = decodificarLogoPdf(negocio.logoBnBase64);
 
     doc.addPage(
       pw.Page(

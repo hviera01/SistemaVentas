@@ -63,17 +63,25 @@ class VentaRepository {
 
     late String numeroDocumento;
 
+    // Timeout corto (el default del SDK es 30s): en cajas con internet
+    // lento/intermitente es mejor que el cajero vea rápido que falló y
+    // pueda reintentar, a que la pantalla quede "cargando" media hora.
     await _db.runTransaction((transaction) async {
       final contadorSnap = await transaction.get(contadorRef);
       final actual = ((contadorSnap.data()?['ultimo'] ?? 0) as num).toInt();
       final nuevo = actual + 1;
       numeroDocumento = _formatearCorrelativo(tipoDocumento, nuevo);
 
+      // Las lecturas se disparan todas a la vez (Future.wait) en vez de una
+      // por una: con varios productos en la venta, esperar cada round-trip
+      // en serie es lo que hacía que registrar una venta se sintiera colgado
+      // en cajas con internet lento.
       final stocksActuales = <String, double>{};
-      for (final item in itemsADescontar) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final snap = await transaction.get(ref);
-        stocksActuales[item.idProducto] = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+      final snapsStock = await Future.wait(
+        itemsADescontar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+      );
+      for (var i = 0; i < itemsADescontar.length; i++) {
+        stocksActuales[itemsADescontar[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
 
       transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
@@ -157,7 +165,7 @@ class VentaRepository {
           });
         }
       }
-    });
+    }, timeout: const Duration(seconds: 12));
 
     return VentaModel(
       id: ventaRef.id,
@@ -243,10 +251,11 @@ class VentaRepository {
 
     await _db.runTransaction((transaction) async {
       final stocksActuales = <String, double>{};
-      for (final item in itemsARestaurar) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final snap = await transaction.get(ref);
-        stocksActuales[item.idProducto] = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+      final snapsStock = await Future.wait(
+        itemsARestaurar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+      );
+      for (var i = 0; i < itemsARestaurar.length; i++) {
+        stocksActuales[itemsARestaurar[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
 
       transaction.update(_colVentas.doc(id), {
@@ -274,7 +283,7 @@ class VentaRepository {
           'fecha': FieldValue.serverTimestamp(),
         });
       }
-    });
+    }, timeout: const Duration(seconds: 12));
   }
 
   Stream<List<VentaEnEsperaModel>> obtenerVentasEnEspera() {
