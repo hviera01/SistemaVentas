@@ -31,6 +31,22 @@ class VentaRepository {
     return numero.toString().padLeft(8, '0');
   }
 
+  /// Próximo número que le tocaría a la próxima Factura/Boleta (comparten
+  /// el mismo contador 'venta', ver _claveContador). Para uso en Negocio,
+  /// donde se puede consultar y fijar manualmente antes de empezar a
+  /// facturar (por ejemplo, para continuar la numeración de un talonario
+  /// físico en vez de arrancar siempre desde 1).
+  Future<int> obtenerProximoNumeroFactura() async {
+    final snap = await _colContadores.doc('venta').get();
+    final actual = ((snap.data()?['ultimo'] ?? 0) as num).toInt();
+    return actual + 1;
+  }
+
+  Future<void> establecerProximoNumeroFactura(int proximoNumero) async {
+    final nuevoUltimo = proximoNumero - 1;
+    await _colContadores.doc('venta').set({'ultimo': nuevoUltimo < 0 ? 0 : nuevoUltimo}, SetOptions(merge: true));
+  }
+
   Future<VentaModel> registrarVenta({
     required String tipoDocumento,
     required String condicion,

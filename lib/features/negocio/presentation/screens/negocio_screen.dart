@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../ventas/providers/ventas_provider.dart';
 import '../../data/negocio_model.dart';
 import '../../providers/negocio_provider.dart';
 import '../widgets/negocio_logo_picker.dart';
@@ -49,6 +50,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   final _claveController = TextEditingController();
   final _ipRedController = TextEditingController();
   final _puertoRedController = TextEditingController();
+  final _ctrlProximoFactura = TextEditingController();
   final _servicioImpresoraRed = ImpresoraRedService();
 
   DateTime? _fechaLimite;
@@ -57,6 +59,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   bool _guardandoClave = false;
   bool _guardandoRed = false;
   bool _probandoRed = false;
+  int? _proximoFacturaActual;
+  bool _cargandoProximoFactura = true;
+  bool _guardandoProximoFactura = false;
   String? _error;
 
   @override
@@ -77,7 +82,42 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     _permisos = Map<String, bool>.from(m.permisos);
     _ipRedController.text = m.impresoraRedIp;
     _puertoRedController.text = m.impresoraRedPuerto.toString();
+    _cargarProximoFactura();
   }
+
+  Future<void> _cargarProximoFactura() async {
+    final proximo = await ref.read(ventaRepositoryProvider).obtenerProximoNumeroFactura();
+    if (!mounted) return;
+    setState(() {
+      _proximoFacturaActual = proximo;
+      _cargandoProximoFactura = false;
+      _ctrlProximoFactura.text = proximo.toString();
+    });
+  }
+
+  Future<void> _guardarProximoFactura() async {
+    final valor = int.tryParse(_ctrlProximoFactura.text.trim());
+    if (valor == null || valor < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingresá un número válido (mayor a 0)')));
+      return;
+    }
+    setState(() => _guardandoProximoFactura = true);
+    try {
+      await ref.read(ventaRepositoryProvider).establecerProximoNumeroFactura(valor);
+      if (!mounted) return;
+      setState(() {
+        _proximoFacturaActual = valor;
+        _guardandoProximoFactura = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('La próxima factura va a salir con el número ${_formatoFactura(valor)}')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _guardandoProximoFactura = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+    }
+  }
+
+  String _formatoFactura(int numero) => numero.toString().padLeft(8, '0');
 
   @override
   void dispose() {
@@ -94,6 +134,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     _claveController.dispose();
     _ipRedController.dispose();
     _puertoRedController.dispose();
+    _ctrlProximoFactura.dispose();
     super.dispose();
   }
 
@@ -623,6 +664,49 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             valor: widget.modelo.facturaPreciosConIsv,
             onChanged: (v) => ref.read(negocioRepositoryProvider).establecerFacturaPreciosConIsv(v),
           ),
+          Divider(color: Colors.grey.shade200, height: 28),
+          Text('Numeración de facturas', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+          const SizedBox(height: 3),
+          Text(
+            'El número que le va a tocar a la próxima Factura o Boleta que registrés. Sirve para continuar la numeración de un talonario físico en vez de arrancar siempre desde 1 (por ejemplo, después de vaciar los datos de prueba).',
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 12),
+          if (_cargandoProximoFactura)
+            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(strokeWidth: 2)))
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctrlProximoFactura,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.poppins(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Próximo número de factura',
+                      labelStyle: GoogleFonts.poppins(fontSize: 13),
+                      helperText: _proximoFacturaActual != null ? 'Actual: ${_formatoFactura(_proximoFacturaActual!)}' : null,
+                      helperStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                      filled: true,
+                      fillColor: const Color(0xFFE8EAF0),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: _guardandoProximoFactura ? null : _guardarProximoFactura,
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    child: _guardandoProximoFactura
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text('Guardar', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
