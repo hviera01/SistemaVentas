@@ -8,6 +8,7 @@ import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 /// Resultado de elegir un producto (y el nivel de precio con el que se va a
 /// vender) desde el buscador.
@@ -135,6 +136,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     _confirmarSeleccion(nuevo);
   }
 
+  Future<void> _escanear() async {
+    final codigo = await escanearCodigoBarras(context);
+    if (codigo == null || codigo.isEmpty || !mounted) return;
+    _busquedaController.text = codigo;
+    _buscar();
+  }
+
   @override
   Widget build(BuildContext context) {
     final productosAsync = ref.watch(productosStreamProvider);
@@ -206,6 +214,17 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     ),
                   ),
                   _selectorNivelPrecio(),
+                  OutlinedButton.icon(
+                    onPressed: _escanear,
+                    icon: const Icon(Icons.qr_code_scanner, size: 18),
+                    label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1A1A1A),
+                      side: const BorderSide(color: Color(0xFFDCDFE6)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                   OutlinedButton.icon(
                     onPressed: _crearProductoNuevo,
                     icon: const Icon(Icons.add_circle_outline, size: 18),

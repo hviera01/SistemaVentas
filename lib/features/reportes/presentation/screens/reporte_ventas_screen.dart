@@ -169,8 +169,14 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
           final esMovil = constraints.maxWidth < 760;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
-            child: CustomScrollView(
-              slivers: [
+            // NestedScrollView (en vez de CustomScrollView + SliverFillRemaining)
+            // coordina el scroll del encabezado/filtros con el de la lista de
+            // abajo: sin esto, la lista tiene su propio scroll independiente y,
+            // en móvil, al bajar del todo dentro de ella no había forma de
+            // volver a subir arrastrando (el encabezado quedaba "atrapado"
+            // fuera de la pantalla).
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -253,34 +259,31 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
-                    ),
-                    child: _cargando
-                        ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
-                        : _error != null
-                            ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                            : lista.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
-                                        const SizedBox(height: 12),
-                                        Text('No se encontraron resultados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                      ],
-                                    ),
-                                  )
-                                : (esMovil ? _tarjetas(lista) : _tabla(lista)),
-                  ),
-                ),
               ],
+              body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                ),
+                child: _cargando
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                    : _error != null
+                        ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
+                        : lista.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
+                                    const SizedBox(height: 12),
+                                    Text('No se encontraron resultados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                                  ],
+                                ),
+                              )
+                            : (esMovil ? _tarjetas(lista) : _tabla(lista)),
+              ),
             ),
           );
         },

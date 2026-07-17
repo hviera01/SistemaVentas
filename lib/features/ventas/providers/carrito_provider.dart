@@ -124,7 +124,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// de búsqueda), con cantidad 1 y sin descuento por defecto. Si el cajero
   /// eligió un nivel de precio distinto al principal, [precioSeleccionado]
   /// trae ese precio (con ISV, tal como se muestra en el buscador).
-  void agregarProductoDirecto(ProductoModel producto, {double? precioSeleccionado, double precioCompraUsado = 0}) {
+  void agregarProductoDirecto(ProductoModel producto, {double? precioSeleccionado, double precioCompraUsado = 0, bool reembasado = false}) {
     final precioConIsv = precioSeleccionado ?? producto.precioVenta;
     final precioSinIsv = redondearMoneda(precioConIsv / 1.15);
     final item = ItemVentaModel(
@@ -135,6 +135,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       cantidad: 1,
       subtotal: _subtotalLinea(precioSinIsv, 1, 0),
       precioCompraUsado: precioCompraUsado > 0 ? precioCompraUsado : producto.precioCompra,
+      reembasado: reembasado,
     );
     state = state.copyWith(items: [...state.items, item]);
   }

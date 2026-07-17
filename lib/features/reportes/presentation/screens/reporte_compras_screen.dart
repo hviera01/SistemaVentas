@@ -154,8 +154,8 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
           final esMovil = constraints.maxWidth < 760;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
-            child: CustomScrollView(
-              slivers: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -238,34 +238,31 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
-                    ),
-                    child: _cargando
-                        ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
-                        : _error != null
-                            ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                            : lista.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.shopping_cart_outlined, size: 56, color: Colors.grey.shade300),
-                                        const SizedBox(height: 12),
-                                        Text('No se encontraron resultados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                      ],
-                                    ),
-                                  )
-                                : (esMovil ? _tarjetas(lista) : _tabla(lista)),
-                  ),
-                ),
               ],
+              body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                ),
+                child: _cargando
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                    : _error != null
+                        ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
+                        : lista.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.shopping_cart_outlined, size: 56, color: Colors.grey.shade300),
+                                    const SizedBox(height: 12),
+                                    Text('No se encontraron resultados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                                  ],
+                                ),
+                              )
+                            : (esMovil ? _tarjetas(lista) : _tabla(lista)),
+              ),
             ),
           );
         },

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 class ProductoFormDialog extends ConsumerStatefulWidget {
   final ProductoModel? producto;
@@ -233,7 +234,17 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                           child: TextField(
                             controller: _codigoBarrasController,
                             style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Código de barras'),
+                            decoration: _decoracion('Código de barras').copyWith(
+                              suffixIcon: IconButton(
+                                tooltip: 'Escanear',
+                                icon: const Icon(Icons.qr_code_scanner, size: 20),
+                                onPressed: () async {
+                                  final codigo = await escanearCodigoBarras(context);
+                                  if (codigo == null || codigo.isEmpty || !mounted) return;
+                                  setState(() => _codigoBarrasController.text = codigo);
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ],

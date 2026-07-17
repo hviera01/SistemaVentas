@@ -27,8 +27,8 @@ class CategoriasScreen extends ConsumerWidget {
           final esMovil = constraints.maxWidth < 640;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 16 : 28),
-            child: CustomScrollView(
-              slivers: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Text(
                     'Categorías',
@@ -62,23 +62,22 @@ class CategoriasScreen extends ConsumerWidget {
                   ),
                 ],
                 SliverToBoxAdapter(child: const SizedBox(height: 20)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFDCDFE6), width: 1.2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+              ],
+              body: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFDCDFE6), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
-                    child: categoriasAsync.when(
+                  ],
+                ),
+                child: categoriasAsync.when(
                       data: (categorias) {
                         final filtradas = categorias.where((c) {
                           return c.descripcion.toLowerCase().contains(busqueda.toLowerCase());
@@ -169,8 +168,6 @@ class CategoriasScreen extends ConsumerWidget {
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
                     ),
                   ),
-                ),
-              ],
             ),
           );
         },

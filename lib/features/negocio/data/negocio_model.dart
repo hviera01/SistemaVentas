@@ -5,14 +5,12 @@ class PermisosEspeciales {
   static const inventarioAjustarStock = 'inventario_ajustar_stock';
   static const ventasCreditoEliminar = 'ventas_credito_eliminar';
   static const ventasCambiarPrecio = 'ventas_cambiar_precio';
-  static const ventasAgregarSinStock = 'ventas_agregar_sin_stock';
 
   static const Map<String, String> etiquetas = {
     inventarioEditarProducto: 'Editar productos en Inventario',
     inventarioAjustarStock: 'Cambiar existencias en Inventario',
     ventasCreditoEliminar: 'Eliminar créditos en Ventas a Crédito',
     ventasCambiarPrecio: 'Cambiar precio de un producto en Ventas',
-    ventasAgregarSinStock: 'Agregar productos sin existencia en Ventas',
   };
 
   static const Map<String, String> descripciones = {
@@ -20,7 +18,6 @@ class PermisosEspeciales {
     inventarioAjustarStock: 'Pide la clave especial antes de confirmar un ajuste de existencia.',
     ventasCreditoEliminar: 'Pide la clave especial antes de eliminar un crédito.',
     ventasCambiarPrecio: 'Pide la clave especial antes de modificar el precio unitario de un producto dentro de una venta.',
-    ventasAgregarSinStock: 'Pide la clave especial antes de agregar a una venta un producto sin existencia disponible.',
   };
 }
 

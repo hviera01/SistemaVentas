@@ -134,21 +134,74 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return coincidencias.isEmpty ? true : coincidencias.first.controlaStock;
   }
 
+  /// Calcula, para un tipo de reembasado y una cantidad a vender, cuánto hay
+  /// que descontar del producto base y la cantidad final que queda en la
+  /// línea de venta. Compartido entre "agregar producto sin existencia" y
+  /// "aumentar cantidad sin existencia suficiente".
+  ({double cantidadReembasar, double cantidadFinal})? _calcularReembase(String tipo, double nuevaCantidad) {
+    switch (tipo) {
+      case 'GalonACuarto':
+        return (cantidadReembasar: 0.25 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+      case 'CubetaACuarto':
+        return (cantidadReembasar: 0.05 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+      case 'CubetaAGalon':
+        return (cantidadReembasar: 0.2 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+      case 'GalonAMedioCuarto':
+        if (nuevaCantidad == 0.5) {
+          return (cantidadReembasar: 0.125, cantidadFinal: 1);
+        }
+        return (cantidadReembasar: 0.125 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+      default:
+        return null;
+    }
+  }
+
   Future<void> _agregarProductoDesdeBusqueda() async {
     final resultado = await Navigator.of(context).push<ProductoConPrecio>(
       MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()),
     );
     if (resultado == null || !mounted) return;
-    if (resultado.producto.stock <= 0 && _categoriaControlaStock(resultado.producto.idCategoria)) {
-      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasAgregarSinStock);
+    final producto = resultado.producto;
+    final carrito = ref.read(carritoVentaProvider);
+    final sinExistencia = producto.stock <= 0 && _categoriaControlaStock(producto.idCategoria);
+
+    if (sinExistencia && carrito.esCotizacion) {
+      _mostrarMensaje('Advertencia: "${producto.nombre}" no tiene existencia disponible, pero se agregará a la cotización.');
+    } else if (sinExistencia) {
+      final quiereReembasar = await _confirmarDialogo(
+        'Reembasado',
+        'El producto "${producto.nombre}" no tiene existencia disponible.\n¿Desea realizar un reembasado?',
+      );
       if (!mounted) return;
-      if (!autorizado) {
-        _mostrarMensaje('No se agregó: el producto no tiene existencia disponible');
+      if (quiereReembasar) {
+        final resultadoReembase = await showDialog<ReembaseResultado>(context: context, builder: (context) => const ReembaseDialog());
+        if (resultadoReembase == null || !mounted) return;
+
+        final calculo = _calcularReembase(resultadoReembase.tipo, 1);
+        if (calculo == null) {
+          _mostrarMensaje('Opción de reembasado inválida');
+          return;
+        }
+        final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+        final ok = await ref.read(productoRepositoryProvider).descontarStock(
+              id: resultadoReembase.productoBase.id,
+              cantidad: calculo.cantidadReembasar,
+              usuario: usuario,
+              motivo: 'Reembasado para venta de "${producto.nombre}"',
+            );
+        if (!mounted) return;
+        if (!ok) {
+          _mostrarMensaje('No se pudo descontar el stock del producto base');
+          return;
+        }
+        ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: resultado.precio, reembasado: true);
         return;
       }
+      // Si dice que no, se ignora la falta de existencia y se agrega igual
+      // (sin marcar reembasado): al vender no baja de 0 (ver venta_repository).
     }
     if (!mounted) return;
-    ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(resultado.producto, precioSeleccionado: resultado.precio);
+    ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: resultado.precio);
   }
 
   void _quitarItem(int index) {
@@ -201,36 +254,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         return;
       }
 
-      double cantidadReembasar;
-      var cantidadFinal = nuevaCantidad;
-      switch (resultado.tipo) {
-        case 'GalonACuarto':
-          cantidadReembasar = 0.25 * nuevaCantidad;
-          break;
-        case 'CubetaACuarto':
-          cantidadReembasar = 0.05 * nuevaCantidad;
-          break;
-        case 'CubetaAGalon':
-          cantidadReembasar = 0.2 * nuevaCantidad;
-          break;
-        case 'GalonAMedioCuarto':
-          if (nuevaCantidad == 0.5) {
-            cantidadReembasar = 0.125;
-            cantidadFinal = 1;
-          } else {
-            cantidadReembasar = 0.125 * nuevaCantidad;
-          }
-          break;
-        default:
-          _mostrarMensaje('Opción de reembasado inválida');
-          _revertirCantidad(index);
-          return;
+      final calculo = _calcularReembase(resultado.tipo, nuevaCantidad);
+      if (calculo == null) {
+        _mostrarMensaje('Opción de reembasado inválida');
+        _revertirCantidad(index);
+        return;
       }
 
       final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
       final ok = await ref.read(productoRepositoryProvider).descontarStock(
             id: resultado.productoBase.id,
-            cantidad: cantidadReembasar,
+            cantidad: calculo.cantidadReembasar,
             usuario: usuario,
             motivo: 'Reembasado para venta de "${item.nombreProducto}"',
           );
@@ -239,7 +273,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         _revertirCantidad(index);
         return;
       }
-      ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: cantidadFinal, reembasado: true);
+      ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: calculo.cantidadFinal, reembasado: true);
       return;
     } else if (stockDisponible < nuevaCantidad && carrito.esCotizacion) {
       _mostrarMensaje('Advertencia: "${item.nombreProducto}" no tiene stock suficiente, pero se actualizará en la cotización.');
@@ -436,6 +470,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       }
 
       final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+      final categorias = ref.read(categoriasStreamProvider).value ?? [];
+      final categoriasSinControlStock = categorias.where((c) => !c.controlaStock).map((c) => c.id).toSet();
       final venta = await ref.read(ventaRepositoryProvider).registrarVenta(
             tipoDocumento: carrito.tipoDocumento,
             condicion: esCotizacion ? 'Contado' : carrito.condicion,
@@ -455,6 +491,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             impuesto: carrito.impuesto,
             totalAPagar: carrito.totalAPagar,
             usuario: usuario,
+            categoriasSinControlStock: categoriasSinControlStock,
           );
 
       if (carrito.idEnEspera != null) {

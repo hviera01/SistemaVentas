@@ -96,8 +96,8 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           final esMovil = constraints.maxWidth < 720;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
-            child: CustomScrollView(
-              slivers: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Text(
                     'Clientes',
@@ -137,16 +137,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
-                    ),
-                    child: clientesAsync.when(
+              ],
+              body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                ),
+                child: clientesAsync.when(
                       data: (clientes) {
                         var lista = clientes;
                         if (busqueda.isNotEmpty) {
@@ -178,8 +177,6 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
                     ),
                   ),
-                ),
-              ],
             ),
           );
         },

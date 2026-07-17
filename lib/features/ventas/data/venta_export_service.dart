@@ -287,7 +287,10 @@ class VentaExportService {
 
   Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio) async {
     final doc = pw.Document();
-    final logo = decodificarLogoPdf(negocio.logoBnBase64);
+    // maxDimension más alto que el default acá: el logo del ticket ahora se
+    // imprime más grande (ver _construirPaginaTicket), y con la resolución
+    // chica que alcanza para un logo de cabecera normal se vería borroso.
+    final logo = decodificarLogoPdf(negocio.logoBnBase64, maxDimension: 400);
 
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false));
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true));
@@ -306,7 +309,11 @@ class VentaExportService {
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            if (logo != null) pw.Center(child: pw.Image(logo, height: 50)),
+            // Ancho fijo (en vez de alto) para que se vea grande y nítido sin
+            // desbordar el ticket de 80mm, sea cual sea la proporción del
+            // logo que suba el negocio: antes salía muy chico porque solo se
+            // limitaba el alto a 50pt.
+            if (logo != null) pw.Center(child: pw.Image(logo, width: 140)),
             if (negocio.nombre.isNotEmpty)
               pw.Center(child: pw.Text(negocio.nombre.toUpperCase(), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
             if (negocio.eslogan.isNotEmpty)
@@ -339,15 +346,18 @@ class VentaExportService {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(item.nombreProducto, style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+                      // Sin negrita: en la impresora térmica el texto en
+                      // negrita se ve más "manchado" y termina siendo menos
+                      // claro que el peso normal, sobre todo en letra chica.
+                      pw.Text(item.nombreProducto, style: const pw.TextStyle(fontSize: fSmall)),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
                           pw.Text(
                             '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(item.precioVenta)}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}',
-                            style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold),
+                            style: const pw.TextStyle(fontSize: fSmall),
                           ),
-                          pw.Text(formatearMoneda(item.subtotal), style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+                          pw.Text(formatearMoneda(item.subtotal), style: const pw.TextStyle(fontSize: fSmall)),
                         ],
                       ),
                     ],

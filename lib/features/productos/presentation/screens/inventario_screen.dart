@@ -20,6 +20,7 @@ import 'package:printing/printing.dart';
 import '../../../negocio/data/negocio_model.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../negocio/presentation/widgets/acceso_especial.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -51,6 +52,13 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _buscar() {
     ref.read(inventarioBusquedaProvider.notifier).actualizar(_busquedaController.text.trim());
+  }
+
+  Future<void> _escanear() async {
+    final codigo = await escanearCodigoBarras(context);
+    if (codigo == null || codigo.isEmpty || !mounted) return;
+    _busquedaController.text = codigo;
+    _buscar();
   }
 
   void _limpiarBusqueda() {
@@ -224,8 +232,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           final esMovil = constraints.maxWidth < 720;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
-            child: CustomScrollView(
-              slivers: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -302,16 +310,15 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
-                    ),
-                    child: productosAsync.when(
+              ],
+              body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                ),
+                child: productosAsync.when(
                       data: (productos) {
                         var lista = productos;
                         if (vista == 'bajo') {
@@ -352,8 +359,6 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
                     ),
                   ),
-                ),
-              ],
             ),
           );
         },
@@ -736,6 +741,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             ),
           ),
           if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),
+          IconButton(tooltip: 'Escanear código de barras', icon: const Icon(Icons.qr_code_scanner, size: 20), onPressed: _escanear),
           IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),
         ],
       ),

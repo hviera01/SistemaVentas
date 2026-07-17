@@ -55,23 +55,18 @@ class VentaRepository {
     required double impuesto,
     required double totalAPagar,
     required String usuario,
+    // Categorías marcadas para no controlar existencia (servicios, pintura
+    // preparada, etc.): sus productos no bajan del inventario al venderse.
+    // Se recibe ya resuelta desde la UI (que ya tiene las categorías
+    // cargadas en memoria vía su stream) en vez de volver a consultarlas
+    // acá: hacerlo adentro agregaba una ida y vuelta extra a Firestore justo
+    // antes de cada venta, y el registro de venta tiene que sentirse casi
+    // instantáneo.
+    Set<String> categoriasSinControlStock = const {},
   }) async {
     final claveContador = _claveContador(tipoDocumento);
     final contadorRef = _colContadores.doc(claveContador);
     final ventaRef = _colVentas.doc();
-
-    // Categorías marcadas para no controlar existencia (servicios, pintura
-    // preparada, etc.): sus productos no bajan del inventario al venderse.
-    final idsCategoria = items.map((i) => i.idCategoria).where((id) => id.isNotEmpty).toSet();
-    final categoriasSinControlStock = <String>{};
-    if (idsCategoria.isNotEmpty) {
-      final snapsCategorias = await Future.wait(idsCategoria.map((id) => _db.collection('categorias').doc(id).get()));
-      for (final snap in snapsCategorias) {
-        if (snap.exists && (snap.data()?['controlaStock'] ?? true) == false) {
-          categoriasSinControlStock.add(snap.id);
-        }
-      }
-    }
     final itemsADescontar = items.where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)).toList();
 
     late String numeroDocumento;
@@ -80,19 +75,23 @@ class VentaRepository {
     // lento/intermitente es mejor que el cajero vea rápido que falló y
     // pueda reintentar, a que la pantalla quede "cargando" media hora.
     await _db.runTransaction((transaction) async {
-      final contadorSnap = await transaction.get(contadorRef);
+      // Todas las lecturas de la transacción (contador + stock de cada
+      // producto) se disparan juntas con un solo Future.wait, en vez de
+      // esperar primero el contador y luego los productos: eso ahorra una
+      // ida y vuelta completa a Firestore en cada venta, que es justo lo
+      // que la hacía sentir lenta (sobre todo en cajas con internet móvil).
+      final resultados = await Future.wait([
+        transaction.get(contadorRef),
+        ...itemsADescontar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+      ]);
+      final contadorSnap = resultados[0];
+      final snapsStock = resultados.sublist(1);
+
       final actual = ((contadorSnap.data()?['ultimo'] ?? 0) as num).toInt();
       final nuevo = actual + 1;
       numeroDocumento = _formatearCorrelativo(tipoDocumento, nuevo);
 
-      // Las lecturas se disparan todas a la vez (Future.wait) en vez de una
-      // por una: con varios productos en la venta, esperar cada round-trip
-      // en serie es lo que hacía que registrar una venta se sintiera colgado
-      // en cajas con internet lento.
       final stocksActuales = <String, double>{};
-      final snapsStock = await Future.wait(
-        itemsADescontar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
-      );
       for (var i = 0; i < itemsADescontar.length; i++) {
         stocksActuales[itemsADescontar[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
@@ -145,7 +144,10 @@ class VentaRepository {
       for (final item in itemsADescontar) {
         final ref = _db.collection('productos').doc(item.idProducto);
         final stockActual = stocksActuales[item.idProducto] ?? 0;
-        final stockNuevo = stockActual - item.cantidad;
+        // Nunca queda en negativo: si ya estaba en 0 (por ejemplo, se vendió
+        // a propósito sin existencia disponible) el piso es 0, no un número
+        // negativo que después confunda los reportes de inventario.
+        final stockNuevo = (stockActual - item.cantidad) < 0 ? 0.0 : stockActual - item.cantidad;
         transaction.update(ref, {'stock': stockNuevo});
         final historialRef = ref.collection('historial').doc();
         transaction.set(historialRef, {

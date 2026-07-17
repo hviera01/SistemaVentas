@@ -202,8 +202,8 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
           final esMovil = constraints.maxWidth < 760;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
-            child: CustomScrollView(
-              slivers: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -263,16 +263,15 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
-                    ),
-                    child: creditosAsync.when(
+              ],
+              body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                ),
+                child: creditosAsync.when(
                       data: (creditos) {
                         final lista = listaFiltrada!;
                         if (lista.isEmpty) {
@@ -293,8 +292,6 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
                     ),
                   ),
-                ),
-              ],
             ),
           );
         },
