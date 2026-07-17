@@ -101,7 +101,7 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                 hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
                 errorText: _error,
                 filled: true,
-                fillColor: const Color(0xFFF5F6FA),
+                fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
@@ -112,7 +112,7 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, false),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     child: Text('Cancelar', style: GoogleFonts.poppins(fontSize: 13.5)),
                   ),
                 ),

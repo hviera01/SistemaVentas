@@ -125,4 +125,14 @@ class NegocioRepository {
     await _doc.set({'impresoraEtiquetasUrl': url, 'impresoraEtiquetasNombre': nombre}, SetOptions(merge: true));
     _invalidarCache();
   }
+
+  Future<void> establecerFacturaImprimirCopia(bool valor) async {
+    await _doc.set({'facturaImprimirCopia': valor}, SetOptions(merge: true));
+    _invalidarCache();
+  }
+
+  Future<void> establecerFacturaPreciosConIsv(bool valor) async {
+    await _doc.set({'facturaPreciosConIsv': valor}, SetOptions(merge: true));
+    _invalidarCache();
+  }
 }

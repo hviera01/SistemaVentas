@@ -109,7 +109,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -203,7 +203,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10)),
                               child: Row(
                                 children: [
                                   Expanded(

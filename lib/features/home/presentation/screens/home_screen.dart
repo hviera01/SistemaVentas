@@ -130,7 +130,7 @@ class HomeScreen extends ConsumerWidget {
           padding: EdgeInsets.all(esMovil ? 14 : 22),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 16, offset: const Offset(0, 6))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

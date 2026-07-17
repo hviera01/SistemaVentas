@@ -84,7 +84,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
                 labelText: 'Paga con',
                 labelStyle: GoogleFonts.poppins(fontSize: 13),
                 filled: true,
-                fillColor: const Color(0xFFF5F6FA),
+                fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),

@@ -67,9 +67,9 @@ class _NegocioLogoPickerState extends ConsumerState<NegocioLogoPicker> {
           width: 128,
           height: 128,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F6FA),
+            color: const Color(0xFFE8EAF0),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFDCDFE6)),
+            border: Border.all(color: const Color(0xFFB6BCC7)),
           ),
           clipBehavior: Clip.antiAlias,
           child: _construirVistaPrevia(),
@@ -85,7 +85,7 @@ class _NegocioLogoPickerState extends ConsumerState<NegocioLogoPicker> {
             label: Text(_subiendo ? 'Guardando...' : 'Subir', style: GoogleFonts.poppins(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF1A1A1A),
-              side: const BorderSide(color: Color(0xFFDCDFE6)),
+              side: const BorderSide(color: Color(0xFFB6BCC7)),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),

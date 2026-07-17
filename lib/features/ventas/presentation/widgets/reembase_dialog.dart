@@ -70,7 +70,7 @@ class _ReembaseDialogState extends State<ReembaseDialog> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     Icon(Icons.inventory_2_outlined, size: 18, color: Colors.grey.shade600),

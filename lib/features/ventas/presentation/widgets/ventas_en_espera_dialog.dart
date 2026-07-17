@@ -83,7 +83,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                         onTap: () => Navigator.pop(context, sesion),
                         child: Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE5E7EC))),
+                          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
                           child: Row(
                             children: [
                               Expanded(

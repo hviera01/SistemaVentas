@@ -172,7 +172,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                       onPressed: _cargando ? null : _limpiar,
                       icon: const Icon(Icons.close, size: 18),
                       label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     ),
                   ],
                 ),
@@ -227,7 +227,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+          decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -247,7 +247,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: _idProveedorFiltro,
@@ -268,7 +268,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _vista,
@@ -291,7 +291,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     final formatoFecha = DateFormat('dd/MM/yyyy');
     final mostrarDia = _vista == 'dia_proveedor';
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFDCDFE6)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           Container(

@@ -188,7 +188,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                       label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFDCDFE6)),
+                        side: const BorderSide(color: Color(0xFFB6BCC7)),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -202,6 +202,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               SliverToBoxAdapter(child: _tarjetaPermisos(esMovil, tieneClave)),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaImpresoras(esMovil)),
+              SliverToBoxAdapter(child: const SizedBox(height: 18)),
+              SliverToBoxAdapter(child: _tarjetaFactura()),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
             ],
           ),
@@ -217,8 +219,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 22, offset: const Offset(0, 10))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 22, offset: const Offset(0, 10))],
       ),
       child: child,
     );
@@ -239,7 +241,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
@@ -349,7 +351,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
                 Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
@@ -469,6 +471,61 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _tarjetaFactura() {
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion('Factura', Icons.receipt_long_outlined),
+          const SizedBox(height: 6),
+          Text(
+            'Configuración de lo que se imprime en el ticket de venta.',
+            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 14),
+          _filaSwitchFactura(
+            titulo: 'Imprimir copia además del original',
+            descripcion: 'Si lo apagás, cada venta solo imprime la hoja "ORIGINAL" (se ahorra el papel de la "COPIA").',
+            valor: widget.modelo.facturaImprimirCopia,
+            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerFacturaImprimirCopia(v),
+          ),
+          Divider(color: Colors.grey.shade200, height: 28),
+          _filaSwitchFactura(
+            titulo: 'Mostrar precios con ISV incluido',
+            descripcion: 'El precio unitario y el importe de cada producto en el ticket se muestran con ISV incluido (el total y el desglose de ISV no cambian).',
+            valor: widget.modelo.facturaPreciosConIsv,
+            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerFacturaPreciosConIsv(v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filaSwitchFactura({
+    required String titulo,
+    required String descripcion,
+    required bool valor,
+    required void Function(bool) onChanged,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+              const SizedBox(height: 3),
+              Text(descripcion, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        Switch(value: valor, activeThumbColor: const Color(0xFF16A34A), onChanged: onChanged),
+      ],
     );
   }
 

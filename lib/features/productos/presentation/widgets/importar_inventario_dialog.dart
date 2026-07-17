@@ -137,7 +137,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.description_outlined, size: 18),
           label: Text(_cargando ? 'Leyendo...' : (_nombreArchivo == null ? 'Elegir archivo .xlsx' : 'Elegir otro archivo'), style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
         if (_nombreArchivo != null && !_cargando) ...[
           const SizedBox(height: 8),
@@ -180,7 +180,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
     final filas = _filas!;
     return Container(
       constraints: const BoxConstraints(maxHeight: 320),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: SingleChildScrollView(
         child: Column(
           children: filas.map((f) {
@@ -268,7 +268,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
         Expanded(
           child: OutlinedButton(
             onPressed: _importando ? null : () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: Text('Cancelar', style: GoogleFonts.poppins(fontSize: 13.5)),
           ),
         ),

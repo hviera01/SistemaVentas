@@ -188,7 +188,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
     final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
     const anchoTabla = 640.0;
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFDCDFE6)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
@@ -259,7 +259,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFDCDFE6))),
+        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB6BCC7))),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -10,6 +10,10 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
+import '../../../ventas_credito/data/abono_model.dart';
+import '../../../ventas_credito/data/venta_credito_export_service.dart';
+import '../../../ventas_credito/providers/ventas_credito_provider.dart';
+import '../../../ventas_credito/presentation/widgets/registrar_abono_dialog.dart';
 
 /// Pantalla de consulta de una venta ya registrada: buscá por número de
 /// documento (o abrila directo desde Reportes / Ventas a Crédito pasando
@@ -165,6 +169,37 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     }
   }
 
+  Future<void> _abrirRegistrarAbono() async {
+    final venta = _venta;
+    if (venta == null) return;
+    final credito = await ref.read(ventaCreditoRepositoryProvider).obtenerPorId(venta.id);
+    if (!mounted) return;
+    if (credito == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró el crédito asociado a esta venta')));
+      return;
+    }
+    if (credito.saldoPendiente <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este crédito ya está saldado')));
+      return;
+    }
+    final abono = await showDialog<AbonoModel>(context: context, builder: (context) => RegistrarAbonoDialog(credito: credito));
+    if (abono == null || !mounted) return;
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Vista previa · Recibo de abono',
+        nombreArchivo: 'recibo_${credito.numeroDocumento}.pdf',
+        generarPdf: () => VentaCreditoExportService().generarPdfRecibo(credito, abono, negocio),
+        impresora: impresora,
+      ),
+    );
+  }
+
   Future<void> _anular() async {
     final venta = _venta;
     if (venta == null) return;
@@ -191,7 +226,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 labelText: 'Motivo (opcional)',
                 labelStyle: GoogleFonts.poppins(fontSize: 12.5),
                 filled: true,
-                fillColor: const Color(0xFFF5F6FA),
+                fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
@@ -257,7 +292,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     child: Container(
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFDCDFE6))),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
                       child: TextField(
                         controller: _busquedaController,
                         autofocus: widget.ventaIdInicial == null,
@@ -276,13 +311,13 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     onPressed: _cargando ? null : _buscarPorNumero,
                     icon: const Icon(Icons.search, size: 18),
                     label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   ),
                   OutlinedButton.icon(
                     onPressed: _cargando ? null : _limpiar,
                     icon: const Icon(Icons.close, size: 18),
                     label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   ),
                 ],
               ),
@@ -371,7 +406,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1A1A1A)))
                   : const Icon(Icons.print_outlined, size: 18),
               label: Text('Reimprimir', style: GoogleFonts.poppins(fontSize: 13)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
             OutlinedButton.icon(
               onPressed: _procesandoPdf ? null : _descargarPdf,
@@ -379,8 +414,15 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1A1A1A)))
                   : const Icon(Icons.picture_as_pdf_outlined, size: 18),
               label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 13)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
+            if (esCredito && !venta.estaAnulada)
+              OutlinedButton.icon(
+                onPressed: _abrirRegistrarAbono,
+                icon: const Icon(Icons.payments_outlined, size: 18),
+                label: Text('Registrar Abono', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF16A34A), side: const BorderSide(color: Color(0xFFBEE9CE)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
             if (!esCotizacion && !venta.estaAnulada)
               FilledButton.icon(
                 onPressed: _anulando ? null : _anular,
@@ -435,7 +477,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
       ),
       child: child,
     );
@@ -472,7 +514,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(mainAxisSize: MainAxisSize.min, children: [opcion('Con ISV', true), opcion('Sin ISV', false)]),
     );
   }

@@ -140,7 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               labelStyle: GoogleFonts.poppins(fontSize: 13),
                               prefixIcon: const Icon(Icons.badge_outlined, size: 20),
                               filled: true,
-                              fillColor: const Color(0xFFF5F6FA),
+                              fillColor: const Color(0xFFE8EAF0),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,
@@ -165,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF5F6FA),
+                              fillColor: const Color(0xFFE8EAF0),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,

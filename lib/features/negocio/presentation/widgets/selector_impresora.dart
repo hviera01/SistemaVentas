@@ -82,7 +82,7 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+          decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,

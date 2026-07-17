@@ -97,6 +97,7 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
       precioCompra: producto.precioCompra,
       cantidad: 1,
       subtotal: _subtotalLinea(producto.precioCompra, 1, 0),
+      precioVentaNuevo: producto.precioVenta,
     );
     state = state.copyWith(items: [...state.items, item]);
   }
@@ -106,9 +107,9 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
     state = state.copyWith(items: nuevos);
   }
 
-  /// Actualiza cantidad, precio de costo y/o descuento de línea directamente
-  /// desde la tabla, recalculando el subtotal.
-  void actualizarLinea(int index, {double? cantidad, double? precioCompra, double? descuentoPorcentaje}) {
+  /// Actualiza cantidad, precio de costo, descuento y/o el nuevo precio de
+  /// venta de línea directamente desde la tabla, recalculando el subtotal.
+  void actualizarLinea(int index, {double? cantidad, double? precioCompra, double? descuentoPorcentaje, double? precioVentaNuevo}) {
     final actual = state.items[index];
     final nuevaCantidad = cantidad ?? actual.cantidad;
     final nuevoPrecio = precioCompra ?? actual.precioCompra;
@@ -122,6 +123,7 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
       cantidad: nuevaCantidad,
       subtotal: _subtotalLinea(nuevoPrecio, nuevaCantidad, nuevoDescuento),
       descuentoPorcentaje: nuevoDescuento,
+      precioVentaNuevo: precioVentaNuevo ?? actual.precioVentaNuevo,
     );
     state = state.copyWith(items: nuevos);
   }

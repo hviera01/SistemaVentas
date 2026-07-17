@@ -274,31 +274,31 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         onPressed: () => ref.invalidate(productosStreamProvider),
                         icon: const Icon(Icons.refresh, size: 18),
                         label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       OutlinedButton.icon(
                         onPressed: _abrirImportar,
                         icon: const Icon(Icons.upload_file_outlined, size: 18),
                         label: Text('Importar', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       OutlinedButton.icon(
                         onPressed: () => _exportarExcel(mapaCategorias),
                         icon: const Icon(Icons.grid_on_outlined, size: 18),
                         label: Text('Excel', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       OutlinedButton.icon(
                         onPressed: () => _exportarPdf(mapaCategorias),
                         icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
                         label: Text('PDF', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       OutlinedButton.icon(
                         onPressed: () => _imprimirTicketGrid(mapaCategorias),
                         icon: const Icon(Icons.receipt_long_outlined, size: 18),
                         label: Text('Ticket', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       ),
                       FilledButton.icon(
                         onPressed: () => _abrirFormulario(),
@@ -315,8 +315,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                  border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
                 ),
                 child: productosAsync.when(
                       data: (productos) {
@@ -485,7 +485,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           },
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFE5E7EC))),
+            decoration: BoxDecoration(color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFC7CBD3))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -539,7 +539,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   Widget _chipInfo(String label, String valor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(8)),
       child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
     );
   }
@@ -581,7 +581,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       flex: flex,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: const BoxDecoration(border: Border(right: BorderSide(color: Color(0xFFE5E7EC), width: 1))),
+        decoration: const BoxDecoration(border: Border(right: BorderSide(color: Color(0xFFC7CBD3), width: 1))),
         alignment: Alignment.centerLeft,
         child: child,
       ),
@@ -667,7 +667,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: vista,
@@ -711,7 +711,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -726,7 +726,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),

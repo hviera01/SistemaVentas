@@ -131,7 +131,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                 labelText: 'Motivo (opcional)',
                 labelStyle: GoogleFonts.poppins(fontSize: 12.5),
                 filled: true,
-                fillColor: const Color(0xFFF5F6FA),
+                fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
@@ -197,7 +197,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                 child: Container(
                   height: 50,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFDCDFE6))),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
                   child: TextField(
                     controller: _busquedaController,
                     autofocus: widget.compraIdInicial == null,
@@ -216,13 +216,13 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                 onPressed: _cargando ? null : _buscarPorNumero,
                 icon: const Icon(Icons.search, size: 18),
                 label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               ),
               OutlinedButton.icon(
                 onPressed: _cargando ? null : _limpiar,
                 icon: const Icon(Icons.close, size: 18),
                 label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               ),
             ],
           ),
@@ -346,7 +346,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
       ),
       child: child,
     );

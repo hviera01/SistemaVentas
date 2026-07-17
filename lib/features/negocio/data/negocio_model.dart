@@ -41,6 +41,14 @@ class NegocioModel {
   final String impresoraTermicaNombre;
   final String impresoraEtiquetasUrl;
   final String impresoraEtiquetasNombre;
+  // Si es false, el ticket de venta solo imprime la hoja "ORIGINAL" (se
+  // salta la "COPIA"), para no gastar papel de más cuando no hace falta.
+  final bool facturaImprimirCopia;
+  // Si es true, el precio unitario y el importe de cada línea del ticket se
+  // muestran con ISV incluido (igual que el recuadro "Con ISV" del carrito
+  // en Registrar Venta). Si es false (default, comportamiento de siempre)
+  // se muestran sin ISV, con el ISV desglosado aparte en el total.
+  final bool facturaPreciosConIsv;
 
   const NegocioModel({
     this.nombre = '',
@@ -62,6 +70,8 @@ class NegocioModel {
     this.impresoraTermicaNombre = '',
     this.impresoraEtiquetasUrl = '',
     this.impresoraEtiquetasNombre = '',
+    this.facturaImprimirCopia = true,
+    this.facturaPreciosConIsv = false,
   });
 
   bool get tieneClaveEspecial => claveEspecialHash.isNotEmpty;
@@ -90,6 +100,8 @@ class NegocioModel {
       impresoraTermicaNombre: data['impresoraTermicaNombre'] ?? '',
       impresoraEtiquetasUrl: data['impresoraEtiquetasUrl'] ?? '',
       impresoraEtiquetasNombre: data['impresoraEtiquetasNombre'] ?? '',
+      facturaImprimirCopia: data['facturaImprimirCopia'] ?? true,
+      facturaPreciosConIsv: data['facturaPreciosConIsv'] ?? false,
     );
   }
 
@@ -114,6 +126,8 @@ class NegocioModel {
       'impresoraTermicaNombre': impresoraTermicaNombre,
       'impresoraEtiquetasUrl': impresoraEtiquetasUrl,
       'impresoraEtiquetasNombre': impresoraEtiquetasNombre,
+      'facturaImprimirCopia': facturaImprimirCopia,
+      'facturaPreciosConIsv': facturaPreciosConIsv,
     };
   }
 
@@ -133,6 +147,8 @@ class NegocioModel {
     String? logoBnBase64,
     String? claveEspecialHash,
     Map<String, bool>? permisos,
+    bool? facturaImprimirCopia,
+    bool? facturaPreciosConIsv,
   }) {
     return NegocioModel(
       nombre: nombre ?? this.nombre,
@@ -150,6 +166,12 @@ class NegocioModel {
       logoBnBase64: logoBnBase64 ?? this.logoBnBase64,
       claveEspecialHash: claveEspecialHash ?? this.claveEspecialHash,
       permisos: permisos ?? this.permisos,
+      impresoraTermicaUrl: impresoraTermicaUrl,
+      impresoraTermicaNombre: impresoraTermicaNombre,
+      impresoraEtiquetasUrl: impresoraEtiquetasUrl,
+      impresoraEtiquetasNombre: impresoraEtiquetasNombre,
+      facturaImprimirCopia: facturaImprimirCopia ?? this.facturaImprimirCopia,
+      facturaPreciosConIsv: facturaPreciosConIsv ?? this.facturaPreciosConIsv,
     );
   }
 }

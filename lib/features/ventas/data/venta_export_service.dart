@@ -293,7 +293,9 @@ class VentaExportService {
     final logo = decodificarLogoPdf(negocio.logoBnBase64, maxDimension: 400);
 
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false));
-    doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true));
+    if (negocio.facturaImprimirCopia) {
+      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true));
+    }
     return doc.save();
   }
 
@@ -302,6 +304,17 @@ class VentaExportService {
     final formatoDia = DateFormat('dd/MM/yyyy');
     const fSmall = 7.5;
     const fNormal = 8.0;
+
+    // El total y el desglose de ISV siempre reflejan el monto real de la
+    // venta; esto solo cambia cómo se ve el precio unitario y el importe de
+    // cada línea (con o sin ISV incluido), según la configuración del
+    // negocio.
+    double precioMostrado(dynamic item) => negocio.facturaPreciosConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : item.precioVenta as double;
+    double importeMostrado(dynamic item) {
+      if (!negocio.facturaPreciosConIsv) return item.subtotal as double;
+      final precio = precioMostrado(item);
+      return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
+    }
 
     return pw.Page(
       pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 10),
@@ -339,7 +352,16 @@ class VentaExportService {
             if (venta.regExonerado.isNotEmpty) pw.Text('No. Reg de exonerado: ${venta.regExonerado}', style: const pw.TextStyle(fontSize: fNormal)),
             if (venta.regSag.isNotEmpty) pw.Text('No. De reg de la SAG: ${venta.regSag}', style: const pw.TextStyle(fontSize: fNormal)),
             _separador(),
-            pw.Text('CANT  DESCRIPCIÓN                 IMPORTE', style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+            // Fila con spaceBetween (no texto con espacios a mano) para que
+            // "IMPORTE" quede alineado de verdad arriba del monto de cada
+            // línea, que también se dibuja pegado a la derecha.
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('CANT  DESCRIPCIÓN', style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+                pw.Text('IMPORTE', style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
             _separador(),
             ...venta.detalle.map((item) => pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 3),
@@ -354,10 +376,10 @@ class VentaExportService {
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
                           pw.Text(
-                            '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(item.precioVenta)}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}',
+                            '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(precioMostrado(item))}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}',
                             style: const pw.TextStyle(fontSize: fSmall),
                           ),
-                          pw.Text(formatearMoneda(item.subtotal), style: const pw.TextStyle(fontSize: fSmall)),
+                          pw.Text(formatearMoneda(importeMostrado(item)), style: const pw.TextStyle(fontSize: fSmall)),
                         ],
                       ),
                     ],

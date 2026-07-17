@@ -83,7 +83,7 @@ class CompraCreditoExportService {
             cellStyle: const pw.TextStyle(fontSize: 8.5),
             cellAlignment: pw.Alignment.centerLeft,
             cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 7),
-            oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F6FA)),
+            oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFE8EAF0)),
             border: null,
           ),
         ],

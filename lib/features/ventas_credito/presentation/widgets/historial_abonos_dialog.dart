@@ -63,7 +63,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
   Widget _tabla(List<AbonoModel> abonos) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFDCDFE6)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           Container(
@@ -137,7 +137,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
         final a = abonos[index];
         return Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE5E7EC))),
+          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

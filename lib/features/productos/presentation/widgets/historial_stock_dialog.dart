@@ -106,7 +106,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                         final subio = r.stockNuevo >= r.stockAnterior;
                         return Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE5E7EC))),
+                          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -132,7 +132,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                     );
                   }
                   return Container(
-                    decoration: BoxDecoration(border: Border.all(color: const Color(0xFFDCDFE6)), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
                         Container(
@@ -197,7 +197,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFDCDFE6))),
+        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB6BCC7))),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

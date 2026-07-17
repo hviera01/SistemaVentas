@@ -125,7 +125,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -139,8 +139,8 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: child,
     );
@@ -194,7 +194,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           onPressed: _limpiar,
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
           label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
       ],
     );
@@ -317,7 +317,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       style: GoogleFonts.poppins(fontSize: 13),
       decoration: InputDecoration(
         filled: true,
-        fillColor: const Color(0xFFF5F6FA),
+        fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -350,7 +350,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

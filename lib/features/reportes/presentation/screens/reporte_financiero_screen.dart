@@ -164,7 +164,7 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
           onPressed: _cargando ? null : _generar,
           icon: const Icon(Icons.refresh, size: 18),
           label: Text('Generar', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
         FilledButton.icon(
           onPressed: _data == null ? null : _descargarPdf,
@@ -182,7 +182,7 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

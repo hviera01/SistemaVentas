@@ -68,10 +68,10 @@ class CategoriasScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFDCDFE6), width: 1.2),
+                  border: Border.all(color: const Color(0xFFB6BCC7), width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withOpacity(0.13),
                       blurRadius: 24,
                       offset: const Offset(0, 10),
                     ),
@@ -182,7 +182,7 @@ class CategoriasScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCDFE6)),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
       ),
       child: Row(
         children: [
@@ -212,7 +212,7 @@ class CategoriasScreen extends ConsumerWidget {
       label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xFF1A1A1A),
-        side: const BorderSide(color: Color(0xFFDCDFE6)),
+        side: const BorderSide(color: Color(0xFFB6BCC7)),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

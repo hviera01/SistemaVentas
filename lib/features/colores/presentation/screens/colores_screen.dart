@@ -130,7 +130,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                         label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFDCDFE6)),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -141,7 +141,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                         label: Text('Descargar Excel', style: GoogleFonts.poppins(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFDCDFE6)),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -179,8 +179,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                              border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
                             ),
                             child: Center(
                               child: Column(
@@ -206,8 +206,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFCDD1DA), width: 1.3),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 26, offset: const Offset(0, 12))],
+                          border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
                         ),
                         sliver: esMovil ? _tarjetasSliver(lista) : _tablaSliver(lista, constraints.maxWidth),
                       ),
@@ -237,7 +237,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: vista,
@@ -260,7 +260,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -411,7 +411,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
             decoration: BoxDecoration(
               color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFE5E7EC)),
+              border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFC7CBD3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,7 +455,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
   Widget _chipInfo(String label, String valor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(8)),
       child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
     );
   }

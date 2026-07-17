@@ -118,7 +118,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -193,7 +193,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
                           Text('Estado', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),

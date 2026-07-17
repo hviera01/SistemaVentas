@@ -6,6 +6,9 @@ class ItemCompraModel {
   final double cantidad;
   final double subtotal;
   final double descuentoPorcentaje;
+  // Nuevo precio de venta (con ISV) a aplicar al producto al registrar la
+  // compra. Null significa "no cambiar el precio de venta actual".
+  final double? precioVentaNuevo;
 
   ItemCompraModel({
     required this.idProducto,
@@ -15,6 +18,7 @@ class ItemCompraModel {
     required this.cantidad,
     required this.subtotal,
     this.descuentoPorcentaje = 0,
+    this.precioVentaNuevo,
   });
 
   factory ItemCompraModel.fromMap(Map<String, dynamic> data) {
@@ -26,6 +30,7 @@ class ItemCompraModel {
       cantidad: (data['cantidad'] ?? 0).toDouble(),
       subtotal: (data['subtotal'] ?? 0).toDouble(),
       descuentoPorcentaje: (data['descuentoPorcentaje'] ?? 0).toDouble(),
+      precioVentaNuevo: (data['precioVentaNuevo'] as num?)?.toDouble(),
     );
   }
 
@@ -38,6 +43,7 @@ class ItemCompraModel {
       'cantidad': cantidad,
       'subtotal': subtotal,
       'descuentoPorcentaje': descuentoPorcentaje,
+      'precioVentaNuevo': precioVentaNuevo,
     };
   }
 
@@ -46,6 +52,7 @@ class ItemCompraModel {
     double? cantidad,
     double? subtotal,
     double? descuentoPorcentaje,
+    double? precioVentaNuevo,
   }) {
     return ItemCompraModel(
       idProducto: idProducto,
@@ -55,6 +62,7 @@ class ItemCompraModel {
       cantidad: cantidad ?? this.cantidad,
       subtotal: subtotal ?? this.subtotal,
       descuentoPorcentaje: descuentoPorcentaje ?? this.descuentoPorcentaje,
+      precioVentaNuevo: precioVentaNuevo ?? this.precioVentaNuevo,
     );
   }
 }

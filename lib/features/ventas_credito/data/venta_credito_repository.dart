@@ -17,6 +17,15 @@ class VentaCreditoRepository {
     });
   }
 
+  /// El documento de `ventasCredito` de una venta a crédito se crea con el
+  /// mismo id que la venta (ver `VentaRepository.registrarVenta`), así que se
+  /// puede ir directo a buscarlo por id en vez de filtrar toda la colección.
+  Future<VentaCreditoModel?> obtenerPorId(String id) async {
+    final snap = await _col.doc(id).get();
+    if (!snap.exists) return null;
+    return VentaCreditoModel.fromMap(snap.id, snap.data()!);
+  }
+
   Stream<List<AbonoModel>> obtenerAbonos(String idCredito) {
     return _col.doc(idCredito).collection('abonos').orderBy('fecha', descending: true).snapshots().map((snap) {
       return snap.docs.map((d) => AbonoModel.fromMap(d.id, d.data())).toList();

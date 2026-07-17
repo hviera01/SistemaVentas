@@ -112,7 +112,11 @@ class CompraRepository {
         // línea (importe gravado), más el ISV de esta compra.
         final precioFinalConIsv = redondearMoneda(item.precioCompra * (1 - item.descuentoPorcentaje / 100) * (1 + isvPorcentaje / 100));
 
-        transaction.update(ref, {'stock': stockNuevo, 'precioCompra': precioFinalConIsv});
+        final Map<String, dynamic> actualizacion = {'stock': stockNuevo, 'precioCompra': precioFinalConIsv};
+        if (item.precioVentaNuevo != null) {
+          actualizacion['precioVenta'] = item.precioVentaNuevo!;
+        }
+        transaction.update(ref, actualizacion);
 
         final historialRef = ref.collection('historial').doc();
         transaction.set(historialRef, {

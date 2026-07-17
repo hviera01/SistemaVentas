@@ -299,13 +299,13 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           onPressed: _exportarExcel,
           icon: const Icon(Icons.grid_on_outlined, size: 18),
           label: Text('Excel', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
         OutlinedButton.icon(
           onPressed: _exportarPdf,
           icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
           label: Text('PDF', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
       ],
     );
@@ -315,7 +315,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -352,7 +352,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                   onPressed: _eliminarEgreso,
                   icon: const Icon(Icons.delete_outline, size: 16),
                   label: Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5)),
-                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 ),
               ),
               const SizedBox(width: 10),
@@ -409,7 +409,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
   Widget _statChip(String etiqueta, double valor, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -437,7 +437,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     }
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: ListView.separated(
         padding: const EdgeInsets.all(8),
         itemCount: lista.length,
@@ -476,7 +476,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
         labelText: etiqueta,
         labelStyle: GoogleFonts.poppins(fontSize: 12),
         filled: true,
-        fillColor: const Color(0xFFF5F6FA),
+        fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
@@ -487,7 +487,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade500),
@@ -501,7 +501,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
   Widget _dropdown(String etiqueta, String valor, List<String> opciones, void Function(String?) onChanged) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: valor,
@@ -521,7 +521,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -538,7 +538,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: valor,
@@ -559,7 +559,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),

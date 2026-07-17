@@ -132,7 +132,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
             onPressed: () => Printing.layoutPdf(onLayout: (format) => widget.generarPdf(), name: widget.nombreArchivo),
             icon: const Icon(Icons.print_outlined, size: 18),
             label: Text('Ver / imprimir', style: GoogleFonts.poppins(fontSize: 13)),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
           ),
         ),
       ],

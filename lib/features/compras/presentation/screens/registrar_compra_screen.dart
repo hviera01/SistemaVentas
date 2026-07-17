@@ -34,6 +34,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   final Map<int, TextEditingController> _ctrlCantidad = {};
   final Map<int, TextEditingController> _ctrlPrecio = {};
   final Map<int, TextEditingController> _ctrlDescuento = {};
+  final Map<int, TextEditingController> _ctrlMargen = {};
+  final Map<int, TextEditingController> _ctrlPrecioVenta = {};
   int _conteoItemsControladores = -1;
 
   @override
@@ -49,6 +51,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       c.dispose();
     }
     for (final c in _ctrlDescuento.values) {
+      c.dispose();
+    }
+    for (final c in _ctrlMargen.values) {
+      c.dispose();
+    }
+    for (final c in _ctrlPrecioVenta.values) {
       c.dispose();
     }
     super.dispose();
@@ -107,6 +115,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       return;
     }
     ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioCompra: nuevoPrecio);
+    _sincronizarMargenControlador(index);
   }
 
   void _actualizarDescuentoLinea(int index, double descuento) {
@@ -115,6 +124,58 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       return;
     }
     ref.read(carritoCompraProvider.notifier).actualizarLinea(index, descuentoPorcentaje: descuento);
+    _sincronizarMargenControlador(index);
+  }
+
+  /// Costo final por unidad (con descuento de línea e ISV de la compra ya
+  /// aplicados): la misma referencia que usa el margen de ganancia sugerido.
+  double _costoFinalItem(dynamic item) {
+    final isv = ref.read(carritoCompraProvider).isvPorcentaje;
+    return redondearMoneda((item.precioCompra as double) * (1 - (item.descuentoPorcentaje as double) / 100) * (1 + isv / 100));
+  }
+
+  double _margenActual(dynamic item) {
+    final costo = _costoFinalItem(item);
+    final precioVenta = (item.precioVentaNuevo as double?) ?? 0;
+    return costo > 0 ? ((precioVenta - costo) / costo * 100) : 0.0;
+  }
+
+  (TextEditingController, TextEditingController) _controladoresMargen(int index, dynamic item) {
+    final ctrlMargen = _ctrlMargen.putIfAbsent(index, () => TextEditingController(text: _margenActual(item).toStringAsFixed(1)));
+    final ctrlPrecioVenta = _ctrlPrecioVenta.putIfAbsent(index, () => TextEditingController(text: ((item.precioVentaNuevo as double?) ?? 0).toStringAsFixed(2)));
+    return (ctrlMargen, ctrlPrecioVenta);
+  }
+
+  void _actualizarPrecioVentaCompra(int index, double nuevoPrecioVenta) {
+    if (nuevoPrecioVenta < 0) {
+      _mostrarMensaje('Precio inválido');
+      return;
+    }
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioVenta);
+    _sincronizarMargenControlador(index);
+  }
+
+  void _actualizarMargenCompra(int index, double nuevoMargen) {
+    final carrito = ref.read(carritoCompraProvider);
+    if (index >= carrito.items.length) return;
+    final costo = _costoFinalItem(carrito.items[index]);
+    final nuevoPrecio = redondearMoneda(costo * (1 + nuevoMargen / 100));
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecio);
+    _ctrlPrecioVenta[index]?.text = nuevoPrecio.toStringAsFixed(2);
+  }
+
+  /// Recalcula el % de margen mostrado a partir del precio de venta y el
+  /// costo final vigentes. Se llama después de editar el precio de venta, la
+  /// cantidad, el costo unitario o el descuento de línea, para que el
+  /// margen mostrado nunca quede desactualizado.
+  void _sincronizarMargenControlador(int index) {
+    final carrito = ref.read(carritoCompraProvider);
+    if (index >= carrito.items.length) return;
+    final item = carrito.items[index];
+    final costo = _costoFinalItem(item);
+    final precioVenta = item.precioVentaNuevo ?? 0;
+    final margen = costo > 0 ? ((precioVenta - costo) / costo * 100) : 0.0;
+    _ctrlMargen[index]?.text = margen.toStringAsFixed(1);
   }
 
   double _descuentoLineaMonto(dynamic item) {
@@ -139,9 +200,17 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     for (final c in _ctrlDescuento.values) {
       c.dispose();
     }
+    for (final c in _ctrlMargen.values) {
+      c.dispose();
+    }
+    for (final c in _ctrlPrecioVenta.values) {
+      c.dispose();
+    }
     _ctrlCantidad.clear();
     _ctrlPrecio.clear();
     _ctrlDescuento.clear();
+    _ctrlMargen.clear();
+    _ctrlPrecioVenta.clear();
     _conteoItemsControladores = 0;
   }
 
@@ -273,7 +342,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   ButtonStyle _estiloBotonSecundario() {
     return OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFF1A1A1A),
-      side: const BorderSide(color: Color(0xFFDCDFE6)),
+      side: const BorderSide(color: Color(0xFFB6BCC7)),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
@@ -286,8 +355,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: child,
     );
@@ -300,7 +369,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -330,7 +399,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
                         Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
@@ -404,7 +473,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
                           Icon(Icons.event_outlined, size: 16, color: Colors.grey.shade500),
@@ -541,9 +610,17 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       for (final c in _ctrlDescuento.values) {
         c.dispose();
       }
+      for (final c in _ctrlMargen.values) {
+        c.dispose();
+      }
+      for (final c in _ctrlPrecioVenta.values) {
+        c.dispose();
+      }
       _ctrlCantidad.clear();
       _ctrlPrecio.clear();
       _ctrlDescuento.clear();
+      _ctrlMargen.clear();
+      _ctrlPrecioVenta.clear();
       _conteoItemsControladores = carrito.items.length;
     }
 
@@ -553,8 +630,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -660,7 +737,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       decoration: InputDecoration(
         suffixText: sufijo,
         filled: true,
-        fillColor: const Color(0xFFF5F6FA),
+        fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -690,25 +767,43 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
     final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: (item.precioCompra as double).toStringAsFixed(2)));
     final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final (ctrlMargen, ctrlPrecioVenta) = _controladoresMargen(index, item);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-          Expanded(
-            flex: 4,
-            child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
+              Expanded(
+                flex: 4,
+                child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+              ),
+              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
+              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v)))),
+              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
+              Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
+              Expanded(flex: 2, child: Text(formatearMoneda(item.subtotal as double), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+              SizedBox(
+                width: 40,
+                child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+              ),
+            ],
           ),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v)))),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero(ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
-          Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-          Expanded(flex: 2, child: Text(formatearMoneda(item.subtotal as double), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
-          SizedBox(
-            width: 40,
-            child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                const Spacer(flex: 6),
+                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v)))),
+                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v)))),
+                const Spacer(flex: 4),
+                const SizedBox(width: 40),
+              ],
+            ),
           ),
         ],
       ),
@@ -721,11 +816,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
     final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: (item.precioCompra as double).toStringAsFixed(2)));
     final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final (ctrlMargen, ctrlPrecioVenta) = _controladoresMargen(index, item);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -751,6 +847,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               Expanded(child: _campoInlineConEtiqueta('Costo unitario', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v))),
               const SizedBox(width: 8),
               Expanded(child: _campoInlineConEtiqueta('Desc. %', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _campoInlineConEtiqueta('Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v))),
+              const SizedBox(width: 8),
+              Expanded(child: _campoInlineConEtiqueta('Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v))),
             ],
           ),
           const SizedBox(height: 10),

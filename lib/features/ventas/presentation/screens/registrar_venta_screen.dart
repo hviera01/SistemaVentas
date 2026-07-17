@@ -641,7 +641,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   ButtonStyle _estiloBotonSecundario() {
     return OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFF1A1A1A),
-      side: const BorderSide(color: Color(0xFFDCDFE6)),
+      side: const BorderSide(color: Color(0xFFB6BCC7)),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
@@ -654,8 +654,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: child,
     );
@@ -666,7 +666,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFF5F6FA),
+      fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -695,7 +695,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
                         Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
@@ -738,7 +738,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     IconButton(
                       onPressed: _buscarCliente,
                       icon: const Icon(Icons.search),
-                      style: IconButton.styleFrom(backgroundColor: const Color(0xFFF5F6FA), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     ),
                   ],
                 ),
@@ -841,7 +841,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                    decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+                                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
                                     child: Row(
                                       children: [
                                         Icon(Icons.event_outlined, size: 16, color: Colors.grey.shade500),
@@ -939,8 +939,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EC)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1050,7 +1050,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFDCDFE6))),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1100,7 +1100,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       decoration: InputDecoration(
         suffixText: sufijo,
         filled: true,
-        fillColor: const Color(0xFFF5F6FA),
+        fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -1177,7 +1177,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

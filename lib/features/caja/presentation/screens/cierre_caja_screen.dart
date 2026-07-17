@@ -242,7 +242,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
     return Container(
       width: esMovil ? anchoTotal - 28 : 420,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -265,7 +265,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
               onPressed: _guardando ? null : _guardarMontoInicial,
               icon: const Icon(Icons.savings_outlined, size: 18),
               label: Text('Guardar monto inicial (sin cerrar)', style: GoogleFonts.poppins(fontSize: 12.5)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFDCDFE6)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
           ),
         ],
@@ -277,7 +277,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
     return Container(
       width: esMovil ? anchoTotal - 28 : 420,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EC))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -294,7 +294,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
               hintText: '0.00',
               prefixText: 'L. ',
               filled: true,
-              fillColor: const Color(0xFFF5F6FA),
+              fillColor: const Color(0xFFE8EAF0),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
@@ -303,7 +303,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -325,7 +325,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             decoration: InputDecoration(
               hintText: 'Observaciones del cierre (opcional)',
               filled: true,
-              fillColor: const Color(0xFFF5F6FA),
+              fillColor: const Color(0xFFE8EAF0),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),

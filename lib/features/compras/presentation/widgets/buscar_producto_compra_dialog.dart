@@ -144,7 +144,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                     child: Container(
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFDCDFE6))),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
                       child: Row(
                         children: [
                           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -189,7 +189,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EC)),
+                    border: Border.all(color: const Color(0xFFC7CBD3)),
                   ),
                   child: Focus(
                     focusNode: _focusNodeLista,
