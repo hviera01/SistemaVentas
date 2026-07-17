@@ -299,6 +299,16 @@ class VentaExportService {
     return doc.save();
   }
 
+  // pw.MultiPage en vez de pw.Page: antes esto usaba una altura "infinita"
+  // (double.infinity) para que el ticket se ajuste a lo que ocupe el
+  // contenido, pensado para el rollo continuo de la térmica. Funciona bien
+  // en la vista previa (el paquete mide el contenido real antes de
+  // mostrarlo), pero al imprimir directo sin pasar por esa vista previa,
+  // algunos drivers de impresora en Windows no manejan bien una altura
+  // infinita y terminaban cortando el ticket a la mitad (palabras y cifras
+  // cortadas). Con MultiPage el contenido que no entra en una página sigue
+  // en la próxima automáticamente, así que nunca se recorta información sin
+  // importar por qué camino se mande a imprimir.
   pw.Page _construirPaginaTicket(VentaModel venta, NegocioModel negocio, pw.MemoryImage? logo, {required bool esCopia}) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final formatoDia = DateFormat('dd/MM/yyyy');
@@ -316,12 +326,10 @@ class VentaExportService {
       return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
     }
 
-    return pw.Page(
-      pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 10),
+    return pw.MultiPage(
+      pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, 400 * PdfPageFormat.mm, marginAll: 10),
       build: (context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
+        return [
             // Ancho fijo (en vez de alto) para que se vea grande y nítido sin
             // desbordar el ticket de 80mm, sea cual sea la proporción del
             // logo que suba el negocio: antes salía muy chico porque solo se
@@ -429,8 +437,7 @@ class VentaExportService {
               alignment: pw.Alignment.centerRight,
               child: pw.Text(esCopia ? 'COPIA' : 'ORIGINAL', style: pw.TextStyle(fontSize: fNormal, fontWeight: pw.FontWeight.bold)),
             ),
-          ],
-        );
+          ];
       },
     );
   }
