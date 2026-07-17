@@ -15,8 +15,9 @@ typedef EstadoLotesProducto = Map<DocumentReference<Map<String, dynamic>>, Estad
 
 /// Costeo FIFO por lotes (ver LoteCostoModel). Se usa desde dentro de
 /// transacciones de Firestore de otros repositorios (compras, ventas,
-/// ajustes de stock), por eso todos los métodos reciben la [Transaction] en
-/// vez de manejar la suya propia.
+/// ajustes de stock); los métodos que escriben (crearLote, aplicarEstado)
+/// reciben la [Transaction] de quien los llama en vez de manejar la suya
+/// propia.
 class LoteCostoRepository {
   final _db = FirebaseFirestore.instance;
 
@@ -49,32 +50,31 @@ class LoteCostoRepository {
     });
   }
 
-  /// Fase de lectura: hay que llamarla ANTES de cualquier escritura en la
-  /// transacción (Firestore exige que todas las lecturas transaccionales
-  /// ocurran antes que cualquier escritura). El cliente de Firestore no
-  /// permite queries dentro de una transacción (solo lecturas por
-  /// referencia), así que primero se hace una lectura simple (no
-  /// transaccional) de los lotes candidatos, ordenados del más viejo al más
-  /// nuevo, y recién después se leen esos documentos puntuales de forma
-  /// transaccional (para que la transacción reintente sola si algo más los
-  /// modificó mientras tanto).
-  Future<List<DocumentSnapshot<Map<String, dynamic>>>> leerLotesTransaccional(Transaction transaction, String idProducto) async {
-    final candidatos = await colLotes(idProducto).orderBy('fecha').limit(30).get();
-    return Future.wait(candidatos.docs.map((d) => transaction.get(d.reference)));
+  /// Lectura simple (no transaccional: Firestore no permite queries dentro
+  /// de una transacción del cliente) de los lotes candidatos de un
+  /// producto, ordenados del más viejo al más nuevo. A propósito NO vuelve a
+  /// leer cada documento de forma transaccional (como se hacía antes): eso
+  /// agregaba una ida y vuelta a Firestore extra POR PRODUCTO en cada venta,
+  /// y la venta tiene que sentirse instantánea. Para el volumen de este
+  /// negocio, el riesgo de que dos ventas concurrentes consuman justo el
+  /// mismo lote en el mismo instante es mínimo, y aceptarlo vale la pena a
+  /// cambio de no perder velocidad. Como no depende de las demás lecturas de
+  /// la transacción (contador/stock), se puede lanzar en paralelo con ellas
+  /// en vez de esperarlas primero.
+  Future<QuerySnapshot<Map<String, dynamic>>> consultarLotes(String idProducto) {
+    return colLotes(idProducto).orderBy('fecha').limit(30).get();
   }
 
-  /// Arma el estado de trabajo a partir de los snapshots leídos. Cuando el
-  /// carrito tiene más de una línea del mismo producto, las dos deben
-  /// consumir del mismo estado en vez de cada una partir de los snapshots
-  /// originales: si no, contarían dos veces la misma capacidad de un lote.
-  EstadoLotesProducto inicializarEstado(List<DocumentSnapshot<Map<String, dynamic>>> snapshotsLotes) {
+  /// Arma el estado de trabajo a partir del resultado de [consultarLotes].
+  /// Cuando el carrito tiene más de una línea del mismo producto, las dos
+  /// deben consumir del mismo estado en vez de cada una partir de la query
+  /// original: si no, contarían dos veces la misma capacidad de un lote.
+  EstadoLotesProducto inicializarEstado(QuerySnapshot<Map<String, dynamic>> query) {
     final estado = <DocumentReference<Map<String, dynamic>>, EstadoLote>{};
-    for (final snap in snapshotsLotes) {
-      final data = snap.data();
-      if (data == null) continue;
-      estado[snap.reference] = EstadoLote(
-        restante: ((data['cantidadRestante'] ?? 0) as num).toDouble(),
-        costoUnitario: ((data['costoUnitario'] ?? 0) as num).toDouble(),
+    for (final doc in query.docs) {
+      estado[doc.reference] = EstadoLote(
+        restante: ((doc.data()['cantidadRestante'] ?? 0) as num).toDouble(),
+        costoUnitario: ((doc.data()['costoUnitario'] ?? 0) as num).toDouble(),
       );
     }
     return estado;

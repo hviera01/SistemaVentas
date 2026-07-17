@@ -54,9 +54,6 @@ class VentaTicketEscPosService {
 
     for (final item in venta.detalle) {
       bytes += generador.text(item.nombreProducto);
-      if (item.nombreOriginal.isNotEmpty) {
-        bytes += generador.text('  (desc. original: ${item.nombreOriginal})', styles: const PosStyles(height: PosTextSize.size1, width: PosTextSize.size1));
-      }
       bytes += generador.row([
         PosColumn(text: '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(precioMostrado(item))}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}', width: 8),
         PosColumn(text: formatearMoneda(importeMostrado(item)), width: 4, styles: const PosStyles(align: PosAlign.right)),

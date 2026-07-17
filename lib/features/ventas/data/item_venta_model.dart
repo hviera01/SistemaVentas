@@ -2,11 +2,6 @@ class ItemVentaModel {
   final String idProducto;
   final String idCategoria;
   final String nombreProducto;
-  // Nombre real del producto al momento de agregarlo al carrito, guardado
-  // solo cuando [nombreProducto] fue editado a mano en la venta (si no se
-  // editó, queda vacío). Sirve para mostrar/imprimir un aviso de que la
-  // descripción de esa línea fue modificada.
-  final String nombreOriginal;
   final double precioVenta;
   final double cantidad;
   final double subtotal;
@@ -18,7 +13,6 @@ class ItemVentaModel {
     required this.idProducto,
     required this.idCategoria,
     required this.nombreProducto,
-    this.nombreOriginal = '',
     required this.precioVenta,
     required this.cantidad,
     required this.subtotal,
@@ -32,7 +26,6 @@ class ItemVentaModel {
       idProducto: data['idProducto'] ?? '',
       idCategoria: data['idCategoria'] ?? '',
       nombreProducto: data['nombreProducto'] ?? '',
-      nombreOriginal: data['nombreOriginal'] ?? '',
       precioVenta: (data['precioVenta'] ?? 0).toDouble(),
       cantidad: (data['cantidad'] ?? 0).toDouble(),
       subtotal: (data['subtotal'] ?? 0).toDouble(),
@@ -47,7 +40,6 @@ class ItemVentaModel {
       'idProducto': idProducto,
       'idCategoria': idCategoria,
       'nombreProducto': nombreProducto,
-      'nombreOriginal': nombreOriginal,
       'precioVenta': precioVenta,
       'cantidad': cantidad,
       'subtotal': subtotal,
@@ -59,7 +51,6 @@ class ItemVentaModel {
 
   ItemVentaModel copyWith({
     String? nombreProducto,
-    String? nombreOriginal,
     double? precioVenta,
     double? cantidad,
     double? subtotal,
@@ -70,7 +61,6 @@ class ItemVentaModel {
       idProducto: idProducto,
       idCategoria: idCategoria,
       nombreProducto: nombreProducto ?? this.nombreProducto,
-      nombreOriginal: nombreOriginal ?? this.nombreOriginal,
       precioVenta: precioVenta ?? this.precioVenta,
       cantidad: cantidad ?? this.cantidad,
       subtotal: subtotal ?? this.subtotal,

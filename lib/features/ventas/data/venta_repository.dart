@@ -78,15 +78,23 @@ class VentaRepository {
     // lento/intermitente es mejor que el cajero vea rápido que falló y
     // pueda reintentar, a que la pantalla quede "cargando" media hora.
     await _db.runTransaction((transaction) async {
-      // Todas las lecturas de la transacción (contador + stock de cada
-      // producto) se disparan juntas con un solo Future.wait, en vez de
-      // esperar primero el contador y luego los productos: eso ahorra una
-      // ida y vuelta completa a Firestore en cada venta, que es justo lo
-      // que la hacía sentir lenta (sobre todo en cajas con internet móvil).
-      final resultados = await Future.wait([
+      // Todas las lecturas de la transacción (contador, stock de cada
+      // producto, y los lotes de costo de cada producto distinto) se
+      // disparan juntas, en vez de esperar unas antes de lanzar las otras:
+      // eso ahorra idas y vueltas completas a Firestore en cada venta, que
+      // es justo lo que la hacía sentir lenta (sobre todo en cajas con
+      // internet móvil) — tiene que sentirse instantánea. Los lotes se leen
+      // con una consulta simple (no transaccional, ver consultarLotes) que
+      // no depende de nada más, así que se lanza en paralelo con el resto
+      // en vez de esperar a que terminen el contador y el stock primero.
+      final idsProductoUnicos = itemsADescontar.map((i) => i.idProducto).toSet().toList();
+      final futureResultados = Future.wait([
         transaction.get(contadorRef),
         ...itemsADescontar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
       ]);
+      final futureLotes = Future.wait(idsProductoUnicos.map((id) => _lotes.consultarLotes(id)));
+
+      final resultados = await futureResultados;
       final contadorSnap = resultados[0];
       final snapsStock = resultados.sublist(1);
 
@@ -102,17 +110,12 @@ class VentaRepository {
         precioCompraActual[itemsADescontar[i].idProducto] = ((data?['precioCompra'] ?? 0) as num).toDouble();
       }
 
-      // Costeo FIFO: cada producto distinto que se va a descontar lee sus
-      // lotes UNA vez (todavía en fase de lectura, antes de cualquier
-      // escritura de la transacción); si el carrito tiene más de una línea
-      // del mismo producto, comparten el mismo estado para no contar dos
-      // veces la misma capacidad de un lote.
-      final idsProductoUnicos = itemsADescontar.map((i) => i.idProducto).toSet().toList();
-      final snapsLotesPorProducto = await Future.wait(
-        idsProductoUnicos.map((id) => _lotes.leerLotesTransaccional(transaction, id)),
-      );
+      // Costeo FIFO: si el carrito tiene más de una línea del mismo
+      // producto, comparten el mismo estado para no contar dos veces la
+      // misma capacidad de un lote.
+      final queriesLotes = await futureLotes;
       final estadoLotesPorProducto = <String, EstadoLotesProducto>{
-        for (var i = 0; i < idsProductoUnicos.length; i++) idsProductoUnicos[i]: _lotes.inicializarEstado(snapsLotesPorProducto[i]),
+        for (var i = 0; i < idsProductoUnicos.length; i++) idsProductoUnicos[i]: _lotes.inicializarEstado(queriesLotes[i]),
       };
       costosFifo = <ItemVentaModel, double>{};
       for (final item in itemsADescontar) {

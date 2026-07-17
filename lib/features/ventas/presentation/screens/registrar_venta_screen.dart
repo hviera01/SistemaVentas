@@ -1278,7 +1278,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // el negocio activó el permiso ventasEditarDescripcion, pide la clave
   // especial antes de aplicar el cambio (y revierte el texto si la cancelan
   // o la clave es incorrecta).
-  Widget _campoDescripcion(int index, dynamic item, ProductoModel? producto) {
+  Widget _campoDescripcion(int index, dynamic item) {
     final ctrl = _ctrlDescripcion.putIfAbsent(index, () => TextEditingController(text: item.nombreProducto as String));
 
     Future<void> confirmar() async {
@@ -1289,7 +1289,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         return;
       }
       if (nuevoTexto == nombreActual) return;
-      final nombreReal = producto?.nombre ?? nombreActual;
       final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
       if (negocio.tienePermiso(PermisosEspeciales.ventasEditarDescripcion)) {
         if (!mounted) return;
@@ -1299,7 +1298,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           return;
         }
       }
-      ref.read(carritoVentaProvider.notifier).actualizarDescripcion(index, nuevoTexto, nombreReal);
+      ref.read(carritoVentaProvider.notifier).actualizarDescripcion(index, nuevoTexto);
     }
     _confirmarDescripcion[index] = confirmar;
 
@@ -1323,8 +1322,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           onSubmitted: (_) => confirmar(),
           onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         ),
-        if ((item.nombreOriginal as String).isNotEmpty)
-          Text('Editado (antes: ${item.nombreOriginal})', style: GoogleFonts.poppins(fontSize: 10, color: Colors.orange.shade800)),
         if (item.reembasado as bool) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
       ],
     );
@@ -1346,7 +1343,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-          Expanded(flex: 4, child: _campoDescripcion(index, item, producto)),
+          Expanded(flex: 4, child: _campoDescripcion(index, item)),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v)))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
@@ -1383,7 +1380,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _campoDescripcion(index, item, producto),
+                    _campoDescripcion(index, item),
                     Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
                   ],
                 ),

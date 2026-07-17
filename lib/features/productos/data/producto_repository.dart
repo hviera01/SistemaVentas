@@ -65,6 +65,21 @@ class ProductoRepository {
       'estado': estado,
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
+    // Si el producto se crea con existencia inicial, esa cantidad también
+    // necesita su propio lote de costo — si no, al venderla no hay lote que
+    // consumir por FIFO y termina costeándose con el precioCompra vigente
+    // en el momento de la venta (que puede ya haber cambiado por una compra
+    // posterior) en vez del costo real de esa existencia inicial.
+    if (stock > 0) {
+      await ref.collection('lotes').add({
+        'cantidadOriginal': stock,
+        'cantidadRestante': stock,
+        'costoUnitario': precioCompra,
+        'fecha': Timestamp.fromDate(DateTime.now()),
+        'origen': 'inicial',
+        'idCompra': null,
+      });
+    }
     return ProductoModel(
       id: ref.id,
       codigo: codigoFinal,
@@ -233,8 +248,8 @@ class ProductoRepository {
 
       EstadoLotesProducto? estadoLotes;
       if (!esIncremento && diferencia > 0) {
-        final snapsLotes = await lotes.leerLotesTransaccional(transaction, id);
-        estadoLotes = lotes.inicializarEstado(snapsLotes);
+        final query = await lotes.consultarLotes(id);
+        estadoLotes = lotes.inicializarEstado(query);
         lotes.consumir(estadoLotes, diferencia, costoFallback: precioCompraActual);
       }
 

@@ -100,7 +100,12 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
         ),
         if (!_listadoImpresorasDisponible) ...[
           const SizedBox(height: 4),
-          Text('No disponible en este dispositivo', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+          Text(
+            kIsWeb
+                ? 'No se puede elegir acá desde el navegador (limitación del navegador, no un error). No hace falta: si activás "Imprimir directo, sin preguntar", el navegador abre su propio diálogo de impresión con todas las impresoras del equipo.'
+                : 'No disponible en este dispositivo. En el celular usá la impresora de red (más abajo) en vez de esta lista.',
+            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+          ),
         ] else if (_error != null) ...[
           const SizedBox(height: 4),
           Text(_error!, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade700)),

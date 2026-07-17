@@ -591,8 +591,6 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                      if (item.nombreOriginal.isNotEmpty)
-                        Text('Editado (antes: ${item.nombreOriginal})', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.orange.shade800)),
                       if (item.reembasado) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
                       if (item.descuentoPorcentaje > 0) Text('Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
                     ],
@@ -620,8 +618,6 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
-                if (item.nombreOriginal.isNotEmpty)
-                  Text('Editado (antes: ${item.nombreOriginal})', style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange.shade800)),
                 if (item.reembasado || item.descuentoPorcentaje > 0)
                   Text(
                     [if (item.reembasado) 'Reembasado', if (item.descuentoPorcentaje > 0) 'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%'].join(' · '),

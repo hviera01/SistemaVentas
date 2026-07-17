@@ -176,7 +176,7 @@ class VentaExportService {
       data: venta.detalle.map((item) {
         return [
           _formatoCantidad(item.cantidad),
-          item.nombreOriginal.isEmpty ? item.nombreProducto : '${item.nombreProducto}\n(antes: ${item.nombreOriginal})',
+          item.nombreProducto,
           formatearMoneda(item.precioVenta),
           item.descuentoPorcentaje > 0 ? '${_formatoCantidad(item.descuentoPorcentaje)}%' : '-',
           formatearMoneda(item.subtotal),
@@ -372,8 +372,6 @@ class VentaExportService {
                       // negrita se ve más "manchado" y termina siendo menos
                       // claro que el peso normal, sobre todo en letra chica.
                       pw.Text(item.nombreProducto, style: const pw.TextStyle(fontSize: fSmall)),
-                      if (item.nombreOriginal.isNotEmpty)
-                        pw.Text('(desc. original: ${item.nombreOriginal})', style: pw.TextStyle(fontSize: fSmall - 1, fontStyle: pw.FontStyle.italic, color: _colorGrisTexto)),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
