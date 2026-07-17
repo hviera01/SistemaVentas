@@ -35,8 +35,19 @@ bool coincideFuzzy(String textoCompleto, String consulta) {
   for (final palabraConsulta in palabrasConsulta) {
     if (palabraConsulta.isEmpty) continue;
     final coincideAlguna = palabrasTexto.any((palabraTexto) {
-      if (palabraTexto.contains(palabraConsulta) || palabraConsulta.contains(palabraTexto)) return true;
-      final tolerancia = palabraConsulta.length <= 4 ? 1 : 2;
+      if (palabraTexto.isEmpty) return false;
+      // Que la palabra buscada aparezca dentro de una palabra del producto
+      // (permite escribir solo el principio o una parte). Antes también se
+      // aceptaba al revés (palabra del producto dentro de la búsqueda), lo
+      // que hacía que una palabra corta cualquiera del producto -"on", "rex",
+      // etc.- calzara adentro de algo como "rexona" y trajera resultados sin
+      // ninguna relación real.
+      if (palabraTexto.contains(palabraConsulta)) return true;
+      // Tolerancia a errores de tipeo: nada para palabras muy cortas (ahí
+      // cualquier letra distinta ya es otra palabra), un poco más para
+      // palabras largas.
+      final tolerancia = palabraConsulta.length <= 4 ? 0 : (palabraConsulta.length <= 7 ? 1 : 2);
+      if (tolerancia == 0) return false;
       return distanciaLevenshtein(palabraTexto, palabraConsulta) <= tolerancia;
     });
     if (!coincideAlguna) return false;
