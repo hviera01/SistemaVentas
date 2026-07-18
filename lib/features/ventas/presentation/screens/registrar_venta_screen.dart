@@ -152,7 +152,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje), showCloseIcon: true));
   }
 
   Future<bool> _confirmarDialogo(String titulo, String mensaje) async {
@@ -664,6 +664,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           content: Text('⚠ $mensaje', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           backgroundColor: const Color(0xFFC62828),
           duration: const Duration(seconds: 12),
+          showCloseIcon: true,
+          closeIconColor: Colors.white,
           action: SnackBarAction(
             label: 'Reintentar',
             textColor: Colors.white,

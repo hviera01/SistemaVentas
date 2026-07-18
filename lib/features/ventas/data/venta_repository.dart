@@ -255,8 +255,16 @@ class VentaRepository {
     );
   }
 
+  // Best-effort: es solo una bandera de conveniencia para ubicar después
+  // ventas sin imprimir, así que si el documento ya no existe (por ejemplo,
+  // una venta vieja que quedó en el caché local de un dispositivo después de
+  // vaciar la base de datos) no debe reventar con un error feo en pantalla.
   Future<void> marcarPendienteImpresion(String id, bool valor) async {
-    await _colVentas.doc(id).update({'pendienteImpresion': valor});
+    try {
+      await _colVentas.doc(id).update({'pendienteImpresion': valor});
+    } on FirebaseException catch (e) {
+      if (e.code != 'not-found' && e.code != 'invalid-argument') rethrow;
+    }
   }
 
   Future<VentaModel?> obtenerVentaPorId(String id) async {
@@ -325,6 +333,37 @@ class VentaRepository {
     }
     final itemsARestaurar = items.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
 
+    // Si la venta se borró del servidor pero seguía "existiendo" en el
+    // caché local (por ejemplo, después de vaciar la base de datos desde
+    // otro dispositivo), la comprobación de arriba pasa igual porque lee del
+    // caché, y recién acá, al hablar con el servidor de verdad, aparece el
+    // error. Se traduce a un mensaje claro en vez de mostrar el texto crudo
+    // de Firestore.
+    try {
+      await _anularVentaTransaccion(
+        id: id,
+        usuario: usuario,
+        motivo: motivo,
+        numeroDocumento: numeroDocumento,
+        creditoExiste: creditoExiste,
+        itemsARestaurar: itemsARestaurar,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found' || e.code == 'invalid-argument') {
+        throw Exception('No se pudo anular: la venta ya no existe en el servidor (puede que se haya borrado desde otro dispositivo)');
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _anularVentaTransaccion({
+    required String id,
+    required String usuario,
+    required String motivo,
+    required String numeroDocumento,
+    required bool creditoExiste,
+    required List<ItemVentaModel> itemsARestaurar,
+  }) async {
     await _db.runTransaction((transaction) async {
       final stocksActuales = <String, double>{};
       final snapsStock = await Future.wait(

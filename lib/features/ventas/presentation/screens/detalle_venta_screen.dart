@@ -138,7 +138,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo generar el ticket: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo generar el ticket: $e'), showCloseIcon: true));
       }
     } finally {
       if (mounted) setState(() => _procesandoPdf = false);
@@ -148,7 +148,14 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   Future<void> _marcarComoImpresa() async {
     final venta = _venta;
     if (venta == null) return;
-    await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, false);
+    try {
+      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, false);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo actualizar: $e'), showCloseIcon: true));
+      }
+      return;
+    }
     if (mounted) await _buscarPorId(venta.id);
   }
 
@@ -169,7 +176,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo generar el PDF: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo generar el PDF: $e'), showCloseIcon: true));
       }
     } finally {
       if (mounted) setState(() => _procesandoPdf = false);
@@ -182,11 +189,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     final credito = await ref.read(ventaCreditoRepositoryProvider).obtenerPorId(venta.id);
     if (!mounted) return;
     if (credito == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró el crédito asociado a esta venta')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró el crédito asociado a esta venta'), showCloseIcon: true));
       return;
     }
     if (credito.saldoPendiente <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este crédito ya está saldado')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este crédito ya está saldado'), showCloseIcon: true));
       return;
     }
     final abono = await showDialog<AbonoModel>(context: context, builder: (context) => RegistrarAbonoDialog(credito: credito));
@@ -258,11 +265,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       if (!mounted) return;
       await _buscarPorId(venta.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Venta anulada correctamente')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Venta anulada correctamente'), showCloseIcon: true));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), showCloseIcon: true));
       }
     } finally {
       if (mounted) setState(() => _anulando = false);

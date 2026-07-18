@@ -308,12 +308,16 @@ class VentaExportService {
   // infinita y terminaban cortando el ticket a la mitad (palabras y cifras
   // cortadas). Con MultiPage el contenido que no entra en una página sigue
   // en la próxima automáticamente, así que nunca se recorta información sin
-  // importar por qué camino se mande a imprimir.
+  // importar por qué camino se mande a imprimir. El alto se calcula según lo
+  // que realmente va a imprimirse (ver _estimarAlturaTicketMm) en vez de un
+  // valor fijo enorme: con una altura fija muy por encima de lo real, la
+  // vista previa quedaba con un espacio en blanco gigante al final.
   pw.Page _construirPaginaTicket(VentaModel venta, NegocioModel negocio, pw.MemoryImage? logo, {required bool esCopia}) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final formatoDia = DateFormat('dd/MM/yyyy');
     const fSmall = 7.5;
     const fNormal = 8.0;
+    final alturaMm = _estimarAlturaTicketMm(venta, negocio, tieneLogo: logo != null);
 
     // El total y el desglose de ISV siempre reflejan el monto real de la
     // venta; esto solo cambia cómo se ve el precio unitario y el importe de
@@ -327,7 +331,16 @@ class VentaExportService {
     }
 
     return pw.MultiPage(
-      pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, 400 * PdfPageFormat.mm, marginAll: 10),
+      // marginAll en mm (no en puntos, que es lo que había antes con el 10 a
+      // secas): 10 puntos son apenas ~3.5mm de margen a cada lado, dejando el
+      // contenido casi pegado al borde de los 80mm declarados. El propio
+      // paquete `pdf` recomienda 5mm para rollos térmicos (PdfPageFormat.roll80).
+      // Al imprimir con vista previa o desde el navegador el sistema suele
+      // reescalar un poco para que todo entre en el área imprimible real de
+      // la impresora, pero al imprimir directo (sin diálogo) se manda tal
+      // cual, así que ese margen angosto es la explicación más probable de
+      // que la factura saliera cortada por la derecha solo en "sin preguntar".
+      pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, alturaMm * PdfPageFormat.mm, marginAll: 5 * PdfPageFormat.mm),
       build: (context) {
         return [
             // Ancho fijo (en vez de alto) para que se vea grande y nítido sin
@@ -440,6 +453,46 @@ class VentaExportService {
           ];
       },
     );
+  }
+
+  // Estima cuánto va a ocupar el ticket según lo que realmente se va a
+  // imprimir (mismas condiciones que el `build` de arriba), para que el
+  // rollo térmico no quede con un espacio en blanco larguísimo al final ni,
+  // al revés, tan corto que MultiPage tenga que agregar una página extra de
+  // continuación. Si la estimación se queda corta no se pierde nada:
+  // MultiPage sigue el contenido en una página siguiente automáticamente.
+  double _estimarAlturaTicketMm(VentaModel venta, NegocioModel negocio, {required bool tieneLogo}) {
+    const linea = 4.3;
+    const separador = 6.0;
+    // Bloque fijo que siempre se imprime: tipo/fecha/atendido/condición,
+    // separadores, cliente + id, encabezado de tabla, los 7 renglones de
+    // totales, "son:", avisos legales de original/copia, agradecimiento y
+    // el "ORIGINAL"/"COPIA" final.
+    double alto = 30.0 + linea * 15 + separador * 5;
+
+    if (tieneLogo) alto += 18.0;
+    if (negocio.nombre.isNotEmpty) alto += linea;
+    if (negocio.eslogan.isNotEmpty) alto += linea;
+    if (negocio.direccion.isNotEmpty) alto += linea * 2;
+    if (negocio.rtn.isNotEmpty) alto += linea;
+    if (negocio.telefono.isNotEmpty) alto += linea;
+    if (negocio.correo.isNotEmpty) alto += linea;
+    if (negocio.cai.isNotEmpty) alto += linea;
+
+    if (venta.condicion == 'Credito' && venta.fechaVencimiento != null) alto += linea;
+    if (venta.oc.isNotEmpty) alto += linea;
+    if (venta.regExonerado.isNotEmpty) alto += linea;
+    if (venta.regSag.isNotEmpty) alto += linea;
+    if (venta.descuentoGlobal > 0) alto += linea;
+    if (venta.condicion != 'Credito') alto += linea * 2;
+    if (negocio.rangoPrefijo.isNotEmpty || negocio.rangoDesde.isNotEmpty) alto += linea;
+    if (negocio.fechaLimiteEmision != null) alto += linea;
+
+    // Cada producto: nombre + renglón de cantidad/importe, con margen extra
+    // por si el nombre es largo y se parte en dos líneas.
+    alto += venta.detalle.length * (linea * 2 + 4);
+
+    return alto;
   }
 
   pw.Widget _separador() {
