@@ -92,7 +92,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
             const SizedBox(height: 20),
             TextField(
               controller: _stockController,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               onChanged: (_) => setState(() {}),
               style: GoogleFonts.poppins(fontSize: 14),

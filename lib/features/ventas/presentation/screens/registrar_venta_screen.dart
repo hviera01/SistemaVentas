@@ -238,6 +238,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (sinExistencia && carrito.esCotizacion) {
       _mostrarMensaje('Advertencia: "${producto.nombre}" no tiene existencia disponible, pero se agregará a la cotización.');
     } else if (sinExistencia) {
+      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasVenderSinStock);
+      if (!mounted) return;
+      if (!autorizado) return;
+
       final quiereReembasar = await _confirmarDialogo(
         'Reembasado',
         'El producto "${producto.nombre}" no tiene existencia disponible.\n¿Desea realizar un reembasado?',
@@ -308,15 +312,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final stockDisponible = coincidencias.isNotEmpty ? coincidencias.first.stock : 0.0;
 
     if (stockDisponible < nuevaCantidad && !carrito.esCotizacion) {
+      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasVenderSinStock);
+      if (!mounted) return;
+      if (!autorizado) {
+        _revertirCantidad(index);
+        return;
+      }
+
       final quiereReembasar = await _confirmarDialogo(
         'Reembasado',
         'El producto "${item.nombreProducto}" no tiene suficiente stock para $nuevaCantidad unidad(es).\n¿Desea realizar un reembasado?',
       );
+      if (!mounted) return;
       if (!quiereReembasar) {
-        _revertirCantidad(index);
+        // A diferencia de un valor inválido, acá el usuario decidió a
+        // propósito seguir sin reembasar: se deja la cantidad tal como la
+        // puso (al vender no baja de 0, ver venta_repository).
+        ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
         return;
       }
-      if (!mounted) return;
 
       final resultado = await showDialog<ReembaseResultado>(context: context, builder: (context) => const ReembaseDialog());
       if (resultado == null) {
