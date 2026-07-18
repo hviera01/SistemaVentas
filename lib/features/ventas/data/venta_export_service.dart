@@ -332,6 +332,13 @@ class VentaExportService {
       return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
     }
 
+    // Suma de descuentos por línea (precio de lista de cada producto, sin
+    // descuento, menos lo que realmente quedó en subtotal) más el descuento
+    // global: es la misma base sin ISV que ya usan SUBTOTAL y Gravado 15%
+    // más abajo, así que cuadra con el resto de la lista.
+    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
+    final descuentosYRebajas = redondearMoneda(totalSinDescuento - venta.subtotal);
+
     // En la web (imprime a través del diálogo del navegador) y en Android
     // (ESC/POS por red, ni siquiera pasa por acá) 5mm de margen imprime
     // perfecto. Pero en el .exe de Windows, imprimiendo nativo (con o sin
@@ -414,6 +421,7 @@ class VentaExportService {
             _separador(),
             _filaTotal('SUBTOTAL:', venta.subtotal),
             if (venta.descuentoGlobal > 0) pw.Text('Descuento global: ${_formatoCantidad(venta.descuentoGlobal)}%', style: const pw.TextStyle(fontSize: fSmall)),
+            _filaTotal('Descuentos y rebajas:', descuentosYRebajas),
             _filaTotal('Importe Exento:', 0),
             _filaTotal('Importe Exonerado:', 0),
             _filaTotal('Gravado 15%:', venta.subtotal),
@@ -471,10 +479,11 @@ class VentaExportService {
   double _estimarAlturaTicketMm(VentaModel venta, NegocioModel negocio, {required bool tieneLogo}) {
     // Bloque fijo que siempre se imprime: tipo/fecha/atendido/condición,
     // cliente + id, encabezado de tabla, los 7 separadores entre secciones,
-    // los 7 renglones de totales, "son:", forma de pago, avisos legales de
-    // original/copia, agradecimiento y el "ORIGINAL"/"COPIA" final — más
-    // margen de la página y colchón de seguridad.
-    double alto = 195.0;
+    // los 8 renglones de totales (incluye "Descuentos y rebajas"), "son:",
+    // forma de pago, avisos legales de original/copia, agradecimiento y el
+    // "ORIGINAL"/"COPIA" final — más margen de la página y colchón de
+    // seguridad.
+    double alto = 200.0;
 
     if (tieneLogo) alto += 20.0;
     if (negocio.nombre.isNotEmpty) alto += 6.0;

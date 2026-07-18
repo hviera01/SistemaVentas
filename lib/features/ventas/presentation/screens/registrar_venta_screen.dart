@@ -31,6 +31,7 @@ import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
 import '../widgets/ventas_en_espera_dialog.dart';
 import '../widgets/ventas_pendientes_impresion_dialog.dart';
+import '../widgets/teclado_numerico_dialog.dart';
 import 'detalle_venta_screen.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia'];
@@ -1455,9 +1456,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // del primer build. La guarda de "no cambió respecto al ya aplicado" evita
   // volver a llamar a alConfirmar y así el problema original no vuelve.
   Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo}) {
+    // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en web
+    // no sirve de nada) sí detecta el sistema operativo real aunque se esté
+    // usando desde el navegador.
+    final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
     void confirmar() {
-      final valor = double.tryParse(controlador.text.replaceAll(',', '').trim());
-      if (valor == null || (valor - valorActual).abs() < 0.005) return;
+      final texto = controlador.text.replaceAll(',', '').trim();
+      final valor = double.tryParse(texto);
+      if (valor == null) return;
+      // En móvil (web y APK), si escribió un número entero sin poner el
+      // ".00" (más incómodo de tipear en el teclado numérico del celular),
+      // se completa solo para que el campo quede prolijo.
+      if (esMovil && !texto.contains('.')) {
+        controlador.text = valor.toStringAsFixed(2);
+      }
+      if ((valor - valorActual).abs() < 0.005) return;
       alConfirmar(valor);
     }
     _confirmarInline[claveFoco] = confirmar;
@@ -1470,6 +1484,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return node;
     });
 
+    Future<void> abrirTecladoNumerico() async {
+      final texto = await showDialog<String>(
+        context: context,
+        builder: (context) => TecladoNumericoDialog(
+          titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor',
+          valorInicial: controlador.text,
+        ),
+      );
+      if (texto == null || !mounted) return;
+      controlador.text = texto;
+      confirmar();
+    }
+
     return TextField(
       controller: controlador,
       focusNode: focusNode,
@@ -1478,6 +1505,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       style: GoogleFonts.poppins(fontSize: 13),
       decoration: InputDecoration(
         suffixText: sufijo,
+        // En escritorio (Windows y web en computadora) se agrega un ícono
+        // para abrir un teclado numérico en pantalla, para quien prefiera
+        // cambiar el valor a clics de mouse en vez de escribir con el
+        // teclado físico (que sigue funcionando igual, con Enter para
+        // confirmar). En móvil no hace falta: ya está el teclado del SO.
+        suffixIcon: esMovil
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.dialpad, size: 18),
+                tooltip: 'Teclado numérico',
+                onPressed: abrirTecladoNumerico,
+              ),
         filled: true,
         fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),

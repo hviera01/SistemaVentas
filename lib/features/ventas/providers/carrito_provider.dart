@@ -61,7 +61,11 @@ class CarritoVentaState {
     return redondearMoneda(total);
   }
 
-  double get impuesto => _totalConImpuestoBase - subtotal;
+  // redondearMoneda acá también: aunque _totalConImpuestoBase y subtotal ya
+  // vienen cada uno redondeado a centavos, restar dos doubles "limpios" en
+  // punto flotante binario puede dar un resultado como 79.99999999999997 en
+  // vez de 80.00 exacto, y eso terminaba imprimiéndose como 79.99 o 80.01.
+  double get impuesto => redondearMoneda(_totalConImpuestoBase - subtotal);
 
   /// Redondeo a lempira entero: si el residuo es >= .90 sube, si no baja.
   double get totalAPagar {

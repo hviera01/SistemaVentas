@@ -2,7 +2,11 @@ import 'package:intl/intl.dart';
 
 String formatearMoneda(double valor) {
   final formato = NumberFormat('#,##0.00', 'en_US');
-  return 'L. ${formato.format(valor)}';
+  // Redondea antes de formatear: es el mismo problema que redondearMoneda
+  // evita en otros lados (ver más abajo) pero como respaldo general acá,
+  // para que ningún monto se muestre con arrastre de coma flotante sin
+  // importar de dónde venga.
+  return 'L. ${formato.format(redondearMoneda(valor))}';
 }
 
 /// Redondea un monto a centavos evitando errores de precisión binaria.
