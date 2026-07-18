@@ -771,9 +771,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     if (kIsWeb) {
+      // Entre que se confirma la venta y se arma el PDF pasan unos segundos
+      // en los que no aparece nada en pantalla (la ventana de impresión del
+      // navegador tarda en salir), lo que da la sensación de que se quedó
+      // pegado. Este aviso se cierra apenas esté listo, sea que la ventana
+      // de impresión abrió bien o que falló.
+      ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? preparando;
+      if (mounted) {
+        preparando = ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preparando impresión…'), duration: Duration(seconds: 30)),
+        );
+      }
       try {
         await Printing.layoutPdf(onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio), name: 'venta_${venta.numeroDocumento}.pdf');
+        preparando?.close();
       } catch (_) {
+        preparando?.close();
         _mostrarMensaje('No se pudo imprimir. La venta se guardó de todas formas.');
       }
       return;
