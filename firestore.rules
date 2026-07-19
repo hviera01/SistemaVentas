@@ -87,6 +87,16 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Sesiones cortas de escaneo remoto: la PC crea el código, el celular
+    // (sin necesidad de iniciar sesión) manda ahí los códigos que escanea.
+    match /escaneosRemotos/{idSesion} {
+      allow read, write: if true;
+
+      match /eventos/{idEvento} {
+        allow read, write: if true;
+      }
+    }
+
     match /contadores/{idContador} {
       allow read, write: if true;
     }

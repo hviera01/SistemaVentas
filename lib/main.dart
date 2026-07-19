@@ -9,6 +9,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'core/widgets/app_shell.dart';
 import 'core/widgets/splash_screen.dart';
+import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,13 @@ class SistemaVentasApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // El QR que muestra la PC para usar el celular como lector de código de
+    // barras (ver EscanearRemotoDialog) apunta a esta misma URL con
+    // "?escanear=CODIGO". Si viene ese parámetro, se salta el login por
+    // completo y se va directo a la cámara: cualquier celular tiene que
+    // poder ayudar a escanear sin necesitar una cuenta en el sistema.
+    final codigoEscaneo = Uri.base.queryParameters['escanear'];
+
     return MaterialApp(
       title: 'Sistema Ventas',
       debugShowCheckedModeBanner: false,
@@ -59,7 +67,9 @@ class SistemaVentasApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const SplashScreen(siguiente: AuthGate()),
+      home: codigoEscaneo != null && codigoEscaneo.isNotEmpty
+          ? EscaneoRemotoScreen(codigo: codigoEscaneo)
+          : const SplashScreen(siguiente: AuthGate()),
     );
   }
 }

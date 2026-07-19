@@ -32,6 +32,7 @@ import '../widgets/cobrar_dialog.dart';
 import '../widgets/ventas_en_espera_dialog.dart';
 import '../widgets/ventas_pendientes_impresion_dialog.dart';
 import '../widgets/teclado_numerico_dialog.dart';
+import '../widgets/escanear_remoto_dialog.dart';
 import 'detalle_venta_screen.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia'];
@@ -232,6 +233,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()),
     );
     if (resultado == null || !mounted) return;
+    await _procesarProductoSeleccionado(resultado);
+  }
+
+  // Compartido entre el buscador local (_agregarProductoDesdeBusqueda) y el
+  // escáner remoto por celular (_procesarCodigoEscaneadoRemoto): decide si
+  // hay que ofrecer reembasado por falta de existencia, o agregar directo.
+  Future<void> _procesarProductoSeleccionado(ProductoConPrecio resultado) async {
     final producto = resultado.producto;
     final carrito = ref.read(carritoVentaProvider);
     final sinExistencia = producto.stock <= 0 && _categoriaControlaStock(producto.idCategoria);
@@ -277,6 +285,42 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
     if (!mounted) return;
     ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: resultado.precio);
+  }
+
+  /// Se llama cada vez que el celular (ver EscanearRemotoDialog) manda un
+  /// código escaneado: busca el producto por coincidencia exacta de código
+  /// (igual que el buscador local) y lo agrega con el mismo flujo de
+  /// siempre, incluyendo el aviso de reembasado si no hay existencia.
+  Future<void> _procesarCodigoEscaneadoRemoto(String codigo) async {
+    if (!mounted) return;
+    final texto = codigo.trim();
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    final coincidencias = productos.where((p) => p.estado && (p.codigoBarras.trim() == texto || p.codigo.trim() == texto)).toList();
+    if (coincidencias.isEmpty) {
+      _mostrarMensaje('Código escaneado no encontrado: $texto');
+      return;
+    }
+    final producto = coincidencias.first;
+    final precio = _primerPrecioDisponible(producto);
+    if (precio == null) {
+      _mostrarMensaje('"${producto.nombre}" no tiene un precio configurado');
+      return;
+    }
+    await _procesarProductoSeleccionado(ProductoConPrecio(producto: producto, precio: precio, nivelPrecio: 1));
+  }
+
+  double? _primerPrecioDisponible(ProductoModel p) {
+    for (final valor in [p.precioVenta, p.precioVenta2, p.precioVenta3]) {
+      if (valor > 0) return valor;
+    }
+    return null;
+  }
+
+  Future<void> _abrirEscaneoRemoto() async {
+    await showDialog(
+      context: context,
+      builder: (context) => EscanearRemotoDialog(alRecibirCodigo: (codigo) => _procesarCodigoEscaneadoRemoto(codigo)),
+    );
   }
 
   void _quitarItem(int index) {
@@ -1327,6 +1371,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   children: [
                     Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
                     const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: _abrirEscaneoRemoto,
+                      icon: const Icon(Icons.qr_code_scanner, size: 18),
+                      label: Text('Escanear con celular', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1A1A1A),
+                        side: const BorderSide(color: Color(0xFFB6BCC7)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     FilledButton.icon(
                       onPressed: _agregarProductoDesdeBusqueda,
                       icon: const Icon(Icons.add, size: 18),
