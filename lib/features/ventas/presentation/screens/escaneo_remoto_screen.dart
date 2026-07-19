@@ -31,20 +31,29 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
   String? _ultimoCodigoDetectado;
   DateTime? _ultimoEnvioFecha;
 
+  bool _yaAvisoConectado = false;
+
   @override
   void initState() {
     super.initState();
-    // Suscripción en vivo (no una comprobación única al abrir): si la PC
-    // cierra la ventana del QR, borra la sesión en Firestore, y esto se
-    // entera al instante aunque la cámara del celular siga abierta — así
-    // nunca manda un código "al aire" después de que la PC dejó de
-    // escuchar, que es justo lo que pasaba antes.
+    // Suscripción en vivo (no una comprobación única al abrir): la sesión
+    // solo deja de existir cuando en la PC se toca "Finalizar escaneo" o se
+    // cierra la pestaña de venta — no por cerrar la ventanita del QR — y
+    // esto se entera al instante en cualquiera de esos casos, aunque la
+    // cámara del celular siga abierta.
     _suscripcionSesion = _repo.existeSesionEnVivo(widget.codigo).listen((existe) {
       if (!mounted) return;
       setState(() {
         _sesionValida = existe;
         _verificando = false;
       });
+      // Le avisa a la PC que el celular ya llegó a la cámara para que
+      // pueda cerrar sola la ventanita del QR, sin que el usuario tenga
+      // que hacerlo a mano.
+      if (existe && !_yaAvisoConectado) {
+        _yaAvisoConectado = true;
+        _repo.marcarConectado(widget.codigo);
+      }
     });
   }
 

@@ -28,11 +28,23 @@ class EscaneoRemotoRepository {
   }
 
   /// El celular se suscribe a esto (en vez de solo comprobar una vez al
-  /// abrir) para enterarse al instante si la PC cerró la ventana del QR: en
-  /// ese caso `eliminarSesion` borra este documento, y el celular tiene que
-  /// dejar de mandar códigos aunque la cámara siga abierta.
+  /// abrir) para enterarse al instante si la sesión terminó de verdad
+  /// (`eliminarSesion`, al tocar "Finalizar escaneo" o cerrar la pestaña de
+  /// venta): recién ahí el celular deja de mandar códigos, aunque la cámara
+  /// siga abierta.
   Stream<bool> existeSesionEnVivo(String codigo) {
     return _col.doc(codigo).snapshots().map((snap) => snap.exists);
+  }
+
+  /// El celular marca esto apenas confirma la sesión y muestra la cámara,
+  /// para que la PC sepa que ya se emparejó y pueda cerrar solo la ventanita
+  /// del QR (sin necesidad de que el usuario la cierre a mano).
+  Future<void> marcarConectado(String codigo) async {
+    await _col.doc(codigo).set({'conectado': true, 'conectadoEn': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+  }
+
+  Stream<bool> escucharConectado(String codigo) {
+    return _col.doc(codigo).snapshots().map((snap) => (snap.data()?['conectado'] as bool?) ?? false);
   }
 
   Future<void> enviarCodigo(String codigoSesion, String codigoEscaneado) async {

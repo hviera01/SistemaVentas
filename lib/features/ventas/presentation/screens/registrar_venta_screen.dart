@@ -81,7 +81,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // en la PC (que solo sirve para volver a mostrar el QR cuando haga falta).
   final _escaneoRemoto = EscaneoRemotoRepository();
   String? _codigoEscaneoRemoto;
+  bool _escaneoRemotoConectado = false;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _suscripcionEscaneoRemoto;
+  StreamSubscription<bool>? _suscripcionConectadoEscaneo;
 
   // Controladores para la edición inline (cantidad / precio / descuento) de
   // cada fila de la tabla de productos. Se reindexan cuando cambia el total
@@ -140,6 +142,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // pero cierra la sesión de escaneo remoto si quedó una activa al
     // abandonar esta pestaña de venta.
     _suscripcionEscaneoRemoto?.cancel();
+    _suscripcionConectadoEscaneo?.cancel();
     final codigoEscaneo = _codigoEscaneoRemoto;
     if (codigoEscaneo != null) _escaneoRemoto.eliminarSesion(codigoEscaneo);
     _nombreClienteController.dispose();
@@ -345,6 +348,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final codigo = _escaneoRemoto.generarCodigo();
     await _escaneoRemoto.crearSesion(codigo);
     _codigoEscaneoRemoto = codigo;
+    _escaneoRemotoConectado = false;
     _suscripcionEscaneoRemoto = _escaneoRemoto.escucharEventos(codigo).listen((snap) {
       for (final cambio in snap.docChanges) {
         if (cambio.type != DocumentChangeType.added) continue;
@@ -354,6 +358,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         }
       }
     });
+    // El celular marca "conectado" apenas llega a la cámara (ver
+    // EscaneoRemotoScreen): con esto la pantalla sabe en vivo si ya hay
+    // alguien escaneando, para decidir qué mostrar al tocar el botón de
+    // nuevo (el QR otra vez, o el menú de "escaneo activo").
+    _suscripcionConectadoEscaneo = _escaneoRemoto.escucharConectado(codigo).listen((conectado) {
+      if (mounted) setState(() => _escaneoRemotoConectado = conectado);
+    });
     return codigo;
   }
 
@@ -361,12 +372,40 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final codigo = _codigoEscaneoRemoto;
     if (codigo == null) return;
     await _suscripcionEscaneoRemoto?.cancel();
+    await _suscripcionConectadoEscaneo?.cancel();
     _suscripcionEscaneoRemoto = null;
+    _suscripcionConectadoEscaneo = null;
     _codigoEscaneoRemoto = null;
+    if (mounted) setState(() => _escaneoRemotoConectado = false);
     await _escaneoRemoto.eliminarSesion(codigo);
   }
 
+  /// Si ya hay un celular conectado y escaneando, tocar el botón de nuevo no
+  /// vuelve a mostrar el QR (no hace falta, ya está emparejado): muestra un
+  /// menú para terminar el escaneo o arrancar de cero con otro celular. Si
+  /// todavía no se conectó nadie (o no hay sesión), muestra el QR, que se
+  /// cierra solo apenas el celular se empareje.
   Future<void> _abrirEscaneoRemoto() async {
+    if (_codigoEscaneoRemoto != null && _escaneoRemotoConectado) {
+      final codigoActivo = _codigoEscaneoRemoto!;
+      await showDialog(
+        context: context,
+        builder: (context) => EscaneoActivoDialog(
+          eventos: _escaneoRemoto.escucharEventos(codigoActivo),
+          alFinalizar: () async {
+            Navigator.pop(context);
+            await _finalizarEscaneoRemoto();
+          },
+          alEscanearOtro: () async {
+            Navigator.pop(context);
+            await _finalizarEscaneoRemoto();
+            await _abrirEscaneoRemoto();
+          },
+        ),
+      );
+      return;
+    }
+
     final codigo = await _asegurarSesionEscaneoRemoto();
     if (!mounted) return;
     await showDialog(
@@ -374,10 +413,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       builder: (context) => EscanearRemotoDialog(
         codigo: codigo,
         eventos: _escaneoRemoto.escucharEventos(codigo),
-        alFinalizar: () {
-          Navigator.pop(context);
-          _finalizarEscaneoRemoto();
-        },
+        conectado: _escaneoRemoto.escucharConectado(codigo),
       ),
     );
   }
@@ -1432,11 +1468,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     const Spacer(),
                     OutlinedButton.icon(
                       onPressed: _abrirEscaneoRemoto,
-                      icon: const Icon(Icons.qr_code_scanner, size: 18),
-                      label: Text('Escanear con celular', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                      icon: Icon(_escaneoRemotoConectado ? Icons.wifi_tethering : Icons.qr_code_scanner, size: 18, color: _escaneoRemotoConectado ? Colors.green.shade600 : null),
+                      label: Text(
+                        _escaneoRemotoConectado ? 'Escaneo activo' : 'Escanear con celular',
+                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _escaneoRemotoConectado ? Colors.green.shade700 : null),
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFB6BCC7)),
+                        side: BorderSide(color: _escaneoRemotoConectado ? Colors.green.shade400 : const Color(0xFFB6BCC7)),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -1620,18 +1659,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       style: GoogleFonts.poppins(fontSize: 13),
       decoration: InputDecoration(
         suffixText: sufijo,
-        // En escritorio (Windows y web en computadora) se agrega un ícono
-        // para abrir un teclado numérico en pantalla, para quien prefiera
-        // cambiar el valor a clics de mouse en vez de escribir con el
-        // teclado físico (que sigue funcionando igual, con Enter para
-        // confirmar). En móvil no hace falta: ya está el teclado del SO.
-        suffixIcon: esMovil
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.dialpad, size: 18),
-                tooltip: 'Teclado numérico',
-                onPressed: abrirTecladoNumerico,
-              ),
         filled: true,
         fillColor: const Color(0xFFE8EAF0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
