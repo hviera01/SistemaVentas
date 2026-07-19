@@ -287,12 +287,23 @@ class VentaExportService {
     );
   }
 
-  Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio) async {
+  // [forzarCopia] es para cuando se reimprime desde Detalle de Venta y el
+  // usuario elige explícitamente si quiere una hoja que diga "ORIGINAL" o
+  // "COPIA": si se manda, se imprime solo esa (una sola página), sin importar
+  // negocio.facturaImprimirCopia. Si se deja en null, es el comportamiento de
+  // siempre (al momento de la venta): ORIGINAL, y además COPIA si el negocio
+  // tiene esa opción activada.
+  Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio, {bool? forzarCopia}) async {
     final doc = pw.Document();
     // maxDimension más alto que el default acá: el logo del ticket ahora se
     // imprime más grande (ver _construirPaginaTicket), y con la resolución
     // chica que alcanza para un logo de cabecera normal se vería borroso.
     final logo = decodificarLogoPdf(negocio.logoBnBase64, maxDimension: 400);
+
+    if (forzarCopia != null) {
+      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: forzarCopia));
+      return doc.save();
+    }
 
     doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false));
     if (negocio.facturaImprimirCopia) {

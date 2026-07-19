@@ -27,6 +27,14 @@ class EscaneoRemotoRepository {
     return snap.exists;
   }
 
+  /// El celular se suscribe a esto (en vez de solo comprobar una vez al
+  /// abrir) para enterarse al instante si la PC cerró la ventana del QR: en
+  /// ese caso `eliminarSesion` borra este documento, y el celular tiene que
+  /// dejar de mandar códigos aunque la cámara siga abierta.
+  Stream<bool> existeSesionEnVivo(String codigo) {
+    return _col.doc(codigo).snapshots().map((snap) => snap.exists);
+  }
+
   Future<void> enviarCodigo(String codigoSesion, String codigoEscaneado) async {
     await _col.doc(codigoSesion).collection('eventos').add({
       'codigo': codigoEscaneado,

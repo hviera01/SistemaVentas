@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -21,6 +22,7 @@ class EscaneoRemotoScreen extends StatefulWidget {
 class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
   final _repo = EscaneoRemotoRepository();
   final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.normal);
+  StreamSubscription<bool>? _suscripcionSesion;
 
   bool _verificando = true;
   bool _sesionValida = false;
@@ -32,25 +34,29 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
   @override
   void initState() {
     super.initState();
-    _verificarSesion();
-  }
-
-  Future<void> _verificarSesion() async {
-    final existe = await _repo.existeSesion(widget.codigo);
-    if (!mounted) return;
-    setState(() {
-      _sesionValida = existe;
-      _verificando = false;
+    // Suscripción en vivo (no una comprobación única al abrir): si la PC
+    // cierra la ventana del QR, borra la sesión en Firestore, y esto se
+    // entera al instante aunque la cámara del celular siga abierta — así
+    // nunca manda un código "al aire" después de que la PC dejó de
+    // escuchar, que es justo lo que pasaba antes.
+    _suscripcionSesion = _repo.existeSesionEnVivo(widget.codigo).listen((existe) {
+      if (!mounted) return;
+      setState(() {
+        _sesionValida = existe;
+        _verificando = false;
+      });
     });
   }
 
   @override
   void dispose() {
+    _suscripcionSesion?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   void _alDetectar(BarcodeCapture captura) {
+    if (!_sesionValida) return;
     final codigos = captura.barcodes;
     if (codigos.isEmpty) return;
     final valor = codigos.first.rawValue;
@@ -90,7 +96,9 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
                 const Icon(Icons.error_outline, color: Colors.white, size: 40),
                 const SizedBox(height: 12),
                 Text(
-                  'Este código de escaneo ya no es válido. Volvé a la PC y abrí el QR de nuevo.',
+                  _enviados > 0
+                      ? 'Se cerró la ventana de escaneo en la PC. Si querés seguir agregando productos, volvé a la PC y abrí el QR de nuevo.'
+                      : 'Este código de escaneo ya no es válido. Volvé a la PC y abrí el QR de nuevo.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
                 ),

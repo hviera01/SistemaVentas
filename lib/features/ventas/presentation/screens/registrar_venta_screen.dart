@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../data/escaneo_remoto_repository.dart';
 import '../../data/venta_en_espera_model.dart';
 import '../../data/venta_export_service.dart';
 import '../../data/venta_model.dart';
@@ -72,6 +74,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _servicioImpresoraRed = ImpresoraRedService();
   bool _guardando = false;
 
+  // Escaneo remoto por celular (ver EscanearRemotoDialog/EscaneoRemotoScreen):
+  // la sesión y su escucha viven acá, en el estado de la pantalla, no dentro
+  // del diálogo del QR — así el celular puede seguir mandando códigos
+  // mientras tenga la cámara abierta aunque el usuario cierre esa ventanita
+  // en la PC (que solo sirve para volver a mostrar el QR cuando haga falta).
+  final _escaneoRemoto = EscaneoRemotoRepository();
+  String? _codigoEscaneoRemoto;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _suscripcionEscaneoRemoto;
+
   // Controladores para la edición inline (cantidad / precio / descuento) de
   // cada fila de la tabla de productos. Se reindexan cuando cambia el total
   // de filas (agregar/quitar producto).
@@ -125,6 +136,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
+    // Best-effort: no se espera a que termine (dispose no puede ser async),
+    // pero cierra la sesión de escaneo remoto si quedó una activa al
+    // abandonar esta pestaña de venta.
+    _suscripcionEscaneoRemoto?.cancel();
+    final codigoEscaneo = _codigoEscaneoRemoto;
+    if (codigoEscaneo != null) _escaneoRemoto.eliminarSesion(codigoEscaneo);
     _nombreClienteController.dispose();
     _documentoClienteController.dispose();
     _ocController.dispose();
@@ -316,10 +333,52 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return null;
   }
 
+  /// Crea la sesión de escaneo remoto la primera vez que hace falta y deja
+  /// la escucha corriendo en el estado de la pantalla (no en el diálogo del
+  /// QR), para que el celular pueda seguir mandando códigos aunque el
+  /// usuario cierre esa ventanita en la PC. Si ya había una sesión activa
+  /// (el usuario vuelve a tocar el botón para ver el QR de nuevo), reusa el
+  /// mismo código en vez de crear uno nuevo.
+  Future<String> _asegurarSesionEscaneoRemoto() async {
+    final codigoActual = _codigoEscaneoRemoto;
+    if (codigoActual != null) return codigoActual;
+    final codigo = _escaneoRemoto.generarCodigo();
+    await _escaneoRemoto.crearSesion(codigo);
+    _codigoEscaneoRemoto = codigo;
+    _suscripcionEscaneoRemoto = _escaneoRemoto.escucharEventos(codigo).listen((snap) {
+      for (final cambio in snap.docChanges) {
+        if (cambio.type != DocumentChangeType.added) continue;
+        final codigoEscaneado = cambio.doc.data()?['codigo'] as String?;
+        if (codigoEscaneado != null && codigoEscaneado.isNotEmpty) {
+          _procesarCodigoEscaneadoRemoto(codigoEscaneado);
+        }
+      }
+    });
+    return codigo;
+  }
+
+  Future<void> _finalizarEscaneoRemoto() async {
+    final codigo = _codigoEscaneoRemoto;
+    if (codigo == null) return;
+    await _suscripcionEscaneoRemoto?.cancel();
+    _suscripcionEscaneoRemoto = null;
+    _codigoEscaneoRemoto = null;
+    await _escaneoRemoto.eliminarSesion(codigo);
+  }
+
   Future<void> _abrirEscaneoRemoto() async {
+    final codigo = await _asegurarSesionEscaneoRemoto();
+    if (!mounted) return;
     await showDialog(
       context: context,
-      builder: (context) => EscanearRemotoDialog(alRecibirCodigo: (codigo) => _procesarCodigoEscaneadoRemoto(codigo)),
+      builder: (context) => EscanearRemotoDialog(
+        codigo: codigo,
+        eventos: _escaneoRemoto.escucharEventos(codigo),
+        alFinalizar: () {
+          Navigator.pop(context);
+          _finalizarEscaneoRemoto();
+        },
+      ),
     );
   }
 
@@ -1579,6 +1638,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      // En escritorio, un clic en el campo (no solo en el ícono) ya abre el
+      // teclado numérico, para que quede claro que se está por cambiar ese
+      // valor. onTap es un gesto (no se dispara al recuperar el foco
+      // programáticamente cuando se cierra el diálogo), así que no hay
+      // riesgo de que se vuelva a abrir solo. Escribir con el teclado físico
+      // y darle Enter sigue funcionando igual, sin pasar por el diálogo.
+      onTap: esMovil ? null : abrirTecladoNumerico,
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     );

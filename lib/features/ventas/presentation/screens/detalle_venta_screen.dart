@@ -119,9 +119,35 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     });
   }
 
+  /// Al reimprimir se le pregunta al usuario si esa hoja va a decir
+  /// "ORIGINAL" o "COPIA" (por ejemplo, si el original ya se le dio al
+  /// cliente y ahora hace falta una copia para el archivo del negocio, o al
+  /// revés). Devuelve true para copia, false para original, null si canceló.
+  Future<bool?> _elegirOriginalOCopia() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Reimprimir', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text('¿La hoja reimpresa debe decir "ORIGINAL" o "COPIA"?', style: GoogleFonts.poppins(fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: Text('Original', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Copia', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _reimprimir() async {
     final venta = _venta;
     if (venta == null) return;
+    final esCopia = await _elegirOriginalOCopia();
+    if (esCopia == null || !mounted) return;
     setState(() => _procesandoPdf = true);
     try {
       final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
@@ -130,9 +156,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       await showDialog(
         context: context,
         builder: (context) => PdfPreviewDialog(
-          titulo: 'Vista previa · ${venta.numeroDocumento}',
+          titulo: 'Vista previa · ${venta.numeroDocumento} (${esCopia ? 'copia' : 'original'})',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
-          generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
+          generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia),
           impresora: impresora,
         ),
       );
