@@ -2,15 +2,21 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 class PdfPreviewDialog extends StatefulWidget {
   final String titulo;
   final Future<Uint8List> Function() generarPdf;
+  // Opcional: para imprimir directo en Windows, algunos PDF (el ticket
+  // térmico) necesitan saber el formato real que reporta la impresora
+  // seleccionada para no salir desalineados (ver venta_export_service.dart).
+  // Si no se manda, se usa generarPdf() igual que siempre.
+  final Future<Uint8List> Function(PdfPageFormat formato)? generarPdfConFormato;
   final String nombreArchivo;
   final Printer? impresora;
 
-  const PdfPreviewDialog({super.key, required this.titulo, required this.generarPdf, required this.nombreArchivo, this.impresora});
+  const PdfPreviewDialog({super.key, required this.titulo, required this.generarPdf, this.generarPdfConFormato, required this.nombreArchivo, this.impresora});
 
   @override
   State<PdfPreviewDialog> createState() => _PdfPreviewDialogState();
@@ -24,7 +30,11 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
     if (impresora == null) return;
     setState(() => _imprimiendo = true);
     try {
-      await Printing.directPrintPdf(printer: impresora, onLayout: (format) => widget.generarPdf());
+      final generarConFormato = widget.generarPdfConFormato;
+      await Printing.directPrintPdf(
+        printer: impresora,
+        onLayout: generarConFormato != null ? (format) => generarConFormato(format) : (format) => widget.generarPdf(),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo imprimir en la impresora configurada')));

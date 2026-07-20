@@ -901,6 +901,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           titulo: 'Vista previa · ${venta.numeroDocumento}',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
+          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato),
           impresora: impresora,
         ),
       );
@@ -960,7 +961,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
     try {
       final impresora = Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
-      await Printing.directPrintPdf(printer: impresora, onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio));
+      await Printing.directPrintPdf(printer: impresora, onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato));
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir en la impresora configurada');
     }
@@ -1635,10 +1636,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       final texto = controlador.text.replaceAll(',', '').trim();
       final valor = double.tryParse(texto);
       if (valor == null) return;
-      // En móvil (web y APK), si escribió un número entero sin poner el
-      // ".00" (más incómodo de tipear en el teclado numérico del celular),
-      // se completa solo para que el campo quede prolijo.
-      if (esMovil && !texto.contains('.')) {
+      // Si escribió un número entero sin poner el ".00" se completa solo
+      // (en cualquier plataforma, no solo móvil), para que el campo quede
+      // prolijo y coincida con lo que realmente se aplicó.
+      if (!texto.contains('.')) {
         controlador.text = valor.toStringAsFixed(2);
       }
       if ((valor - valorActual).abs() < 0.005) return;

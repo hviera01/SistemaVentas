@@ -163,6 +163,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           titulo: 'Vista previa · ${venta.numeroDocumento} (${esCopia ? 'copia' : 'original'})',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia),
+          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia, formatoImpresora: formato),
           impresora: impresora,
         ),
       );

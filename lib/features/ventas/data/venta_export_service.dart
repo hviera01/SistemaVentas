@@ -314,23 +314,42 @@ class VentaExportService {
   // negocio.facturaImprimirCopia. Si se deja en null, es el comportamiento de
   // siempre (al momento de la venta): ORIGINAL, y además COPIA si el negocio
   // tiene esa opción activada.
-  Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio, {bool? forzarCopia}) async {
+  //
+  // [formatoImpresora] es el `format` que el propio paquete `printing` le
+  // pasa a `onLayout` con el tamaño de página real que espera la impresora
+  // seleccionada en Windows (según su configuración en el sistema). En web
+  // sale centrado sin este dato porque el navegador reescala/ubica solo,
+  // pero en el .exe de Windows, si armamos el PDF con un ancho fijo de 80mm
+  // que no coincide exactamente con lo que el driver de la impresora tiene
+  // configurado, el resultado queda con el contenido pegado a un lado en vez
+  // de centrado. Si viene un formato que parece de rollo térmico (entre 40 y
+  // 120mm de ancho) se usa ese ancho real en vez del fijo; si no, se sigue
+  // usando 80mm como hasta ahora.
+  Future<Uint8List> generarPdfFactura(VentaModel venta, NegocioModel negocio, {bool? forzarCopia, PdfPageFormat? formatoImpresora}) async {
     final doc = pw.Document();
     // maxDimension más alto que el default acá: el logo del ticket ahora se
     // imprime más grande (ver _construirPaginaTicket), y con la resolución
     // chica que alcanza para un logo de cabecera normal se vería borroso.
     final logo = decodificarLogoPdf(negocio.logoBnBase64, maxDimension: 400);
+    final anchoMm = _anchoValidoDesdeFormato(formatoImpresora);
 
     if (forzarCopia != null) {
-      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: forzarCopia));
+      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: forzarCopia, anchoMm: anchoMm));
       return doc.save();
     }
 
-    doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false));
+    doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false, anchoMm: anchoMm));
     if (negocio.facturaImprimirCopia) {
-      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true));
+      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: true, anchoMm: anchoMm));
     }
     return doc.save();
+  }
+
+  double? _anchoValidoDesdeFormato(PdfPageFormat? formato) {
+    if (formato == null) return null;
+    final anchoMm = formato.width / PdfPageFormat.mm;
+    if (anchoMm < 40 || anchoMm > 120) return null;
+    return anchoMm;
   }
 
   // pw.MultiPage en vez de pw.Page: antes esto usaba una altura "infinita"
@@ -346,7 +365,7 @@ class VentaExportService {
   // que realmente va a imprimirse (ver _estimarAlturaTicketMm) en vez de un
   // valor fijo enorme: con una altura fija muy por encima de lo real, la
   // vista previa quedaba con un espacio en blanco gigante al final.
-  pw.Page _construirPaginaTicket(VentaModel venta, NegocioModel negocio, pw.MemoryImage? logo, {required bool esCopia}) {
+  pw.Page _construirPaginaTicket(VentaModel venta, NegocioModel negocio, pw.MemoryImage? logo, {required bool esCopia, double? anchoMm}) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final formatoDia = DateFormat('dd/MM/yyyy');
     const fSmall = 7.5;
@@ -382,9 +401,12 @@ class VentaExportService {
     // darle más margen de sobra SOLO en Windows nativo, dejando la web y el
     // APK exactamente como están (que ya imprimen bien).
     final margenMm = (!kIsWeb && Platform.isWindows) ? 9.0 : 5.0;
+    // Ancho real de la impresora (ver _anchoValidoDesdeFormato) si vino uno
+    // que parece de rollo térmico; si no, el fijo de siempre.
+    final anchoPaginaMm = anchoMm ?? 80.0;
 
     return pw.MultiPage(
-      pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, alturaMm * PdfPageFormat.mm, marginAll: margenMm * PdfPageFormat.mm),
+      pageFormat: PdfPageFormat(anchoPaginaMm * PdfPageFormat.mm, alturaMm * PdfPageFormat.mm, marginAll: margenMm * PdfPageFormat.mm),
       build: (context) {
         return [
             // Ancho fijo (en vez de alto) para que se vea grande y nítido sin
