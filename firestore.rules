@@ -105,6 +105,13 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Latido de presencia de la PC principal (ver
+    // PresenciaImpresionRepository): la PC escribe acá cada 25s mientras
+    // está abierta, y el celular lo lee antes de pedir impresión en vivo.
+    match /presenciaImpresion/{idDocumento} {
+      allow read, write: if true;
+    }
+
     match /cierresCaja/{idCierre} {
       allow read, write: if true;
     }
