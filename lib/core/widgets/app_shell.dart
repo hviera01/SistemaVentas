@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +9,10 @@ import '../models/tab_item.dart';
 import '../widgets/side_menu.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/negocio/providers/negocio_provider.dart';
+import '../../features/ventas/data/impresion_en_vivo_service.dart';
+import '../../features/ventas/data/venta_model.dart';
+import '../../features/ventas/providers/ventas_provider.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -16,6 +23,16 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   bool _menuAbierto = false;
+
+  // Esta es "la PC principal" (con impresora térmica conectada) solo cuando
+  // corre como app de escritorio nativa: ni en el navegador (ahí no hay
+  // forma de mandar un PDF directo a una impresora sin diálogo) ni en el
+  // celular. Solo esta plataforma envía latido de presencia y procesa
+  // solicitudes de impresión en vivo, ver PresenciaImpresionRepository.
+  final bool _esPcPrincipal = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+  Timer? _latidoTimer;
+  final _servicioImpresionEnVivo = ImpresionEnVivoService();
+  final _idsSolicitudEnProceso = <String>{};
 
   @override
   void initState() {
@@ -34,6 +51,49 @@ class _AppShellState extends ConsumerState<AppShell> {
         );
       }
     });
+
+    if (_esPcPrincipal) {
+      final presencia = ref.read(presenciaImpresionRepositoryProvider);
+      presencia.enviarLatido();
+      _latidoTimer = Timer.periodic(const Duration(seconds: 25), (_) => presencia.enviarLatido());
+    }
+  }
+
+  @override
+  void dispose() {
+    _latidoTimer?.cancel();
+    super.dispose();
+  }
+
+  // Se dispara sola apenas una venta hecha desde el celular pide impresión
+  // en vivo (ver RegistrarVentaScreen). No pregunta nada: imprime directo
+  // en la impresora configurada en esta PC, sin ningún diálogo. Si falla o
+  // no hay impresora configurada, no insiste: la venta ya había quedado
+  // como pendienteImpresion, así que sigue disponible ahí para resolverla
+  // a mano.
+  Future<void> _procesarSolicitudImpresionEnVivo(VentaModel venta) async {
+    if (_idsSolicitudEnProceso.contains(venta.id)) return;
+    _idsSolicitudEnProceso.add(venta.id);
+    try {
+      final ventaRepo = ref.read(ventaRepositoryProvider);
+      unawaited(ventaRepo.marcarSolicitudImpresionEnVivo(venta.id, false));
+      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final ventaCompleta = await ventaRepo.obtenerVentaPorId(venta.id);
+      if (ventaCompleta == null) return;
+      final ok = await _servicioImpresionEnVivo.imprimirSilencioso(ventaCompleta, negocio);
+      if (ok) {
+        await ventaRepo.marcarPendienteImpresion(venta.id, false);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Venta ${ventaCompleta.numeroDocumento} recibida desde el celular: no se pudo imprimir automáticamente, quedó en Pendientes de Impresión.'),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+    } finally {
+      _idsSolicitudEnProceso.remove(venta.id);
+    }
   }
 
   @override
@@ -41,6 +101,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     final tabsState = ref.watch(tabsProvider);
     final authState = ref.watch(authProvider);
     final usuario = authState.usuario;
+
+    if (_esPcPrincipal) {
+      ref.listen<AsyncValue<List<VentaModel>>>(ventasConSolicitudImpresionEnVivoStreamProvider, (previous, next) {
+        for (final venta in next.value ?? const <VentaModel>[]) {
+          unawaited(_procesarSolicitudImpresionEnVivo(venta));
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),

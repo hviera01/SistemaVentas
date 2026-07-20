@@ -32,6 +32,11 @@ class VentaModel {
   // venta hecha en el celular sin la impresora de red a mano. Se resuelve
   // reimprimiendo desde cualquier dispositivo (ver DetalleVentaScreen).
   final bool pendienteImpresion;
+  // true cuando esta venta (hecha desde el celular) le está pidiendo a la
+  // PC principal que la imprima automáticamente apenas la detecte, en vez
+  // de esperar a que alguien la resuelva a mano desde Pendientes de
+  // Impresión. Ver PresenciaImpresionRepository y el listener en AppShell.
+  final bool solicitudImpresionEnVivo;
 
   bool get estaAnulada => estado == 'Anulada';
 
@@ -62,6 +67,7 @@ class VentaModel {
     this.motivoAnulacion = '',
     this.fechaAnulacion,
     this.pendienteImpresion = false,
+    this.solicitudImpresionEnVivo = false,
   });
 
   factory VentaModel.fromMap(String id, Map<String, dynamic> data, List<ItemVentaModel> detalle) {
@@ -92,6 +98,7 @@ class VentaModel {
       motivoAnulacion: data['motivoAnulacion'] ?? '',
       fechaAnulacion: (data['fechaAnulacion'] as Timestamp?)?.toDate(),
       pendienteImpresion: data['pendienteImpresion'] ?? false,
+      solicitudImpresionEnVivo: data['solicitudImpresionEnVivo'] ?? false,
     );
   }
 }

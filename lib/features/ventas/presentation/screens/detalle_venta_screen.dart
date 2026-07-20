@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import '../../data/venta_model.dart';
 import '../../data/venta_export_service.dart';
+import '../../data/tipos_documento.dart';
 import '../../providers/carrito_provider.dart';
 import '../../providers/ventas_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -50,6 +51,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   bool _procesandoPdf = false;
   String? _error;
   bool _precioConIsv = true;
+  // Opcional: acota la búsqueda a un tipo de documento en particular. Hace
+  // falta porque Factura/Boleta y Cotización usan contadores separados pero
+  // el mismo relleno de 8 dígitos (ver VentaRepository.
+  // buscarVentasPorNumeroDocumento), así que un mismo número escrito sin
+  // ceros podría coincidir con más de una venta a la vez.
+  String? _tipoDocumentoFiltro;
 
   @override
   void initState() {
@@ -101,18 +108,62 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       _venta = null;
     });
     try {
-      final venta = await ref.read(ventaRepositoryProvider).obtenerVentaPorNumeroDocumento(texto);
+      final resultados = await ref.read(ventaRepositoryProvider).buscarVentasPorNumeroDocumento(texto, tipoDocumento: _tipoDocumentoFiltro);
       if (!mounted) return;
-      if (venta == null) {
+      if (resultados.isEmpty) {
         setState(() => _error = 'No se encontró ninguna venta con ese número de documento');
+      } else if (resultados.length == 1) {
+        setState(() => _venta = resultados.first);
       } else {
-        setState(() => _venta = venta);
+        final elegida = await _elegirEntreVarias(resultados);
+        if (!mounted) return;
+        if (elegida != null) {
+          setState(() => _venta = elegida);
+        } else {
+          setState(() => _error = 'Hay más de una venta con ese número: elegí el tipo de documento para buscar más preciso');
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _error = 'Error al buscar: $e');
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  /// Cuando el número escrito (sin ceros de relleno) coincide con más de
+  /// una venta -típicamente una Factura/Boleta y una Cotización con el
+  /// mismo número, ver VentaRepository.buscarVentasPorNumeroDocumento- se
+  /// le pide al usuario que elija cuál era.
+  Future<VentaModel?> _elegirEntreVarias(List<VentaModel> ventas) {
+    final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
+    return showDialog<VentaModel>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Hay más de una venta con ese número', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15)),
+        content: SizedBox(
+          width: 380,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: ventas.length,
+            separatorBuilder: (context, i) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              final v = ventas[i];
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('${tiposDocumento[v.tipoDocumento] ?? v.tipoDocumento} · ${v.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  '${v.nombreCliente.isEmpty ? 'Sin cliente' : v.nombreCliente}${v.fechaRegistro != null ? ' · ${formatoFecha.format(v.fechaRegistro!)}' : ''}',
+                  style: GoogleFonts.poppins(fontSize: 11.5),
+                ),
+                onTap: () => Navigator.pop(context, v),
+              );
+            },
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins()))],
+      ),
+    );
   }
 
   void _limpiar() {
@@ -368,6 +419,27 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                           isDense: true,
                         ),
                         onSubmitted: (_) => _buscarPorNumero(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: esMovil ? tamano.width - 28 : 200,
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _tipoDocumentoFiltro,
+                          isExpanded: true,
+                          hint: Text('Tipo (todos)', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
+                          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                          items: [
+                            DropdownMenuItem<String?>(value: null, child: Text('Tipo (todos)', style: GoogleFonts.poppins(fontSize: 13))),
+                            ...tiposDocumento.entries.map((e) => DropdownMenuItem<String?>(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))),
+                          ],
+                          onChanged: (v) => setState(() => _tipoDocumentoFiltro = v),
+                        ),
                       ),
                     ),
                   ),

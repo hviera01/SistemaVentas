@@ -267,6 +267,25 @@ class VentaRepository {
     }
   }
 
+  // Best-effort, mismo criterio que marcarPendienteImpresion.
+  Future<void> marcarSolicitudImpresionEnVivo(String id, bool valor) async {
+    try {
+      await _colVentas.doc(id).update({'solicitudImpresionEnVivo': valor});
+    } on FirebaseException catch (e) {
+      if (e.code != 'not-found' && e.code != 'invalid-argument') rethrow;
+    }
+  }
+
+  /// Ventas pendientes de impresión que además le están pidiendo a la PC
+  /// principal que la imprima automáticamente apenas la detecte (ver
+  /// AppShell). Sin `orderBy` por el mismo motivo que
+  /// obtenerVentasPendientesImpresion.
+  Stream<List<VentaModel>> obtenerVentasConSolicitudImpresionEnVivo() {
+    return _colVentas.where('solicitudImpresionEnVivo', isEqualTo: true).snapshots().map((snap) {
+      return snap.docs.map((d) => VentaModel.fromMap(d.id, d.data(), const [])).toList();
+    });
+  }
+
   Future<VentaModel?> obtenerVentaPorId(String id) async {
     final snap = await _colVentas.doc(id).get();
     if (!snap.exists) return null;
@@ -284,6 +303,40 @@ class VentaRepository {
     final detalleSnap = await doc.reference.collection('detalle').get();
     final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
     return VentaModel.fromMap(doc.id, doc.data(), items);
+  }
+
+  /// Busca ventas por número de documento sin que el usuario tenga que
+  /// escribir los ceros de relleno (por ejemplo "5" en vez de "00000005"):
+  /// arma las variantes rellenadas posibles -8 dígitos para Factura/Boleta/
+  /// Cotización, 4 para Venta Sin Facturar (ver _formatearCorrelativo)- y
+  /// las busca todas. Si se indica [tipoDocumento] filtra además por ese
+  /// tipo: hace falta porque Factura/Boleta y Cotización usan contadores
+  /// separados pero el mismo relleno de 8 dígitos, así que un mismo número
+  /// bien podría coincidir con una Factura Y una Cotización a la vez. Cada
+  /// candidato se busca con una consulta de igualdad simple (no `whereIn`)
+  /// para no depender de un índice compuesto.
+  Future<List<VentaModel>> buscarVentasPorNumeroDocumento(String texto, {String? tipoDocumento}) async {
+    final limpio = texto.trim();
+    if (limpio.isEmpty) return [];
+
+    final candidatos = <String>{limpio};
+    if (RegExp(r'^\d+$').hasMatch(limpio)) {
+      candidatos.add(limpio.padLeft(8, '0'));
+      candidatos.add(limpio.padLeft(4, '0'));
+    }
+
+    final snaps = await Future.wait(candidatos.map((c) => _colVentas.where('numeroDocumento', isEqualTo: c).get()));
+    final docs = snaps.expand((s) => s.docs).toList();
+
+    final resultados = <VentaModel>[];
+    for (final doc in docs) {
+      if (tipoDocumento != null && tipoDocumento.isNotEmpty && doc.data()['tipoDocumento'] != tipoDocumento) continue;
+      final detalleSnap = await doc.reference.collection('detalle').get();
+      final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+      resultados.add(VentaModel.fromMap(doc.id, doc.data(), items));
+    }
+    resultados.sort((a, b) => (b.fechaRegistro ?? DateTime(0)).compareTo(a.fechaRegistro ?? DateTime(0)));
+    return resultados;
   }
 
   /// Anula una venta: la marca como 'Anulada', repone al inventario el stock

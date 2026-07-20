@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../data/escaneo_remoto_repository.dart';
+import '../../../../core/utils/beep.dart';
 
 /// Pantalla que abre el celular al escanear el QR que muestra la PC (ver
 /// EscanearRemotoDialog): no pide iniciar sesión (se llega acá directo desde
@@ -28,10 +29,15 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
   bool _sesionValida = false;
   int _enviados = 0;
   String? _ultimoEnviado;
-  String? _ultimoCodigoDetectado;
-  DateTime? _ultimoEnvioFecha;
 
   bool _yaAvisoConectado = false;
+
+  // Mientras está en true se ignora cualquier detección nueva: es la
+  // pausa que sigue a cada envío (con beep + aviso grande en pantalla) para
+  // que el usuario tenga tiempo de notar que ya se mandó ese código antes
+  // de que la cámara pueda volver a leer el mismo (o el siguiente) sin que
+  // se dé cuenta.
+  bool _mostrandoConfirmacion = false;
 
   @override
   void initState() {
@@ -65,26 +71,25 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
   }
 
   void _alDetectar(BarcodeCapture captura) {
-    if (!_sesionValida) return;
+    if (!_sesionValida || _mostrandoConfirmacion) return;
     final codigos = captura.barcodes;
     if (codigos.isEmpty) return;
     final valor = codigos.first.rawValue;
     if (valor == null || valor.isEmpty) return;
 
-    // Evita mandar el mismo código repetido mientras sigue en cuadro (la
-    // cámara lo vuelve a detectar en cada frame): solo se reenvía si cambió
-    // el código o pasaron más de 2 segundos desde el último envío.
-    final ahora = DateTime.now();
-    if (valor == _ultimoCodigoDetectado && _ultimoEnvioFecha != null && ahora.difference(_ultimoEnvioFecha!) < const Duration(seconds: 2)) {
-      return;
-    }
-    _ultimoCodigoDetectado = valor;
-    _ultimoEnvioFecha = ahora;
-
     _repo.enviarCodigo(widget.codigo, valor);
+    reproducirBeep();
     setState(() {
       _enviados++;
       _ultimoEnviado = valor;
+      _mostrandoConfirmacion = true;
+    });
+    // Mientras dure esta pausa se ignora cualquier otra detección (ver
+    // _alDetectar de arriba): le da tiempo al usuario a ver el aviso "✓
+    // Enviado" en pantalla y alejar el celular del código antes de que la
+    // cámara pueda volver a leerlo (o leer el siguiente) sin darse cuenta.
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _mostrandoConfirmacion = false);
     });
   }
 
@@ -158,12 +163,38 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
           ),
           IgnorePointer(
             child: Center(
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
                 width: 260,
                 height: 160,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 2),
+                  border: Border.all(color: _mostrandoConfirmacion ? const Color(0xFF4CAF50) : Colors.white.withValues(alpha: 0.85), width: _mostrandoConfirmacion ? 4 : 2),
                   borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+          // Aviso grande en el centro de la pantalla mientras dura la pausa
+          // de confirmación (ver _alDetectar): junto con el beep, es lo que
+          // evita que el usuario pase el mismo código dos veces sin notarlo.
+          IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: _mostrandoConfirmacion ? 1 : 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                  decoration: BoxDecoration(color: const Color(0xFF2E7D32), borderRadius: BorderRadius.circular(18)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white, size: 34),
+                      const SizedBox(height: 6),
+                      Text('Código enviado', style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                      if (_ultimoEnviado != null)
+                        Text(_ultimoEnviado!, style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
             ),

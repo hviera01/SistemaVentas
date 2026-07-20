@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../utils/beep.dart';
 
 /// Abre la pantalla de escaneo y devuelve el código leído (o null si se
 /// canceló). Uso: `final codigo = await escanearCodigoBarras(context);`
@@ -38,6 +39,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     final valor = codigos.first.rawValue;
     if (valor == null || valor.isEmpty) return;
     _detectado = true;
+    reproducirBeep();
     Navigator.pop(context, valor);
   }
 

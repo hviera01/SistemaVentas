@@ -8,6 +8,7 @@ import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 /// Resultado de elegir un producto (y el nivel de precio con el que se va a
@@ -120,15 +121,24 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   /// tocar el botón de buscar. Si el texto tiene una sola coincidencia (por
   /// ejemplo, un código exacto leído con lector de código de barras) se
   /// agrega directo, sin necesidad de un segundo Enter para confirmar.
+  bool _coincideExacto(ProductoModel p, String texto) => p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
+
   void _buscar({bool exacta = false}) {
-    final texto = _busquedaController.text.trim();
+    var texto = _busquedaController.text.trim();
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    // Si la búsqueda viene de un código escaneado y no matchea a nada, se
+    // prueba con el código invertido (ver invertirCodigoBarras): corrige el
+    // caso de algunos celulares que leen el código de barras al revés.
+    if (exacta && texto.isNotEmpty && !productos.any((p) => p.estado && _coincideExacto(p, texto))) {
+      final invertido = invertirCodigoBarras(texto);
+      if (productos.any((p) => p.estado && _coincideExacto(p, invertido))) texto = invertido;
+    }
     setState(() {
       _busquedaAplicada = texto;
       _filaSeleccionada = null;
       _busquedaExacta = exacta;
     });
     if (texto.isEmpty) return;
-    final productos = ref.read(productosStreamProvider).value ?? [];
     final coincidencias = productos.where((p) => p.estado && _coincide(p, texto)).toList();
     if (coincidencias.length == 1) {
       _confirmarSeleccion(coincidencias.first);
@@ -136,7 +146,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   }
 
   bool _coincide(ProductoModel p, String texto) {
-    if (_busquedaExacta) return p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
+    if (_busquedaExacta) return _coincideExacto(p, texto);
     return coincideFuzzy(p.textoBusqueda, texto);
   }
 

@@ -25,6 +25,7 @@ import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
@@ -35,15 +36,10 @@ import '../widgets/ventas_en_espera_dialog.dart';
 import '../widgets/ventas_pendientes_impresion_dialog.dart';
 import '../widgets/teclado_numerico_dialog.dart';
 import '../widgets/escanear_remoto_dialog.dart';
+import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia'];
-const _tiposDocumento = {
-  'Factura': 'Factura',
-  'Boleta': 'Boleta',
-  'Cotizacion': 'Cotización',
-  'VentaSinFacturar': 'Venta Sin Facturar',
-};
 
 class RegistrarVentaScreen extends ConsumerStatefulWidget {
   // Id de la pestaña donde vive esta pantalla (ver pantalla_builder.dart):
@@ -331,7 +327,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (!mounted) return;
     final texto = codigo.trim();
     final productos = ref.read(productosStreamProvider).value ?? [];
-    final coincidencias = productos.where((p) => p.estado && (p.codigoBarras.trim() == texto || p.codigo.trim() == texto)).toList();
+    bool coincide(ProductoModel p, String t) => p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
+    var coincidencias = productos.where((p) => coincide(p, texto)).toList();
+    if (coincidencias.isEmpty) {
+      // Ver invertirCodigoBarras: corrige el caso de algunos celulares que
+      // leen el código de barras al revés.
+      final invertido = invertirCodigoBarras(texto);
+      if (invertido != texto) {
+        coincidencias = productos.where((p) => coincide(p, invertido)).toList();
+      }
+    }
     if (coincidencias.isEmpty) {
       _mostrarMensaje('Código escaneado no encontrado: $texto');
       return;
@@ -819,7 +824,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         unawaited(_imprimirEnSegundoPlano(venta));
         if (negocio != null) _avisarSiRangoSuperado(negocio, venta);
       } else {
-        _mostrarMensaje('${_tiposDocumento[venta.tipoDocumento]} generada: ${venta.numeroDocumento}');
+        _mostrarMensaje('${tiposDocumento[venta.tipoDocumento]} generada: ${venta.numeroDocumento}');
       }
     } catch (e) {
       if (!mounted) return;
@@ -878,7 +883,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // - 'directo' en desktop: imprime sin diálogo en la impresora del SO
   //   configurada (paquete `printing`).
   // - 'directo' en iOS: se manda el ticket por ESC/POS a la impresora de red
-  //   configurada (no hay forma de listar impresoras del SO en móvil).
+  //   configurada (no hay forma de listar impresoras del SO en móvil). En
+  //   Android e iOS, si esto no funciona (ver _imprimirEscPosRed), se le
+  //   pide a la PC principal que imprima ella sola antes de dejarla
+  //   pendiente sin más.
   // - 'directo' en web: no se puede imprimir sin diálogo desde el
   //   navegador, así que se abre su diálogo de impresión directo (sin
   //   nuestra propia vista previa intermedia).
@@ -919,11 +927,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // una impresora térmica: los navegadors no dan acceso a sockets
       // crudos (lo que usa la impresora de red) ni, para una impresora
       // térmica típica, hay un diálogo de impresión del sistema operativo
-      // que la alcance. En vez de intentarlo y fallar en silencio, se marca
-      // pendiente de una vez para poder reimprimirla después desde un
-      // equipo que sí pueda.
-      _mostrarMensaje('No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión');
+      // que la alcance. Antes de resignarse a dejarla pendiente, se
+      // consulta si la PC principal está conectada en ese momento (envía un
+      // latido periódico, ver PresenciaImpresionRepository): si lo está, se
+      // le pide que la imprima ella sola apenas la detecte (sin que nadie
+      // tenga que confirmar nada ahí). Si no está conectada, o la consulta
+      // falla por falta de red, se cae exactamente al comportamiento de
+      // siempre: queda pendiente para reimprimir después a mano.
       await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
+      final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+      if (pcConectada) {
+        await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionEnVivo(venta.id, true);
+        _mostrarMensaje('Se envió la orden de impresión a la caja principal');
+      } else {
+        _mostrarMensaje('No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión');
+      }
       return;
     }
 
@@ -1002,17 +1020,27 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
   }
 
+  // Intenta imprimir por ESC/POS de red (Android/iOS). Si no hay impresora
+  // de red configurada en este equipo, o el intento falla -lo más común: el
+  // celular no está conectado a la misma red que la impresora-, antes de
+  // resignarse a dejarla pendiente se prueba pedirle a la PC principal que
+  // la imprima ella sola, igual que desde el navegador del celular (ver
+  // _manejarImpresion, rama kIsWeb && esMovil): en el celular casi nunca se
+  // va a poder llegar de verdad hasta la impresora física, así que este
+  // respaldo es el camino más común, no la excepción.
   Future<void> _imprimirEscPosRed(VentaModel venta, NegocioModel negocio) async {
-    if (negocio.impresoraRedIp.isEmpty) {
-      _mostrarMensaje('No hay impresora configurada: la venta quedó pendiente de impresión');
-      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
-      return;
+    if (negocio.impresoraRedIp.isNotEmpty) {
+      final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
+      final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+      if (ok) return;
     }
-    final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-    final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
-    if (!ok) {
+    await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
+    final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+    if (pcConectada) {
+      await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionEnVivo(venta.id, true);
+      _mostrarMensaje('Se envió la orden de impresión a la caja principal');
+    } else {
       _mostrarMensaje('No se pudo imprimir: la venta quedó pendiente de impresión');
-      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
     }
   }
 
@@ -1216,7 +1244,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   isExpanded: true,
                   decoration: _decoracion('Tipo de documento'),
                   style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                  items: _tiposDocumento.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
+                  items: tiposDocumento.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
                   onChanged: (v) {
                     if (v == null) return;
                     ref.read(carritoVentaProvider.notifier).establecerTipoDocumento(v);
@@ -1636,12 +1664,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       final texto = controlador.text.replaceAll(',', '').trim();
       final valor = double.tryParse(texto);
       if (valor == null) return;
-      // Si escribió un número entero sin poner el ".00" se completa solo
-      // (en cualquier plataforma, no solo móvil), para que el campo quede
-      // prolijo y coincida con lo que realmente se aplicó.
-      if (!texto.contains('.')) {
-        controlador.text = valor.toStringAsFixed(2);
-      }
       if ((valor - valorActual).abs() < 0.005) return;
       alConfirmar(valor);
     }

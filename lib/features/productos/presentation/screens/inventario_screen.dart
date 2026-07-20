@@ -21,6 +21,7 @@ import '../../../negocio/data/negocio_model.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../negocio/presentation/widgets/acceso_especial.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
+import '../../../../core/utils/codigo_barras_utils.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -59,12 +60,23 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     ref.read(inventarioBusquedaProvider.notifier).actualizar(_busquedaController.text.trim());
   }
 
+  bool _coincideExacto(ProductoModel p, String texto) => p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
+
   Future<void> _escanear() async {
     final codigo = await escanearCodigoBarras(context);
     if (codigo == null || codigo.isEmpty || !mounted) return;
-    _busquedaController.text = codigo;
+    var texto = codigo.trim();
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    // Si el código escaneado no matchea a nada, se prueba con el código
+    // invertido (ver invertirCodigoBarras): corrige el caso de algunos
+    // celulares que leen el código de barras al revés.
+    if (!productos.any((p) => _coincideExacto(p, texto))) {
+      final invertido = invertirCodigoBarras(texto);
+      if (productos.any((p) => _coincideExacto(p, invertido))) texto = invertido;
+    }
+    _busquedaController.text = texto;
     setState(() => _busquedaPorCodigoBarras = true);
-    ref.read(inventarioBusquedaProvider.notifier).actualizar(codigo.trim());
+    ref.read(inventarioBusquedaProvider.notifier).actualizar(texto);
   }
 
   void _limpiarBusqueda() {
