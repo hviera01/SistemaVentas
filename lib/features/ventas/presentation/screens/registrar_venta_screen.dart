@@ -412,11 +412,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     bool coincide(ProductoModel p, String t) => p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
     var coincidencias = productos.where((p) => coincide(p, texto)).toList();
     if (coincidencias.isEmpty) {
-      // Ver invertirCodigoBarras: corrige el caso de algunos celulares que
-      // leen el código de barras al revés.
-      final invertido = invertirCodigoBarras(texto);
-      if (invertido != texto) {
-        coincidencias = productos.where((p) => coincide(p, invertido)).toList();
+      // Ver variantesCodigoBarras: corrige tanto el código leído al revés
+      // (algunos celulares) como el "0" que iPhone agrega al principio de
+      // los códigos UPC-A (Android no lo agrega).
+      for (final variante in variantesCodigoBarras(texto)) {
+        coincidencias = productos.where((p) => coincide(p, variante)).toList();
+        if (coincidencias.isNotEmpty) break;
       }
     }
     if (coincidencias.isEmpty) {

@@ -67,12 +67,17 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     if (codigo == null || codigo.isEmpty || !mounted) return;
     var texto = codigo.trim();
     final productos = ref.read(productosStreamProvider).value ?? [];
-    // Si el código escaneado no matchea a nada, se prueba con el código
-    // invertido (ver invertirCodigoBarras): corrige el caso de algunos
-    // celulares que leen el código de barras al revés.
+    // Si el código escaneado no matchea a nada, se prueban otras variantes
+    // válidas del mismo código (ver variantesCodigoBarras): corrige tanto
+    // el código leído al revés (algunos celulares) como el "0" que iPhone
+    // agrega al principio de los códigos UPC-A (Android no lo agrega).
     if (!productos.any((p) => _coincideExacto(p, texto))) {
-      final invertido = invertirCodigoBarras(texto);
-      if (productos.any((p) => _coincideExacto(p, invertido))) texto = invertido;
+      for (final variante in variantesCodigoBarras(texto)) {
+        if (productos.any((p) => _coincideExacto(p, variante))) {
+          texto = variante;
+          break;
+        }
+      }
     }
     _busquedaController.text = texto;
     setState(() => _busquedaPorCodigoBarras = true);

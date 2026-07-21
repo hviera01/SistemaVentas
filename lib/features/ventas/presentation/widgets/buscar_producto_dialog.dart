@@ -128,11 +128,17 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     var texto = _busquedaController.text.trim();
     final productos = ref.read(productosStreamProvider).value ?? [];
     // Si la búsqueda viene de un código escaneado y no matchea a nada, se
-    // prueba con el código invertido (ver invertirCodigoBarras): corrige el
-    // caso de algunos celulares que leen el código de barras al revés.
+    // prueban otras variantes válidas del mismo código (ver
+    // variantesCodigoBarras): corrige tanto el código leído al revés
+    // (algunos celulares) como el "0" que iPhone agrega al principio de los
+    // códigos UPC-A (Android no lo agrega).
     if (exacta && texto.isNotEmpty && !productos.any((p) => p.estado && _coincideExacto(p, texto))) {
-      final invertido = invertirCodigoBarras(texto);
-      if (productos.any((p) => p.estado && _coincideExacto(p, invertido))) texto = invertido;
+      for (final variante in variantesCodigoBarras(texto)) {
+        if (productos.any((p) => p.estado && _coincideExacto(p, variante))) {
+          texto = variante;
+          break;
+        }
+      }
     }
     setState(() {
       _busquedaAplicada = texto;
