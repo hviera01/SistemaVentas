@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -244,17 +245,22 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     ),
                   ),
                   _selectorNivelPrecio(),
-                  OutlinedButton.icon(
-                    onPressed: _escanear,
-                    icon: const Icon(Icons.qr_code_scanner, size: 18),
-                    label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  // Escanear con la cámara solo tiene sentido en el celular
+                  // (APK o navegador móvil): en escritorio no hay cámara
+                  // para esto, ahí el escaneo es "Escanear con celular" (QR,
+                  // desde Registrar Venta) o un lector físico.
+                  if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)
+                    OutlinedButton.icon(
+                      onPressed: _escanear,
+                      icon: const Icon(Icons.qr_code_scanner, size: 18),
+                      label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1A1A1A),
+                        side: const BorderSide(color: Color(0xFFB6BCC7)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
-                  ),
                   OutlinedButton.icon(
                     onPressed: _crearProductoNuevo,
                     icon: const Icon(Icons.add_circle_outline, size: 18),

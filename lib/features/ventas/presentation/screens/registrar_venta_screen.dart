@@ -80,6 +80,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _ctrlCodigoBarras = TextEditingController();
   final _focusCodigoBarras = FocusNode();
 
+  // defaultTargetPlatform (a diferencia de kIsWeb solo, que no distingue
+  // "celular entrando por el navegador" de "PC entrando por el navegador")
+  // detecta el sistema operativo real del equipo. Se usa para decidir si
+  // mostrar la barra de escanear/escribir código: en escritorio (Windows o
+  // navegador de escritorio) esa vía visible no aplica -ahí el escaneo es
+  // "Escanear con celular" (QR) o un lector físico, que funciona en
+  // cualquier momento sin necesitar un campo visible-, así que solo se
+  // muestra en el celular (APK o navegador móvil).
+  bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
   // Escaneo remoto por celular (ver EscanearRemotoDialog/EscaneoRemotoScreen):
   // la sesión y su escucha viven acá, en el estado de la pantalla, no dentro
   // del diálogo del QR — así el celular puede seguir mandando códigos
@@ -115,6 +125,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // TextField de cantidad/precio/descripción ya presentes).
     HardwareKeyboard.instance.addHandler(_manejarAtajoTeclado);
 
+    // En escritorio, cada vez que el foco queda en nada (el usuario tocó
+    // afuera de un campo, o cerró un diálogo) se lo devuelve al campo de
+    // código de barras invisible (ver _campoCodigoBarras): así un lector
+    // físico funciona en cualquier momento, sin que el usuario tenga que
+    // clickear nada primero. En el celular no hace falta (ahí el campo es
+    // visible y el usuario lo toca a propósito).
+    if (!_esPlataformaMovil) {
+      FocusManager.instance.addListener(_alCambiarFocoGlobal);
+    }
+
     // Si esta pestaña se abrió desde "Duplicar venta" o "Convertir a venta"
     // en Detalle de Venta (ver DetalleVentaScreen), acá está esperando la
     // venta de origen para precargar el carrito.
@@ -129,6 +149,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _regExoneradoController.text = ventaOrigen.regExonerado;
       _regSagController.text = ventaOrigen.regSag;
       _descuentoGlobalController.text = ventaOrigen.descuentoGlobal == 0 ? '' : _formatoCantidad(ventaOrigen.descuentoGlobal);
+    }
+  }
+
+  void _alCambiarFocoGlobal() {
+    if (!mounted || _esPlataformaMovil) return;
+    // Con varias pestañas de Registrar Venta abiertas a la vez (quedan
+    // todas montadas, ver AppShell/IndexedStack), este listener global
+    // corre en cada una: sin este chequeo, todas competirían por el foco
+    // cada vez que queda en nada, aunque estén en una pestaña de fondo que
+    // ni se ve.
+    if (!_esPestanaActiva()) return;
+    if (FocusManager.instance.primaryFocus == null) {
+      _focusCodigoBarras.requestFocus();
     }
   }
 
@@ -160,6 +193,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
+    if (!_esPlataformaMovil) {
+      FocusManager.instance.removeListener(_alCambiarFocoGlobal);
+    }
     // Best-effort: no se espera a que termine (dispose no puede ser async),
     // pero cierra la sesión de escaneo remoto si quedó una activa al
     // abandonar esta pestaña de venta.
@@ -1491,10 +1527,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   // Campo de código de barras de esta pantalla (ver _confirmarCodigoBarras/
-  // _escanearConCamara): con foco permanente para que un lector físico
-  // (teclado-wedge) agregue el producto solo apenas escanea algo, y un
-  // ícono de cámara para escanear desde el celular (APK o navegador móvil).
+  // _escanearConCamara). Solo se ve en el celular (APK o navegador móvil):
+  // ahí tiene sentido un campo para escribir/pegar el código y un ícono de
+  // cámara. En escritorio (Windows o navegador de escritorio) no se
+  // muestra -el escaneo visible ahí es "Escanear con celular" (QR)-, pero
+  // el llamador (ver _tarjetaCarritoGrande) lo deja igual en el árbol
+  // dentro de un Offstage: layout y foco siguen funcionando aunque no se
+  // pinte nada, así que un lector de código de barras físico (que se
+  // comporta como un teclado) sigue agregando el producto en cualquier
+  // momento sin necesitar un campo visible.
   Widget _campoCodigoBarras() {
+    final campo = TextField(
+      controller: _ctrlCodigoBarras,
+      focusNode: _focusCodigoBarras,
+      autofocus: true,
+      style: GoogleFonts.poppins(fontSize: 13),
+      decoration: InputDecoration(
+        hintText: 'Escanear o escribir código de barras...',
+        hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
+        border: InputBorder.none,
+        isDense: true,
+      ),
+      onSubmitted: (_) => _confirmarCodigoBarras(),
+    );
+
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1503,21 +1559,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         children: [
           Icon(Icons.qr_code_scanner, size: 18, color: Colors.grey.shade600),
           const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _ctrlCodigoBarras,
-              focusNode: _focusCodigoBarras,
-              autofocus: true,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Escanear o escribir código de barras...',
-                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              onSubmitted: (_) => _confirmarCodigoBarras(),
-            ),
-          ),
+          Expanded(child: campo),
           IconButton(tooltip: 'Escanear con la cámara', icon: const Icon(Icons.camera_alt_outlined, size: 20), onPressed: _escanearConCamara),
         ],
       ),
@@ -1614,8 +1656,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     ),
                   ],
                 ),
-          const SizedBox(height: 12),
-          _campoCodigoBarras(),
+          if (_esPlataformaMovil) ...[
+            const SizedBox(height: 12),
+            _campoCodigoBarras(),
+          ] else
+            Offstage(offstage: true, child: _campoCodigoBarras()),
           const SizedBox(height: 12),
           Row(
             children: [
