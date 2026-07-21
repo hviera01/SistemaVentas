@@ -1794,7 +1794,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // usuario toca el siguiente número sin darse cuenta, borra el valor
       // entero en vez de agregarle un dígito. Se deja el cursor al final,
       // sin nada seleccionado, en cantidad/precio/descuento por igual.
-      controlador.selection = TextSelection.collapsed(offset: controlador.text.length);
+      // Se hace en el frame siguiente (no en el mismo confirmar()): el
+      // rebuild que dispara alConfirmar (el carrito cambió) puede volver a
+      // seleccionar todo el texto después si se asigna en el mismo tick.
+      final offsetFinal = controlador.text.length;
+      controlador.selection = TextSelection.collapsed(offset: offsetFinal);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (controlador.text.length == offsetFinal) {
+          controlador.selection = TextSelection.collapsed(offset: offsetFinal);
+        }
+      });
     }
     _confirmarInline[claveFoco] = confirmar;
 

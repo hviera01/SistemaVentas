@@ -156,7 +156,13 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// trae ese precio (con ISV, tal como se muestra en el buscador).
   void agregarProductoDirecto(ProductoModel producto, {double? precioSeleccionado, double precioCompraUsado = 0, bool reembasado = false}) {
     final precioConIsv = precioSeleccionado ?? producto.precioVenta;
-    final precioSinIsv = redondearMoneda(precioConIsv / 1.15);
+    // Sin redondear a centavos acá: precioVenta (sin ISV) no siempre es un
+    // número "limpio" de 2 decimales -por ejemplo 100/1.15- y redondearlo
+    // de una vez, antes de multiplicarlo de nuevo por 1.15 para mostrar o
+    // sumar el total, es lo que causaba precios como 100.01 en vez de
+    // 100.00 (dos redondeos en cadena). Se redondea una sola vez, recién al
+    // mostrar o calcular un total (ver _totalConImpuestoBase más abajo).
+    final precioSinIsv = precioConIsv / 1.15;
     final item = ItemVentaModel(
       idProducto: producto.id,
       idCategoria: producto.idCategoria,
@@ -186,7 +192,9 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   void actualizarLinea(int index, {double? cantidad, double? precioConIsv, double? descuentoPorcentaje, bool? reembasado}) {
     final actual = state.items[index];
     final nuevaCantidad = cantidad ?? actual.cantidad;
-    final nuevoPrecio = precioConIsv != null ? redondearMoneda(precioConIsv / 1.15) : actual.precioVenta;
+    // Ver el comentario en agregarProductoDirecto: no se redondea acá para
+    // no perder precisión antes de multiplicar de nuevo por 1.15.
+    final nuevoPrecio = precioConIsv != null ? precioConIsv / 1.15 : actual.precioVenta;
     final nuevoDescuento = descuentoPorcentaje ?? actual.descuentoPorcentaje;
     final nuevos = [...state.items];
     nuevos[index] = ItemVentaModel(
