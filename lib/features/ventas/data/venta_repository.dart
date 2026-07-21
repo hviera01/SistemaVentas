@@ -148,7 +148,15 @@ class VentaRepository {
         'totalAPagar': totalAPagar,
         'condicion': condicion,
         'fechaVencimiento': fechaVencimiento != null ? Timestamp.fromDate(fechaVencimiento) : null,
+        // 'fechaRegistro' es la fecha de negocio (el cajero la puede elegir
+        // con el selector de fecha, para atrasar una factura, por ejemplo),
+        // no necesariamente cuándo se creó de verdad el registro. 'creadoEn'
+        // sí es siempre el momento real, puesto por el servidor: se usa
+        // para ordenar el Reporte de Ventas por orden de creación (ver
+        // ReporteRepository.obtenerReporteVentas) sin importar qué fecha de
+        // negocio se haya elegido.
         'fechaRegistro': Timestamp.fromDate(fechaRegistro),
+        'creadoEn': FieldValue.serverTimestamp(),
         'estado': 'Activa',
         'usuarioRegistro': usuario,
         'cantidadProductos': items.fold<double>(0, (s, i) => s + i.cantidad),
@@ -293,11 +301,26 @@ class VentaRepository {
   }
 
   Future<VentaModel?> obtenerVentaPorId(String id) async {
-    final snap = await _colVentas.doc(id).get();
+    // Las dos lecturas no dependen una de la otra (el id ya se conoce de
+    // entrada), así que se disparan juntas en vez de esperar el documento
+    // antes de recién ahí pedir el detalle: ahorra una vuelta completa a
+    // Firestore.
+    final futureVenta = _colVentas.doc(id).get();
+    final futureDetalle = _colVentas.doc(id).collection('detalle').get();
+    final snap = await futureVenta;
     if (!snap.exists) return null;
-    final detalleSnap = await _colVentas.doc(id).collection('detalle').get();
+    final detalleSnap = await futureDetalle;
     final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
     return VentaModel.fromMap(id, snap.data()!, items);
+  }
+
+  /// Solo el detalle (items) de una venta, sin volver a leer el documento
+  /// principal: para cuando ya se tiene el resto de la venta por otro lado
+  /// (por ejemplo, de un stream) y solo hace falta completarla con el
+  /// detalle antes de imprimir — ver VentaModel.copyWith y AppShell.
+  Future<List<ItemVentaModel>> obtenerDetalleVenta(String id) async {
+    final detalleSnap = await _colVentas.doc(id).collection('detalle').get();
+    return detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
   }
 
   Future<VentaModel?> obtenerVentaPorNumeroDocumento(String numeroDocumento) async {

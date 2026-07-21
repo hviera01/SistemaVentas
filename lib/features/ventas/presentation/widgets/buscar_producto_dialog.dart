@@ -40,6 +40,16 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   List<ProductoModel> _listaActual = [];
   String? _filaSeleccionada;
   int _nivelActivo = 1;
+  // Orden de la lista de resultados (solo la columna "Existencia" por
+  // ahora, ver _encabezadoOrdenable). null = sin ordenar, en el orden que
+  // ya trae el stream.
+  String? _columnaOrden;
+  bool _ordenAscendente = true;
+
+  // defaultTargetPlatform (a diferencia de un ancho de pantalla angosto,
+  // que también puede pasar en un navegador de escritorio con la ventana
+  // chica) detecta el sistema operativo real del equipo.
+  bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
   void dispose() {
@@ -147,7 +157,12 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     });
     if (texto.isEmpty) return;
     final coincidencias = productos.where((p) => p.estado && _coincide(p, texto)).toList();
-    if (coincidencias.length == 1) {
+    // Un código escaneado (exacta) con un solo resultado se agrega directo
+    // en cualquier plataforma, para que escanear siga siendo instantáneo.
+    // Una búsqueda por escrito con un solo resultado también se agregaba
+    // directo antes, pero en escritorio eso no dejaba ver la existencia
+    // disponible antes de decidir: ahí ahora solo se muestra en la lista.
+    if (coincidencias.length == 1 && (exacta || _esPlataformaMovil)) {
       _confirmarSeleccion(coincidencias.first);
     }
   }
@@ -310,6 +325,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                       }
 
                       final lista = productos.where((p) => p.estado && _coincide(p, _busquedaAplicada)).toList();
+                      if (_columnaOrden == 'existencia') {
+                        lista.sort((a, b) => _ordenAscendente ? a.stock.compareTo(b.stock) : b.stock.compareTo(a.stock));
+                      }
                       _listaActual = lista;
                       if (lista.isEmpty) {
                         return Center(
@@ -395,8 +413,37 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
         Expanded(flex: 6, child: Text('Descripción', style: estilo)),
         Expanded(flex: 3, child: Text('Categoría', style: estilo)),
         Expanded(flex: 3, child: Text('Precio', textAlign: TextAlign.right, style: estilo)),
-        Expanded(flex: 2, child: Text('Existencia', textAlign: TextAlign.center, style: estilo)),
+        Expanded(flex: 2, child: _encabezadoOrdenable('Existencia', 'existencia', estilo)),
       ],
+    );
+  }
+
+  // Tocar el nombre de la columna ordena por esa columna (ascendente); si
+  // ya estaba ordenando por esa misma columna, invierte a descendente.
+  Widget _encabezadoOrdenable(String texto, String clave, TextStyle estilo) {
+    final activo = _columnaOrden == clave;
+    return InkWell(
+      onTap: () => setState(() {
+        if (activo) {
+          _ordenAscendente = !_ordenAscendente;
+        } else {
+          _columnaOrden = clave;
+          _ordenAscendente = true;
+        }
+      }),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(texto, style: activo ? estilo.copyWith(color: const Color(0xFFC62828)) : estilo),
+          const SizedBox(width: 3),
+          Icon(
+            activo ? (_ordenAscendente ? Icons.arrow_upward : Icons.arrow_downward) : Icons.unfold_more,
+            size: 14,
+            color: activo ? const Color(0xFFC62828) : Colors.grey.shade400,
+          ),
+        ],
+      ),
     );
   }
 

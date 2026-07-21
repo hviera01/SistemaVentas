@@ -49,6 +49,44 @@ class VentaModel {
 
   bool get estaAnulada => estado == 'Anulada';
 
+  // Usado para completar con el detalle (items) una VentaModel que ya se
+  // tenía con todo lo demás (por ejemplo, la que llega de un stream sin
+  // detalle, ver VentaRepository.obtenerVentasConSolicitudImpresionEnVivo)
+  // sin tener que releer el documento completo de nuevo — para que la
+  // impresión remota en vivo tarde lo menos posible, ver AppShell.
+  VentaModel copyWith({List<ItemVentaModel>? detalle}) {
+    return VentaModel(
+      id: id,
+      tipoDocumento: tipoDocumento,
+      numeroDocumento: numeroDocumento,
+      documentoCliente: documentoCliente,
+      nombreCliente: nombreCliente,
+      metodoPago: metodoPago,
+      montoPago: montoPago,
+      montoCambio: montoCambio,
+      subtotal: subtotal,
+      impuesto: impuesto,
+      totalAPagar: totalAPagar,
+      condicion: condicion,
+      fechaVencimiento: fechaVencimiento,
+      fechaRegistro: fechaRegistro,
+      estado: estado,
+      usuarioRegistro: usuarioRegistro,
+      cantidadProductos: cantidadProductos,
+      oc: oc,
+      regExonerado: regExonerado,
+      regSag: regSag,
+      descuentoGlobal: descuentoGlobal,
+      detalle: detalle ?? this.detalle,
+      usuarioAnulacion: usuarioAnulacion,
+      motivoAnulacion: motivoAnulacion,
+      fechaAnulacion: fechaAnulacion,
+      pendienteImpresion: pendienteImpresion,
+      solicitudImpresionEnVivo: solicitudImpresionEnVivo,
+      solicitudImpresionEsCopia: solicitudImpresionEsCopia,
+    );
+  }
+
   VentaModel({
     required this.id,
     required this.tipoDocumento,

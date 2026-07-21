@@ -164,6 +164,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
   }
 
+  // Falso apenas se abre CUALQUIER diálogo o pantalla nueva encima de esta
+  // (Buscar Producto, Buscar Cliente, Cobrar, el teclado numérico, etc.):
+  // sin este chequeo, mientras esa pantalla nueva también le pide el foco a
+  // su propio campo (por ejemplo el buscador de Buscar Producto, que se
+  // autoenfoca al abrir), este listener se lo disputaba pidiéndoselo para
+  // el campo invisible de código de barras -las dos peticiones de foco
+  // corriendo casi al mismo tiempo dejaban a veces la primera tecla
+  // tecleada sin ningún campo real que la reciba (se perdía, con el bip de
+  // Windows de tecla no consumida por nadie) hasta que la segunda tecla ya
+  // encontraba todo asentado.
+  bool get _esRutaActual => ModalRoute.of(context)?.isCurrent ?? true;
+
   void _alCambiarFocoGlobal() {
     if (!mounted || _esPlataformaMovil) return;
     // Con varias pestañas de Registrar Venta abiertas a la vez (quedan
@@ -172,6 +184,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // cada vez que queda en nada, aunque estén en una pestaña de fondo que
     // ni se ve.
     if (!_esPestanaActiva()) return;
+    if (!_esRutaActual) return;
     if (FocusManager.instance.primaryFocus == null) {
       _focusCodigoBarras.requestFocus();
     }
@@ -181,6 +194,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (event is! KeyDownEvent) return false;
     if (!mounted || _guardando) return false;
     if (!_esPestanaActiva()) return false;
+    // Mismo motivo que en _alCambiarFocoGlobal: con un diálogo abierto
+    // encima (Buscar Producto, Cobrar, etc.) ni los atajos F10/F12 ni la
+    // detección del lector físico deben competir por lo que se esté
+    // tecleando ahí.
+    if (!_esRutaActual) return false;
     if (event.logicalKey == LogicalKeyboardKey.f10) {
       _agregarProductoDesdeBusqueda();
       return true;
@@ -1082,14 +1100,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // tenga que confirmar nada ahí). Si no está conectada, o la consulta
       // falla por falta de red, se cae exactamente al comportamiento de
       // siempre: queda pendiente para reimprimir después a mano.
-      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
+      // Estas dos no dependen una de la otra, así que van juntas (no una
+      // esperando a la otra) para que, si hay que pedirle a la PC que
+      // imprima, esa orden salga lo antes posible.
+      final ventaRepoLocal = ref.read(ventaRepositoryProvider);
+      final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(venta.id, true);
       final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
       if (pcConectada) {
-        await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionEnVivo(venta.id, true);
+        await ventaRepoLocal.marcarSolicitudImpresionEnVivo(venta.id, true);
         _mostrarMensaje('Se envió la orden de impresión a la caja principal');
       } else {
         _mostrarMensaje('No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión');
       }
+      await futurePendiente;
       return;
     }
 
@@ -1182,14 +1205,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
       if (ok) return;
     }
-    await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
+    final ventaRepoLocal = ref.read(ventaRepositoryProvider);
+    final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(venta.id, true);
     final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
     if (pcConectada) {
-      await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionEnVivo(venta.id, true);
+      await ventaRepoLocal.marcarSolicitudImpresionEnVivo(venta.id, true);
       _mostrarMensaje('Se envió la orden de impresión a la caja principal');
     } else {
       _mostrarMensaje('No se pudo imprimir: la venta quedó pendiente de impresión');
     }
+    await futurePendiente;
   }
 
   Future<bool> _validarFechaLimite(NegocioModel negocio) async {
@@ -1692,6 +1717,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               : Row(
                   children: [
                     Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    const SizedBox(width: 14),
+                    // En escritorio va acá, chico, en vez de en su propia
+                    // fila abajo: con varios productos en la venta, esa
+                    // fila de más le sacaba espacio vertical a la tabla,
+                    // que es lo que más se necesita ver.
+                    _selectorPrecioIsvCarrito(compacto: true),
                     const Spacer(),
                     OutlinedButton.icon(
                       onPressed: _abrirEscaneoRemoto,
@@ -1717,14 +1748,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   ],
                 ),
           Offstage(offstage: true, child: _campoCodigoBarras()),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text('Precio unitario:', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-              const SizedBox(width: 10),
-              _selectorPrecioIsvCarrito(),
-            ],
-          ),
+          // En escritorio el selector de Con/Sin ISV ya va arriba, junto al
+          // título (ver más arriba): acá solo hace falta en móvil, donde no
+          // hay tanta presión de espacio vertical por la tabla.
+          if (esMovil) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text('Precio unitario:', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                const SizedBox(width: 10),
+                _selectorPrecioIsvCarrito(),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           if (!esMovil) ...[
             _encabezadoTablaCarrito(),
@@ -1770,22 +1806,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _selectorPrecioIsvCarrito() {
+  Widget _selectorPrecioIsvCarrito({bool compacto = false}) {
     Widget opcion(String texto, bool valor) {
       final activo = _precioCarritoConIsv == valor;
       return InkWell(
         onTap: () => _alternarVistaPrecioCarrito(valor),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(9),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: compacto ? 8 : 12, vertical: compacto ? 5 : 8),
           decoration: BoxDecoration(
             color: activo ? const Color(0xFFC62828) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(9),
           ),
           child: Text(
             texto,
-            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72)),
+            style: GoogleFonts.poppins(fontSize: compacto ? 10.5 : 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72)),
           ),
         ),
       );
@@ -1793,7 +1829,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(11), border: Border.all(color: const Color(0xFFB6BCC7))),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -76,16 +76,21 @@ class _AppShellState extends ConsumerState<AppShell> {
     _idsSolicitudEnProceso.add(venta.id);
     try {
       final ventaRepo = ref.read(ventaRepositoryProvider);
-      // Importante leer la venta completa ANTES de limpiar la solicitud: al
-      // ser un `update()` de Firestore, la limpieza se refleja de inmediato
-      // en el caché local (antes de confirmarse en el servidor), así que si
-      // se limpia primero, la lectura de acá abajo ya vendría con
-      // solicitudImpresionEsCopia en null -perdiendo la elección de
-      // copia/original que se pidió- en vez del valor real que se mandó.
-      final ventaCompleta = await ventaRepo.obtenerVentaPorId(venta.id);
-      if (ventaCompleta == null) return;
+      // [venta] ya llegó completa del stream salvo el detalle (que el
+      // stream no trae, ver obtenerVentasConSolicitudImpresionEnVivo) —
+      // incluida la elección de copia/original, así que no hace falta
+      // releer el documento entero de nuevo: alcanza con pedir el detalle.
+      // Esa lectura y la del negocio no dependen una de la otra, así que
+      // van juntas; la limpieza de la solicitud tampoco espera a nada de
+      // esto. Entre los tres ahorros (menos vueltas a Firestore, en
+      // paralelo, sin esperar la limpieza) la impresión sale lo antes
+      // posible.
       unawaited(ventaRepo.marcarSolicitudImpresionEnVivo(venta.id, false));
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final futureDetalle = ventaRepo.obtenerDetalleVenta(venta.id);
+      final futureNegocio = ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final detalle = await futureDetalle;
+      final negocio = await futureNegocio;
+      final ventaCompleta = venta.copyWith(detalle: detalle);
       final ok = await _servicioImpresionEnVivo.imprimirSilencioso(ventaCompleta, negocio, forzarCopia: ventaCompleta.solicitudImpresionEsCopia);
       if (ok) {
         await ventaRepo.marcarPendienteImpresion(venta.id, false);
