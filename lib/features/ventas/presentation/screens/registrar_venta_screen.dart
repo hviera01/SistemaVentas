@@ -1800,14 +1800,32 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // Después de confirmar, el campo pierde el foco del todo (no solo se
       // deja de seleccionar el texto): que quede como si el usuario hubiera
       // tocado en cualquier otro lado en blanco, sin cursor parpadeando ni
-      // texto resaltado. Si esto se llamó porque el campo ya estaba
-      // perdiendo el foco (ver el listener de arriba), unfocus() de nuevo
-      // acá no hace nada raro.
-      if (focusNode.hasFocus) focusNode.unfocus();
+      // texto resaltado.
+      if (esMovil) {
+        // En el celular alcanza con soltar el foco (ahí no existe el
+        // diálogo del teclado numérico en pantalla, ver más abajo, así que
+        // no hay restauración de foco de la que cuidarse).
+        if (focusNode.hasFocus) focusNode.unfocus();
+      } else {
+        // En escritorio, simplemente "unfocus()" no alcanza: si el valor se
+        // acaba de confirmar viniendo del diálogo del teclado numérico (ver
+        // abrirTecladoNumerico), al cerrarse ese diálogo Flutter le
+        // devuelve el foco solo al campo que lo tenía antes de abrirlo
+        // -este mismo-, lo que reseleccionaba todo el texto de nuevo
+        // después de "arreglarlo". Pedirle el foco a otro campo concreto
+        // (el de código de barras invisible, ver _campoCodigoBarras) en vez
+        // de solo soltarlo evita esa restauración: ya hay algo nuevo con el
+        // foco, así que no queda nada pendiente de "recuperar".
+        _focusCodigoBarras.requestFocus();
+      }
     }
     _confirmarInline[claveFoco] = confirmar;
 
     Future<void> abrirTecladoNumerico() async {
+      // Sin esto, al cerrar el diálogo Flutter le devuelve el foco a este
+      // campo (el que lo tenía antes de abrirlo) y reselecciona todo el
+      // texto, deshaciendo lo que confirmar() acababa de arreglar.
+      focusNode.unfocus();
       final texto = await showDialog<String>(
         context: context,
         builder: (context) => TecladoNumericoDialog(
