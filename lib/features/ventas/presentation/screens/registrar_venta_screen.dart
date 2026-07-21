@@ -1789,6 +1789,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // sí llegó a desalinearse por el redondeo del ISV en algún caso raro,
       // ver historial- sino que se formatea directo lo que el usuario tecleó.
       if (dosDecimales) controlador.text = valor.toStringAsFixed(2);
+      // En escritorio, al confirmar un campo queda con todo el texto
+      // seleccionado (comportamiento por defecto de Flutter ahí): si el
+      // usuario toca el siguiente número sin darse cuenta, borra el valor
+      // entero en vez de agregarle un dígito. Se deja el cursor al final,
+      // sin nada seleccionado, en cantidad/precio/descuento por igual.
+      controlador.selection = TextSelection.collapsed(offset: controlador.text.length);
     }
     _confirmarInline[claveFoco] = confirmar;
 
