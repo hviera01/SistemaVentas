@@ -203,11 +203,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // rápido de lo humanamente posible) y termina con Enter. Se arma un
   // buffer con las teclas que van llegando pegadas; si en algún momento
   // pasa demasiado tiempo entre una tecla y la siguiente, se asume que es
-  // typing humano normal y el buffer arranca de cero desde esa tecla. Las
-  // teclas nunca se "tragan" (siempre devuelve false para ellas, dejando
-  // que sigan su curso normal hacia el campo que tenga el foco, si alguno
-  // lo tiene) — solo el Enter final se traga (y sí devuelve true) cuando
-  // el buffer completo llegó lo bastante rápido como para ser un escaneo.
+  // typing humano normal y el buffer arranca de cero desde esa tecla.
+  //
+  // Que este método devuelva `true` para el Enter final NO alcanza para
+  // evitar que el control que tenga el foco reaccione a la ráfaga: el
+  // combobox de "Tipo de documento" o "Método de pago", por ejemplo, se
+  // abre solo con recibir esas teclas, sin importar qué se haga después con
+  // el Enter. Por eso, apenas se confirma que hay una ráfaga rápida en
+  // curso (la segunda tecla pegada a la anterior, no hay que esperar al
+  // Enter) se le quita el foco a lo que sea que lo tenga: así no queda
+  // ningún control despierto para reaccionar al resto de las teclas que
+  // todavía faltan por llegar.
   bool _detectarEscaneoFisico(KeyEvent event) {
     final ahora = DateTime.now();
     final ultimaTecla = _ultimaTeclaEscanerFisico;
@@ -230,6 +236,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     if (llegoRapido) {
       _bufferEscanerFisico.write(caracter);
+      FocusManager.instance.primaryFocus?.unfocus();
     } else {
       _bufferEscanerFisico
         ..clear()
