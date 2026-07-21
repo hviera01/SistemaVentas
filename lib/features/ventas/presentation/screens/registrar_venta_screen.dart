@@ -65,6 +65,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _descuentoGlobalController = TextEditingController();
   bool _datosExpandidos = false;
   bool _precioCarritoConIsv = true;
+  // true mientras está abierto el diálogo de "ver la tabla más grande" (ver
+  // _expandirTablaProductos): mientras tanto, la tabla de acá abajo no
+  // renderiza sus filas, porque esas filas comparten los mismos
+  // TextEditingController/FocusNode (_ctrlCantidad, _focusInline, etc.) que
+  // las del diálogo — tenerlas montadas en los dos lados a la vez rompería
+  // el foco y la edición.
+  bool _tablaExpandida = false;
 
   final _servicioExport = VentaExportService();
   final _servicioTicketEscPos = VentaTicketEscPosService();
@@ -1737,6 +1744,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     // fila de más le sacaba espacio vertical a la tabla,
                     // que es lo que más se necesita ver.
                     _selectorPrecioIsvCarrito(compacto: true),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      tooltip: 'Ver la tabla más grande',
+                      onPressed: _expandirTablaProductos,
+                      icon: const Icon(Icons.open_in_full, size: 18),
+                      color: Colors.grey.shade600,
+                    ),
                     const Spacer(),
                     OutlinedButton.icon(
                       onPressed: _abrirEscaneoRemoto,
@@ -1807,6 +1821,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ],
               ],
             )
+          else if (_tablaExpandida)
+            // Ver el comentario de _tablaExpandida: mientras el diálogo de
+            // "ver más grande" está abierto, esta tabla no monta sus filas
+            // (esas mismas filas ya están montadas allá, usando los mismos
+            // controladores).
+            Expanded(
+              child: Center(
+                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+              ),
+            )
           else
             Expanded(
               child: ListView.separated(
@@ -1820,11 +1844,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _selectorPrecioIsvCarrito({bool compacto = false}) {
+  // [alCambiarExtra] es para cuando este selector se muestra dentro de un
+  // diálogo aparte (ver _expandirTablaProductos): _alternarVistaPrecioCarrito
+  // ya actualiza el estado real con su propio setState, pero eso no alcanza
+  // para refrescar lo que ese diálogo ya dibujó, al ser una ruta aparte.
+  Widget _selectorPrecioIsvCarrito({bool compacto = false, VoidCallback? alCambiarExtra}) {
     Widget opcion(String texto, bool valor) {
       final activo = _precioCarritoConIsv == valor;
       return InkWell(
-        onTap: () => _alternarVistaPrecioCarrito(valor),
+        onTap: () {
+          _alternarVistaPrecioCarrito(valor);
+          alCambiarExtra?.call();
+        },
         borderRadius: BorderRadius.circular(9),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -1852,6 +1883,77 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         ],
       ),
     );
+  }
+
+  // Muestra la tabla de productos sola, casi a pantalla completa, para
+  // cuando hay varios items y la vista normal se queda chica. El contenido
+  // de la tabla va dentro de un Consumer propio (no alcanza con el `ref` de
+  // esta pantalla) para que se siga actualizando en vivo mientras el
+  // diálogo está abierto: si se edita una cantidad o se borra una línea acá
+  // adentro, tiene que verse al toque, no recién al cerrar.
+  void _expandirTablaProductos() {
+    setState(() => _tablaExpandida = true);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        final tamano = MediaQuery.of(dialogContext).size;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: Container(
+            width: tamano.width - 40,
+            height: tamano.height - 40,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+            // El toggle Con/Sin ISV cambia _precioCarritoConIsv en esta
+            // pantalla (con su propio setState), pero eso no alcanza para
+            // refrescar lo que ya se dibujó acá adentro (el diálogo es una
+            // ruta aparte): con este StatefulBuilder, tocarlo también
+            // reconstruye el encabezado y el selector del diálogo al toque.
+            child: StatefulBuilder(
+              builder: (context, setDialogState) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 14),
+                      _selectorPrecioIsvCarrito(compacto: true, alCambiarExtra: () => setDialogState(() {})),
+                      const Spacer(),
+                      IconButton(tooltip: 'Cerrar', icon: const Icon(Icons.close), onPressed: () => Navigator.pop(dialogContext)),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _encabezadoTablaCarrito(),
+                  Divider(height: 18, color: Colors.grey.shade300),
+                  Expanded(
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final carrito = ref.watch(carritoVentaProvider);
+                        final productos = ref.watch(productosStreamProvider).value ?? [];
+                        final mapaProductos = {for (final p in productos) p.id: p};
+                        if (carrito.items.isEmpty) {
+                          return Center(
+                            child: Text('Todavía no agregaste productos.', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: carrito.items.length,
+                          separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                          itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      if (mounted) setState(() => _tablaExpandida = false);
+    });
   }
 
   Widget _encabezadoTablaCarrito() {
