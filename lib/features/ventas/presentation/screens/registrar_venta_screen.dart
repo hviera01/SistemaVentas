@@ -1272,8 +1272,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           // altura fija generosa (no Expanded) para que nunca desaparezca si
           // el encabezado ocupa más espacio del previsto; si el contenido no
           // cabe completo, la pantalla se vuelve desplazable en vez de
-          // recortarse en silencio.
-          final altoTabla = (constraints.maxHeight * 0.58).clamp(360.0, 1000.0);
+          // recortarse en silencio. Un porcentaje más alto que antes (y un
+          // techo más generoso): con varios productos cargados, la tabla se
+          // quedaba chica y obligaba a scrollear adentro de una zona
+          // chiquita en vez de aprovechar el alto real de la ventana.
+          final altoTabla = (constraints.maxHeight * 0.72).clamp(420.0, 1400.0);
           return SingleChildScrollView(
             padding: EdgeInsets.all(esMovil ? 14 : 22),
             child: Column(
