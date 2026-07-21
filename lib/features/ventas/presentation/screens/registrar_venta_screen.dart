@@ -1778,6 +1778,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // usando desde el navegador.
     final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
+    final focusNode = _focusInline.putIfAbsent(claveFoco, () {
+      final node = FocusNode();
+      node.addListener(() {
+        if (!node.hasFocus) _confirmarInline[claveFoco]?.call();
+      });
+      return node;
+    });
+
     void confirmar() {
       final texto = controlador.text.replaceAll(',', '').trim();
       final valor = double.tryParse(texto);
@@ -1789,31 +1797,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // sí llegó a desalinearse por el redondeo del ISV en algún caso raro,
       // ver historial- sino que se formatea directo lo que el usuario tecleó.
       if (dosDecimales) controlador.text = valor.toStringAsFixed(2);
-      // En escritorio, al confirmar un campo queda con todo el texto
-      // seleccionado (comportamiento por defecto de Flutter ahí): si el
-      // usuario toca el siguiente número sin darse cuenta, borra el valor
-      // entero en vez de agregarle un dígito. Se deja el cursor al final,
-      // sin nada seleccionado, en cantidad/precio/descuento por igual.
-      // Se hace en el frame siguiente (no en el mismo confirmar()): el
-      // rebuild que dispara alConfirmar (el carrito cambió) puede volver a
-      // seleccionar todo el texto después si se asigna en el mismo tick.
-      final offsetFinal = controlador.text.length;
-      controlador.selection = TextSelection.collapsed(offset: offsetFinal);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (controlador.text.length == offsetFinal) {
-          controlador.selection = TextSelection.collapsed(offset: offsetFinal);
-        }
-      });
+      // Después de confirmar, el campo pierde el foco del todo (no solo se
+      // deja de seleccionar el texto): que quede como si el usuario hubiera
+      // tocado en cualquier otro lado en blanco, sin cursor parpadeando ni
+      // texto resaltado. Si esto se llamó porque el campo ya estaba
+      // perdiendo el foco (ver el listener de arriba), unfocus() de nuevo
+      // acá no hace nada raro.
+      if (focusNode.hasFocus) focusNode.unfocus();
     }
     _confirmarInline[claveFoco] = confirmar;
-
-    final focusNode = _focusInline.putIfAbsent(claveFoco, () {
-      final node = FocusNode();
-      node.addListener(() {
-        if (!node.hasFocus) _confirmarInline[claveFoco]?.call();
-      });
-      return node;
-    });
 
     Future<void> abrirTecladoNumerico() async {
       final texto = await showDialog<String>(
