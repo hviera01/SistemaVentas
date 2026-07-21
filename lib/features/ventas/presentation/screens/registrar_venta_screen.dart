@@ -80,6 +80,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _ctrlCodigoBarras = TextEditingController();
   final _focusCodigoBarras = FocusNode();
 
+  // Detección del lector de código de barras físico a nivel de hardware
+  // (ver _manejarAtajoTeclado/_detectarEscaneoFisico), independiente de qué
+  // campo tenga el foco en ese momento: un lector escribe cada carácter
+  // muchísimo más rápido de lo humanamente posible, así que se arma un
+  // "buffer" con las teclas que van llegando y se reinicia solo si alguna
+  // tarda demasiado (typing humano normal). Esto es lo que garantiza que
+  // escanear SIEMPRE agregue el producto a la venta abierta, se haya
+  // tocado lo que se haya tocado antes.
+  final _bufferEscanerFisico = StringBuffer();
+  DateTime? _ultimaTeclaEscanerFisico;
+  static const _intervaloMaximoEscanerFisico = Duration(milliseconds: 45);
+
   // defaultTargetPlatform (a diferencia de kIsWeb solo, que no distingue
   // "celular entrando por el navegador" de "PC entrando por el navegador")
   // detecta el sistema operativo real del equipo. Se usa para decidir si
@@ -176,6 +188,52 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (event.logicalKey == LogicalKeyboardKey.f12) {
       _confirmarVenta();
       return true;
+    }
+    return _detectarEscaneoFisico(event);
+  }
+
+  // Corre a nivel de hardware (ver initState), no de foco: así un lector de
+  // código de barras físico agrega el producto a la venta abierta en esta
+  // pestaña sin importar qué campo (o ninguno) tenga el foco en ese
+  // momento -cambiar el tipo de documento, tocar "Crear Venta", lo que
+  // sea-, en vez de depender de que el campo invisible de código de barras
+  // (ver _campoCodigoBarras) logre recuperar el foco a tiempo.
+  //
+  // Un lector escribe cada tecla en unos pocos milisegundos (mucho más
+  // rápido de lo humanamente posible) y termina con Enter. Se arma un
+  // buffer con las teclas que van llegando pegadas; si en algún momento
+  // pasa demasiado tiempo entre una tecla y la siguiente, se asume que es
+  // typing humano normal y el buffer arranca de cero desde esa tecla. Las
+  // teclas nunca se "tragan" (siempre devuelve false para ellas, dejando
+  // que sigan su curso normal hacia el campo que tenga el foco, si alguno
+  // lo tiene) — solo el Enter final se traga (y sí devuelve true) cuando
+  // el buffer completo llegó lo bastante rápido como para ser un escaneo.
+  bool _detectarEscaneoFisico(KeyEvent event) {
+    final ahora = DateTime.now();
+    final ultimaTecla = _ultimaTeclaEscanerFisico;
+    final llegoRapido = ultimaTecla != null && ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
+    _ultimaTeclaEscanerFisico = ahora;
+
+    if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      final codigo = _bufferEscanerFisico.toString();
+      _bufferEscanerFisico.clear();
+      if (llegoRapido && codigo.length >= 3) {
+        _ctrlCodigoBarras.clear();
+        _procesarCodigoEscaneado(codigo);
+        return true;
+      }
+      return false;
+    }
+
+    final caracter = event.character;
+    if (caracter == null || caracter.isEmpty) return false;
+
+    if (llegoRapido) {
+      _bufferEscanerFisico.write(caracter);
+    } else {
+      _bufferEscanerFisico
+        ..clear()
+        ..write(caracter);
     }
     return false;
   }
