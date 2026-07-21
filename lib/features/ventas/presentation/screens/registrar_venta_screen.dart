@@ -145,6 +145,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // visible y el usuario lo toca a propósito).
     if (!_esPlataformaMovil) {
       FocusManager.instance.addListener(_alCambiarFocoGlobal);
+      // El primer pedido de foco de este campo NO usa `autofocus` (ver
+      // _campoCodigoBarras): el timing propio de `autofocus` de Flutter es
+      // distinto al de _alCambiarFocoGlobal, y esa diferencia justo la
+      // primera vez es lo que hacía perder la primera tecla si se abría un
+      // diálogo (Buscar Producto) muy rápido después de entrar a esta
+      // pantalla. Pidiéndolo acá, después del primer frame, con el mismo
+      // método que usa el resto, el comportamiento es idéntico siempre.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _alCambiarFocoGlobal());
     }
 
     // Si esta pestaña se abrió desde "Duplicar venta" o "Convertir a venta"
@@ -1626,10 +1634,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // (ahí se escanea con la cámara, ver _escanearConCamara y el botón
   // "Escanear" junto a "Agregar Producto").
   Widget _campoCodigoBarras() {
+    // Sin autofocus: en escritorio el primer pedido de foco lo hace
+    // _alCambiarFocoGlobal desde un postFrameCallback en initState (mismo
+    // mecanismo, mismo timing, que los pedidos de foco posteriores). En
+    // celular no hace falta que este campo tenga foco nunca.
     return TextField(
       controller: _ctrlCodigoBarras,
       focusNode: _focusCodigoBarras,
-      autofocus: true,
       onSubmitted: (_) => _confirmarCodigoBarras(),
     );
   }
