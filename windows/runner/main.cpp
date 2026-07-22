@@ -31,9 +31,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
-  // Arranca siempre maximizada (Create ya la deja visible en su tamaño
-  // normal 1280x720; esto la maximiza apenas se muestra la primera vez).
-  ::ShowWindow(window.GetHandle(), SW_SHOWMAXIMIZED);
+  // El arranque maximizado se hace en flutter_window.cpp (en el callback
+  // del primer frame): acá no alcanza, porque ese callback -que es lo que
+  // de verdad muestra la ventana la primera vez- corre después y pisaba
+  // cualquier maximizado pedido acá.
 
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {

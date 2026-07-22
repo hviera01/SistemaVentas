@@ -28,7 +28,12 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    // Arranca siempre maximizada. Tiene que ser acá (no alcanza con
+    // llamarlo después de Create() en main.cpp): este callback es lo que
+    // de verdad muestra la ventana por primera vez, recién cuando Flutter
+    // ya renderizó el primer frame -antes, este->Show() normal pisaba
+    // cualquier maximizado que se hubiera pedido antes.
+    ::ShowWindow(this->GetHandle(), SW_SHOWMAXIMIZED);
   });
 
   // Flutter can complete the first frame before the "show window" callback is
