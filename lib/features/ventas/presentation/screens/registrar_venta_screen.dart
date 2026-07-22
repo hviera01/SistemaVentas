@@ -72,6 +72,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // las del diálogo — tenerlas montadas en los dos lados a la vez rompería
   // el foco y la edición.
   bool _tablaExpandida = false;
+  // true mientras hay abierto un diálogo con su propio campo de texto libre
+  // (por ahora, solo Buscar Producto) que necesita recibir cada tecla tal
+  // cual, sin que el lector físico ni el refoco automático del código de
+  // barras invisible compitan por ellas. La tabla expandida (ver
+  // _expandirTablaProductos) no la toca a propósito: ahí sí tiene que
+  // seguir funcionando el escáner.
+  bool _pausarLectorFisico = false;
   // Ver el comentario en _expandirTablaProductos: es la forma de pedirle a
   // ese diálogo (si está abierto) que se vuelva a pintar con los datos ya
   // leídos por el `ref` correcto de esta pantalla, cada vez que el carrito
@@ -184,18 +191,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
   }
 
-  // Falso apenas se abre CUALQUIER diálogo o pantalla nueva encima de esta
-  // (Buscar Producto, Buscar Cliente, Cobrar, el teclado numérico, etc.):
-  // sin este chequeo, mientras esa pantalla nueva también le pide el foco a
-  // su propio campo (por ejemplo el buscador de Buscar Producto, que se
-  // autoenfoca al abrir), este listener se lo disputaba pidiéndoselo para
-  // el campo invisible de código de barras -las dos peticiones de foco
-  // corriendo casi al mismo tiempo dejaban a veces la primera tecla
-  // tecleada sin ningún campo real que la reciba (se perdía, con el bip de
-  // Windows de tecla no consumida por nadie) hasta que la segunda tecla ya
-  // encontraba todo asentado.
-  bool get _esRutaActual => ModalRoute.of(context)?.isCurrent ?? true;
-
   void _alCambiarFocoGlobal() {
     if (!mounted || _esPlataformaMovil) return;
     // Con varias pestañas de Registrar Venta abiertas a la vez (quedan
@@ -204,7 +199,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // cada vez que queda en nada, aunque estén en una pestaña de fondo que
     // ni se ve.
     if (!_esPestanaActiva()) return;
-    if (!_esRutaActual) return;
+    // Ver _pausarLectorFisico: con Buscar Producto abierto, no hay que
+    // disputarle el foco a su campo de texto.
+    if (_pausarLectorFisico) return;
     if (FocusManager.instance.primaryFocus == null) {
       _focusCodigoBarras.requestFocus();
     }
@@ -214,11 +211,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (event is! KeyDownEvent) return false;
     if (!mounted || _guardando) return false;
     if (!_esPestanaActiva()) return false;
-    // Mismo motivo que en _alCambiarFocoGlobal: con un diálogo abierto
-    // encima (Buscar Producto, Cobrar, etc.) ni los atajos F10/F12 ni la
-    // detección del lector físico deben competir por lo que se esté
-    // tecleando ahí.
-    if (!_esRutaActual) return false;
+    // Ver _pausarLectorFisico: con Buscar Producto abierto (el único
+    // diálogo con un campo de texto libre propio) ni los atajos F10/F12 ni
+    // la detección del lector físico deben competir por lo que se esté
+    // tecleando ahí. La tabla expandida no pausa esto: ahí el escáner sigue
+    // funcionando a propósito.
+    if (_pausarLectorFisico) return false;
     if (event.logicalKey == LogicalKeyboardKey.f10) {
       _agregarProductoDesdeBusqueda();
       return true;
@@ -412,11 +410,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   Future<void> _agregarProductoDesdeBusqueda() async {
-    final resultado = await Navigator.of(context).push<ProductoConPrecio>(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()),
-    );
-    if (resultado == null || !mounted) return;
-    await _procesarProductoSeleccionado(resultado);
+    // Mientras el buscador está abierto (tiene su propio campo de texto
+    // libre), se pausa la detección del lector físico y el refoco
+    // automático del código de barras invisible (ver _pausarLectorFisico):
+    // si no, competían por el foco justo al escribir ahí. La tabla
+    // expandida (ver _expandirTablaProductos) no toca esta bandera a
+    // propósito: ahí sí tiene que seguir funcionando el escáner.
+    _pausarLectorFisico = true;
+    try {
+      final resultado = await Navigator.of(context).push<ProductoConPrecio>(
+        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()),
+      );
+      if (resultado == null || !mounted) return;
+      await _procesarProductoSeleccionado(resultado);
+    } finally {
+      _pausarLectorFisico = false;
+    }
   }
 
   // Confirma lo escrito/escaneado en el campo de código de barras de esta
@@ -1941,6 +1950,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
                         const SizedBox(width: 14),
                         _selectorPrecioIsvCarrito(compacto: true, alCambiarExtra: () => setDialogState(() {})),
+                        const SizedBox(width: 10),
+                        // Sigue funcionando igual que en la pantalla normal:
+                        // abre el mismo buscador, y lo que se elija ahí se
+                        // agrega al mismo carrito (se ve reflejado acá al
+                        // toque). El lector físico de código de barras
+                        // también sigue andando mientras este diálogo está
+                        // abierto (a diferencia de mientras Buscar Producto
+                        // está abierto, ver _pausarLectorFisico).
+                        OutlinedButton.icon(
+                          onPressed: _agregarProductoDesdeBusqueda,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1A1A1A),
+                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
                         const Spacer(),
                         IconButton(tooltip: 'Cerrar', icon: const Icon(Icons.close), onPressed: () => Navigator.pop(dialogContext)),
                       ],
@@ -1959,6 +1987,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
                             ),
                     ),
+                    const SizedBox(height: 14),
+                    // Misma tarjeta de totales y mismo botón de crear venta
+                    // que la pantalla normal: confirmar la venta desde acá
+                    // funciona exactamente igual (valida, cobra si hace
+                    // falta, guarda, y limpia el carrito al terminar).
+                    _tarjetaTotales(carrito, false),
                   ],
                 );
               },
