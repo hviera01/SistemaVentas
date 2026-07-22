@@ -1926,12 +1926,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         final tamano = MediaQuery.of(dialogContext).size;
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
+          insetPadding: const EdgeInsets.all(8),
           child: Container(
-            width: tamano.width - 40,
-            height: tamano.height - 40,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+            width: tamano.width - 16,
+            height: tamano.height - 16,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
             child: StatefulBuilder(
               builder: (context, setDialogState) {
                 // Se guarda para que el build() de esta pantalla (que sí

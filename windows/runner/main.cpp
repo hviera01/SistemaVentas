@@ -31,6 +31,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
+  // Arranca siempre maximizada (Create ya la deja visible en su tamaño
+  // normal 1280x720; esto la maximiza apenas se muestra la primera vez).
+  ::ShowWindow(window.GetHandle(), SW_SHOWMAXIMIZED);
 
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {
