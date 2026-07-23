@@ -89,14 +89,26 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
 
   /// Agrega un producto directamente a la tabla, con cantidad 1 y el costo
   /// unitario que ya tiene registrado el producto (editable en la fila).
+  ///
+  /// El "Precio Compra" guardado en el catálogo incluye el ISV (así llega el
+  /// costo en la factura del proveedor). Como el ISV de la compra se aplica
+  /// una sola vez sobre el total (ver [CarritoCompraState.impuesto]), si acá
+  /// se cargara ese mismo precio y la compra usa ISV el impuesto quedaría
+  /// contado dos veces. Por eso, si la compra tiene ISV (>0), se le quita ese
+  /// porcentaje antes de cargarlo a la línea; si la compra está en ISV 0
+  /// (proveedor exento, por ejemplo), se carga el precio del catálogo tal
+  /// cual.
   void agregarProductoDirecto(ProductoModel producto) {
+    final precioCompra = state.isvPorcentaje > 0
+        ? redondearMoneda(producto.precioCompra / (1 + state.isvPorcentaje / 100))
+        : producto.precioCompra;
     final item = ItemCompraModel(
       idProducto: producto.id,
       idCategoria: producto.idCategoria,
       nombreProducto: producto.nombre,
-      precioCompra: producto.precioCompra,
+      precioCompra: precioCompra,
       cantidad: 1,
-      subtotal: _subtotalLinea(producto.precioCompra, 1, 0),
+      subtotal: _subtotalLinea(precioCompra, 1, 0),
       precioVentaNuevo: producto.precioVenta,
     );
     state = state.copyWith(items: [...state.items, item]);
@@ -138,12 +150,16 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
     state = state.copyWith(
       condicion: v,
       metodoPago: v == 'Credito' ? '' : 'Efectivo',
-      fechaVencimiento: v == 'Credito' ? (state.fechaVencimiento ?? DateTime.now().add(const Duration(days: 30))) : null,
+      fechaVencimiento: v == 'Credito' ? (state.fechaVencimiento ?? state.fecha.add(const Duration(days: 30))) : null,
     );
   }
 
   void establecerMetodoPago(String v) => state = state.copyWith(metodoPago: v);
-  void establecerFecha(DateTime v) => state = state.copyWith(fecha: v);
+
+  /// Al cambiar la fecha de registro, la fecha de vencimiento del crédito se
+  /// recalcula sola a 30 días de esa fecha (no de "hoy"), para que quede
+  /// consistente con lo que el usuario acaba de elegir.
+  void establecerFecha(DateTime v) => state = state.copyWith(fecha: v, fechaVencimiento: v.add(const Duration(days: 30)));
   void establecerFechaVencimiento(DateTime v) => state = state.copyWith(fechaVencimiento: v);
   void establecerDescuentoGlobal(double v) => state = state.copyWith(descuentoGlobalPorcentaje: v);
   void establecerIsv(double v) => state = state.copyWith(isvPorcentaje: v);

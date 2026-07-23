@@ -26,11 +26,34 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
   List<ProductoModel> _listaActual = [];
   String? _filaSeleccionada;
 
+  // Cachea el resultado del filtro: sin esto, cada setState (por ejemplo,
+  // solo resaltar una fila al hacer clic o mover la selección con las
+  // flechas) volvía a recorrer todo el catálogo con coincideFuzzy dentro de
+  // build(), aunque la búsqueda no hubiera cambiado. Eso era lo que se
+  // sentía "pesado y lento" al seleccionar.
+  List<ProductoModel>? _productosCacheados;
+  String? _busquedaFiltroCacheada;
+
+  // Una GlobalKey por fila visible (indexada por posición en _listaActual)
+  // para poder pedirle a la lista que haga scroll hasta la fila resaltada al
+  // navegar con las flechas del teclado, aunque haya quedado fuera de la
+  // vista.
+  final Map<int, GlobalKey> _clavesFila = {};
+
   @override
   void dispose() {
     _busquedaController.dispose();
     _focusNodeLista.dispose();
     super.dispose();
+  }
+
+  List<ProductoModel> _filtrar(List<ProductoModel> productos) {
+    if (identical(productos, _productosCacheados) && _busquedaFiltroCacheada == _busquedaAplicada) {
+      return _listaActual;
+    }
+    _productosCacheados = productos;
+    _busquedaFiltroCacheada = _busquedaAplicada;
+    return productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
   }
 
   void _moverSeleccion(int delta) {
@@ -40,6 +63,10 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     if (nuevoIndice < 0) nuevoIndice = 0;
     if (nuevoIndice >= _listaActual.length) nuevoIndice = _listaActual.length - 1;
     setState(() => _filaSeleccionada = _listaActual[nuevoIndice].id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contexto = _clavesFila[nuevoIndice]?.currentContext;
+      if (contexto != null) Scrollable.ensureVisible(contexto, duration: const Duration(milliseconds: 120), alignment: 0.5);
+    });
   }
 
   KeyEventResult _manejarTeclado(FocusNode node, KeyEvent event) {
@@ -83,6 +110,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     setState(() {
       _busquedaAplicada = texto;
       _filaSeleccionada = null;
+      _clavesFila.clear();
     });
     if (texto.isEmpty) return;
     final productos = ref.read(productosStreamProvider).value ?? [];
@@ -210,7 +238,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                           );
                         }
 
-                        final lista = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
+                        final lista = _filtrar(productos);
                         _listaActual = lista;
                         if (lista.isEmpty) {
                           return Center(
@@ -231,7 +259,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                                 separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                                 itemBuilder: (context, i) {
                                   final p = lista[i];
-                                  return esMovil ? _tarjetaMovil(p, mapaCategorias) : _filaTabla(p, mapaCategorias);
+                                  return esMovil ? _tarjetaMovil(i, p, mapaCategorias) : _filaTabla(i, p, mapaCategorias);
                                 },
                               ),
                             ),
@@ -265,9 +293,10 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     );
   }
 
-  Widget _filaTabla(ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
+      key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -325,9 +354,10 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     );
   }
 
-  Widget _tarjetaMovil(ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
+      key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),

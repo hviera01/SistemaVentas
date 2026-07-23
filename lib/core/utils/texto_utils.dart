@@ -43,6 +43,13 @@ bool coincideFuzzy(String textoCompleto, String consulta) {
       // etc.- calzara adentro de algo como "rexona" y trajera resultados sin
       // ninguna relación real.
       if (palabraTexto.contains(palabraConsulta)) return true;
+      // Sin tolerancia si la palabra buscada tiene algún dígito: son casos
+      // de código (ej. "SC-1332"), donde un caracter de diferencia es
+      // literalmente otro producto, no un error de tipeo a perdonar (a
+      // diferencia de una palabra de texto libre mal escrita). Antes esto
+      // dejaba pasar códigos parecidos por Levenshtein y el filtro traía de
+      // más con búsquedas que deberían haber sido puntuales.
+      if (RegExp(r'[0-9]').hasMatch(palabraConsulta)) return false;
       // Tolerancia a errores de tipeo: nada para palabras muy cortas (ahí
       // cualquier letra distinta ya es otra palabra), un poco más para
       // palabras largas.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,10 @@ import '../../../productos/providers/productos_provider.dart';
 import '../../../proveedores/data/proveedor_model.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../../core/providers/tabs_provider.dart';
+import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
+import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import '../widgets/buscar_producto_compra_dialog.dart';
 import 'detalle_compra_screen.dart';
 
@@ -49,18 +53,61 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   final Map<String, VoidCallback> _confirmarInline = {};
   int _conteoItemsControladores = -1;
 
+  // Campo de código de barras invisible (ver _campoCodigoBarras) + detección
+  // de lector físico a nivel de hardware (ver _detectarEscaneoFisico): mismo
+  // mecanismo que RegistrarVentaScreen, para que un lector de código de
+  // barras físico agregue el producto a la compra sin que el usuario tenga
+  // que tocar nada.
+  final _ctrlCodigoBarras = TextEditingController();
+  final _focusCodigoBarras = FocusNode();
+  final _bufferEscanerFisico = StringBuffer();
+  DateTime? _ultimaTeclaEscanerFisico;
+  static const _intervaloMaximoEscanerFisico = Duration(milliseconds: 45);
+
+  bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
+  // true mientras Buscar Producto (con su propio campo de texto libre) está
+  // abierto: pausa la detección del lector físico y el refoco automático
+  // para que no le compitan el foco a ese campo.
+  bool _pausarLectorFisico = false;
+
+  // true mientras está abierto el diálogo de "ver la tabla más grande" (ver
+  // _expandirTablaProductos): esa tabla comparte los mismos
+  // TextEditingController/FocusNode que la de acá abajo, así que mientras
+  // tanto esta no monta sus filas.
+  bool _tablaExpandida = false;
+  void Function(void Function())? _refrescarDialogoExpandido;
+
   @override
   void initState() {
     super.initState();
     // Atajos a nivel de hardware (no de foco): así funcionan sin importar
     // qué campo de la pantalla tenga el foco en ese momento.
     HardwareKeyboard.instance.addHandler(_manejarAtajoTeclado);
+
+    // En escritorio, cada vez que el foco queda en nada se lo devuelve al
+    // campo de código de barras invisible: así un lector físico funciona en
+    // cualquier momento sin que el usuario tenga que tocar nada primero.
+    if (!_esPlataformaMovil) {
+      FocusManager.instance.addListener(_alCambiarFocoGlobal);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _alCambiarFocoGlobal());
+    }
+  }
+
+  void _alCambiarFocoGlobal() {
+    if (!mounted || _esPlataformaMovil) return;
+    if (!_esPestanaActiva()) return;
+    if (_pausarLectorFisico) return;
+    if (FocusManager.instance.primaryFocus == null) {
+      _focusCodigoBarras.requestFocus();
+    }
   }
 
   bool _manejarAtajoTeclado(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
     if (!mounted || _guardando) return false;
     if (!_esPestanaActiva()) return false;
+    if (_pausarLectorFisico) return false;
     if (event.logicalKey == LogicalKeyboardKey.f10) {
       _agregarProductoDesdeBusqueda();
       return true;
@@ -68,6 +115,42 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     if (event.logicalKey == LogicalKeyboardKey.f12) {
       _confirmarCompra();
       return true;
+    }
+    return _detectarEscaneoFisico(event);
+  }
+
+  // Ver la explicación completa (idéntica) en RegistrarVentaScreen: arma un
+  // buffer con las teclas que llegan pegadas (un lector físico escribe mucho
+  // más rápido que una persona) y, apenas confirma que hay una ráfaga en
+  // curso, le quita el foco a lo que sea que lo tenga para que ningún
+  // control despierto reaccione a las teclas que todavía faltan por llegar.
+  bool _detectarEscaneoFisico(KeyEvent event) {
+    final ahora = DateTime.now();
+    final ultimaTecla = _ultimaTeclaEscanerFisico;
+    final llegoRapido = ultimaTecla != null && ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
+    _ultimaTeclaEscanerFisico = ahora;
+
+    if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      final codigo = _bufferEscanerFisico.toString();
+      _bufferEscanerFisico.clear();
+      if (llegoRapido && codigo.length >= 3) {
+        _ctrlCodigoBarras.clear();
+        _procesarCodigoEscaneado(codigo);
+        return true;
+      }
+      return false;
+    }
+
+    final caracter = event.character;
+    if (caracter == null || caracter.isEmpty) return false;
+
+    if (llegoRapido) {
+      _bufferEscanerFisico.write(caracter);
+      FocusManager.instance.primaryFocus?.unfocus();
+    } else {
+      _bufferEscanerFisico
+        ..clear()
+        ..write(caracter);
     }
     return false;
   }
@@ -83,6 +166,11 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
+    if (!_esPlataformaMovil) {
+      FocusManager.instance.removeListener(_alCambiarFocoGlobal);
+    }
+    _ctrlCodigoBarras.dispose();
+    _focusCodigoBarras.dispose();
     _noFacturaController.dispose();
     _descuentoGlobalController.dispose();
     _isvController.dispose();
@@ -136,11 +224,79 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // ---------- Producto ----------
 
   Future<void> _agregarProductoDesdeBusqueda() async {
-    final producto = await Navigator.of(context).push<ProductoModel>(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoCompraDialog()),
+    // Mientras el buscador está abierto (tiene su propio campo de texto
+    // libre), se pausa la detección del lector físico y el refoco
+    // automático del código de barras invisible: si no, competían por el
+    // foco justo al escribir ahí.
+    _pausarLectorFisico = true;
+    try {
+      final producto = await Navigator.of(context).push<ProductoModel>(
+        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoCompraDialog()),
+      );
+      if (producto == null || !mounted) return;
+      ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(producto);
+    } finally {
+      _pausarLectorFisico = false;
+    }
+  }
+
+  // Campo de código de barras de esta pantalla, siempre invisible (el
+  // llamador lo envuelve en un Offstage): en escritorio, layout y foco
+  // siguen funcionando aunque no se pinte nada, así que un lector de código
+  // de barras físico agrega el producto en cualquier momento sin necesitar
+  // un campo visible. En el celular se escanea con la cámara (ver
+  // _escanearConCamara).
+  Widget _campoCodigoBarras() {
+    return TextField(
+      controller: _ctrlCodigoBarras,
+      focusNode: _focusCodigoBarras,
+      onSubmitted: (_) => _confirmarCodigoBarras(),
     );
-    if (producto == null || !mounted) return;
-    ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(producto);
+  }
+
+  Future<void> _confirmarCodigoBarras() async {
+    final codigo = _ctrlCodigoBarras.text.trim();
+    _ctrlCodigoBarras.clear();
+    if (codigo.isEmpty) return;
+    await _procesarCodigoEscaneado(codigo);
+    if (mounted) _focusCodigoBarras.requestFocus();
+  }
+
+  Future<void> _escanearConCamara() async {
+    final codigo = await escanearCodigoBarras(context);
+    if (codigo == null || codigo.isEmpty || !mounted) return;
+    await _procesarCodigoEscaneado(codigo);
+  }
+
+  /// Busca un producto por código exacto (código de barras o código interno)
+  /// y lo agrega directo a la compra, sin pasar por el modal de Buscar
+  /// Producto.
+  Future<void> _procesarCodigoEscaneado(String codigo) async {
+    if (!mounted) return;
+    final texto = codigo.trim();
+    if (ref.read(productosStreamProvider).value == null) {
+      try {
+        await ref.read(productosStreamProvider.future);
+      } catch (_) {}
+      if (!mounted) return;
+    }
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    bool coincide(ProductoModel p, String t) => p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
+    var coincidencias = productos.where((p) => coincide(p, texto)).toList();
+    if (coincidencias.isEmpty) {
+      // Ver variantesCodigoBarras: corrige tanto el código leído al revés
+      // (algunos celulares) como el "0" que iPhone agrega al principio de
+      // los códigos UPC-A (Android no lo agrega).
+      for (final variante in variantesCodigoBarras(texto)) {
+        coincidencias = productos.where((p) => coincide(p, variante)).toList();
+        if (coincidencias.isNotEmpty) break;
+      }
+    }
+    if (coincidencias.isEmpty) {
+      _mostrarMensaje('Código escaneado no encontrado: $texto');
+      return;
+    }
+    ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(coincidencias.first);
   }
 
   void _quitarItem(int index) {
@@ -327,6 +483,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   @override
   Widget build(BuildContext context) {
     final carrito = ref.watch(carritoCompraProvider);
+    // Si el diálogo de "ver la tabla más grande" está abierto, le pide que
+    // se vuelva a pintar con los datos ya leídos por este `ref` cada vez que
+    // el carrito cambia (ver _expandirTablaProductos).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refrescarDialogoExpandido?.call(() {}));
 
     return Container(
       color: const Color(0xFFF2F3F7),
@@ -693,20 +853,44 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   children: [
                     Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _agregarProductoDesdeBusqueda,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _agregarProductoDesdeBusqueda,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
+                        if (_esPlataformaMovil) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: _escanearConCamara,
+                            icon: const Icon(Icons.qr_code_scanner, size: 16),
+                            label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1A1A1A),
+                              side: const BorderSide(color: Color(0xFFB6BCC7)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 )
               : Row(
                   children: [
                     Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      tooltip: 'Ver la tabla más grande',
+                      onPressed: _expandirTablaProductos,
+                      icon: const Icon(Icons.open_in_full, size: 18),
+                      color: Colors.grey.shade600,
+                    ),
                     const Spacer(),
                     FilledButton.icon(
                       onPressed: _agregarProductoDesdeBusqueda,
@@ -716,6 +900,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     ),
                   ],
                 ),
+          Offstage(offstage: true, child: _campoCodigoBarras()),
           const SizedBox(height: 14),
           if (!esMovil) ...[
             _encabezadoTablaCarrito(),
@@ -744,6 +929,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 ],
               ],
             )
+          else if (_tablaExpandida)
+            // Ver el comentario de _tablaExpandida: mientras el diálogo de
+            // "ver más grande" está abierto, esta tabla no monta sus filas
+            // (esas mismas filas ya están montadas allá, usando los mismos
+            // controladores).
+            Expanded(
+              child: Center(
+                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+              ),
+            )
           else
             Expanded(
               child: ListView.separated(
@@ -752,6 +947,126 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // Muestra la tabla de productos sola, casi a pantalla completa, para
+  // cuando hay varios items y la vista normal se queda chica. Mismo patrón
+  // que RegistrarVentaScreen: el diálogo lee el carrito con el `ref` de esta
+  // pantalla (ref.read) en vez de watch/Consumer propio, porque showDialog
+  // lo inserta con el Navigator raíz, fuera del ProviderScope por pestaña.
+  void _expandirTablaProductos() {
+    setState(() => _tablaExpandida = true);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        final tamano = MediaQuery.of(dialogContext).size;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(8),
+          child: Container(
+            width: tamano.width - 16,
+            height: tamano.height - 16,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                _refrescarDialogoExpandido = setDialogState;
+                final carrito = ref.read(carritoCompraProvider);
+                final productos = ref.read(productosStreamProvider).value ?? [];
+                final mapaProductos = {for (final p in productos) p.id: p};
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                        const SizedBox(width: 14),
+                        OutlinedButton.icon(
+                          onPressed: _agregarProductoDesdeBusqueda,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1A1A1A),
+                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(tooltip: 'Cerrar', icon: const Icon(Icons.close), onPressed: () => Navigator.pop(dialogContext)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    _encabezadoTablaCarrito(),
+                    Divider(height: 18, color: Colors.grey.shade300),
+                    Expanded(
+                      child: carrito.items.isEmpty
+                          ? Center(
+                              child: Text('Todavía no agregaste productos.', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                            )
+                          : ListView.separated(
+                              itemCount: carrito.items.length,
+                              separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                              itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
+                            ),
+                    ),
+                    const SizedBox(height: 10),
+                    _barraTotalesCompacta(carrito),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      _refrescarDialogoExpandido = null;
+      if (mounted) setState(() => _tablaExpandida = false);
+    });
+  }
+
+  // Versión chica de los totales + botón de confirmar, solo para la tabla
+  // expandida: una sola fila delgada, para que la tabla se quede con casi
+  // todo el espacio, que es para lo que se abrió este diálogo.
+  Widget _barraTotalesCompacta(CarritoCompraState carrito) {
+    Widget total(String etiqueta, double valor, {bool destacado = false}) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+          Text(
+            formatearMoneda(valor),
+            style: GoogleFonts.poppins(fontSize: destacado ? 15 : 12.5, fontWeight: FontWeight.w800, color: destacado ? const Color(0xFFC62828) : const Color(0xFF1A1A1A)),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          total('Subtotal', carrito.subtotal),
+          const SizedBox(width: 20),
+          total('ISV', carrito.impuesto),
+          const SizedBox(width: 20),
+          total('Total a pagar', carrito.totalAPagar, destacado: true),
+          const Spacer(),
+          SizedBox(
+            height: 38,
+            child: FilledButton(
+              onPressed: _guardando ? null : _confirmarCompra,
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              child: _guardando
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text('Registrar Compra', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+          ),
         ],
       ),
     );
@@ -785,13 +1100,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // así siempre usa el [valorActual]/[alConfirmar] vigentes en vez de quedar
   // atado a los del primer build (que sería el bug si el listener capturara
   // esos parámetros directamente).
-  Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo}) {
-    void confirmar() {
-      final valor = double.tryParse(controlador.text.replaceAll(',', '').trim());
-      if (valor == null || (valor - valorActual).abs() < 0.005) return;
-      alConfirmar(valor);
-    }
-    _confirmarInline[claveFoco] = confirmar;
+  Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo, bool dosDecimales = false}) {
+    final esMovilPlataforma = _esPlataformaMovil;
 
     final focusNode = _focusInline.putIfAbsent(claveFoco, () {
       final node = FocusNode();
@@ -800,6 +1110,38 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       });
       return node;
     });
+
+    void confirmar() {
+      final texto = controlador.text.replaceAll(',', '').trim();
+      final valor = double.tryParse(texto);
+      if (valor == null) return;
+      if ((valor - valorActual).abs() >= 0.005) alConfirmar(valor);
+      if (dosDecimales) controlador.text = valor.toStringAsFixed(2);
+      if (esMovilPlataforma) {
+        if (focusNode.hasFocus) focusNode.unfocus();
+      } else {
+        // Igual que en RegistrarVentaScreen: pedirle el foco a otro campo
+        // concreto (el de código de barras invisible) en vez de solo
+        // soltarlo evita que, al cerrar el diálogo del teclado numérico,
+        // Flutter le devuelva el foco a este campo y reseleccione el texto.
+        _focusCodigoBarras.requestFocus();
+      }
+    }
+    _confirmarInline[claveFoco] = confirmar;
+
+    Future<void> abrirTecladoNumerico() async {
+      focusNode.unfocus();
+      final texto = await showDialog<String>(
+        context: context,
+        builder: (context) => TecladoNumericoDialog(
+          titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor',
+          valorInicial: controlador.text,
+        ),
+      );
+      if (texto == null || !mounted) return;
+      controlador.text = texto;
+      confirmar();
+    }
 
     return TextField(
       controller: controlador,
@@ -815,18 +1157,21 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      // En escritorio, un clic en el campo (no solo tipear) ya abre el
+      // teclado numérico en pantalla, igual que en Registrar Venta.
+      onTap: esMovilPlataforma ? null : abrirTecladoNumerico,
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     );
   }
 
-  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar) {
+  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {bool dosDecimales = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(etiqueta, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
         const SizedBox(height: 4),
-        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar),
+        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar, dosDecimales: dosDecimales),
       ],
     );
   }
@@ -853,7 +1198,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
               ),
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
-              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v)))),
+              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), dosDecimales: true))),
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
               Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
               Expanded(flex: 2, child: Text(formatearMoneda(item.subtotal as double), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
@@ -869,7 +1214,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               children: [
                 const Spacer(flex: 6),
                 Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v)))),
-                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v)))),
+                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v), dosDecimales: true))),
                 const Spacer(flex: 4),
                 const SizedBox(width: 40),
               ],
@@ -914,7 +1259,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             children: [
               Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v))),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precio_$index', 'Costo unitario', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('precio_$index', 'Costo unitario', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), dosDecimales: true)),
               const SizedBox(width: 8),
               Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v))),
             ],
@@ -924,7 +1269,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             children: [
               Expanded(child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v))),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v), dosDecimales: true)),
             ],
           ),
           const SizedBox(height: 10),

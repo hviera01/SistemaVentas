@@ -46,6 +46,23 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   String? _columnaOrden;
   bool _ordenAscendente = true;
 
+  // Cachea el resultado del filtro/orden: sin esto, cada setState (por
+  // ejemplo, solo resaltar una fila al hacer clic o mover la selección con
+  // las flechas) volvía a recorrer todo el catálogo con coincideFuzzy dentro
+  // de build(), aunque nada de lo que afecta al filtro hubiera cambiado. Eso
+  // era lo que se sentía "pesado y lento" al seleccionar.
+  List<ProductoModel>? _productosCacheados;
+  String? _busquedaFiltroCacheada;
+  bool? _exactaFiltroCacheada;
+  String? _columnaOrdenCacheada;
+  bool? _ordenAscendenteCacheado;
+
+  // Una GlobalKey por fila visible (indexada por posición en _listaActual)
+  // para poder pedirle a la lista que haga scroll hasta la fila resaltada al
+  // navegar con las flechas del teclado, aunque haya quedado fuera de la
+  // vista.
+  final Map<int, GlobalKey> _clavesFila = {};
+
   // defaultTargetPlatform (a diferencia de un ancho de pantalla angosto,
   // que también puede pasar en un navegador de escritorio con la ventana
   // chica) detecta el sistema operativo real del equipo.
@@ -58,6 +75,26 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     super.dispose();
   }
 
+  List<ProductoModel> _filtrar(List<ProductoModel> productos) {
+    if (identical(productos, _productosCacheados) &&
+        _busquedaFiltroCacheada == _busquedaAplicada &&
+        _exactaFiltroCacheada == _busquedaExacta &&
+        _columnaOrdenCacheada == _columnaOrden &&
+        _ordenAscendenteCacheado == _ordenAscendente) {
+      return _listaActual;
+    }
+    _productosCacheados = productos;
+    _busquedaFiltroCacheada = _busquedaAplicada;
+    _exactaFiltroCacheada = _busquedaExacta;
+    _columnaOrdenCacheada = _columnaOrden;
+    _ordenAscendenteCacheado = _ordenAscendente;
+    final lista = productos.where((p) => p.estado && _coincide(p, _busquedaAplicada)).toList();
+    if (_columnaOrden == 'existencia') {
+      lista.sort((a, b) => _ordenAscendente ? a.stock.compareTo(b.stock) : b.stock.compareTo(a.stock));
+    }
+    return lista;
+  }
+
   void _moverSeleccion(int delta) {
     if (_listaActual.isEmpty) return;
     final indiceActual = _filaSeleccionada == null ? -1 : _listaActual.indexWhere((p) => p.id == _filaSeleccionada);
@@ -65,6 +102,10 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     if (nuevoIndice < 0) nuevoIndice = 0;
     if (nuevoIndice >= _listaActual.length) nuevoIndice = _listaActual.length - 1;
     setState(() => _filaSeleccionada = _listaActual[nuevoIndice].id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contexto = _clavesFila[nuevoIndice]?.currentContext;
+      if (contexto != null) Scrollable.ensureVisible(contexto, duration: const Duration(milliseconds: 120), alignment: 0.5);
+    });
   }
 
   KeyEventResult _manejarTeclado(FocusNode node, KeyEvent event) {
@@ -154,6 +195,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       _busquedaAplicada = texto;
       _filaSeleccionada = null;
       _busquedaExacta = exacta;
+      _clavesFila.clear();
     });
     if (texto.isEmpty) return;
     final coincidencias = productos.where((p) => p.estado && _coincide(p, texto)).toList();
@@ -324,10 +366,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                         );
                       }
 
-                      final lista = productos.where((p) => p.estado && _coincide(p, _busquedaAplicada)).toList();
-                      if (_columnaOrden == 'existencia') {
-                        lista.sort((a, b) => _ordenAscendente ? a.stock.compareTo(b.stock) : b.stock.compareTo(a.stock));
-                      }
+                      final lista = _filtrar(productos);
                       _listaActual = lista;
                       if (lista.isEmpty) {
                         return Center(
@@ -348,7 +387,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                               separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                               itemBuilder: (context, i) {
                                 final p = lista[i];
-                                return esMovil ? _tarjetaMovil(p, mapaCategorias) : _filaTabla(p, mapaCategorias);
+                                return esMovil ? _tarjetaMovil(i, p, mapaCategorias) : _filaTabla(i, p, mapaCategorias);
                               },
                             ),
                           ),
@@ -430,6 +469,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
           _columnaOrden = clave;
           _ordenAscendente = true;
         }
+        _clavesFila.clear();
       }),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -462,10 +502,11 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _filaTabla(ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
     final bajoStock = p.stock <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
+      key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -523,10 +564,11 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _tarjetaMovil(ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
     final bajoStock = p.stock <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
+      key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
