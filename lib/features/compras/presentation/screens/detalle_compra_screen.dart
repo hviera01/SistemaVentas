@@ -8,8 +8,9 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 
 /// Pantalla de consulta de una compra ya registrada: buscá por número de
-/// documento (o abrila directo desde Compras a Crédito pasando
-/// [compraIdInicial]) para ver el detalle completo o anularla.
+/// documento o de factura (o abrila directo tocándola desde un reporte, o
+/// desde Compras a Crédito, pasando [compraIdInicial]) para ver el detalle
+/// completo o anularla.
 class DetalleCompraScreen extends ConsumerStatefulWidget {
   final String? compraIdInicial;
   final String? numeroDocumentoInicial;
@@ -74,7 +75,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
   Future<void> _buscarPorNumero() async {
     final texto = _busquedaController.text.trim();
     if (texto.isEmpty) {
-      setState(() => _error = 'Ingresá un número de documento');
+      setState(() => _error = 'Ingresá un número de documento o de factura');
       return;
     }
     setState(() {
@@ -86,7 +87,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
       final compra = await ref.read(compraRepositoryProvider).obtenerCompraPorNumeroDocumento(texto);
       if (!mounted) return;
       if (compra == null) {
-        setState(() => _error = 'No se encontró ninguna compra con ese número de documento');
+        setState(() => _error = 'No se encontró ninguna compra con ese número de documento o de factura');
       } else {
         setState(() => _compra = compra);
       }
@@ -203,7 +204,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                     autofocus: widget.compraIdInicial == null,
                     style: GoogleFonts.poppins(fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Número de documento...',
+                      hintText: 'Número de documento o de factura...',
                       hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
                       border: InputBorder.none,
                       isDense: true,

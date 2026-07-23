@@ -194,12 +194,31 @@ class CompraRepository {
     return CompraModel.fromMap(id, snap.data()!, items);
   }
 
+  /// Busca por número de documento (correlativo interno, ej. "00000123") o
+  /// por número de factura (el que trae la factura física del proveedor).
+  /// El número de documento se normaliza quitando ceros a la izquierda antes
+  /// de comparar, así "123" encuentra "00000123" sin que el usuario tenga que
+  /// escribir el correlativo completo con ceros.
   Future<CompraModel?> obtenerCompraPorNumeroDocumento(String numeroDocumento) async {
     final texto = numeroDocumento.trim();
     if (texto.isEmpty) return null;
-    final query = await _colCompras.where('numeroDocumento', isEqualTo: texto).limit(1).get();
-    if (query.docs.isEmpty) return null;
-    final doc = query.docs.first;
+
+    final soloDigitos = texto.replaceAll(RegExp(r'[^0-9]'), '');
+    QueryDocumentSnapshot<Map<String, dynamic>>? doc;
+
+    if (soloDigitos.isNotEmpty) {
+      final sinCeros = soloDigitos.replaceFirst(RegExp(r'^0+'), '');
+      final correlativo = _formatearCorrelativo(int.parse(sinCeros.isEmpty ? '0' : sinCeros));
+      final porDocumento = await _colCompras.where('numeroDocumento', isEqualTo: correlativo).limit(1).get();
+      if (porDocumento.docs.isNotEmpty) doc = porDocumento.docs.first;
+    }
+
+    if (doc == null) {
+      final porFactura = await _colCompras.where('noFactura', isEqualTo: texto).limit(1).get();
+      if (porFactura.docs.isNotEmpty) doc = porFactura.docs.first;
+    }
+
+    if (doc == null) return null;
     final detalleSnap = await doc.reference.collection('detalle').get();
     final items = detalleSnap.docs.map((d) => ItemCompraModel.fromMap(d.data())).toList();
     return CompraModel.fromMap(doc.id, doc.data(), items);

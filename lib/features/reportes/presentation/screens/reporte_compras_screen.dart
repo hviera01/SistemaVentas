@@ -11,6 +11,7 @@ import '../../../../core/utils/exportador.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../usuarios/providers/usuarios_provider.dart';
+import '../../../compras/presentation/screens/detalle_compra_screen.dart';
 
 class ReporteComprasScreen extends ConsumerStatefulWidget {
   const ReporteComprasScreen({super.key});
@@ -65,6 +66,12 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  void _verDetalle(String idCompra) {
+    Navigator.of(context).push(
+      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleCompraScreen(compraIdInicial: idCompra)),
+    );
   }
 
   void _aplicarBusqueda() {
@@ -425,18 +432,21 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
             return Column(
               children: [
                 if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    children: [
-                      _celda(2, c.fechaRegistro != null ? formatoFecha.format(c.fechaRegistro!) : '-', gris: true),
-                      _celda(2, c.noFactura.isEmpty ? '-' : c.noFactura, peso: FontWeight.w600),
-                      _celda(3, c.razonSocial),
-                      _celda(2, formatearMoneda(c.montoTotal), peso: FontWeight.w700),
-                      if (mostrarMetodoPago) _celda(2, c.metodoPago, gris: true),
-                      if (mostrarCondicion) _celda(2, c.condicion, gris: true),
-                      if (mostrarUsuario) _celda(2, c.usuarioRegistro, gris: true),
-                    ],
+                InkWell(
+                  onTap: () => _verDetalle(c.id),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        _celda(2, c.fechaRegistro != null ? formatoFecha.format(c.fechaRegistro!) : '-', gris: true),
+                        _celda(2, c.noFactura.isEmpty ? '-' : c.noFactura, peso: FontWeight.w600),
+                        _celda(3, c.razonSocial),
+                        _celda(2, formatearMoneda(c.montoTotal), peso: FontWeight.w700),
+                        if (mostrarMetodoPago) _celda(2, c.metodoPago, gris: true),
+                        if (mostrarCondicion) _celda(2, c.condicion, gris: true),
+                        if (mostrarUsuario) _celda(2, c.usuarioRegistro, gris: true),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -472,38 +482,42 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final c = lista[index];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(c.razonSocial.isEmpty ? 'Sin proveedor' : c.razonSocial, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                        Text('Factura ${c.noFactura}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
-                      ],
+        return InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _verDetalle(c.id),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(c.razonSocial.isEmpty ? 'Sin proveedor' : c.razonSocial, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                          Text('Factura ${c.noFactura}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(formatearMoneda(c.montoTotal), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _chipInfo('Pago', c.metodoPago),
-                  _chipInfo('Condición', c.condicion),
-                  _chipInfo('Fecha', c.fechaRegistro != null ? formatoFecha.format(c.fechaRegistro!) : '-'),
-                ],
-              ),
-            ],
+                    Text(formatearMoneda(c.montoTotal), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chipInfo('Pago', c.metodoPago),
+                    _chipInfo('Condición', c.condicion),
+                    _chipInfo('Fecha', c.fechaRegistro != null ? formatoFecha.format(c.fechaRegistro!) : '-'),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

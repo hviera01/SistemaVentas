@@ -573,15 +573,16 @@ class VentaExportService {
   }
 
   pw.Widget _filaTotal(String etiqueta, double valor, {bool negrita = false}) {
-    // El negrito a este tamaño (8) se ve "manchado" en la impresora térmica:
-    // los trazos gruesos casi se tocan entre sí a esa resolución. Un poco
-    // más de tamaño y de espaciado entre letras separa esos trazos y deja
-    // el negrito legible sin perder el énfasis (mismo problema que ya se
-    // evitó para los nombres de producto, ver comentario más arriba).
+    // Nada de FontWeight.bold acá: el negrito real (Helvetica-Bold) se ve
+    // "manchado" en la impresora térmica, los trazos gruesos casi se tocan
+    // entre sí a esa resolución (mismo problema que ya se evitó para los
+    // nombres de producto, ver comentario más arriba). El total se destaca
+    // con trazo normal pero un poco más grande y con letras más separadas,
+    // que a esta resolución se lee más claro que el negrito real.
     final estilo = pw.TextStyle(
-      fontSize: negrita ? 9.5 : 8,
-      fontWeight: negrita ? pw.FontWeight.bold : pw.FontWeight.normal,
-      letterSpacing: negrita ? 0.3 : null,
+      fontSize: negrita ? 9 : 8,
+      fontWeight: pw.FontWeight.normal,
+      letterSpacing: negrita ? 0.4 : null,
     );
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 1),
