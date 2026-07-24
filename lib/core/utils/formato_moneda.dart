@@ -6,7 +6,7 @@ String formatearMoneda(double valor) {
   // evita en otros lados (ver más abajo) pero como respaldo general acá,
   // para que ningún monto se muestre con arrastre de coma flotante sin
   // importar de dónde venga.
-  return 'L. ${formato.format(redondearMoneda(valor))}';
+  return 'L.${formato.format(redondearMoneda(valor))}';
 }
 
 /// Redondea un monto a centavos evitando errores de precisión binaria.
