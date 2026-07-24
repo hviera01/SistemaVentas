@@ -60,6 +60,7 @@ dependencies:
   esc_pos_utils_plus: ^2.0.4
   qr_flutter: ^4.1.0
   http: ^1.2.2
+  open_file: ^3.5.10
 
 dev_dependencies:
   flutter_test:

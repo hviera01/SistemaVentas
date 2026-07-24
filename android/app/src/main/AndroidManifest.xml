@@ -2,6 +2,11 @@
     <!-- Necesario para mandar el ticket de venta por socket TCP a una
          impresora térmica en la red WiFi local (ver ImpresoraRedService). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Necesario para poder disparar la pantalla de instalación de una
+         actualización descargada (ver ActualizacionService); Android igual
+         le pide confirmación al usuario antes de instalar, esto solo
+         habilita que la app pueda abrir esa pantalla. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="Super Color"
         android:name="${applicationName}"
