@@ -56,6 +56,22 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // F10 sin ningún modificador es, a nivel de Win32, una "tecla de
+  // sistema" igual que Alt solo: Windows la manda como WM_SYSKEYDOWN /
+  // WM_SYSKEYUP, y si ese mensaje llega a DefWindowProc (más abajo, vía
+  // Win32Window::MessageHandler), el sistema operativo entra en "modo
+  // menú". Como esta app no tiene un menú nativo, la siguiente tecla que
+  // se escribe se interpreta como un mnemónico de menú inexistente, y
+  // Windows la traga sonando el beep de error en vez de mandarla como
+  // texto -esto pasaba incluso con el atajo F10 ya manejado del lado de
+  // Dart (ver _manejarAtajoTeclado en registrar_venta_screen.dart), porque
+  // esa decisión de Dart no evita que DefWindowProc procese el mensaje
+  // nativo original-. Se lo sigue dejando pasar a Flutter primero (así el
+  // atajo F10 en Dart sigue funcionando igual que siempre), pero después
+  // se corta acá sin llamar a Win32Window::MessageHandler para que nunca
+  // llegue a DefWindowProc y el modo menú nunca se active.
+  const bool esSysKeyF10 = (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) && wparam == VK_F10;
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -64,6 +80,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     if (result) {
       return *result;
     }
+  }
+
+  if (esSysKeyF10) {
+    return 0;
   }
 
   switch (message) {
