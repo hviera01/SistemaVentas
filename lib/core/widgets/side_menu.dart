@@ -4,13 +4,27 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/modulos_menu.dart';
 import '../models/tab_item.dart';
 import '../providers/tabs_provider.dart';
+import '../services/actualizacion_service.dart';
 import '../utils/pantalla_builder.dart';
+import '../widgets/actualizacion_dialog.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 class SideMenu extends ConsumerWidget {
   final VoidCallback onCerrar;
 
   const SideMenu({super.key, required this.onCerrar});
+
+  Future<void> _buscarActualizaciones(BuildContext context) async {
+    final mensajero = ScaffoldMessenger.of(context);
+    mensajero.showSnackBar(const SnackBar(content: Text('Buscando actualizaciones...'), duration: Duration(seconds: 2)));
+    final actualizacion = await ActualizacionService.buscarActualizacion();
+    if (!context.mounted) return;
+    if (actualizacion == null) {
+      mensajero.showSnackBar(const SnackBar(content: Text('Ya tenés la última versión instalada')));
+      return;
+    }
+    mostrarDialogoActualizacion(context, actualizacion);
+  }
 
   void _abrirSubModulo(WidgetRef ref, SubModulo sub) {
     final esVentaNueva = sub.moduleKey == 'ventas_registrar';
@@ -98,6 +112,12 @@ class SideMenu extends ConsumerWidget {
                   },
                 ),
               ),
+              if (ActualizacionService.aplica)
+                ListTile(
+                  leading: Icon(Icons.system_update_alt, color: Colors.grey.shade600, size: 20),
+                  title: Text('Buscar actualizaciones', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+                  onTap: () => _buscarActualizaciones(context),
+                ),
             ],
           ),
         ),
