@@ -36,6 +36,17 @@ class ReporteFinancieroRepository {
   final _ventaCreditoRepository = VentaCreditoRepository();
   final _cierreCajaRepository = CierreCajaRepository();
 
+  // La serie mensual y el efectivo estimado no dependen del rango que el
+  // usuario elija en el reporte (son "últimos 6 meses" y "desde el último
+  // cierre de caja" respectivamente), así que antes se recalculaban desde
+  // cero en cada búsqueda aunque el usuario solo hubiera cambiado el rango
+  // principal. Se cachean un rato corto para no repetir esas consultas.
+  static const _vigenciaCache = Duration(minutes: 5);
+  List<PuntoMensual>? _serieMensualCache;
+  DateTime? _serieMensualCacheEn;
+  double? _efectivoEstimadoCache;
+  DateTime? _efectivoEstimadoCacheEn;
+
   Future<List<ItemVentaModel>> _detalleVenta(String idVenta) async {
     final snap = await _db.collection('ventas').doc(idVenta).collection('detalle').get();
     return snap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
@@ -90,11 +101,18 @@ class ReporteFinancieroRepository {
   }
 
   Future<double> _efectivoEstimado() async {
+    final cacheEn = _efectivoEstimadoCacheEn;
+    if (_efectivoEstimadoCache != null && cacheEn != null && DateTime.now().difference(cacheEn) < _vigenciaCache) {
+      return _efectivoEstimadoCache!;
+    }
     final estado = await _cierreCajaRepository.obtenerEstadoCaja();
     final hoy = DateTime.now();
     final finInclusive = DateTime(hoy.year, hoy.month, hoy.day, 23, 59, 59);
     final totales = await _cierreCajaRepository.calcularTotales(estado.fechaDesde, finInclusive);
-    return estado.montoInicial + totales.ingresosEfectivo - totales.egresosEfectivo;
+    final resultado = estado.montoInicial + totales.ingresosEfectivo - totales.egresosEfectivo;
+    _efectivoEstimadoCache = resultado;
+    _efectivoEstimadoCacheEn = DateTime.now();
+    return resultado;
   }
 
   /// Reconstruye el flujo de efectivo con datos que ya se pidieron para el
@@ -170,8 +188,12 @@ class ReporteFinancieroRepository {
     final abonosVentaFuture = _ventaCreditoRepository.obtenerAbonosPorRango(inicio, finInclusive);
     final abonosCompraFuture = _compraCreditoRepository.obtenerAbonosPorRango(inicio, finInclusive);
     final productosFuture = _db.collection('productos').get();
-    final ventasCreditoFuture = _db.collection('ventasCredito').get();
-    final comprasCreditoFuture = _db.collection('comprasCredito').get();
+    // Solo interesan para sumar saldoPendiente (cuentas por cobrar/pagar), así
+    // que se filtran del lado del servidor los créditos ya saldados en vez de
+    // traer la colección completa (con historial largo, la mayoría termina
+    // pagada) y descartarlos recién en el cliente.
+    final ventasCreditoFuture = _db.collection('ventasCredito').where('saldoPendiente', isGreaterThan: 0).get();
+    final comprasCreditoFuture = _db.collection('comprasCredito').where('saldoPendiente', isGreaterThan: 0).get();
     final serieMensualFuture = _obtenerSerieMensual();
     final efectivoEstimadoFuture = _efectivoEstimado();
     final hace3Meses = DateTime(DateTime.now().year, DateTime.now().month - 2, 1);
@@ -356,6 +378,17 @@ class ReporteFinancieroRepository {
   }
 
   Future<List<PuntoMensual>> _obtenerSerieMensual() async {
+    final cacheEn = _serieMensualCacheEn;
+    if (_serieMensualCache != null && cacheEn != null && DateTime.now().difference(cacheEn) < _vigenciaCache) {
+      return _serieMensualCache!;
+    }
+    final resultado = await _calcularSerieMensual();
+    _serieMensualCache = resultado;
+    _serieMensualCacheEn = DateTime.now();
+    return resultado;
+  }
+
+  Future<List<PuntoMensual>> _calcularSerieMensual() async {
     final hoy = DateTime.now();
     final primerMesDeLaSerie = DateTime(hoy.year, hoy.month - 5, 1);
     final finRango = DateTime(hoy.year, hoy.month + 1, 1).subtract(const Duration(seconds: 1));

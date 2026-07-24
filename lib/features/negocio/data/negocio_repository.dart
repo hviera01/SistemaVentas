@@ -18,7 +18,12 @@ class NegocioRepository {
   // la reciben al instante.
   static NegocioModel? _cache;
   static DateTime? _cacheFecha;
-  static const _vigenciaCache = Duration(seconds: 30);
+  // 10 minutos: no hay riesgo de quedar con datos viejos porque
+  // `_invalidarCache()` se llama apenas se guarda un cambio real; este plazo
+  // solo evita repetir la ida y vuelta a Firestore en acciones puntuales
+  // (editar producto, ajustar stock, etc.) que antes volvían a pedirla cada
+  // 30 segundos aunque nada hubiera cambiado.
+  static const _vigenciaCache = Duration(minutes: 10);
 
   String hashClave(String clave) {
     return sha256.convert(utf8.encode(clave)).toString();
