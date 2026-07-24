@@ -32,6 +32,13 @@ class BuscarProductoDialog extends ConsumerStatefulWidget {
 class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   final _busquedaController = TextEditingController();
   final _focusNodeLista = FocusNode();
+  // Sin `autofocus`: en Windows, pedir el foco durante el primer build (que
+  // es lo que hace `autofocus`) compite con la animación de apertura de
+  // esta pantalla y se pierde la primera tecla que se escribe. Pidiéndolo a
+  // mano después del primer frame (mismo mecanismo que ya usa
+  // registrar_venta_screen para este mismo problema) el foco queda firme
+  // antes de que llegue cualquier tecla.
+  final _focusBusqueda = FocusNode();
   String _busquedaAplicada = '';
   // Cuando la búsqueda viene de escanear un código de barras se filtra por
   // coincidencia exacta de código, no con el buscador difuso (que con
@@ -69,9 +76,18 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusBusqueda.requestFocus();
+    });
+  }
+
+  @override
   void dispose() {
     _busquedaController.dispose();
     _focusNodeLista.dispose();
+    _focusBusqueda.dispose();
     super.dispose();
   }
 
@@ -291,7 +307,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                           Expanded(
                             child: TextField(
                               controller: _busquedaController,
-                              autofocus: true,
+                              focusNode: _focusBusqueda,
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: InputDecoration(
                                 hintText: 'Escribí y presioná Enter para buscar...',
