@@ -25,7 +25,6 @@ import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/services/impresora_red_service.dart';
-import '../../../../core/utils/atajo_nativo.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
@@ -156,10 +155,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // envolver el árbol en Focus/Shortcuts, que competiría con los
     // TextField de cantidad/precio/descripción ya presentes).
     HardwareKeyboard.instance.addHandler(_manejarAtajoTeclado);
-    // F10 en Windows nunca llega hasta acá (ver AtajoNativo): el lado
-    // nativo la traga entera antes de que Flutter la vea, así que avisa
-    // por este canal aparte en su lugar.
-    AtajoNativo.agregarOyenteF10(_alRecibirF10Nativo);
 
     // En escritorio, cada vez que el foco queda en nada (el usuario tocó
     // afuera de un campo, o cerró un diálogo) se lo devuelve al campo de
@@ -212,37 +207,40 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
   }
 
-  // F10 NO pasa por acá en Windows (ver AtajoNativo/_alRecibirF10Nativo):
-  // el lado nativo la traga entera antes de que llegue a Flutter, porque
-  // sin ningún modificador es una "tecla de sistema" de Win32 (como Alt
-  // solo) y dejarla pasar hace que Windows entre en "modo menú" y se
-  // pierda -con beep- la siguiente tecla escrita. F12 no tiene ese
-  // problema (no es tecla de sistema) y se maneja acá como siempre.
   bool _manejarAtajoTeclado(KeyEvent event) {
+    // F10 y F12 se capturan enteros -keyDown Y keyUp- antes que cualquier
+    // otro chequeo de este método. Antes solo se devolvía `true` (evento
+    // "manejado") para el keyDown; el keyUp (soltar la tecla) caía sin
+    // dueño y Windows se lo entregaba a lo que tuviera el foco en ese
+    // instante -el campo de texto de Buscar Producto que F10 recién abrió,
+    // justo tomando el foco porque el usuario todavía no soltó la tecla-.
+    // Esa interrupción justo al enfocar es lo que hacía perder la primera
+    // tecla real que se escribía ahí (solo en Windows: en Web el teclado no
+    // pasa por este mismo mecanismo y no reproducía). El beep de "modo
+    // menú" que F10 puede disparar a nivel de Windows se corta aparte, en
+    // el lado nativo (ver FlutterWindow::MessageHandler en
+    // windows/runner/flutter_window.cpp), sin afectar en nada el manejo de
+    // esta tecla acá.
+    if (event.logicalKey == LogicalKeyboardKey.f10 || event.logicalKey == LogicalKeyboardKey.f12) {
+      if (event is KeyDownEvent && mounted && !_guardando && _esPestanaActiva() && !_pausarLectorFisico) {
+        if (event.logicalKey == LogicalKeyboardKey.f10) {
+          _agregarProductoDesdeBusqueda();
+        } else {
+          _confirmarVenta();
+        }
+      }
+      return true;
+    }
     if (event is! KeyDownEvent) return false;
     if (!mounted || _guardando) return false;
     if (!_esPestanaActiva()) return false;
     // Ver _pausarLectorFisico: con Buscar Producto abierto (el único
-    // diálogo con un campo de texto libre propio) ni el atajo F12 ni la
-    // detección del lector físico deben competir por lo que se esté
-    // tecleando ahí. La tabla expandida no pausa esto: ahí el escáner
-    // sigue funcionando a propósito.
+    // diálogo con un campo de texto libre propio) la detección del lector
+    // físico no debe competir por lo que se esté tecleando ahí. La tabla
+    // expandida no pausa esto: ahí el escáner sigue funcionando a
+    // propósito.
     if (_pausarLectorFisico) return false;
-    if (event.logicalKey == LogicalKeyboardKey.f12) {
-      _confirmarVenta();
-      return true;
-    }
     return _detectarEscaneoFisico(event);
-  }
-
-  // Ver AtajoNativo: reemplaza por completo el manejo de F10 que antes
-  // vivía en _manejarAtajoTeclado (ya no aplica en Windows, donde el
-  // mensaje nunca llega hasta Flutter). En otras plataformas este canal
-  // simplemente nunca recibe nada, así que no hace falta filtrar por
-  // plataforma acá.
-  void _alRecibirF10Nativo() {
-    if (!mounted || _guardando || !_esPestanaActiva() || _pausarLectorFisico) return;
-    _agregarProductoDesdeBusqueda();
   }
 
   // Corre a nivel de hardware (ver initState), no de foco: así un lector de
@@ -311,7 +309,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
-    AtajoNativo.quitarOyenteF10(_alRecibirF10Nativo);
     if (!_esPlataformaMovil) {
       FocusManager.instance.removeListener(_alCambiarFocoGlobal);
     }
