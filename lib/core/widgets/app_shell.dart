@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/actualizacion_provider.dart';
 import '../providers/tabs_provider.dart';
 import '../models/tab_item.dart';
 import '../services/actualizacion_service.dart';
@@ -65,9 +66,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     // avisar nada-.
     if (ActualizacionService.aplica) {
       ActualizacionService.buscarActualizacion().then((actualizacion) {
-        if (actualizacion != null && mounted) {
-          mostrarDialogoActualizacion(context, actualizacion);
-        }
+        if (actualizacion == null || !mounted) return;
+        ref.read(actualizacionDisponibleProvider.notifier).establecer(actualizacion);
+        mostrarDialogoActualizacion(context, actualizacion);
       });
     }
   }

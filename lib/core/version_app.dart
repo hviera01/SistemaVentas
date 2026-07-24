@@ -3,4 +3,4 @@
 /// con MyAppVersion/OutputBaseFilename en el .iss de Inno Setup que se usó
 /// para compilar este instalador. Se sube en 1 cada vez que se publica un
 /// instalador nuevo.
-const int versionAppWindows = 25;
+const int versionAppWindows = 26;

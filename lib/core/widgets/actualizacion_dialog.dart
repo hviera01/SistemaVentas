@@ -93,7 +93,7 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
           : [
               TextButton(onPressed: () => Navigator.pop(context), child: Text('Después', style: GoogleFonts.poppins())),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1E9E5A)),
                 onPressed: _actualizar,
                 child: Text('Actualizar ahora', style: GoogleFonts.poppins()),
               ),

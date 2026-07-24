@@ -236,6 +236,16 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     _confirmarSeleccion(nuevo);
   }
 
+  // Editar un producto (por ejemplo, corregir un precio) sin salir de este
+  // buscador ni tener que ir hasta Inventario: útil en medio de una venta,
+  // cuando el cliente hace notar que un precio quedó mal cargado. No agrega
+  // el producto a la venta al guardar -eso lo sigue haciendo la fila misma,
+  // con doble clic o Enter-, el stream de productos ya refresca solo la
+  // lista con los datos nuevos.
+  Future<void> _editarProducto(ProductoModel p) async {
+    await showDialog<ProductoModel>(context: context, builder: (context) => ProductoFormDialog(producto: p));
+  }
+
   Future<void> _escanear() async {
     final codigo = await escanearCodigoBarras(context);
     if (codigo == null || codigo.isEmpty || !mounted) return;
@@ -469,6 +479,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
         Expanded(flex: 3, child: Text('Categoría', style: estilo)),
         Expanded(flex: 3, child: Text('Precio', textAlign: TextAlign.right, style: estilo)),
         Expanded(flex: 2, child: _encabezadoOrdenable('Existencia', 'existencia', estilo)),
+        const SizedBox(width: 40),
       ],
     );
   }
@@ -573,6 +584,14 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   ),
                 ),
               ),
+              SizedBox(
+                width: 40,
+                child: IconButton(
+                  tooltip: 'Editar producto',
+                  icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade500),
+                  onPressed: () => _editarProducto(p),
+                ),
+              ),
             ],
           ),
         ),
@@ -627,7 +646,16 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                 ],
               ),
               const SizedBox(height: 10),
-              _celdaPrecio(p),
+              Row(
+                children: [
+                  Expanded(child: _celdaPrecio(p)),
+                  IconButton(
+                    tooltip: 'Editar producto',
+                    icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade500),
+                    onPressed: () => _editarProducto(p),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

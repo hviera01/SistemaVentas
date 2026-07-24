@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/modulos_menu.dart';
 import '../models/tab_item.dart';
+import '../providers/actualizacion_provider.dart';
 import '../providers/tabs_provider.dart';
 import '../services/actualizacion_service.dart';
 import '../utils/pantalla_builder.dart';
@@ -14,7 +15,7 @@ class SideMenu extends ConsumerWidget {
 
   const SideMenu({super.key, required this.onCerrar});
 
-  Future<void> _buscarActualizaciones(BuildContext context) async {
+  Future<void> _buscarActualizaciones(BuildContext context, WidgetRef ref) async {
     final mensajero = ScaffoldMessenger.of(context);
     mensajero.showSnackBar(const SnackBar(content: Text('Buscando actualizaciones...'), duration: Duration(seconds: 2)));
     final actualizacion = await ActualizacionService.buscarActualizacion();
@@ -23,6 +24,7 @@ class SideMenu extends ConsumerWidget {
       mensajero.showSnackBar(const SnackBar(content: Text('Ya tenés la última versión instalada')));
       return;
     }
+    ref.read(actualizacionDisponibleProvider.notifier).establecer(actualizacion);
     mostrarDialogoActualizacion(context, actualizacion);
   }
 
@@ -112,12 +114,26 @@ class SideMenu extends ConsumerWidget {
                   },
                 ),
               ),
-              if (ActualizacionService.aplica)
-                ListTile(
-                  leading: Icon(Icons.system_update_alt, color: Colors.grey.shade600, size: 20),
-                  title: Text('Buscar actualizaciones', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
-                  onTap: () => _buscarActualizaciones(context),
-                ),
+              if (ActualizacionService.aplica) ...[
+                Builder(builder: (context) {
+                  final actualizacion = ref.watch(actualizacionDisponibleProvider);
+                  final hayActualizacion = actualizacion != null;
+                  final colorVerde = const Color(0xFF1E9E5A);
+                  return ListTile(
+                    leading: Icon(
+                      hayActualizacion ? Icons.system_update : Icons.system_update_alt,
+                      color: hayActualizacion ? colorVerde : Colors.grey.shade600,
+                      size: 20,
+                    ),
+                    title: Text(
+                      hayActualizacion ? 'Actualización disponible' : 'Buscar actualizaciones',
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: hayActualizacion ? FontWeight.w700 : FontWeight.w400, color: hayActualizacion ? colorVerde : Colors.grey.shade700),
+                    ),
+                    subtitle: hayActualizacion ? Text('v${actualizacion.version} · tocá para instalar', style: GoogleFonts.poppins(fontSize: 11, color: colorVerde)) : null,
+                    onTap: () => hayActualizacion ? mostrarDialogoActualizacion(context, actualizacion) : _buscarActualizaciones(context, ref),
+                  );
+                }),
+              ],
             ],
           ),
         ),
