@@ -3,6 +3,8 @@
 
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <flutter/method_channel.h>
+#include <flutter/standard_method_codec.h>
 
 #include <memory>
 
@@ -28,6 +30,11 @@ class FlutterWindow : public Win32Window {
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+
+  // Canal para avisarle a Dart cuando se presiona F10 (ver el comentario en
+  // MessageHandler): la tecla nunca llega a Flutter por el mecanismo normal
+  // de teclado, así que se la manda por acá en su lugar.
+  std::unique_ptr<flutter::MethodChannel<>> atajos_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

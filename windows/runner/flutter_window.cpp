@@ -25,6 +25,12 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  // Ver el comentario en MessageHandler: F10 nunca llega a Flutter por el
+  // camino normal de teclado, así que este canal es la única forma de
+  // avisarle a Dart cuando se presiona.
+  atajos_channel_ = std::make_unique<flutter::MethodChannel<>>(
+      flutter_controller_->engine()->messenger(), "atajos_teclado",
+      &flutter::StandardMethodCodec::GetInstance());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -57,20 +63,33 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
   // F10 sin ningún modificador es, a nivel de Win32, una "tecla de
-  // sistema" igual que Alt solo: Windows la manda como WM_SYSKEYDOWN /
-  // WM_SYSKEYUP, y si ese mensaje llega a DefWindowProc (más abajo, vía
-  // Win32Window::MessageHandler), el sistema operativo entra en "modo
-  // menú". Como esta app no tiene un menú nativo, la siguiente tecla que
-  // se escribe se interpreta como un mnemónico de menú inexistente, y
-  // Windows la traga sonando el beep de error en vez de mandarla como
-  // texto -esto pasaba incluso con el atajo F10 ya manejado del lado de
-  // Dart (ver _manejarAtajoTeclado en registrar_venta_screen.dart), porque
-  // esa decisión de Dart no evita que DefWindowProc procese el mensaje
-  // nativo original-. Se lo sigue dejando pasar a Flutter primero (así el
-  // atajo F10 en Dart sigue funcionando igual que siempre), pero después
-  // se corta acá sin llamar a Win32Window::MessageHandler para que nunca
-  // llegue a DefWindowProc y el modo menú nunca se active.
-  const bool esSysKeyF10 = (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) && wparam == VK_F10;
+  // sistema" igual que Alt solo (WM_SYSKEYDOWN/WM_SYSKEYUP). Un primer
+  // intento cortaba este mensaje DESPUÉS de dárselo a
+  // HandleTopLevelWindowProc, pero no alcanzó: el motor de Flutter, al no
+  // consumirla del todo en el lado nativo, la deja pasar igual hacia el
+  // procesamiento por default de Windows -eso pasa adentro del motor
+  // (flutter_windows.dll), no acá, así que no hay forma de interceptarlo
+  // después de haberla dejado entrar-. Una vez que Windows procesa ese
+  // mensaje entra en "modo menú", y como esta app no tiene menú nativo, la
+  // siguiente tecla que se escribe se pierde con el beep de error en vez
+  // de escribirse.
+  //
+  // La única forma confiable de evitarlo es no dejar que el mensaje llegue
+  // a Flutter en absoluto: se traga entero acá (keyDown y keyUp, antes de
+  // llamar a HandleTopLevelWindowProc) y, en el keyDown, se le avisa a
+  // Dart por un canal aparte (atajos_channel_, ver AtajoNativo en
+  // atajo_nativo.dart) en vez de por el camino normal de teclado. F12 no
+  // tiene este problema -no es una tecla de sistema- y sigue andando igual
+  // que siempre, sin pasar por acá.
+  if (message == WM_SYSKEYDOWN && wparam == VK_F10) {
+    if (atajos_channel_) {
+      atajos_channel_->InvokeMethod("f10", nullptr);
+    }
+    return 0;
+  }
+  if (message == WM_SYSKEYUP && wparam == VK_F10) {
+    return 0;
+  }
 
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
@@ -80,10 +99,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     if (result) {
       return *result;
     }
-  }
-
-  if (esSysKeyF10) {
-    return 0;
   }
 
   switch (message) {
