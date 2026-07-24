@@ -208,23 +208,37 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   bool _manejarAtajoTeclado(KeyEvent event) {
+    // F10 y F12 se capturan enteros -keyDown Y keyUp- antes que cualquier
+    // otro chequeo de este método. Antes solo se devolvía `true` (evento
+    // "manejado") para el keyDown; el keyUp (soltar la tecla) caía sin
+    // dueño y Windows se lo entregaba a lo que tuviera el foco en ese
+    // instante -el campo de texto de Buscar Producto que F10 recién abrió,
+    // justo tomando el foco porque el usuario todavía no soltó la tecla-.
+    // Esa interrupción justo al enfocar es lo que hacía perder la primera
+    // tecla real que se escribía ahí (solo en Windows: en Web el teclado no
+    // pasa por este mismo mecanismo y no reproducía). La acción en sí sigue
+    // respetando los mismos chequeos que antes (mounted/guardando/pestaña
+    // activa/_pausarLectorFisico), solo que ahora anidados adentro en vez
+    // de cortar la función antes de llegar a F10/F12.
+    if (event.logicalKey == LogicalKeyboardKey.f10 || event.logicalKey == LogicalKeyboardKey.f12) {
+      if (event is KeyDownEvent && mounted && !_guardando && _esPestanaActiva() && !_pausarLectorFisico) {
+        if (event.logicalKey == LogicalKeyboardKey.f10) {
+          _agregarProductoDesdeBusqueda();
+        } else {
+          _confirmarVenta();
+        }
+      }
+      return true;
+    }
     if (event is! KeyDownEvent) return false;
     if (!mounted || _guardando) return false;
     if (!_esPestanaActiva()) return false;
     // Ver _pausarLectorFisico: con Buscar Producto abierto (el único
-    // diálogo con un campo de texto libre propio) ni los atajos F10/F12 ni
-    // la detección del lector físico deben competir por lo que se esté
-    // tecleando ahí. La tabla expandida no pausa esto: ahí el escáner sigue
-    // funcionando a propósito.
+    // diálogo con un campo de texto libre propio) la detección del lector
+    // físico no debe competir por lo que se esté tecleando ahí. La tabla
+    // expandida no pausa esto: ahí el escáner sigue funcionando a
+    // propósito.
     if (_pausarLectorFisico) return false;
-    if (event.logicalKey == LogicalKeyboardKey.f10) {
-      _agregarProductoDesdeBusqueda();
-      return true;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.f12) {
-      _confirmarVenta();
-      return true;
-    }
     return _detectarEscaneoFisico(event);
   }
 
