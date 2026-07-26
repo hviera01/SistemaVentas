@@ -61,14 +61,32 @@ class EgresoRepository {
 
     for (final v in ventas) {
       if (v.estado != 'Activa' || v.condicion != 'Contado' || v.tipoDocumento == 'Cotizacion') continue;
-      movimientos.add(MovimientoFinanciero(
-        fecha: v.fechaRegistro ?? DateTime.now(),
-        tipoMovimiento: 'Venta (Contado)',
-        descripcion: 'Doc. ${v.numeroDocumento} · ${v.nombreCliente.isEmpty ? 'Consumidor final' : v.nombreCliente}',
-        ingreso: v.totalAPagar,
-        metodoPago: v.metodoPago,
-        usuario: v.usuarioRegistro,
-      ));
+      final descripcion = 'Doc. ${v.numeroDocumento} · ${v.nombreCliente.isEmpty ? 'Consumidor final' : v.nombreCliente}';
+      if (v.metodoPago == 'Mixto' && v.pagosMixtos.isNotEmpty) {
+        // Una venta con pago mixto no cae en un solo balde de
+        // efectivo/tarjeta/transferencia: se reparte en un movimiento por
+        // cada método, cada uno con su propio monto, para que el cierre de
+        // caja cuadre con lo que de verdad entró por cada método.
+        for (final pago in v.pagosMixtos) {
+          movimientos.add(MovimientoFinanciero(
+            fecha: v.fechaRegistro ?? DateTime.now(),
+            tipoMovimiento: 'Venta (Contado)',
+            descripcion: '$descripcion (mixto)',
+            ingreso: pago.monto,
+            metodoPago: pago.metodoPago,
+            usuario: v.usuarioRegistro,
+          ));
+        }
+      } else {
+        movimientos.add(MovimientoFinanciero(
+          fecha: v.fechaRegistro ?? DateTime.now(),
+          tipoMovimiento: 'Venta (Contado)',
+          descripcion: descripcion,
+          ingreso: v.totalAPagar,
+          metodoPago: v.metodoPago,
+          usuario: v.usuarioRegistro,
+        ));
+      }
     }
 
     for (final c in compras) {

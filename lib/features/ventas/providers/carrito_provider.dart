@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/item_venta_model.dart';
+import '../data/pago_detalle_model.dart';
 import '../data/venta_en_espera_model.dart';
 import '../data/venta_model.dart';
 import '../../productos/data/producto_model.dart';
@@ -50,6 +51,9 @@ class CarritoVentaState {
   final double pagoCon;
   final double cambio;
   final double descuentoGlobalPorcentaje;
+  // Desglose cuando metodoPago == 'Mixto' (ver PagoMixtoDialog). Vacío en
+  // cualquier otro método.
+  final List<PagoDetalle> pagosMixtos;
 
   CarritoVentaState({
     this.idEnEspera,
@@ -67,11 +71,13 @@ class CarritoVentaState {
     this.pagoCon = 0,
     this.cambio = 0,
     this.descuentoGlobalPorcentaje = 0,
+    this.pagosMixtos = const [],
   }) : fecha = fecha ?? DateTime.now();
 
   bool get esCotizacion => tipoDocumento == 'Cotizacion';
   bool get esVentaSinFacturar => tipoDocumento == 'VentaSinFacturar';
   bool get esCredito => condicion == 'Credito';
+  bool get esPagoMixto => metodoPago == 'Mixto';
 
   double get _subtotalLineasSinDescuentoGlobal => items.fold<double>(0, (s, i) => s + i.subtotal);
 
@@ -119,6 +125,7 @@ class CarritoVentaState {
     double? pagoCon,
     double? cambio,
     double? descuentoGlobalPorcentaje,
+    List<PagoDetalle>? pagosMixtos,
   }) {
     return CarritoVentaState(
       idEnEspera: idEnEspera == _sinCambio ? this.idEnEspera : idEnEspera as String?,
@@ -136,6 +143,7 @@ class CarritoVentaState {
       pagoCon: pagoCon ?? this.pagoCon,
       cambio: cambio ?? this.cambio,
       descuentoGlobalPorcentaje: descuentoGlobalPorcentaje ?? this.descuentoGlobalPorcentaje,
+      pagosMixtos: pagosMixtos ?? this.pagosMixtos,
     );
   }
 }
@@ -230,10 +238,15 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       condicion: v,
       metodoPago: v == 'Credito' ? '' : 'Efectivo',
       fechaVencimiento: v == 'Credito' ? (state.fechaVencimiento ?? DateTime.now().add(const Duration(days: 30))) : null,
+      pagosMixtos: const [],
     );
   }
 
-  void establecerMetodoPago(String v) => state = state.copyWith(metodoPago: v);
+  void establecerMetodoPago(String v) => state = state.copyWith(metodoPago: v, pagosMixtos: v == 'Mixto' ? state.pagosMixtos : const []);
+
+  /// Guarda el desglose confirmado en PagoMixtoDialog. No cambia metodoPago:
+  /// eso ya se hizo al elegir "Mixto" en el dropdown.
+  void establecerPagosMixtos(List<PagoDetalle> pagos) => state = state.copyWith(pagosMixtos: pagos);
   void establecerCliente({required String documento, required String nombre}) {
     state = state.copyWith(documentoCliente: documento, nombreCliente: nombre);
   }

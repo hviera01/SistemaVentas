@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'item_venta_model.dart';
+import 'pago_detalle_model.dart';
 
 class VentaModel {
   final String id;
@@ -24,6 +25,10 @@ class VentaModel {
   final String regSag;
   final double descuentoGlobal;
   final List<ItemVentaModel> detalle;
+  // Desglose cuando metodoPago == 'Mixto' (una venta pagada con más de un
+  // método a la vez, ej. mitad Efectivo/mitad Tarjeta). Vacío en cualquier
+  // otro caso: ahí montoPago/montoCambio/metodoPago ya alcanzan solos.
+  final List<PagoDetalle> pagosMixtos;
   final String usuarioAnulacion;
   final String motivoAnulacion;
   final DateTime? fechaAnulacion;
@@ -78,6 +83,7 @@ class VentaModel {
       regSag: regSag,
       descuentoGlobal: descuentoGlobal,
       detalle: detalle ?? this.detalle,
+      pagosMixtos: pagosMixtos,
       usuarioAnulacion: usuarioAnulacion,
       motivoAnulacion: motivoAnulacion,
       fechaAnulacion: fechaAnulacion,
@@ -110,6 +116,7 @@ class VentaModel {
     required this.regSag,
     this.descuentoGlobal = 0,
     required this.detalle,
+    this.pagosMixtos = const [],
     this.usuarioAnulacion = '',
     this.motivoAnulacion = '',
     this.fechaAnulacion,
@@ -142,6 +149,7 @@ class VentaModel {
       regSag: data['regSag'] ?? '',
       descuentoGlobal: (data['descuentoGlobal'] ?? 0).toDouble(),
       detalle: detalle,
+      pagosMixtos: PagoDetalle.listaFromMaps(data['pagosMixtos'] as List<dynamic>?),
       usuarioAnulacion: data['usuarioAnulacion'] ?? '',
       motivoAnulacion: data['motivoAnulacion'] ?? '',
       fechaAnulacion: (data['fechaAnulacion'] as Timestamp?)?.toDate(),

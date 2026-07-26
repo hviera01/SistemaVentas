@@ -227,6 +227,9 @@ class VentaExportService {
           if (venta.metodoPago == 'Efectivo') ...[
             pw.Text('Efectivo recibido: ${formatearMoneda(venta.montoPago)}', style: const pw.TextStyle(fontSize: 9)),
             pw.Text('Cambio: ${formatearMoneda(venta.montoCambio)}', style: const pw.TextStyle(fontSize: 9)),
+          ] else if (venta.metodoPago == 'Mixto') ...[
+            for (final pago in venta.pagosMixtos)
+              pw.Text('${pago.metodoPago}: ${formatearMoneda(pago.monto)}', style: const pw.TextStyle(fontSize: 9)),
           ] else
             pw.Text('Pago: ${venta.metodoPago}', style: const pw.TextStyle(fontSize: 9)),
         ],
@@ -492,7 +495,10 @@ class VentaExportService {
               ] else if (venta.metodoPago == 'Tarjeta')
                 pw.Text('Pago con tarjeta: ${formatearMoneda(venta.totalAPagar)}', style: const pw.TextStyle(fontSize: fNormal))
               else if (venta.metodoPago == 'Transferencia')
-                pw.Text('Transferencia', style: const pw.TextStyle(fontSize: fNormal)),
+                pw.Text('Transferencia', style: const pw.TextStyle(fontSize: fNormal))
+              else if (venta.metodoPago == 'Mixto')
+                for (final pago in venta.pagosMixtos)
+                  pw.Text('${pago.metodoPago}: ${formatearMoneda(pago.monto)}', style: const pw.TextStyle(fontSize: fNormal)),
             ],
             _separador(),
             if (negocio.rangoPrefijo.isNotEmpty || negocio.rangoDesde.isNotEmpty)

@@ -34,7 +34,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   String? _error;
   List<ReporteVentaModel>? _ventas;
 
-  static const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
+  static const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque', 'Mixto'];
   static const _condiciones = ['Contado', 'Crédito'];
   static const _estados = ['Activa', 'Anulada'];
   static const _tiposDocumento = ['Factura', 'Boleta', 'Cotizacion', 'VentaSinFacturar'];

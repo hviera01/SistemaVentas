@@ -861,6 +861,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 _filaTotalTexto('Paga con', venta.montoPago),
                 _filaTotalTexto('Cambio', venta.montoCambio),
               ],
+              if (venta.condicion != 'Credito' && venta.metodoPago == 'Mixto')
+                for (final pago in venta.pagosMixtos) _filaTotalTexto(pago.metodoPago, pago.monto),
             ],
           ),
           const SizedBox(height: 14),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'venta_model.dart';
 import 'venta_en_espera_model.dart';
 import 'item_venta_model.dart';
+import 'pago_detalle_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 import '../../productos/data/lote_costo_repository.dart';
 
@@ -62,6 +63,7 @@ class VentaRepository {
     required List<ItemVentaModel> items,
     required double montoPago,
     required double montoCambio,
+    List<PagoDetalle> pagosMixtos = const [],
     required double subtotal,
     required double impuesto,
     required double totalAPagar,
@@ -143,6 +145,7 @@ class VentaRepository {
         'metodoPago': metodoPago,
         'montoPago': montoPago,
         'montoCambio': montoCambio,
+        'pagosMixtos': PagoDetalle.listaToMaps(pagosMixtos),
         'subtotal': subtotal,
         'impuesto': impuesto,
         'totalAPagar': totalAPagar,
@@ -243,6 +246,7 @@ class VentaRepository {
       metodoPago: metodoPago,
       montoPago: montoPago,
       montoCambio: montoCambio,
+      pagosMixtos: pagosMixtos,
       subtotal: subtotal,
       impuesto: impuesto,
       totalAPagar: totalAPagar,

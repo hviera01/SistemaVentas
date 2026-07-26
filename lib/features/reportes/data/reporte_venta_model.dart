@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../ventas/data/pago_detalle_model.dart';
 
 class ReporteVentaModel {
   final String id;
@@ -21,6 +22,10 @@ class ReporteVentaModel {
   // elegir a mano). null en ventas viejas de antes de que este campo
   // existiera. Ver ReporteRepository.obtenerReporteVentas.
   final DateTime? creadoEn;
+  // Desglose cuando metodoPago == 'Mixto': ver VentaModel.pagosMixtos. Se usa
+  // para repartir el ingreso entre efectivo/tarjeta/transferencia en el
+  // libro financiero (EgresoRepository.obtenerLibroFinanciero).
+  final List<PagoDetalle> pagosMixtos;
 
   ReporteVentaModel({
     required this.id,
@@ -39,6 +44,7 @@ class ReporteVentaModel {
     required this.estado,
     this.pendienteImpresion = false,
     this.creadoEn,
+    this.pagosMixtos = const [],
   });
 
   bool get esActiva => estado == 'Activa';
@@ -62,6 +68,7 @@ class ReporteVentaModel {
       estado: data['estado'] ?? 'Activa',
       pendienteImpresion: data['pendienteImpresion'] ?? false,
       creadoEn: (data['creadoEn'] as Timestamp?)?.toDate(),
+      pagosMixtos: PagoDetalle.listaFromMaps(data['pagosMixtos'] as List<dynamic>?),
     );
   }
 
