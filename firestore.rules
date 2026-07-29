@@ -11,6 +11,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /dispositivos/{idDispositivo} {
+      allow read, write: if true;
+    }
+
     match /categorias/{idCategoria} {
       allow read, write: if true;
     }

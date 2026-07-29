@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/actualizacion_service.dart';
+import '../version_app.dart';
 
 /// Diálogo central que avisa que hay una versión nueva publicada. Se abre
 /// solo (al iniciar la app, ver AppShell) o a mano desde "Buscar
@@ -70,6 +71,11 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
             Text(
               'Hay una nueva versión (v${widget.actualizacion.version}) disponible para instalar.',
               style: GoogleFonts.poppins(fontSize: 13.5),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tenés instalada la versión v$versionApp.',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
             ),
             if (widget.actualizacion.notas.isNotEmpty) ...[
               const SizedBox(height: 10),

@@ -8,9 +8,11 @@ import '../providers/actualizacion_provider.dart';
 import '../providers/tabs_provider.dart';
 import '../models/tab_item.dart';
 import '../services/actualizacion_service.dart';
+import '../version_app.dart';
 import '../widgets/actualizacion_dialog.dart';
 import '../widgets/side_menu.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/dispositivos/providers/dispositivos_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/negocio/providers/negocio_provider.dart';
 import '../../features/ventas/data/impresion_en_vivo_service.dart';
@@ -26,6 +28,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   bool _menuAbierto = false;
+  bool _dialogoActualizacionAbierto = false;
 
   // Esta es "la PC principal" (con impresora térmica conectada) solo cuando
   // corre como app de escritorio nativa: ni en el navegador (ahí no hay
@@ -34,6 +37,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   // solicitudes de impresión en vivo, ver PresenciaImpresionRepository.
   final bool _esPcPrincipal = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
   Timer? _latidoTimer;
+  Timer? _actualizacionTimer;
   final _servicioImpresionEnVivo = ImpresionEnVivoService();
   final _idsSolicitudEnProceso = <String>{};
 
@@ -61,21 +65,37 @@ class _AppShellState extends ConsumerState<AppShell> {
       _latidoTimer = Timer.periodic(const Duration(seconds: 25), (_) => presencia.enviarLatido());
     }
 
-    // Solo en Windows: ver ActualizacionService. No bloquea el arranque -si
-    // no hay internet o GitHub no responde a tiempo, sigue de largo sin
-    // avisar nada-.
+    // Reporta este equipo (versión instalada + quién inició sesión) al
+    // módulo de Dispositivos. Silencioso: ver DispositivoRepository.reportar.
+    final usuario = ref.read(authProvider).usuario;
+    ref.read(dispositivoRepositoryProvider).reportar(versionApp: versionApp, usuario: usuario?.nombreCompleto ?? '');
+
+    // Solo en Windows/Android: ver ActualizacionService. No bloquea el
+    // arranque -si no hay internet o GitHub no responde a tiempo, sigue de
+    // largo sin avisar nada-. Además de una vez al abrir la app, se repite
+    // cada 10 minutos mientras quede abierta: así, si alguien deja la app
+    // abierta todo el día y se publica una versión nueva mientras tanto, el
+    // aviso igual le llega sin que tenga que cerrar y volver a abrir.
     if (ActualizacionService.aplica) {
-      ActualizacionService.buscarActualizacion().then((actualizacion) {
-        if (actualizacion == null || !mounted) return;
-        ref.read(actualizacionDisponibleProvider.notifier).establecer(actualizacion);
-        mostrarDialogoActualizacion(context, actualizacion);
-      });
+      _chequearActualizacion();
+      _actualizacionTimer = Timer.periodic(const Duration(minutes: 10), (_) => _chequearActualizacion());
     }
+  }
+
+  Future<void> _chequearActualizacion() async {
+    if (_dialogoActualizacionAbierto) return;
+    final actualizacion = await ActualizacionService.buscarActualizacion();
+    if (actualizacion == null || !mounted) return;
+    ref.read(actualizacionDisponibleProvider.notifier).establecer(actualizacion);
+    _dialogoActualizacionAbierto = true;
+    await mostrarDialogoActualizacion(context, actualizacion);
+    _dialogoActualizacionAbierto = false;
   }
 
   @override
   void dispose() {
     _latidoTimer?.cancel();
+    _actualizacionTimer?.cancel();
     super.dispose();
   }
 

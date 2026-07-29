@@ -47,6 +47,7 @@ List<ModuloMenu> obtenerModulos() {
         SubModulo(titulo: 'Inventario', icono: Icons.inventory_2_outlined, moduleKey: 'inventario', soloAdmin: true),
         SubModulo(titulo: 'Negocio', icono: Icons.store_outlined, moduleKey: 'negocio', soloAdmin: true),
         SubModulo(titulo: 'Registro de Colores', icono: Icons.palette_outlined, moduleKey: 'colores'),
+        SubModulo(titulo: 'Dispositivos', icono: Icons.devices_outlined, moduleKey: 'dispositivos', soloAdmin: true),
       ],
     ),
     ModuloMenu(
