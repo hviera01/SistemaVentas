@@ -28,6 +28,18 @@ class ReporteRepository {
     return lista;
   }
 
+  /// Versión en vivo de [obtenerReporteVentas], para tarjetas de resumen
+  /// (ej. venta del día/mes en Inicio) que deben actualizarse solas cuando
+  /// se registra o anula una venta, sin necesidad de refrescar la pantalla.
+  Stream<List<ReporteVentaModel>> observarReporteVentas(DateTime inicio, DateTime finInclusive) {
+    return _db
+        .collection('ventas')
+        .where('fechaRegistro', isGreaterThanOrEqualTo: Timestamp.fromDate(inicio))
+        .where('fechaRegistro', isLessThanOrEqualTo: Timestamp.fromDate(finInclusive))
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => ReporteVentaModel.fromMap(d.id, d.data())).toList());
+  }
+
   Future<List<ReporteCompraModel>> obtenerReporteCompras(DateTime inicio, DateTime finInclusive, {String? idProveedor}) async {
     Query<Map<String, dynamic>> query = _db
         .collection('compras')

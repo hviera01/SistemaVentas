@@ -1154,7 +1154,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       confirmar();
     }
 
-    return TextField(
+    final campo = TextField(
       controller: controlador,
       focusNode: focusNode,
       textAlign: TextAlign.center,
@@ -1170,11 +1170,19 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
-      // En escritorio, un clic en el campo (no solo tipear) ya abre el
-      // teclado numérico en pantalla, igual que en Registrar Venta.
-      onTap: esMovilPlataforma ? null : abrirTecladoNumerico,
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    );
+
+    if (esMovilPlataforma) return campo;
+
+    // En escritorio, el clic debe abrir el teclado numérico de una vez, sin
+    // que se alcance a ver el cursor de texto parpadeando primero (ver el
+    // mismo arreglo y explicación completa en RegistrarVentaScreen).
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: abrirTecladoNumerico,
+      child: AbsorbPointer(child: campo),
     );
   }
 
@@ -1203,12 +1211,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
               Expanded(
                 flex: 4,
-                child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
               ),
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true))),

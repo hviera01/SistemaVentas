@@ -2180,7 +2180,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       confirmar();
     }
 
-    return TextField(
+    final campo = TextField(
       controller: controlador,
       focusNode: focusNode,
       textAlign: TextAlign.center,
@@ -2196,15 +2196,26 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
-      // En escritorio, un clic en el campo (no solo en el ícono) ya abre el
-      // teclado numérico, para que quede claro que se está por cambiar ese
-      // valor. onTap es un gesto (no se dispara al recuperar el foco
-      // programáticamente cuando se cierra el diálogo), así que no hay
-      // riesgo de que se vuelva a abrir solo. Escribir con el teclado físico
-      // y darle Enter sigue funcionando igual, sin pasar por el diálogo.
-      onTap: esMovil ? null : abrirTecladoNumerico,
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    );
+
+    if (esMovil) return campo;
+
+    // En escritorio, un clic en el campo debe abrir el teclado numérico de
+    // una vez, sin que primero se vea el cursor de texto parpadeando (lo que
+    // pasaba porque el propio TextField toma el foco apenas se presiona,
+    // antes de que onTap llegue a dispararse: con un clic rápido incluso
+    // alcanzaba a dejar escribir directo ahí). El GestureDetector de afuera
+    // es quien recibe el toque; AbsorbPointer evita que ese mismo toque le
+    // llegue al TextField, así que nunca se enfoca ni parpadea el cursor
+    // con el mouse. El foco por teclado físico (Tab) no pasa por gestos de
+    // puntero, así que seguir tipeando y dándole Enter sin abrir el diálogo
+    // sigue funcionando igual que antes.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: abrirTecladoNumerico,
+      child: AbsorbPointer(child: campo),
     );
   }
 
@@ -2263,9 +2274,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         TextField(
           controller: ctrl,
           focusNode: focusNode,
+          // Sin límite de líneas: un nombre largo pasa a una segunda línea
+          // en vez de desplazarse fuera de vista dentro de un campo de una
+          // sola línea. Como contrapartida, Enter ya no confirma el cambio
+          // (inserta un salto de línea, como en cualquier campo multilínea);
+          // tocar fuera del campo lo sigue confirmando igual.
+          maxLines: null,
+          minLines: 1,
           style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
           decoration: const InputDecoration(isDense: true, border: InputBorder.none, contentPadding: EdgeInsets.zero),
-          onSubmitted: (_) => confirmar(),
           onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         ),
         if (item.reembasado as bool) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
@@ -2286,7 +2303,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
           Expanded(flex: 4, child: _campoDescripcion(index, item)),

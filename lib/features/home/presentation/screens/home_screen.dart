@@ -6,6 +6,8 @@ import '../../../../core/providers/tabs_provider.dart';
 import '../../../../core/models/tab_item.dart';
 import '../../../../core/data/modulos_menu.dart';
 import '../../../../core/utils/pantalla_builder.dart';
+import '../../../../core/utils/formato_moneda.dart';
+import '../../providers/resumen_ventas_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -94,6 +96,8 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text('Seleccioná una opción para comenzar', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+                  const SizedBox(height: 20),
+                  _resumenVentas(ref, esMovil),
                   const SizedBox(height: 24),
                   GridView.builder(
                     shrinkWrap: true,
@@ -115,6 +119,113 @@ class HomeScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _resumenVentas(WidgetRef ref, bool esMovil) {
+    final resumen = ref.watch(resumenVentasHomeProvider);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final apilado = esMovil || constraints.maxWidth < 480;
+        final tarjetas = [
+          _tarjetaResumenVenta(
+            titulo: 'Venta de hoy',
+            icono: Icons.today_rounded,
+            colores: const [Color(0xFFC62828), Color(0xFFE53935)],
+            monto: resumen.whenOrNull(data: (r) => r.totalDia),
+            subtitulo: resumen.whenOrNull(data: (r) => '${r.cantidadVentasDia} ${r.cantidadVentasDia == 1 ? 'venta' : 'ventas'}'),
+            cargando: resumen.isLoading,
+          ),
+          _tarjetaResumenVenta(
+            titulo: 'Venta del mes',
+            icono: Icons.calendar_month_rounded,
+            colores: const [Color(0xFF1E3A5F), Color(0xFF2C5282)],
+            monto: resumen.whenOrNull(data: (r) => r.totalMes),
+            subtitulo: _nombreMesActual(),
+            cargando: resumen.isLoading,
+          ),
+        ];
+
+        if (apilado) {
+          return Column(
+            children: [
+              tarjetas[0],
+              const SizedBox(height: 12),
+              tarjetas[1],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: tarjetas[0]),
+            const SizedBox(width: 16),
+            Expanded(child: tarjetas[1]),
+          ],
+        );
+      },
+    );
+  }
+
+  String _nombreMesActual() {
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    final ahora = DateTime.now();
+    return 'de ${meses[ahora.month - 1]}';
+  }
+
+  Widget _tarjetaResumenVenta({
+    required String titulo,
+    required IconData icono,
+    required List<Color> colores,
+    required double? monto,
+    required String? subtitulo,
+    required bool cargando,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colores, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: colores.last.withOpacity(0.30), blurRadius: 16, offset: const Offset(0, 8))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(14)),
+            child: Icon(icono, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.85))),
+                const SizedBox(height: 2),
+                cargando
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.4, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                      )
+                    : Text(
+                        formatearMoneda(monto ?? 0),
+                        style: GoogleFonts.poppins(fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                if (!cargando && subtitulo != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitulo, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.white.withOpacity(0.75))),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
