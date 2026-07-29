@@ -1,13 +1,12 @@
 ; Instalador de Windows para Super Color, generado con Inno Setup 6.
 ;
-; El AppId de acá abajo es NUEVO (no existe copia previa de este .iss en el
-; repo ni en esta máquina, ver historial del chat). Los instaladores hasta
-; la v28 se generaban con otro script que se perdió, con otro AppId, así que
-; quien actualice desde una versión <=28 va a terminar con una instalación
-; nueva (separada) en vez de un reemplazo en el mismo lugar -no hay forma de
-; evitar eso sin el AppId original-. De acá en adelante, mientras se siga
-; usando este mismo .iss (y no se le cambie el AppId), las actualizaciones
-; sí van a reemplazar la instalación en el mismo lugar correctamente.
+; El .iss original con el que se generaron los instaladores hasta la v28 no
+; estaba versionado y se perdió (ver historial del chat). Este es un
+; reemplazo reconstruido a mano, pero con el mismo AppId, nombre y carpeta
+; de instalación que la instalación real (sacados del registro de Windows,
+; HKLM\...\Uninstall\{885ED3C7-640C-4A18-ABC1-52482C28F573}_is1, en una PC
+; que ya tenía Super Color instalado) para que las actualizaciones sigan
+; reemplazando en el mismo lugar en vez de crear una instalación duplicada.
 ;
 ; Uso: compilar con
 ;   flutter build windows --release
@@ -16,17 +15,20 @@
 ; -subirlo a mano al release de GitHub junto con el .apk, ver
 ; ActualizacionService y version_app.dart-.
 
-#define MyAppName "Super Color"
+#define MyAppName "Super Color Nuevo"
 #define MyAppVersion "29"
-#define MyAppPublisher "Super Color"
 #define MyAppExeName "sistema_ventas.exe"
 #define MyReleaseDir "..\..\build\windows\x64\runner\Release"
 
 [Setup]
-AppId={{60E690E9-61D3-4E6E-972C-041E70F0C7F6}
+AppId={{885ED3C7-640C-4A18-ABC1-52482C28F573}
 AppName={#MyAppName}
+AppVerName={#MyAppName} version {#MyAppVersion}
 AppVersion={#MyAppVersion}
-AppPublisher={#MyAppPublisher}
+AppPublisher=My Company, Inc.
+AppPublisherURL=https://www.example.com/
+AppSupportURL=https://www.example.com/
+AppUpdatesURL=https://www.example.com/
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
@@ -48,8 +50,7 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "Crear un acceso directo en el Escritorio"; GroupDescription: "Accesos directos:"
 
 [Files]
-Source: "{#MyReleaseDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyReleaseDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyReleaseDir}\*"; DestDir: "{app}"; Flags: ignoreversion; Excludes: "data\*"
 Source: "{#MyReleaseDir}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
