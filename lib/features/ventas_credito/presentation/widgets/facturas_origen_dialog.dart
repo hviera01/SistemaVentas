@@ -36,6 +36,13 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     _cargarDetalle();
   }
 
+  // Misma conversión que usa DetalleVentaScreen: precioVenta/subtotal se
+  // guardan sin ISV, así que hay que aplicar el 15% para mostrarlos como en
+  // la factura real.
+  double _precioConIsv(ItemVentaModel item) => redondearMoneda(item.precioVenta * 1.15);
+
+  double _importeConIsv(ItemVentaModel item) => redondearMoneda(_precioConIsv(item) * item.cantidad * (1 - item.descuentoPorcentaje / 100));
+
   Future<void> _cargarDetalle() async {
     final repo = ref.read(ventaRepositoryProvider);
     final items = <_ItemConsolidado>[];
@@ -71,7 +78,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     final esMovil = tamano.width < 640;
     final anchoDialog = esMovil ? tamano.width - 24 : 640.0;
     final altoDialog = tamano.height < 700 ? tamano.height - 40 : 640.0;
-    final totalItems = _items.fold<double>(0, (s, i) => s + i.item.subtotal);
+    final totalItems = _items.fold<double>(0, (s, i) => s + _importeConIsv(i.item));
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -130,7 +137,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    _items.isEmpty ? '' : 'Suma de productos: ${formatearMoneda(totalItems)}',
+                    _items.isEmpty ? '' : 'Suma de productos (c/ISV): ${formatearMoneda(totalItems)}',
                     style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ),
@@ -153,8 +160,8 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
             children: [
               _celdaEncabezado('PRODUCTO'),
               _celdaEncabezado('CANT.', alinear: TextAlign.right),
-              _celdaEncabezado('PRECIO', alinear: TextAlign.right),
-              _celdaEncabezado('SUBTOTAL', alinear: TextAlign.right),
+              _celdaEncabezado('PRECIO (c/ISV)', alinear: TextAlign.right),
+              _celdaEncabezado('IMPORTE (c/ISV)', alinear: TextAlign.right),
             ],
           ),
           ..._items.map((c) => TableRow(
@@ -162,8 +169,8 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                 children: [
                   _celdaProducto(c.item.nombreProducto, c.numeroFacturaOrigen),
                   _celda(c.item.cantidad.toStringAsFixed(c.item.cantidad % 1 == 0 ? 0 : 2), alinear: TextAlign.right),
-                  _celda(formatearMoneda(c.item.precioVenta), alinear: TextAlign.right),
-                  _celda(formatearMoneda(c.item.subtotal), alinear: TextAlign.right),
+                  _celda(formatearMoneda(_precioConIsv(c.item)), alinear: TextAlign.right),
+                  _celda(formatearMoneda(_importeConIsv(c.item)), alinear: TextAlign.right),
                 ],
               )),
         ],
