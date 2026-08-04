@@ -49,6 +49,7 @@ class VentaCreditoRepository {
       'saldoPendiente': saldoPendiente,
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
+      'sinVentaOrigen': true,
     });
   }
 
@@ -98,6 +99,8 @@ class VentaCreditoRepository {
       'saldoPendiente': total,
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
+      'sinVentaOrigen': true,
+      'facturasOrigen': facturas.map((f) => {'numeroDocumento': f.numeroDocumento, 'saldoPendiente': f.saldoPendiente}).toList(),
     });
     await batch.commit();
   }
@@ -131,6 +134,7 @@ class VentaCreditoRepository {
         'saldoPendiente': fila.saldoPendiente,
         'fechaRegistro': fila.fechaRegistro != null ? Timestamp.fromDate(fila.fechaRegistro!) : FieldValue.serverTimestamp(),
         'fechaVencimiento': Timestamp.fromDate(fila.fechaVencimiento),
+        'sinVentaOrigen': true,
       });
       creados++;
       operacionesEnBatch++;

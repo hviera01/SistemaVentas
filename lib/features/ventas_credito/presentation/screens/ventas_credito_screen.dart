@@ -18,6 +18,7 @@ import '../widgets/registrar_credito_dialog.dart';
 import '../widgets/registrar_abono_dialog.dart';
 import '../widgets/unir_facturas_dialog.dart';
 import '../widgets/historial_abonos_dialog.dart';
+import '../widgets/facturas_origen_dialog.dart';
 import '../widgets/importar_creditos_venta_dialog.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 
@@ -97,6 +98,10 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     showDialog(context: context, builder: (context) => HistorialAbonosDialog(credito: credito));
   }
 
+  void _abrirFacturasOrigen(VentaCreditoModel credito) {
+    showDialog(context: context, builder: (context) => FacturasOrigenDialog(credito: credito));
+  }
+
   Future<void> _eliminar(VentaCreditoModel credito) async {
     final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasCreditoEliminar);
     if (!autorizado || !mounted) return;
@@ -152,6 +157,9 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       case 'detalle':
         _verDetalleVenta(credito);
         break;
+      case 'origenFusion':
+        _abrirFacturasOrigen(credito);
+        break;
       case 'eliminar':
         _eliminar(credito);
         break;
@@ -168,7 +176,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     return [
       if (!credito.liquidada) _opcionMenu(valor: 'abono', icono: Icons.payments_outlined, texto: 'Registrar abono'),
       _opcionMenu(valor: 'historial', icono: Icons.history, texto: 'Ver historial de abonos'),
-      _opcionMenu(valor: 'detalle', icono: Icons.receipt_long_outlined, texto: 'Ver detalle de venta'),
+      if (!credito.sinVentaOrigen) _opcionMenu(valor: 'detalle', icono: Icons.receipt_long_outlined, texto: 'Ver detalle de venta'),
+      if (credito.esFusion) _opcionMenu(valor: 'origenFusion', icono: Icons.call_merge_outlined, texto: 'Ver facturas unidas'),
       const PopupMenuDivider(),
       _opcionMenu(valor: 'eliminar', icono: Icons.delete_outline, texto: 'Eliminar'),
     ];
