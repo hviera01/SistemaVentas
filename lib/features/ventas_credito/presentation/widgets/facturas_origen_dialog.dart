@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 import '../../data/venta_credito_model.dart';
 import '../../data/venta_credito_export_service.dart';
+import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../ventas/data/item_venta_model.dart';
@@ -36,6 +37,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   List<VentaModel> _ventasOrigen = [];
   List<_ItemConsolidado> _items = [];
   List<String> _facturasSinDetalle = [];
+  List<String> _numerosFacturasUnidas = [];
 
   @override
   void initState() {
@@ -50,31 +52,62 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
 
   double _importeConIsv(ItemVentaModel item) => redondearMoneda(_precioConIsv(item) * item.cantidad * (1 - item.descuentoPorcentaje / 100));
 
-  Future<void> _cargarDetalle() async {
-    final repo = ref.read(ventaRepositoryProvider);
-    final ventas = <VentaModel>[];
-    final sinDetalle = <String>[];
-    for (final factura in widget.credito.facturasOrigen) {
+  // Una factura "origen" puede a su vez ser el resultado de otra unión
+  // anterior (unir una factura ya fusionada con una nueva) — en ese caso no
+  // tiene una venta real propia, pero sí su propia lista de facturasOrigen.
+  // Se baja recursivamente hasta encontrar las ventas reales del fondo, para
+  // que el detalle consolidado siempre muestre todos los productos sin
+  // importar cuántos niveles de fusión haya.
+  Future<void> _resolverFactura(
+    FacturaOrigenModel factura,
+    List<VentaModel> ventas,
+    List<String> sinDetalle,
+    List<String> numeros,
+    Set<String> visitados,
+  ) async {
+    if (factura.id.isEmpty || !visitados.add(factura.id)) {
       if (factura.id.isEmpty) {
         sinDetalle.add(factura.numeroDocumento);
-        continue;
+        numeros.add(factura.numeroDocumento);
       }
-      try {
-        final venta = await repo.obtenerVentaPorId(factura.id);
-        if (venta == null || venta.detalle.isEmpty) {
-          sinDetalle.add(factura.numeroDocumento);
-        } else {
-          ventas.add(venta);
+      return;
+    }
+    try {
+      final venta = await ref.read(ventaRepositoryProvider).obtenerVentaPorId(factura.id);
+      if (venta != null && venta.detalle.isNotEmpty) {
+        ventas.add(venta);
+        numeros.add(venta.numeroDocumento);
+        return;
+      }
+      final creditoOrigen = await ref.read(ventaCreditoRepositoryProvider).obtenerPorId(factura.id);
+      if (creditoOrigen != null && creditoOrigen.facturasOrigen.isNotEmpty) {
+        for (final sub in creditoOrigen.facturasOrigen) {
+          await _resolverFactura(sub, ventas, sinDetalle, numeros, visitados);
         }
-      } catch (_) {
+      } else {
         sinDetalle.add(factura.numeroDocumento);
+        numeros.add(factura.numeroDocumento);
       }
+    } catch (_) {
+      sinDetalle.add(factura.numeroDocumento);
+      numeros.add(factura.numeroDocumento);
+    }
+  }
+
+  Future<void> _cargarDetalle() async {
+    final ventas = <VentaModel>[];
+    final sinDetalle = <String>[];
+    final numeros = <String>[];
+    final visitados = <String>{};
+    for (final factura in widget.credito.facturasOrigen) {
+      await _resolverFactura(factura, ventas, sinDetalle, numeros, visitados);
     }
     if (!mounted) return;
     setState(() {
       _ventasOrigen = ventas;
       _items = [for (final v in ventas) for (final item in v.detalle) _ItemConsolidado(v.numeroDocumento, item)];
       _facturasSinDetalle = sinDetalle;
+      _numerosFacturasUnidas = numeros;
       _cargando = false;
     });
   }
@@ -106,7 +139,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Factura unificada',
         nombreArchivo: 'factura_unificada_${widget.credito.numeroDocumento}.pdf',
-        generarPdf: () => VentaCreditoExportService().generarPdfFacturaUnificada(widget.credito, _ventasOrigen, negocio),
+        generarPdf: () => VentaCreditoExportService().generarPdfFacturaUnificada(widget.credito, _ventasOrigen, negocio, numerosFacturasUnidas: _numerosFacturasUnidas),
         impresora: impresora,
       ),
     );
@@ -155,7 +188,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Facturas unidas: ${credito.facturasOrigen.map((f) => f.numeroDocumento).join(', ')}',
+              'Facturas unidas: ${(_numerosFacturasUnidas.isEmpty ? credito.facturasOrigen.map((f) => f.numeroDocumento) : _numerosFacturasUnidas).join(', ')}',
               style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 14),

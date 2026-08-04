@@ -158,7 +158,7 @@ class VentaCreditoExportService {
   /// (ver "Unir Facturas" / "Ver facturas unidas"), cada línea marcada con
   /// el número de la factura de la que vino, en vez de una hoja por cada
   /// factura original.
-  Future<Uint8List> generarPdfFacturaUnificada(VentaCreditoModel credito, List<VentaModel> ventasOrigen, NegocioModel negocio) async {
+  Future<Uint8List> generarPdfFacturaUnificada(VentaCreditoModel credito, List<VentaModel> ventasOrigen, NegocioModel negocio, {List<String>? numerosFacturasUnidas}) async {
     final formatoFecha = DateFormat('dd/MM/yyyy');
     final doc = pw.Document();
     final logo = decodificarLogoPdf(negocio.logoBnBase64);
@@ -196,7 +196,7 @@ class VentaCreditoExportService {
               pw.Text('Cliente: ${credito.nombreCliente}', style: const pw.TextStyle(fontSize: 8)),
               pw.SizedBox(height: 4),
               pw.Text(
-                'Facturas unidas: ${credito.facturasOrigen.map((f) => f.numeroDocumento).join(', ')}',
+                'Facturas unidas: ${(numerosFacturasUnidas ?? credito.facturasOrigen.map((f) => f.numeroDocumento).toList()).join(', ')}',
                 style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(height: 6),

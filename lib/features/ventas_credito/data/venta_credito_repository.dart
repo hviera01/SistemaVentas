@@ -90,6 +90,18 @@ class VentaCreditoRepository {
     for (final factura in facturas) {
       batch.update(_col.doc(factura.id), {'saldoPendiente': 0, 'fusionada': true});
     }
+    // Si una de las facturas que se está uniendo ya era, a su vez, el
+    // resultado de una unión anterior, se guardan sus facturas de origen
+    // reales en vez de su propio id (que no tiene venta real ni detalle
+    // propio) — así el nuevo crédito siempre apunta directo a las ventas
+    // reales del fondo, sin importar cuántas uniones se encadenen.
+    final facturasOrigenPlanas = <FacturaOrigenModel>[
+      for (final factura in facturas)
+        if (factura.esFusion)
+          ...factura.facturasOrigen
+        else
+          FacturaOrigenModel(id: factura.id, numeroDocumento: factura.numeroDocumento, saldoPendiente: factura.saldoPendiente),
+    ];
     final nuevaRef = _col.doc();
     batch.set(nuevaRef, {
       'documentoCliente': documentoCliente.isEmpty ? 'N/A' : documentoCliente,
@@ -100,7 +112,7 @@ class VentaCreditoRepository {
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
       'sinVentaOrigen': true,
-      'facturasOrigen': facturas.map((f) => {'id': f.id, 'numeroDocumento': f.numeroDocumento, 'saldoPendiente': f.saldoPendiente}).toList(),
+      'facturasOrigen': facturasOrigenPlanas.map((f) => f.toMap()).toList(),
     });
     await batch.commit();
   }
