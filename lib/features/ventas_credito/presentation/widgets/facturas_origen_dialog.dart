@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:printing/printing.dart';
 import '../../data/venta_credito_model.dart';
+import '../../data/venta_credito_export_service.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../ventas/data/item_venta_model.dart';
+import '../../../ventas/data/venta_model.dart';
+import '../../../ventas/data/venta_export_service.dart';
 import '../../../ventas/providers/ventas_provider.dart';
+import '../../../negocio/providers/negocio_provider.dart';
 
 /// Item consolidado para el detalle único de una factura fusionada: junta
 /// las líneas de producto de todas las facturas que se unieron, marcando de
@@ -27,6 +33,7 @@ class FacturasOrigenDialog extends ConsumerStatefulWidget {
 
 class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   bool _cargando = true;
+  List<VentaModel> _ventasOrigen = [];
   List<_ItemConsolidado> _items = [];
   List<String> _facturasSinDetalle = [];
 
@@ -45,7 +52,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
 
   Future<void> _cargarDetalle() async {
     final repo = ref.read(ventaRepositoryProvider);
-    final items = <_ItemConsolidado>[];
+    final ventas = <VentaModel>[];
     final sinDetalle = <String>[];
     for (final factura in widget.credito.facturasOrigen) {
       if (factura.id.isEmpty) {
@@ -53,11 +60,11 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         continue;
       }
       try {
-        final detalle = await repo.obtenerDetalleVenta(factura.id);
-        if (detalle.isEmpty) {
+        final venta = await repo.obtenerVentaPorId(factura.id);
+        if (venta == null || venta.detalle.isEmpty) {
           sinDetalle.add(factura.numeroDocumento);
         } else {
-          items.addAll(detalle.map((i) => _ItemConsolidado(factura.numeroDocumento, i)));
+          ventas.add(venta);
         }
       } catch (_) {
         sinDetalle.add(factura.numeroDocumento);
@@ -65,10 +72,44 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     }
     if (!mounted) return;
     setState(() {
-      _items = items;
+      _ventasOrigen = ventas;
+      _items = [for (final v in ventas) for (final item in v.detalle) _ItemConsolidado(v.numeroDocumento, item)];
       _facturasSinDetalle = sinDetalle;
       _cargando = false;
     });
+  }
+
+  Future<void> _imprimirPorSeparado() async {
+    if (_ventasOrigen.isEmpty) return;
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Vista previa · Facturas por separado',
+        nombreArchivo: 'facturas_${widget.credito.numeroDocumento}.pdf',
+        generarPdf: () => VentaExportService().generarPdfFacturasPorSeparado(_ventasOrigen, negocio),
+        generarPdfConFormato: (formato) => VentaExportService().generarPdfFacturasPorSeparado(_ventasOrigen, negocio, formatoImpresora: formato),
+        impresora: impresora,
+      ),
+    );
+  }
+
+  Future<void> _imprimirUnificado() async {
+    if (_ventasOrigen.isEmpty) return;
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Vista previa · Factura unificada',
+        nombreArchivo: 'factura_unificada_${widget.credito.numeroDocumento}.pdf',
+        generarPdf: () => VentaCreditoExportService().generarPdfFacturaUnificada(widget.credito, _ventasOrigen, negocio),
+        impresora: impresora,
+      ),
+    );
   }
 
   @override
@@ -144,6 +185,27 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                 Text('Total unificado: ${formatearMoneda(credito.montoTotal)}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
               ],
             ),
+            if (!_cargando && _ventasOrigen.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _imprimirPorSeparado,
+                    icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                    label: Text('Imprimir factura por factura', style: GoogleFonts.poppins(fontSize: 12.5)),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _imprimirUnificado,
+                    icon: const Icon(Icons.description_outlined, size: 17),
+                    label: Text('Imprimir todo en un solo papel', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

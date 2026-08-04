@@ -348,6 +348,21 @@ class VentaExportService {
     return doc.save();
   }
 
+  /// Un único PDF con el ticket de cada venta en páginas separadas — para
+  /// cuando varias facturas de crédito se unieron en un solo saldo (ver
+  /// "Ver facturas unidas" en Ventas a Crédito) pero igual se quiere
+  /// imprimir cada una tal como habría salido individualmente, en vez de
+  /// una sola hoja combinada.
+  Future<Uint8List> generarPdfFacturasPorSeparado(List<VentaModel> ventas, NegocioModel negocio, {PdfPageFormat? formatoImpresora}) async {
+    final doc = pw.Document();
+    final logo = decodificarLogoPdf(negocio.logoBnBase64, maxDimension: 400);
+    final anchoMm = _anchoValidoDesdeFormato(formatoImpresora);
+    for (final venta in ventas) {
+      doc.addPage(_construirPaginaTicket(venta, negocio, logo, esCopia: false, anchoMm: anchoMm));
+    }
+    return doc.save();
+  }
+
   double? _anchoValidoDesdeFormato(PdfPageFormat? formato) {
     if (formato == null) return null;
     final anchoMm = formato.width / PdfPageFormat.mm;
