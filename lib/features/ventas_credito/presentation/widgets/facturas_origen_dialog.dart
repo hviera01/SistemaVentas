@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 import '../../data/venta_credito_model.dart';
-import '../../data/venta_credito_export_service.dart';
 import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
@@ -12,6 +11,7 @@ import '../../../ventas/data/venta_model.dart';
 import '../../../ventas/data/venta_export_service.dart';
 import '../../../ventas/providers/ventas_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 /// Item consolidado para el detalle único de una factura fusionada: junta
 /// las líneas de producto de todas las facturas que se unieron, marcando de
@@ -129,17 +129,68 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     );
   }
 
+  // Junta las líneas que son exactamente el mismo producto (mismo precio y
+  // descuento) sumando cantidad e importe en una sola fila, en vez de
+  // repetir el producto una vez por cada factura de la que vino.
+  List<ItemVentaModel> _consolidarItems() {
+    final porClave = <String, ItemVentaModel>{};
+    for (final c in _items) {
+      final item = c.item;
+      final clave = '${item.idProducto}|${item.precioVenta}|${item.descuentoPorcentaje}';
+      final existente = porClave[clave];
+      porClave[clave] = existente == null
+          ? item
+          : existente.copyWith(cantidad: existente.cantidad + item.cantidad, subtotal: existente.subtotal + item.subtotal);
+    }
+    return porClave.values.toList();
+  }
+
   Future<void> _imprimirUnificado() async {
     if (_ventasOrigen.isEmpty) return;
     final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    // Número real de la secuencia oficial (el que le tocaría a la próxima
+    // factura), aunque no se registre una venta nueva: es solo para que
+    // esta hoja impresa tenga un número válido y no se repita con el de
+    // una venta futura.
+    final numeroDocumento = await ref.read(ventaRepositoryProvider).reservarProximoNumeroFactura();
+    if (!mounted) return;
+    final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    final itemsConsolidados = _consolidarItems();
+    final subtotal = itemsConsolidados.fold<double>(0, (s, i) => s + i.subtotal);
+    final impuesto = redondearMoneda(subtotal * 0.15);
+    final ventaSintetica = VentaModel(
+      id: '',
+      tipoDocumento: 'Factura',
+      numeroDocumento: numeroDocumento,
+      documentoCliente: widget.credito.documentoCliente,
+      nombreCliente: widget.credito.nombreCliente,
+      metodoPago: 'N/A',
+      montoPago: 0,
+      montoCambio: 0,
+      subtotal: subtotal,
+      impuesto: impuesto,
+      totalAPagar: redondearMoneda(subtotal + impuesto),
+      condicion: 'Credito',
+      fechaVencimiento: widget.credito.fechaVencimiento,
+      fechaRegistro: DateTime.now(),
+      estado: 'Activa',
+      usuarioRegistro: usuario,
+      cantidadProductos: itemsConsolidados.fold<double>(0, (s, i) => s + i.cantidad),
+      oc: '',
+      regExonerado: '',
+      regSag: '',
+      detalle: itemsConsolidados,
+    );
     if (!mounted) return;
     final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
-        titulo: 'Vista previa · Factura unificada',
-        nombreArchivo: 'factura_unificada_${widget.credito.numeroDocumento}.pdf',
-        generarPdf: () => VentaCreditoExportService().generarPdfFacturaUnificada(widget.credito, _ventasOrigen, negocio, numerosFacturasUnidas: _numerosFacturasUnidas),
+        titulo: 'Vista previa · $numeroDocumento',
+        nombreArchivo: 'venta_$numeroDocumento.pdf',
+        generarPdf: () => VentaExportService().generarPdfFactura(ventaSintetica, negocio),
+        generarPdfConFormato: (formato) => VentaExportService().generarPdfFactura(ventaSintetica, negocio, formatoImpresora: formato),
         impresora: impresora,
       ),
     );

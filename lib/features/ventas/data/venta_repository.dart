@@ -48,6 +48,23 @@ class VentaRepository {
     await _colContadores.doc('venta').set({'ultimo': nuevoUltimo < 0 ? 0 : nuevoUltimo}, SetOptions(merge: true));
   }
 
+  /// Reserva (consume) el próximo número de Factura/Boleta de la secuencia
+  /// oficial sin crear una venta real — para la "Factura consolidada" que
+  /// se imprime desde Ver facturas unidas: no hay stock que descontar ni
+  /// crédito nuevo que registrar (esos ya existen de las facturas que se
+  /// unieron), pero igual necesita un número de factura de verdad, no uno
+  /// inventado, para no repetirse con la próxima venta real.
+  Future<String> reservarProximoNumeroFactura() async {
+    final contadorRef = _colContadores.doc('venta');
+    return _db.runTransaction((transaction) async {
+      final snap = await transaction.get(contadorRef);
+      final actual = ((snap.data()?['ultimo'] ?? 0) as num).toInt();
+      final nuevo = actual + 1;
+      transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
+      return _formatearCorrelativo('Factura', nuevo);
+    });
+  }
+
   Future<VentaModel> registrarVenta({
     required String tipoDocumento,
     required String condicion,
