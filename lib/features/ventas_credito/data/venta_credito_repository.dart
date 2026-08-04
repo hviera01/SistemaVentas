@@ -100,7 +100,7 @@ class VentaCreditoRepository {
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
       'sinVentaOrigen': true,
-      'facturasOrigen': facturas.map((f) => {'numeroDocumento': f.numeroDocumento, 'saldoPendiente': f.saldoPendiente}).toList(),
+      'facturasOrigen': facturas.map((f) => {'id': f.id, 'numeroDocumento': f.numeroDocumento, 'saldoPendiente': f.saldoPendiente}).toList(),
     });
     await batch.commit();
   }

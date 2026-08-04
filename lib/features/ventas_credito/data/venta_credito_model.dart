@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FacturaOrigenModel {
+  final String id;
   final String numeroDocumento;
   final double saldoPendiente;
 
-  FacturaOrigenModel({required this.numeroDocumento, required this.saldoPendiente});
+  FacturaOrigenModel({required this.id, required this.numeroDocumento, required this.saldoPendiente});
 
   factory FacturaOrigenModel.fromMap(Map<String, dynamic> data) {
     return FacturaOrigenModel(
+      id: data['id'] ?? '',
       numeroDocumento: data['numeroDocumento'] ?? '',
       saldoPendiente: (data['saldoPendiente'] ?? 0).toDouble(),
     );
   }
 
-  Map<String, dynamic> toMap() => {'numeroDocumento': numeroDocumento, 'saldoPendiente': saldoPendiente};
+  Map<String, dynamic> toMap() => {'id': id, 'numeroDocumento': numeroDocumento, 'saldoPendiente': saldoPendiente};
 }
 
 class VentaCreditoModel {
