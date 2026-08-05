@@ -43,6 +43,16 @@ class ImagenProductoNetwork extends StatefulWidget {
 }
 
 class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
+  // Un solo cliente HTTP compartido para TODAS las fotos de producto de toda
+  // la app, nunca se cierra. http.get(...) suelto crea y cierra un Client
+  // (y con él, una conexión TCP/TLS nueva) en cada llamada; al abrir varias
+  // fotos seguidas (Inventario, buscador, detalle) eso dispara una ráfaga de
+  // handshakes nuevos al mismo host, que routers/antivirus con inspección
+  // SSL suelen frenar después de las primeras — coincide con el reporte de
+  // "carga bien un par de veces y después ya no". Reusar un solo cliente con
+  // keep-alive evita abrir conexiones nuevas de más.
+  static final http.Client _client = http.Client();
+
   late Future<Uint8List> _future;
 
   @override
@@ -57,20 +67,18 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
     if (oldWidget.url != widget.url) _reintentar();
   }
 
-  // 3 intentos con espera creciente entre cada uno (1s, 2s) antes de rendirse
-  // y recién ahí mostrar el botón de reintentar manual: la mayoría de los
-  // cortes son un bache pasajero de la red, no hace falta que el usuario se
-  // dé cuenta ni tenga que tocar nada para que la foto termine cargando.
+  // 4 intentos con espera creciente entre cada uno (2s, 4s, 6s) antes de
+  // rendirse y recién ahí mostrar el botón de reintentar manual.
   Future<Uint8List> _cargar() async {
-    const intentos = 3;
+    const intentos = 4;
     for (var intento = 1; intento <= intentos; intento++) {
       try {
-        final res = await http.get(Uri.parse(widget.url)).timeout(const Duration(seconds: 10));
+        final res = await _client.get(Uri.parse(widget.url)).timeout(const Duration(seconds: 15));
         if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
         return res.bodyBytes;
       } catch (_) {
         if (intento == intentos) rethrow;
-        await Future.delayed(Duration(seconds: intento));
+        await Future.delayed(Duration(seconds: intento * 2));
       }
     }
     throw Exception('No se pudo cargar la imagen');
