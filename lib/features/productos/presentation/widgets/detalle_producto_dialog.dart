@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
+import '../../../../core/widgets/imagen_producto_network.dart';
 
 /// Card de solo lectura con toda la info de un producto, para consultar
 /// rápido sin editar nada. Se abre con doble toque/doble clic sobre un
@@ -136,18 +137,7 @@ class DetalleProductoDialog extends StatelessWidget {
       onTap: () => showDialog(context: context, builder: (context) => ImagenZoomDialog(url: producto.imagenUrl)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          producto.imagenUrl,
-          width: 56,
-          height: 56,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stack) => Container(
-            width: 56,
-            height: 56,
-            color: const Color(0xFFE8EAF0),
-            child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
-          ),
-        ),
+        child: ImagenProductoNetwork(url: producto.imagenUrl, width: 56, height: 56),
       ),
     );
   }

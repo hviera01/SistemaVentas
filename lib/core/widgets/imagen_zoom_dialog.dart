@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'imagen_producto_network.dart';
 
 /// Muestra una foto de producto grande, para verla de cerca — se abre desde
 /// el ícono de foto en Buscar Producto y desde la miniatura en el detalle
@@ -23,19 +24,15 @@ class ImagenZoomDialog extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 1,
                 maxScale: 4,
-                child: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(color: Color(0xFFC62828)),
-                    );
-                  },
-                  errorBuilder: (context, error, stack) => const Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Icon(Icons.broken_image_outlined, size: 48, color: Colors.white70),
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: ImagenProductoNetwork(
+                    url: url,
+                    fit: BoxFit.contain,
+                    iconColor: Colors.white70,
+                    textColor: Colors.white70,
+                    iconSize: 48,
+                    textSize: 13,
                   ),
                 ),
               ),

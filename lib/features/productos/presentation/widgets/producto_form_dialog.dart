@@ -9,6 +9,7 @@ import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
+import '../../../../core/widgets/imagen_producto_network.dart';
 
 class ProductoFormDialog extends ConsumerStatefulWidget {
   final ProductoModel? producto;
@@ -506,13 +507,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     if (_imagenPreviewBytes != null) {
       contenido = Image.memory(_imagenPreviewBytes!, width: lado, height: lado, fit: BoxFit.cover);
     } else if (_imagenUrl.isNotEmpty) {
-      contenido = Image.network(
-        _imagenUrl,
-        width: lado,
-        height: lado,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stack) => Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
-      );
+      contenido = ImagenProductoNetwork(url: _imagenUrl, width: lado, height: lado);
     } else {
       contenido = Column(
         mainAxisAlignment: MainAxisAlignment.center,
