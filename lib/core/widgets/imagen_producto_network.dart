@@ -57,11 +57,23 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
     if (oldWidget.url != widget.url) _reintentar();
   }
 
-  Future<Uint8List> _cargar() {
-    return http.get(Uri.parse(widget.url)).timeout(const Duration(seconds: 15)).then((res) {
-      if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
-      return res.bodyBytes;
-    });
+  // 3 intentos con espera creciente entre cada uno (1s, 2s) antes de rendirse
+  // y recién ahí mostrar el botón de reintentar manual: la mayoría de los
+  // cortes son un bache pasajero de la red, no hace falta que el usuario se
+  // dé cuenta ni tenga que tocar nada para que la foto termine cargando.
+  Future<Uint8List> _cargar() async {
+    const intentos = 3;
+    for (var intento = 1; intento <= intentos; intento++) {
+      try {
+        final res = await http.get(Uri.parse(widget.url)).timeout(const Duration(seconds: 10));
+        if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
+        return res.bodyBytes;
+      } catch (_) {
+        if (intento == intentos) rethrow;
+        await Future.delayed(Duration(seconds: intento));
+      }
+    }
+    throw Exception('No se pudo cargar la imagen');
   }
 
   void _reintentar() => setState(() => _future = _cargar());
