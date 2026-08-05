@@ -9,6 +9,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'core/widgets/app_shell.dart';
 import 'core/widgets/splash_screen.dart';
+import 'core/widgets/imagen_producto_network.dart';
 import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 
 Future<void> main() async {
@@ -38,6 +39,10 @@ Future<void> main() async {
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
+  // Calienta la conexión a Cloudinary desde ya, para que la primera foto que
+  // el usuario abra no tenga que pagar el costo de la primera conexión
+  // (la más lenta: resolver el dominio + saludo de seguridad).
+  ImagenProductoNetwork.precalentar();
   runApp(const ProviderScope(child: SistemaVentasApp()));
 }
 
