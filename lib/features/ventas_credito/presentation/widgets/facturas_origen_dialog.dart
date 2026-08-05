@@ -34,6 +34,7 @@ class FacturasOrigenDialog extends ConsumerStatefulWidget {
 
 class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   bool _cargando = true;
+  bool _vistaAgrupada = false;
   List<VentaModel> _ventasOrigen = [];
   List<_ItemConsolidado> _items = [];
   List<String> _facturasSinDetalle = [];
@@ -145,21 +146,33 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     return porClave.values.toList();
   }
 
-  Future<void> _imprimirUnificado() async {
-    if (_ventasOrigen.isEmpty) return;
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
-    if (!mounted) return;
+  // Se arma (y se reserva su número real) una sola vez por apertura de este
+  // diálogo, sin importar cuántas veces se pida imprimir o descargar el PDF
+  // desde acá: así "Imprimir todo en un solo papel" y "Descargar PDF" hablan
+  // siempre del mismo documento con el mismo número, en vez de gastar un
+  // número de la secuencia oficial por cada clic.
+  VentaModel? _ventaSinteticaCache;
+
+  Future<VentaModel> _obtenerVentaSintetica() async {
+    final cache = _ventaSinteticaCache;
+    if (cache != null) return cache;
     // Número real de la secuencia oficial (el que le tocaría a la próxima
     // factura), aunque no se registre una venta nueva: es solo para que
-    // esta hoja impresa tenga un número válido y no se repita con el de
-    // una venta futura.
+    // este documento tenga un número válido y no se repita con el de una
+    // venta futura.
     final numeroDocumento = await ref.read(ventaRepositoryProvider).reservarProximoNumeroFactura();
-    if (!mounted) return;
     final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
     final itemsConsolidados = _consolidarItems();
-    final subtotal = itemsConsolidados.fold<double>(0, (s, i) => s + i.subtotal);
-    final impuesto = redondearMoneda(subtotal * 0.15);
-    final ventaSintetica = VentaModel(
+    // El total sale directo del crédito (ya es el monto exacto y correcto,
+    // suma de los saldos reales de las facturas unidas) en vez de volver a
+    // sumar los ítems y sacarle el 15% aparte: hacerlo por separado puede
+    // arrastrar una diferencia de un centavo (.01/.99) por el redondeo doble
+    // (cada línea redondeada + el total redondeado). Acá el ISV sale de
+    // restarle el subtotal al total ya conocido, así siempre cuadra exacto.
+    final totalAPagar = widget.credito.montoTotal;
+    final subtotal = redondearMoneda(totalAPagar / 1.15);
+    final impuesto = redondearMoneda(totalAPagar - subtotal);
+    final venta = VentaModel(
       id: '',
       tipoDocumento: 'Factura',
       numeroDocumento: numeroDocumento,
@@ -170,7 +183,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
       montoCambio: 0,
       subtotal: subtotal,
       impuesto: impuesto,
-      totalAPagar: redondearMoneda(subtotal + impuesto),
+      totalAPagar: totalAPagar,
       condicion: 'Credito',
       fechaVencimiento: widget.credito.fechaVencimiento,
       fechaRegistro: DateTime.now(),
@@ -182,16 +195,44 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
       regSag: '',
       detalle: itemsConsolidados,
     );
+    _ventaSinteticaCache = venta;
+    return venta;
+  }
+
+  Future<void> _imprimirUnificado() async {
+    if (_ventasOrigen.isEmpty) return;
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final ventaSintetica = await _obtenerVentaSintetica();
     if (!mounted) return;
     final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
-        titulo: 'Vista previa · $numeroDocumento',
-        nombreArchivo: 'venta_$numeroDocumento.pdf',
+        titulo: 'Vista previa · ${ventaSintetica.numeroDocumento}',
+        nombreArchivo: 'venta_${ventaSintetica.numeroDocumento}.pdf',
         generarPdf: () => VentaExportService().generarPdfFactura(ventaSintetica, negocio),
         generarPdfConFormato: (formato) => VentaExportService().generarPdfFactura(ventaSintetica, negocio, formatoImpresora: formato),
         impresora: impresora,
+      ),
+    );
+  }
+
+  // Mismo documento formal en tamaño carta que ofrece "Ver detalle de
+  // venta" (VentaExportService.generarPdfDetalleVenta), para poder
+  // descargar/compartir el PDF sin pasar por la vista de ticket térmico.
+  Future<void> _descargarPdf() async {
+    if (_ventasOrigen.isEmpty) return;
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final ventaSintetica = await _obtenerVentaSintetica();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Documento formal · ${ventaSintetica.numeroDocumento}',
+        nombreArchivo: '${ventaSintetica.tipoDocumento}_${ventaSintetica.numeroDocumento}.pdf',
+        generarPdf: () => VentaExportService().generarPdfDetalleVenta(ventaSintetica, negocio),
       ),
     );
   }
@@ -242,6 +283,10 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               'Facturas unidas: ${(_numerosFacturasUnidas.isEmpty ? credito.facturasOrigen.map((f) => f.numeroDocumento) : _numerosFacturasUnidas).join(', ')}',
               style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
             ),
+            if (!_cargando && _items.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _selectorVista(),
+            ],
             const SizedBox(height: 14),
             Expanded(
               child: _cargando
@@ -281,6 +326,12 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                     label: Text('Imprimir factura por factura', style: GoogleFonts.poppins(fontSize: 12.5)),
                     style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: _descargarPdf,
+                    icon: const Icon(Icons.download_outlined, size: 17),
+                    label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 12.5)),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
                   FilledButton.icon(
                     onPressed: _imprimirUnificado,
                     icon: const Icon(Icons.description_outlined, size: 17),
@@ -296,7 +347,38 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     );
   }
 
+  Widget _selectorVista() {
+    Widget opcion(String texto, bool valor) {
+      final activo = _vistaAgrupada == valor;
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _vistaAgrupada = valor),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
+            child: Text(
+              texto,
+              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF4B4F58)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [opcion('Por factura', false), opcion('Agrupado por producto', true)]),
+    );
+  }
+
   Widget _tabla() {
+    final items = _vistaAgrupada ? _consolidarItems() : _items.map((c) => c.item).toList();
+    final etiquetasFactura = _vistaAgrupada ? List<String?>.filled(items.length, null) : _items.map((c) => c.numeroFacturaOrigen).toList();
+    final filas = [for (var i = 0; i < items.length; i++) _celdaProducto(items[i].nombreProducto, etiquetasFactura[i])];
+
     return SingleChildScrollView(
       child: Table(
         columnWidths: const {0: FlexColumnWidth(3), 1: FlexColumnWidth(1.4), 2: FlexColumnWidth(1.6), 3: FlexColumnWidth(1.6)},
@@ -310,15 +392,16 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               _celdaEncabezado('IMPORTE (c/ISV)', alinear: TextAlign.right),
             ],
           ),
-          ..._items.map((c) => TableRow(
-                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFECEEF3)))),
-                children: [
-                  _celdaProducto(c.item.nombreProducto, c.numeroFacturaOrigen),
-                  _celda(c.item.cantidad.toStringAsFixed(c.item.cantidad % 1 == 0 ? 0 : 2), alinear: TextAlign.right),
-                  _celda(formatearMoneda(_precioConIsv(c.item)), alinear: TextAlign.right),
-                  _celda(formatearMoneda(_importeConIsv(c.item)), alinear: TextAlign.right),
-                ],
-              )),
+          for (var i = 0; i < items.length; i++)
+            TableRow(
+              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFECEEF3)))),
+              children: [
+                filas[i],
+                _celda(items[i].cantidad.toStringAsFixed(items[i].cantidad % 1 == 0 ? 0 : 2), alinear: TextAlign.right),
+                _celda(formatearMoneda(_precioConIsv(items[i])), alinear: TextAlign.right),
+                _celda(formatearMoneda(_importeConIsv(items[i])), alinear: TextAlign.right),
+              ],
+            ),
         ],
       ),
     );
@@ -338,7 +421,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     );
   }
 
-  Widget _celdaProducto(String nombreProducto, String numeroFacturaOrigen) {
+  Widget _celdaProducto(String nombreProducto, String? numeroFacturaOrigen) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
       child: Column(
@@ -346,7 +429,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5)),
-          Text('Factura $numeroFacturaOrigen', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+          if (numeroFacturaOrigen != null) Text('Factura $numeroFacturaOrigen', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
         ],
       ),
     );
