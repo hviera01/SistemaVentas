@@ -142,44 +142,15 @@ class ProductoExportService {
     return doc.save();
   }
 
-  Future<Uint8List> generarPdfCodigoBarras(ProductoModel producto) async {
-    final codigo = producto.codigoBarras.isNotEmpty ? producto.codigoBarras : producto.codigo;
-    final doc = pw.Document();
-    doc.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, 45 * PdfPageFormat.mm, marginAll: 6),
-        build: (context) {
-          return pw.Center(
-            child: pw.Column(
-              mainAxisAlignment: pw.MainAxisAlignment.center,
-              children: [
-                pw.Text(
-                  producto.nombre,
-                  style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-                  textAlign: pw.TextAlign.center,
-                  maxLines: 2,
-                ),
-                pw.SizedBox(height: 6),
-                pw.BarcodeWidget(barcode: bc.Barcode.code128(), data: codigo, width: 220, height: 60),
-                pw.SizedBox(height: 4),
-                pw.Text(codigo, style: const pw.TextStyle(fontSize: 8)),
-                pw.SizedBox(height: 2),
-                pw.Text(formatearMoneda(producto.precioVenta), style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-    return doc.save();
-  }
-
   // Hoja de etiquetas de código de barras chicas (~2x1 pulgada, tamaño
   // estándar de etiqueta) para imprimir en la impresora térmica de 80mm que
   // ya se usa para tickets (mientras no haya una "tiquetera" de etiquetas
   // dedicada): a ese ancho de etiqueta solo entra 1 por fila, pero salen
   // varias apiladas en la misma tira de papel para cortarlas y pegarlas en
-  // el producto, en vez de una hoja por producto como generarPdfCodigoBarras.
+  // el producto. Se usa tanto para la impresión masiva ("Etiquetas" en
+  // Inventario, una por producto distinto) como para la de un solo producto
+  // con varias copias (menú "Código de barras" de cada fila, repitiendo el
+  // mismo ProductoModel N veces en la lista).
   Future<Uint8List> generarPdfEtiquetasGrid(List<ProductoModel> productos) async {
     const columnas = 1;
     const anchoEtiquetaMm = 50.8; // 2 pulgadas

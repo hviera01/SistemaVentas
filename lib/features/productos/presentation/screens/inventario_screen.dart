@@ -216,22 +216,21 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   }
 
   Future<void> _abrirCodigoBarras(ProductoModel producto) async {
+    final cantidad = await _pedirCantidadEtiquetas(producto);
+    if (cantidad == null || cantidad <= 0 || !mounted) return;
     final negocio = await ref
         .read(negocioRepositoryProvider)
         .obtenerNegocioActual();
     if (!mounted) return;
-    final impresora = negocio.impresoraEtiquetasUrl.isEmpty
-        ? null
-        : Printer(
-            url: negocio.impresoraEtiquetasUrl,
-            name: negocio.impresoraEtiquetasNombre,
-          );
+    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasUrl : negocio.impresoraTermicaUrl;
+    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasNombre : negocio.impresoraTermicaNombre;
+    final impresora = urlImpresora.isEmpty ? null : Printer(url: urlImpresora, name: nombreImpresora);
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
-        titulo: 'Código de barras · ${producto.nombre}',
-        nombreArchivo: 'codigo_${producto.codigo}.pdf',
-        generarPdf: () => _servicioExport.generarPdfCodigoBarras(producto),
+        titulo: 'Etiquetas · ${producto.nombre} (x$cantidad)',
+        nombreArchivo: 'etiquetas_${producto.codigo}.pdf',
+        generarPdf: () => _servicioExport.generarPdfEtiquetasGrid(List.generate(cantidad, (_) => producto)),
         impresora: impresora,
       ),
     );
@@ -281,6 +280,46 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         nombreArchivo: 'etiquetas_codigos_barras.pdf',
         generarPdf: () => _servicioExport.generarPdfEtiquetasGrid(productos),
         impresora: impresora,
+      ),
+    );
+  }
+
+  Future<int?> _pedirCantidadEtiquetas(ProductoModel producto) async {
+    final controller = TextEditingController(text: '1');
+    return showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Imprimir etiquetas', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(producto.nombre, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.poppins(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: 'Cantidad de etiquetas',
+                labelStyle: GoogleFonts.poppins(fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFFE8EAF0),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim()) ?? 0),
+            child: Text('Imprimir', style: GoogleFonts.poppins()),
+          ),
+        ],
       ),
     );
   }
