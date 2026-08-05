@@ -1,0 +1,19 @@
+{
+  "name": "reporte-whatsapp-supercolor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Envia por WhatsApp el reporte financiero semanal/mensual de Super Color, leyendo Firestore directo.",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "login": "node login.js",
+    "semanal": "node index.js semanal",
+    "mensual": "node index.js mensual"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "pdfkit": "^0.15.0",
+    "pino": "^9.3.2",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
