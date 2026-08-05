@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/imagen_zoom_dialog.dart';
 
 /// Card de solo lectura con toda la info de un producto, para consultar
 /// rápido sin editar nada. Se abre con doble toque/doble clic sobre un
@@ -42,6 +43,10 @@ class DetalleProductoDialog extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (producto.imagenUrl.isNotEmpty) ...[
+                    _miniaturaProducto(context),
+                    const SizedBox(width: 14),
+                  ],
                   Expanded(
                     child: Text(
                       producto.nombre,
@@ -120,6 +125,28 @@ class DetalleProductoDialog extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _miniaturaProducto(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => showDialog(context: context, builder: (context) => ImagenZoomDialog(url: producto.imagenUrl)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          producto.imagenUrl,
+          width: 56,
+          height: 56,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => Container(
+            width: 56,
+            height: 56,
+            color: const Color(0xFFE8EAF0),
+            child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+          ),
         ),
       ),
     );

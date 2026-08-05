@@ -11,6 +11,7 @@ class ProductoModel {
   final double precioVenta2;
   final double precioVenta3;
   final bool estado;
+  final String imagenUrl;
 
   ProductoModel({
     required this.id,
@@ -25,6 +26,7 @@ class ProductoModel {
     required this.precioVenta2,
     required this.precioVenta3,
     required this.estado,
+    this.imagenUrl = '',
   });
 
   factory ProductoModel.fromMap(String id, Map<String, dynamic> data) {
@@ -41,6 +43,7 @@ class ProductoModel {
       precioVenta2: (data['precioVenta2'] ?? 0).toDouble(),
       precioVenta3: (data['precioVenta3'] ?? 0).toDouble(),
       estado: data['estado'] ?? true,
+      imagenUrl: data['imagenUrl'] ?? '',
     );
   }
 
