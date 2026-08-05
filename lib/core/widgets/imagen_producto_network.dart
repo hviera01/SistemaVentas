@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'cliente_fotos_web.dart' if (dart.library.io) 'cliente_fotos_io.dart';
 
 /// Reemplazo de Image.network para fotos de producto. Image.network no
 /// tiene un límite de tiempo propio: si la conexión se traba a mitad de
@@ -47,7 +48,7 @@ class ImagenProductoNetwork extends StatefulWidget {
   // SSL suelen frenar — coincide con el reporte de "carga bien un par de
   // veces y después ya no". Reusar un solo cliente con keep-alive evita abrir
   // conexiones nuevas de más. Mismo cliente usado por precalentar().
-  static final http.Client _client = http.Client();
+  static final http.Client _client = crearClienteFotos();
 
   // Dispara una conexión de calentamiento hacia Cloudinary al arrancar la
   // app (llamado una vez desde main.dart, sin esperar el resultado). La
