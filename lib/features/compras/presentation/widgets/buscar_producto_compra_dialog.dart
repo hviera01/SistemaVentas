@@ -8,6 +8,7 @@ import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/imagen_zoom_dialog.dart';
 
 /// Buscador de productos para Compras: a diferencia del de Ventas no maneja
 /// niveles de precio de venta, sino el costo de compra registrado en el
@@ -140,6 +141,10 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     final nuevo = await showDialog<ProductoModel>(context: context, builder: (context) => const ProductoFormDialog());
     if (nuevo == null || !mounted) return;
     _confirmarSeleccion(nuevo);
+  }
+
+  void _verFoto(ProductoModel p) {
+    showDialog(context: context, builder: (context) => ImagenZoomDialog(url: p.imagenUrl));
   }
 
   @override
@@ -305,6 +310,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
         Expanded(flex: 3, child: Text('Categoría', style: estilo)),
         Expanded(flex: 3, child: Text('Costo', textAlign: TextAlign.right, style: estilo)),
         Expanded(flex: 2, child: Text('Existencia', textAlign: TextAlign.center, style: estilo)),
+        const SizedBox(width: 40),
       ],
     );
   }
@@ -363,6 +369,16 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                   ),
                 ),
               ),
+              SizedBox(
+                width: 40,
+                child: p.imagenUrl.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Ver foto',
+                        icon: const Icon(Icons.photo_outlined, size: 18, color: Color(0xFFC62828)),
+                        onPressed: () => _verFoto(p),
+                      ),
+              ),
             ],
           ),
         ),
@@ -416,7 +432,17 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                 ],
               ),
               const SizedBox(height: 10),
-              Text(formatearMoneda(p.precioCompra), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2B6CB0))),
+              Row(
+                children: [
+                  Expanded(child: Text(formatearMoneda(p.precioCompra), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2B6CB0)))),
+                  if (p.imagenUrl.isNotEmpty)
+                    IconButton(
+                      tooltip: 'Ver foto',
+                      icon: const Icon(Icons.photo_outlined, size: 18, color: Color(0xFFC62828)),
+                      onPressed: () => _verFoto(p),
+                    ),
+                ],
+              ),
             ],
           ),
         ),
