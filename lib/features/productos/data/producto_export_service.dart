@@ -174,20 +174,22 @@ class ProductoExportService {
     return doc.save();
   }
 
-  // Hoja de etiquetas de código de barras en 2 columnas para imprimir en la
-  // impresora térmica de 80mm que ya se usa para tickets (mientras no haya
-  // una "tiquetera" de etiquetas dedicada): salen varias en la misma tira de
-  // papel para cortarlas y pegarlas en el producto, en vez de una hoja por
-  // producto como generarPdfCodigoBarras.
+  // Hoja de etiquetas de código de barras chicas (~2x1 pulgada, tamaño
+  // estándar de etiqueta) para imprimir en la impresora térmica de 80mm que
+  // ya se usa para tickets (mientras no haya una "tiquetera" de etiquetas
+  // dedicada): a ese ancho de etiqueta solo entra 1 por fila, pero salen
+  // varias apiladas en la misma tira de papel para cortarlas y pegarlas en
+  // el producto, en vez de una hoja por producto como generarPdfCodigoBarras.
   Future<Uint8List> generarPdfEtiquetasGrid(List<ProductoModel> productos) async {
-    const columnas = 2;
-    const anchoEtiquetaMm = 38.0;
-    const altoEtiquetaMm = 26.0;
+    const columnas = 1;
+    const anchoEtiquetaMm = 50.8; // 2 pulgadas
+    const altoEtiquetaMm = 25.4; // 1 pulgada
+    const margenMm = 3.0;
     final doc = pw.Document();
 
     final filas = <List<ProductoModel?>>[];
     for (var i = 0; i < productos.length; i += columnas) {
-      filas.add([productos[i], i + 1 < productos.length ? productos[i + 1] : null]);
+      filas.add(List.generate(columnas, (j) => i + j < productos.length ? productos[i + j] : null));
     }
 
     pw.Widget etiqueta(ProductoModel? p) {
@@ -196,36 +198,43 @@ class ProductoExportService {
       return pw.Container(
         width: anchoEtiquetaMm * PdfPageFormat.mm,
         height: altoEtiquetaMm * PdfPageFormat.mm,
-        padding: const pw.EdgeInsets.all(3),
+        padding: const pw.EdgeInsets.all(4),
         alignment: pw.Alignment.center,
         child: pw.Column(
           mainAxisAlignment: pw.MainAxisAlignment.center,
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            pw.Text(p.nombre, style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center, maxLines: 1, overflow: pw.TextOverflow.clip),
+            pw.Text(p.nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center, maxLines: 1, overflow: pw.TextOverflow.clip),
+            pw.SizedBox(height: 3),
+            pw.BarcodeWidget(barcode: bc.Barcode.code128(), data: codigo, width: (anchoEtiquetaMm - 10) * PdfPageFormat.mm, height: 30),
             pw.SizedBox(height: 2),
-            pw.BarcodeWidget(barcode: bc.Barcode.code128(), data: codigo, width: (anchoEtiquetaMm - 6) * PdfPageFormat.mm, height: 20),
-            pw.SizedBox(height: 1),
-            pw.Text(codigo, style: const pw.TextStyle(fontSize: 5.5)),
-            pw.Text(formatearMoneda(p.precioVenta), style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+            pw.Text(codigo, style: const pw.TextStyle(fontSize: 7)),
+            pw.Text(formatearMoneda(p.precioVenta), style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
           ],
         ),
       );
     }
 
+    // pw.Page (no pw.MultiPage) con una altura calculada de antemano: con
+    // MultiPage + altura infinita esta hoja salía completamente en blanco en
+    // la vista previa (MultiPage necesita saber dónde cortar la página, y
+    // con alto infinito nunca "cierra" el layout). El ticket normal
+    // (generarPdfFactura) tiene el mismo problema documentado y por eso ya
+    // usa alto calculado en vez de infinito.
+    final altoPaginaMm = margenMm * 2 + filas.length * altoEtiquetaMm;
     doc.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 3),
-        build: (context) => [
-          pw.Column(
+      pw.Page(
+        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, altoPaginaMm * PdfPageFormat.mm, marginAll: margenMm * PdfPageFormat.mm),
+        build: (context) {
+          return pw.Column(
             children: filas
                 .map((fila) => pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
                       children: fila.map(etiqueta).toList(),
                     ))
                 .toList(),
-          ),
-        ],
+          );
+        },
       ),
     );
     return doc.save();
