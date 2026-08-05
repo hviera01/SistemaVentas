@@ -4,8 +4,16 @@ import '../data/producto_model.dart';
 import '../data/historial_stock_model.dart';
 import '../data/historial_precio_compra_model.dart';
 import '../data/historial_venta_producto_model.dart';
+import '../data/lote_costo_model.dart';
+import '../data/lote_costo_repository.dart';
 
 final productoRepositoryProvider = Provider((ref) => ProductoRepository());
+
+final loteCostoRepositoryProvider = Provider((ref) => LoteCostoRepository());
+
+final lotesProductoProvider = StreamProvider.family<List<LoteCostoModel>, String>((ref, idProducto) {
+  return ref.watch(loteCostoRepositoryProvider).obtenerLotes(idProducto);
+});
 
 final productosStreamProvider = StreamProvider<List<ProductoModel>>((ref) {
   return ref.watch(productoRepositoryProvider).obtenerProductos();

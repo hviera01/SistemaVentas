@@ -237,6 +237,54 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
+  // Etiquetas de código de barras en tira (2 por fila) para imprimir en la
+  // térmica de 80mm que ya está configurada, mientras no haya una
+  // "tiquetera" dedicada — usa impresoraEtiquetas si ya la configuraron más
+  // adelante, si no cae en impresoraTermica.
+  Future<void> _imprimirEtiquetasGrid() async {
+    if (_listaActual.isEmpty) return;
+    final soloSinCodigo = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Imprimir etiquetas', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          '¿Etiquetas de todos los productos de la lista actual, o solo de los que no tienen código de barras?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: Text('Todos', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Solo sin código', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+    if (soloSinCodigo == null || !mounted) return;
+    final productos = soloSinCodigo ? _listaActual.where((p) => p.codigoBarras.isEmpty).toList() : _listaActual;
+    if (productos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay productos sin código de barras en la lista actual')));
+      return;
+    }
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasUrl : negocio.impresoraTermicaUrl;
+    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasNombre : negocio.impresoraTermicaNombre;
+    final impresora = urlImpresora.isEmpty ? null : Printer(url: urlImpresora, name: nombreImpresora);
+    showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Vista previa · Etiquetas (${productos.length})',
+        nombreArchivo: 'etiquetas_codigos_barras.pdf',
+        generarPdf: () => _servicioExport.generarPdfEtiquetasGrid(productos),
+        impresora: impresora,
+      ),
+    );
+  }
+
   void _alternarOrden(String columna) {
     setState(() {
       if (_columnaOrden == columna) {
@@ -476,6 +524,25 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         icon: const Icon(Icons.receipt_long_outlined, size: 18),
                         label: Text(
                           'Ticket',
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _imprimirEtiquetasGrid,
+                        icon: const Icon(Icons.qr_code_2_outlined, size: 18),
+                        label: Text(
+                          'Etiquetas',
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -1247,6 +1314,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       case 'historial_compras':
         _abrirHistorialMovimientos(producto, 'compras');
         break;
+      case 'lotes_costo':
+        _abrirHistorialMovimientos(producto, 'lotes');
+        break;
       case 'codigo_barras':
         _abrirCodigoBarras(producto);
         break;
@@ -1280,6 +1350,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         valor: 'historial_compras',
         icono: Icons.shopping_cart_outlined,
         texto: 'Historial de compras',
+      ),
+      _opcionMenu(
+        valor: 'lotes_costo',
+        icono: Icons.layers_outlined,
+        texto: 'Costos por lote (FIFO)',
       ),
       const PopupMenuDivider(),
       _opcionMenu(

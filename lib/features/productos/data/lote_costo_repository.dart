@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'lote_costo_model.dart';
 
 /// Estado de trabajo (en memoria) de un lote mientras se calcula cuánto
 /// consumir de él. Se separa de LoteCostoModel porque acá cantidadRestante
@@ -63,6 +64,16 @@ class LoteCostoRepository {
   /// en vez de esperarlas primero.
   Future<QuerySnapshot<Map<String, dynamic>>> consultarLotes(String idProducto) {
     return colLotes(idProducto).orderBy('fecha').limit(30).get();
+  }
+
+  /// Para mostrar en pantalla: todos los lotes de un producto (agotados o
+  /// no), del más viejo al más nuevo — o sea, en el mismo orden en que el
+  /// costeo FIFO los va a ir consumiendo. Sirve para ver de un vistazo
+  /// cuántas unidades quedan a cada costo y cuál va a salir primero.
+  Stream<List<LoteCostoModel>> obtenerLotes(String idProducto) {
+    return colLotes(idProducto).orderBy('fecha').snapshots().map((snap) {
+      return snap.docs.map((d) => LoteCostoModel.fromMap(d.id, d.data())).toList();
+    });
   }
 
   /// Arma el estado de trabajo a partir del resultado de [consultarLotes].

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/producto_model.dart';
+import '../../data/lote_costo_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
@@ -42,6 +43,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
   DateTime? _fechaFin;
 
   bool get _esVentas => widget.tipo == 'ventas';
+  bool get _esLotes => widget.tipo == 'lotes';
 
   Future<void> _seleccionarFecha(bool esInicio) async {
     final fecha = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime(2100));
@@ -86,7 +88,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
 
   @override
   Widget build(BuildContext context) {
-    final titulo = _esVentas ? 'Historial de Ventas' : 'Historial de Compras';
+    final titulo = _esLotes ? 'Costos por Lote (FIFO)' : (_esVentas ? 'Historial de Ventas' : 'Historial de Compras');
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final formatoDia = DateFormat('dd/MM/yyyy');
     final tamano = MediaQuery.of(context).size;
@@ -125,7 +127,11 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
               ],
             ),
             const SizedBox(height: 14),
-            Expanded(child: _esVentas ? _contenidoVentas(formatoFecha) : _contenidoCompras(formatoFecha)),
+            Expanded(
+              child: _esLotes
+                  ? _contenidoLotes(formatoDia)
+                  : (_esVentas ? _contenidoVentas(formatoFecha) : _contenidoCompras(formatoFecha)),
+            ),
           ],
         ),
       ),
@@ -171,6 +177,127 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
             .toList());
         return _tabla(filas, formatoFecha, etiquetaContraparte: 'PROVEEDOR', etiquetaDocumento: 'FACTURA', etiquetaPrecio: 'COSTO', vacio: 'Sin compras registradas en el rango seleccionado');
       },
+    );
+  }
+
+  // Los lotes ya vienen ordenados del más viejo al más nuevo (ver
+  // LoteCostoRepository.obtenerLotes): ese es justo el orden en que el
+  // costeo FIFO los va a ir consumiendo, así que el primero con
+  // cantidadRestante > 0 es el que se va a vender/consumir primero.
+  Widget _contenidoLotes(DateFormat formatoDia) {
+    final async = ref.watch(lotesProductoProvider(widget.producto.id));
+    return async.when(
+      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+      error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+      data: (data) {
+        final lotes = data.where((l) {
+          if (_fechaInicio != null && l.fecha.isBefore(DateTime(_fechaInicio!.year, _fechaInicio!.month, _fechaInicio!.day))) return false;
+          if (_fechaFin != null && l.fecha.isAfter(DateTime(_fechaFin!.year, _fechaFin!.month, _fechaFin!.day, 23, 59, 59))) return false;
+          return true;
+        }).toList();
+        if (lotes.isEmpty) {
+          return Center(child: Text('Sin lotes de costo registrados para este producto', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+        }
+        final totalRestante = lotes.fold<double>(0, (s, l) => s + l.cantidadRestante);
+        final idPrimerLoteVigente = lotes.firstWhere((l) => l.cantidadRestante > 0, orElse: () => lotes.first).id;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                'Existencia total: ${_formatoCantidad(totalRestante)} unidades repartidas en ${lotes.where((l) => l.cantidadRestante > 0).length} lote(s) — el más antiguo con existencia se vende primero.',
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ),
+            Expanded(child: _tablaLotes(lotes, formatoDia, idPrimerLoteVigente)),
+          ],
+        );
+      },
+    );
+  }
+
+  void _verDetalleLote(LoteCostoModel lote) {
+    if (lote.origen != 'compra' || lote.idCompra == null || lote.idCompra!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este lote no tiene una compra asociada (viene de un ajuste manual)')));
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleCompraScreen(compraIdInicial: lote.idCompra)),
+    );
+  }
+
+  Widget _tablaLotes(List<LoteCostoModel> lotes, DateFormat formatoDia, String idPrimerLoteVigente) {
+    final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    const anchoTabla = 680.0;
+    return Container(
+      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: anchoTabla,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                child: Row(
+                  children: [
+                    SizedBox(width: 110, child: Text('FECHA', style: estiloHeader)),
+                    SizedBox(width: 90, child: Text('ORIGEN', style: estiloHeader)),
+                    SizedBox(width: 110, child: Text('CANT. ORIGINAL', textAlign: TextAlign.right, style: estiloHeader)),
+                    SizedBox(width: 110, child: Text('CANT. RESTANTE', textAlign: TextAlign.right, style: estiloHeader)),
+                    SizedBox(width: 100, child: Text('COSTO UNIT.', textAlign: TextAlign.right, style: estiloHeader)),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: lotes.length,
+                  separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                  itemBuilder: (context, index) {
+                    final l = lotes[index];
+                    final agotado = l.cantidadRestante <= 0;
+                    final esProximo = l.id == idPrimerLoteVigente && !agotado;
+                    return InkWell(
+                      onTap: () => _verDetalleLote(l),
+                      child: Container(
+                        color: esProximo ? const Color(0xFFFCE4E4) : null,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 110, child: Text(formatoDia.format(l.fecha), style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(width: 90, child: Text(l.origen == 'compra' ? 'Compra' : 'Ajuste', style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(width: 110, child: Text(_formatoCantidad(l.cantidadOriginal), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(
+                              width: 110,
+                              child: Text(
+                                _formatoCantidad(l.cantidadRestante),
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? Colors.grey.shade400 : const Color(0xFF1A1A1A)),
+                              ),
+                            ),
+                            SizedBox(width: 100, child: Text(formatearMoneda(l.costoUnitario), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? Colors.grey.shade400 : null))),
+                            Expanded(
+                              child: esProximo
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(left: 8),
+                                      child: Text('Se vende primero', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+                                    )
+                                  : (agotado ? Padding(padding: const EdgeInsets.only(left: 8), child: Text('Agotado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400))) : const SizedBox()),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
