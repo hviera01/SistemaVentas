@@ -6,7 +6,7 @@
 module.exports = {
   firebaseProjectId: 'supercolor-25505',
   nombreNegocio: 'SUPER COLOR',
-  // Números de WhatsApp que reciben el reporte, en formato internacional sin
-  // "+" ni espacios (código de país + número).
-  numerosDestino: ['50432566571'],
+  // Números de WhatsApp que reciben el reporte (directores), en formato
+  // internacional sin "+" ni espacios (código de país + número).
+  numerosDestino: ['50497485822', '50487361926', '50488330426'],
 };

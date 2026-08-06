@@ -22,15 +22,15 @@ function calcularRango(tipo) {
   const hoy = new Date();
   if (tipo === 'mensual') {
     const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    return { inicio, fin: finDelDia(hoy), titulo: `Reporte financiero mensual · ${nombreNegocio}` };
+    return { inicio, fin: finDelDia(hoy), titulo: 'Reporte financiero mensual' };
   }
   const inicio = inicioDelDia(new Date(hoy.getTime() - 6 * 24 * 60 * 60 * 1000));
-  return { inicio, fin: finDelDia(hoy), titulo: `Reporte financiero semanal · ${nombreNegocio}` };
+  return { inicio, fin: finDelDia(hoy), titulo: 'Reporte financiero semanal' };
 }
 
 function armarCaption(reporte, titulo) {
   return [
-    titulo,
+    `${nombreNegocio} · ${titulo}`,
     `${formatearFecha(reporte.inicio)} al ${formatearFecha(reporte.fin)}`,
     '',
     `Ventas: ${formatearMoneda(reporte.ventasPeriodo)}`,
