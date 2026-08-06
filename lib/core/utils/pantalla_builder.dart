@@ -16,6 +16,7 @@ import '../../features/reportes/presentation/screens/reporte_financiero_screen.d
 import '../../features/ventas/presentation/screens/registrar_venta_screen.dart';
 import '../../features/ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../features/ventas/providers/carrito_provider.dart';
+import '../../features/ventas/providers/usuario_venta_provider.dart';
 import '../../features/compras/presentation/screens/registrar_compra_screen.dart';
 import '../../features/compras/presentation/screens/detalle_compra_screen.dart';
 import '../../features/compras/presentation/screens/hacer_pedido_screen.dart';
@@ -34,9 +35,15 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono, String
       // permite a la pantalla saber si es la pestaña que está activa ahora
       // mismo, para que los atajos de teclado (F10/F12) solo respondan ahí
       // y no en las demás pestañas de venta/compra que sigan abiertas de
-      // fondo.
+      // fondo. usuarioVentaOverrideProvider recibe el mismo aislamiento por
+      // pestaña: permite que "cambiar usuario de esta venta" (ver
+      // registrar_venta_screen) solo afecte a la pestaña donde se tocó el
+      // botón, sin tocar la sesión principal ni las demás pestañas.
       return ProviderScope(
-        overrides: [carritoVentaProvider.overrideWith(() => CarritoVentaNotifier())],
+        overrides: [
+          carritoVentaProvider.overrideWith(() => CarritoVentaNotifier()),
+          usuarioVentaOverrideProvider,
+        ],
         child: RegistrarVentaScreen(tabId: tabId),
       );
     case 'ventas_detalle':

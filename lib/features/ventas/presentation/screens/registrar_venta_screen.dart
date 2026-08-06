@@ -15,6 +15,7 @@ import '../../data/venta_model.dart';
 import '../../data/venta_repository.dart';
 import '../../data/venta_ticket_escpos_service.dart';
 import '../../providers/carrito_provider.dart';
+import '../../providers/usuario_venta_provider.dart';
 import '../../../../core/providers/tabs_provider.dart';
 import '../../providers/ventas_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -31,6 +32,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/buscar_cliente_dialog.dart';
+import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
 import '../widgets/pago_mixto_dialog.dart';
@@ -968,7 +970,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       if (mounted) setState(() => _guardando = false);
     }
 
-    final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    // El usuario que queda registrado como responsable de la venta (el que
+    // cuenta para sus metas): el elegido con "cambiar usuario" en esta
+    // pestaña si lo hay, si no el de la sesión. Los reembasados de arriba y
+    // la anulación (detalle_venta_screen) siguen usando el de la sesión a
+    // propósito: son auditoría de quién movió el stock/anuló, no atribución
+    // de venta.
+    final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
     final categorias = ref.read(categoriasStreamProvider).value ?? [];
     final categoriasSinControlStock = categorias.where((c) => !c.controlaStock).map((c) => c.id).toSet();
     final esFacturable = carrito.tipoDocumento == 'Factura' || carrito.tipoDocumento == 'Boleta';
@@ -1360,6 +1368,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       runSpacing: 10,
       children: [
         Text('Registrar Venta', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        _chipUsuarioVenta(),
         OutlinedButton.icon(
           onPressed: _confirmarLimpiar,
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
@@ -1397,6 +1406,68 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         ),
       ],
     );
+  }
+
+  // Chip con el usuario al que se le va a atribuir ESTA venta (para que
+  // cuente en sus metas): por defecto el de la sesión, o el elegido con
+  // "cambiar usuario" si se tocó ese botón en esta pestaña. El cambio vive
+  // en usuarioVentaOverrideProvider, que está scopeado por pestaña (ver
+  // pantalla_builder.dart), así que no afecta la sesión principal ni las
+  // demás pestañas abiertas.
+  Widget _chipUsuarioVenta() {
+    final override = ref.watch(usuarioVentaOverrideProvider);
+    final sesion = ref.watch(authProvider).usuario;
+    final actual = override ?? sesion;
+    final esOverride = override != null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: esOverride ? const Color(0xFFFFF3E0) : const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(12),
+        border: esOverride ? Border.all(color: const Color(0xFFE0A63C)) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_outline, size: 18, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+          const SizedBox(width: 6),
+          Text(
+            'Vendiendo como: ${actual?.nombreCompleto ?? '-'}',
+            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+          ),
+          if (esOverride) ...[
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: _quitarUsuarioVenta,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.undo, size: 16, color: Color(0xFF9A6A00)),
+              ),
+            ),
+          ],
+          const SizedBox(width: 2),
+          InkWell(
+            onTap: _cambiarUsuarioVenta,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(Icons.swap_horiz, size: 16, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cambiarUsuarioVenta() async {
+    final usuario = await mostrarCambiarUsuarioVentaDialog(context, ref);
+    if (usuario == null || !mounted) return;
+    ref.read(usuarioVentaOverrideProvider.notifier).cambiar(usuario);
+  }
+
+  void _quitarUsuarioVenta() {
+    ref.read(usuarioVentaOverrideProvider.notifier).quitar();
   }
 
   int get _cantidadPendientesImpresion => ref.watch(ventasPendientesImpresionStreamProvider).value?.length ?? 0;
