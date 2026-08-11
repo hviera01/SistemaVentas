@@ -7,6 +7,8 @@ import '../../providers/promociones_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'seleccionar_productos_dialog.dart';
 
+const _metodosPagoAlcance = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
+
 class PromocionFormDialog extends ConsumerStatefulWidget {
   final PromocionModel? promocion;
 
@@ -22,6 +24,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
   final _valorController = TextEditingController();
   final _cantidadRequeridaController = TextEditingController(text: '2');
   final _precioComboController = TextEditingController();
+  final _precioComboMultiController = TextEditingController();
   final _cantidadRegaloController = TextEditingController(text: '1');
 
   TipoPromocion _tipo = TipoPromocion.porcentaje;
@@ -29,12 +32,15 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
   List<String> _nombresProductos = [];
   String _idProductoBase = '';
   String _nombreProductoBase = '';
-  String _idProductoRegalo = '';
-  String _nombreProductoRegalo = '';
+  List<String> _idsProductosCombo = [];
+  List<String> _nombresProductosCombo = [];
+  List<String> _idsProductosRegalo = [];
+  List<String> _nombresProductosRegalo = [];
   DateTime _fechaInicio = DateTime.now();
   DateTime? _fechaFin;
   bool _indefinida = true;
   String _alcancePago = 'Todos';
+  String _metodoPagoAlcance = 'Todos';
   bool _activo = true;
   bool _guardando = false;
 
@@ -54,13 +60,17 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       _nombreProductoBase = p.nombreProductoBase;
       _cantidadRequeridaController.text = p.cantidadRequerida.toString();
       _precioComboController.text = p.precioCombo == 0 ? '' : p.precioCombo.toString();
-      _idProductoRegalo = p.idProductoRegalo;
-      _nombreProductoRegalo = p.nombreProductoRegalo;
+      _precioComboMultiController.text = p.precioCombo == 0 ? '' : p.precioCombo.toString();
+      _idsProductosCombo = [...p.idsProductosCombo];
+      _nombresProductosCombo = [...p.nombresProductosCombo];
+      _idsProductosRegalo = [...p.idsProductosRegalo];
+      _nombresProductosRegalo = [...p.nombresProductosRegalo];
       _cantidadRegaloController.text = p.cantidadRegalo.toString();
       _fechaInicio = p.fechaInicio;
       _fechaFin = p.fechaFin;
       _indefinida = p.esIndefinida;
       _alcancePago = p.alcancePago;
+      _metodoPagoAlcance = p.metodoPagoAlcance;
       _activo = p.activo;
     }
   }
@@ -71,6 +81,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     _valorController.dispose();
     _cantidadRequeridaController.dispose();
     _precioComboController.dispose();
+    _precioComboMultiController.dispose();
     _cantidadRegaloController.dispose();
     super.dispose();
   }
@@ -99,15 +110,27 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     });
   }
 
-  Future<void> _elegirProductoRegalo() async {
+  Future<void> _elegirProductosCombo() async {
     final elegidos = await showDialog<List>(
       context: context,
-      builder: (context) => SeleccionarProductosDialog(seleccionadosIniciales: _idProductoRegalo.isEmpty ? const [] : [_idProductoRegalo], maxSeleccion: 1, titulo: 'Producto de Regalo'),
+      builder: (context) => SeleccionarProductosDialog(seleccionadosIniciales: _idsProductosCombo, titulo: 'Productos del Combo (2 o más)'),
     );
-    if (elegidos == null || elegidos.isEmpty) return;
+    if (elegidos == null) return;
     setState(() {
-      _idProductoRegalo = elegidos.first.id as String;
-      _nombreProductoRegalo = elegidos.first.nombre as String;
+      _idsProductosCombo = elegidos.map((p) => p.id as String).toList();
+      _nombresProductosCombo = elegidos.map((p) => p.nombre as String).toList();
+    });
+  }
+
+  Future<void> _elegirProductosRegalo() async {
+    final elegidos = await showDialog<List>(
+      context: context,
+      builder: (context) => SeleccionarProductosDialog(seleccionadosIniciales: _idsProductosRegalo, titulo: 'Productos de Regalo'),
+    );
+    if (elegidos == null) return;
+    setState(() {
+      _idsProductosRegalo = elegidos.map((p) => p.id as String).toList();
+      _nombresProductosRegalo = elegidos.map((p) => p.nombre as String).toList();
     });
   }
 
@@ -137,16 +160,21 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final esPorcentajeOFijo = _tipo == TipoPromocion.porcentaje || _tipo == TipoPromocion.precioFijo;
+    final esComboBase = _tipo == TipoPromocion.comboCantidad || _tipo == TipoPromocion.regalo;
     if (esPorcentajeOFijo && _idsProductos.isEmpty) {
       _mostrarMensaje('Seleccioná al menos un producto', esError: true);
       return;
     }
-    if (!esPorcentajeOFijo && _idProductoBase.isEmpty) {
+    if (esComboBase && _idProductoBase.isEmpty) {
       _mostrarMensaje('Seleccioná el producto base', esError: true);
       return;
     }
-    if (_tipo == TipoPromocion.regalo && _idProductoRegalo.isEmpty) {
-      _mostrarMensaje('Seleccioná el producto de regalo', esError: true);
+    if (_tipo == TipoPromocion.regalo && _idsProductosRegalo.isEmpty) {
+      _mostrarMensaje('Seleccioná al menos un producto de regalo', esError: true);
+      return;
+    }
+    if (_tipo == TipoPromocion.comboMultiproducto && _idsProductosCombo.length < 2) {
+      _mostrarMensaje('Seleccioná al menos 2 productos para el combo', esError: true);
       return;
     }
     if (!_indefinida && _fechaFin != null && _fechaFin!.isBefore(_fechaInicio)) {
@@ -162,16 +190,21 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       idsProductos: esPorcentajeOFijo ? _idsProductos : const [],
       nombresProductos: esPorcentajeOFijo ? _nombresProductos : const [],
       valor: esPorcentajeOFijo ? (double.tryParse(_valorController.text.trim()) ?? 0) : 0,
-      idProductoBase: esPorcentajeOFijo ? '' : _idProductoBase,
-      nombreProductoBase: esPorcentajeOFijo ? '' : _nombreProductoBase,
-      cantidadRequerida: esPorcentajeOFijo ? 1 : (int.tryParse(_cantidadRequeridaController.text.trim()) ?? 1),
-      precioCombo: _tipo == TipoPromocion.comboCantidad ? (double.tryParse(_precioComboController.text.trim()) ?? 0) : 0,
-      idProductoRegalo: _tipo == TipoPromocion.regalo ? _idProductoRegalo : '',
-      nombreProductoRegalo: _tipo == TipoPromocion.regalo ? _nombreProductoRegalo : '',
+      idProductoBase: esComboBase ? _idProductoBase : '',
+      nombreProductoBase: esComboBase ? _nombreProductoBase : '',
+      cantidadRequerida: esComboBase ? (int.tryParse(_cantidadRequeridaController.text.trim()) ?? 1) : 1,
+      precioCombo: _tipo == TipoPromocion.comboCantidad
+          ? (double.tryParse(_precioComboController.text.trim()) ?? 0)
+          : (_tipo == TipoPromocion.comboMultiproducto ? (double.tryParse(_precioComboMultiController.text.trim()) ?? 0) : 0),
+      idsProductosCombo: _tipo == TipoPromocion.comboMultiproducto ? _idsProductosCombo : const [],
+      nombresProductosCombo: _tipo == TipoPromocion.comboMultiproducto ? _nombresProductosCombo : const [],
+      idsProductosRegalo: _tipo == TipoPromocion.regalo ? _idsProductosRegalo : const [],
+      nombresProductosRegalo: _tipo == TipoPromocion.regalo ? _nombresProductosRegalo : const [],
       cantidadRegalo: _tipo == TipoPromocion.regalo ? (int.tryParse(_cantidadRegaloController.text.trim()) ?? 1) : 1,
       fechaInicio: _fechaInicio,
       fechaFin: _indefinida ? null : _fechaFin,
       alcancePago: _alcancePago,
+      metodoPagoAlcance: _metodoPagoAlcance,
       activo: _activo,
       creadoEn: widget.promocion?.creadoEn,
       creadoPor: widget.promocion?.creadoPor ?? usuario,
@@ -234,6 +267,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                 const SizedBox(height: 16),
                 if (_tipo == TipoPromocion.porcentaje || _tipo == TipoPromocion.precioFijo) _bloquePorcentajeOFijo(),
                 if (_tipo == TipoPromocion.comboCantidad) _bloqueCombo(),
+                if (_tipo == TipoPromocion.comboMultiproducto) _bloqueComboMultiproducto(),
                 if (_tipo == TipoPromocion.regalo) _bloqueRegalo(),
                 const SizedBox(height: 16),
                 Text('Vigencia', style: _etiqueta()),
@@ -264,9 +298,15 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                   title: Text('Sin fecha de fin (indefinida)', style: GoogleFonts.poppins(fontSize: 12.5)),
                 ),
                 const SizedBox(height: 8),
-                Text('Alcance de método de pago', style: _etiqueta()),
+                Text('Condición de la venta', style: _etiqueta()),
                 const SizedBox(height: 8),
                 _selectorAlcance(),
+                const SizedBox(height: 14),
+                Text('Método de pago', style: _etiqueta()),
+                const SizedBox(height: 8),
+                _selectorMetodoPago(),
+                const SizedBox(height: 6),
+                Text('Los dos filtros de arriba son independientes: tienen que cumplirse ambos para que la promoción aplique.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
                 const SizedBox(height: 8),
                 SwitchListTile(
                   value: _activo,
@@ -330,7 +370,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       children: [
         Row(children: [opcion('% Descuento', TipoPromocion.porcentaje), opcion('Precio Fijo', TipoPromocion.precioFijo)]),
         const SizedBox(width: double.infinity, height: 6),
-        Row(children: [opcion('Combo por Cantidad', TipoPromocion.comboCantidad), opcion('Regalo', TipoPromocion.regalo)]),
+        Row(children: [opcion('Combo por Cantidad', TipoPromocion.comboCantidad), opcion('Combo de Productos', TipoPromocion.comboMultiproducto)]),
+        const SizedBox(width: double.infinity, height: 6),
+        Row(children: [opcion('Regalo', TipoPromocion.regalo)]),
       ],
     );
   }
@@ -353,6 +395,26 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     }
 
     return Row(children: [opcion('Todos', 'Todos'), opcion('Contado', 'Contado'), opcion('Crédito', 'Credito')]);
+  }
+
+  Widget _selectorMetodoPago() {
+    Widget opcion(String texto, String valor) {
+      final activo = _metodoPagoAlcance == valor;
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _metodoPagoAlcance = valor),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: activo ? const Color(0xFF16A34A) : const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
+            child: Text(texto, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF4B4F58))),
+          ),
+        ),
+      );
+    }
+
+    return Row(children: [for (final m in _metodosPagoAlcance) opcion(m, m)]);
   }
 
   Widget _campoFecha(String label, DateTime fecha, VoidCallback onTap, DateFormat formato) {
@@ -444,6 +506,36 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     );
   }
 
+  Widget _bloqueComboMultiproducto() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Productos del combo (2 o más, distintos)', style: _etiqueta()),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _elegirProductosCombo,
+          icon: const Icon(Icons.inventory_2_outlined, size: 18),
+          label: Text('Elegir productos del combo (${_idsProductosCombo.length})', style: GoogleFonts.poppins(fontSize: 12.5)),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 13), minimumSize: const Size(double.infinity, 0)),
+        ),
+        if (_nombresProductosCombo.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [for (final n in _nombresProductosCombo) Chip(label: Text(n, style: GoogleFonts.poppins(fontSize: 11)), visualDensity: VisualDensity.compact)]),
+        ],
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _precioComboMultiController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: GoogleFonts.poppins(fontSize: 13),
+          decoration: _decoracion('Precio total del combo (con ISV)'),
+          validator: (v) => (double.tryParse((v ?? '').trim()) ?? 0) <= 0 ? 'Requerido' : null,
+        ),
+        const SizedBox(height: 6),
+        Text('Ej. "Llevando 1 de cada producto elegido arriba, el paquete completo se paga L.250" en vez de la suma de precios normales. Se ofrece solo cuando ya están los productos completos en el carrito.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+      ],
+    );
+  }
+
   Widget _bloqueRegalo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,19 +552,28 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           validator: (v) => (int.tryParse((v ?? '').trim()) ?? 0) < 1 ? 'Mínimo 1' : null,
         ),
         const SizedBox(height: 14),
-        Text('Producto que se regala', style: _etiqueta()),
+        Text('Productos que se regalan', style: _etiqueta()),
         const SizedBox(height: 8),
-        _botonProducto(_nombreProductoRegalo, _elegirProductoRegalo),
+        OutlinedButton.icon(
+          onPressed: _elegirProductosRegalo,
+          icon: const Icon(Icons.card_giftcard_outlined, size: 18),
+          label: Text('Elegir productos de regalo (${_idsProductosRegalo.length})', style: GoogleFonts.poppins(fontSize: 12.5)),
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 13), minimumSize: const Size(double.infinity, 0)),
+        ),
+        if (_nombresProductosRegalo.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [for (final n in _nombresProductosRegalo) Chip(label: Text(n, style: GoogleFonts.poppins(fontSize: 11)), visualDensity: VisualDensity.compact)]),
+        ],
         const SizedBox(height: 8),
         TextFormField(
           controller: _cantidadRegaloController,
           keyboardType: TextInputType.number,
           style: GoogleFonts.poppins(fontSize: 13),
-          decoration: _decoracion('Cantidad de regalo'),
+          decoration: _decoracion('Cantidad de regalo (por cada producto)'),
           validator: (v) => (int.tryParse((v ?? '').trim()) ?? 0) < 1 ? 'Mínimo 1' : null,
         ),
         const SizedBox(height: 6),
-        Text('Ej. "Si lleva 2 unidades, se regala 1" (puede ser del mismo producto o de otro).', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+        Text('Ej. "Si lleva 2 unidades, se regala 1 de cada producto elegido" (pueden ser del mismo producto llevado o de otros).', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
       ],
     );
   }

@@ -442,9 +442,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // propósito: ahí sí tiene que seguir funcionando el escáner.
     _pausarLectorFisico = true;
     try {
-      final condicionActual = ref.read(carritoVentaProvider).condicion;
+      final carritoActual = ref.read(carritoVentaProvider);
       final resultado = await Navigator.of(context).push<ProductoConPrecio>(
-        MaterialPageRoute(fullscreenDialog: true, builder: (context) => BuscarProductoDialog(condicion: condicionActual)),
+        MaterialPageRoute(fullscreenDialog: true, builder: (context) => BuscarProductoDialog(condicion: carritoActual.condicion, metodoPago: carritoActual.metodoPago)),
       );
       if (resultado == null || !mounted) return;
       await _procesarProductoSeleccionado(resultado);
@@ -528,17 +528,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // ---------- Descuentos y Promociones ----------
 
   /// Agrega el producto al carrito y, si corresponde, ofrece de forma
-  /// interactiva la promoción vigente aplicable (según fecha y el método de
-  /// pago/condición ya elegidos en la venta): el cajero decide si la acepta
-  /// o no, si rechaza se queda al precio normal. Si el producto cae en más
-  /// de una promoción de porcentaje/precio fijo a la vez, se aplica solo la
-  /// de mayor beneficio para el cliente (ver mejorPromoPrecio). Combo/regalo
-  /// se revisa aparte porque depende de la cantidad llevada, no del precio
-  /// unitario, y solo se ofrece la primera vez que se alcanza la cantidad
-  /// requerida (no en cada unidad de más).
+  /// interactiva la promoción vigente aplicable (según fecha y la
+  /// condición/método de pago ya elegidos en la venta): el cajero decide si
+  /// la acepta o no, si rechaza se queda al precio normal. Si el producto
+  /// cae en más de una promoción de porcentaje/precio fijo a la vez, se
+  /// aplica solo la de mayor beneficio para el cliente (ver
+  /// mejorPromoPrecio). Combo por cantidad/regalo/combo multiproducto se
+  /// revisan aparte porque dependen de la cantidad o de qué otros productos
+  /// hay en el carrito, no del precio unitario, y solo se ofrecen la
+  /// primera vez que se cumple la condición (no en cada unidad de más). Si
+  /// ya se ofreció un combo por cantidad/regalo con este agregado, no se
+  /// ofrece además un combo multiproducto encima (nunca dos diálogos
+  /// apilados por la misma acción).
   Future<void> _agregarProductoConPromos(ProductoModel producto, {required double precioSeleccionado, bool reembasado = false}) async {
     final carritoAntes = ref.read(carritoVentaProvider);
     final condicion = carritoAntes.condicion;
+    final metodoPago = carritoAntes.metodoPago;
     final cantidadAntes = carritoAntes.items.where((i) => i.idProducto == producto.id).fold<double>(0, (s, i) => s + i.cantidad);
     final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
 
@@ -546,7 +551,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (!mounted) return;
     final indiceNuevo = ref.read(carritoVentaProvider).items.length - 1;
 
-    final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion);
+    final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion, metodoPago: metodoPago);
     if (promoPrecio != null) {
       final aceptar = await showDialog<bool>(context: context, builder: (context) => PromocionDetectadaDialog(promocion: promoPrecio));
       if (!mounted) return;
@@ -566,10 +571,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     final cantidadDespues = cantidadAntes + 1;
-    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: producto.id, cantidadEnCarrito: cantidadDespues, condicion: condicion);
+    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: producto.id, cantidadEnCarrito: cantidadDespues, condicion: condicion, metodoPago: metodoPago);
     if (promoCombo != null && cantidadAntes < promoCombo.cantidadRequerida) {
       await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioSeleccionado);
+      return;
     }
+
+    // Combo multiproducto: se arma el mapa de cantidades por producto antes
+    // y después de este agregado (el producto recién agregado entra con
+    // cantidad 1) y solo se ofrece si el combo queda completo recién ahora
+    // (no si ya estaba completo antes, por ejemplo al agregar una segunda
+    // unidad de un producto que ya completaba el combo).
+    final cantidadesAntes = <String, double>{};
+    for (final item in carritoAntes.items) {
+      cantidadesAntes[item.idProducto] = (cantidadesAntes[item.idProducto] ?? 0) + item.cantidad;
+    }
+    final cantidadesDespues = Map<String, double>.from(cantidadesAntes);
+    cantidadesDespues[producto.id] = (cantidadesDespues[producto.id] ?? 0) + 1;
+
+    final promoComboMulti = promoComboMultiproductoAplicable(
+      promociones: promociones,
+      idProducto: producto.id,
+      cantidadesEnCarrito: cantidadesDespues,
+      condicion: condicion,
+      metodoPago: metodoPago,
+    );
+    if (promoComboMulti == null) return;
+    final yaEstabaCompleto = promoComboMulti.idsProductosCombo.every((id) => (cantidadesAntes[id] ?? 0) >= 1);
+    if (yaEstabaCompleto) return;
+
+    // Precio normal (con ISV) de la "canasta" del combo: 1 unidad de cada
+    // producto, al precio con el que ya está esa línea en el carrito (o el
+    // precio recién elegido para el producto que se acaba de agregar).
+    final precioNormalCombo = promoComboMulti.idsProductosCombo.fold<double>(0, (s, id) {
+      if (id == producto.id) return s + redondearMoneda(precioSeleccionado);
+      final itemExistente = carritoAntes.items.where((i) => i.idProducto == id);
+      if (itemExistente.isEmpty) return s;
+      return s + redondearMoneda(itemExistente.first.precioVenta * 1.15);
+    });
+    await _ofrecerComboORegalo(promoComboMulti, precioUnitarioBase: precioNormalCombo);
   }
 
   Future<void> _ofrecerComboORegalo(PromocionModel promo, {required double precioUnitarioBase}) async {
@@ -582,9 +622,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   /// Revisa, después de cambiar la cantidad de una línea (tabla del
   /// carrito), si ese cambio hace que se alcance por primera vez la
-  /// cantidad requerida de algún combo/regalo — mismo criterio que al
-  /// agregar el producto, pero comparando el total de esa línea más las
-  /// demás líneas del mismo producto antes y después del cambio.
+  /// cantidad requerida de algún combo por cantidad/regalo — mismo criterio
+  /// que al agregar el producto, pero comparando el total de esa línea más
+  /// las demás líneas del mismo producto antes y después del cambio. El
+  /// combo multiproducto no se revisa acá: se completa agregando un
+  /// producto nuevo al carrito (ver _agregarProductoConPromos), cambiar la
+  /// cantidad de un producto que ya estaba no suma otro producto distinto.
   Future<void> _revisarPromoComboTrasCambioCantidad(int index, double cantidadAnteriorLinea, double cantidadNuevaLinea) async {
     final carrito = ref.read(carritoVentaProvider);
     if (index >= carrito.items.length) return;
@@ -598,19 +641,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (cantidadDespues <= cantidadAntes) return;
 
     final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
-    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: idProducto, cantidadEnCarrito: cantidadDespues, condicion: carrito.condicion);
+    final promoCombo = promoComboORegaloAplicable(
+      promociones: promociones,
+      idProducto: idProducto,
+      cantidadEnCarrito: cantidadDespues,
+      condicion: carrito.condicion,
+      metodoPago: carrito.metodoPago,
+    );
     if (promoCombo == null || cantidadAntes >= promoCombo.cantidadRequerida) return;
     final precioUnit = redondearMoneda(carrito.items[index].precioVenta * 1.15);
     await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioUnit);
   }
 
-  /// Aplica el combo/regalo aceptado: para combo por cantidad, reparte un
-  /// descuento uniforme entre todas las líneas del producto base para que
-  /// el total de las unidades requeridas quede en el precio del combo
-  /// (si hay unidades de más en el carrito, esas se cobran a precio normal
-  /// dentro del mismo cálculo). Para regalo, agrega una línea nueva del
-  /// producto regalado a precio 0 (100% de descuento), sin tocar el precio
-  /// del producto llevado.
+  /// Aplica el combo/regalo aceptado:
+  /// - Combo por cantidad: reparte un descuento uniforme entre todas las
+  ///   líneas del producto base para que el total de las unidades
+  ///   requeridas quede en el precio del combo (si hay unidades de más en
+  ///   el carrito, esas se cobran a precio normal dentro del mismo cálculo).
+  /// - Combo multiproducto: mismo criterio pero repartido entre las líneas
+  ///   de TODOS los productos del combo (1 unidad de cada uno es lo que
+  ///   entra al precio del paquete; unidades extra de algún producto del
+  ///   combo se cobran a precio normal dentro del mismo cálculo).
+  /// - Regalo: agrega una línea nueva por CADA producto de
+  ///   idsProductosRegalo, a precio 0 (100% de descuento), sin tocar el
+  ///   precio del producto llevado.
   void _aplicarComboORegalo(PromocionModel promo) {
     final notifier = ref.read(carritoVentaProvider.notifier);
     if (promo.tipo == TipoPromocion.comboCantidad) {
@@ -630,21 +684,62 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       for (final i in indices) {
         notifier.actualizarLinea(i, descuentoPorcentaje: descuentoPct);
       }
+    } else if (promo.tipo == TipoPromocion.comboMultiproducto) {
+      final carrito = ref.read(carritoVentaProvider);
+      final indices = [for (var i = 0; i < carrito.items.length; i++) if (promo.idsProductosCombo.contains(carrito.items[i].idProducto)) i];
+      if (indices.isEmpty) return;
+      // Si falta algún producto del combo (se quitó de la tabla entre que
+      // se ofreció y se aceptó), no se aplica nada: cada línea se queda a
+      // precio normal.
+      final idsPresentes = indices.map((i) => carrito.items[i].idProducto).toSet();
+      if (!promo.idsProductosCombo.every(idsPresentes.contains)) return;
+
+      final totalNormalConIsv = indices.fold<double>(0, (s, i) {
+        final item = carrito.items[i];
+        return s + redondearMoneda(item.precioVenta * 1.15) * item.cantidad;
+      });
+      if (totalNormalConIsv <= 0) return;
+
+      // Unidades "extra" de cada producto del combo (más allá de la 1 que
+      // exige el paquete) se dejan fuera del precio de combo, al precio
+      // normal promedio de ese producto.
+      var extraNormalValue = 0.0;
+      for (final idProd in promo.idsProductosCombo) {
+        final indicesProd = indices.where((i) => carrito.items[i].idProducto == idProd).toList();
+        if (indicesProd.isEmpty) continue;
+        final cantidadProd = indicesProd.fold<double>(0, (s, i) => s + carrito.items[i].cantidad);
+        final normalProd = indicesProd.fold<double>(0, (s, i) {
+          final item = carrito.items[i];
+          return s + redondearMoneda(item.precioVenta * 1.15) * item.cantidad;
+        });
+        final extraCantidad = (cantidadProd - 1).clamp(0, double.infinity);
+        if (cantidadProd > 0) extraNormalValue += extraCantidad * (normalProd / cantidadProd);
+      }
+
+      final objetivo = promo.precioCombo + extraNormalValue;
+      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100).clamp(0, 100).toDouble();
+      for (final i in indices) {
+        notifier.actualizarLinea(i, descuentoPorcentaje: descuentoPct);
+      }
     } else {
       final productos = ref.read(productosStreamProvider).value ?? const <ProductoModel>[];
-      final coincidencias = productos.where((p) => p.id == promo.idProductoRegalo).toList();
-      final precioRegaloConIsv = coincidencias.isNotEmpty ? coincidencias.first.precioVenta : 0.0;
-      final nombreRegalo = coincidencias.isNotEmpty ? coincidencias.first.nombre : promo.nombreProductoRegalo;
-      notifier.agregarItem(ItemVentaModel(
-        idProducto: promo.idProductoRegalo,
-        idCategoria: coincidencias.isNotEmpty ? coincidencias.first.idCategoria : '',
-        nombreProducto: '$nombreRegalo (regalo · ${promo.nombre})',
-        precioVenta: precioRegaloConIsv > 0 ? precioRegaloConIsv / 1.15 : 0,
-        cantidad: promo.cantidadRegalo.toDouble(),
-        subtotal: 0,
-        precioCompraUsado: coincidencias.isNotEmpty ? coincidencias.first.precioCompra : 0,
-        descuentoPorcentaje: 100,
-      ));
+      for (var i = 0; i < promo.idsProductosRegalo.length; i++) {
+        final idRegalo = promo.idsProductosRegalo[i];
+        final nombreFallback = i < promo.nombresProductosRegalo.length ? promo.nombresProductosRegalo[i] : '';
+        final coincidencias = productos.where((p) => p.id == idRegalo).toList();
+        final precioRegaloConIsv = coincidencias.isNotEmpty ? coincidencias.first.precioVenta : 0.0;
+        final nombreRegalo = coincidencias.isNotEmpty ? coincidencias.first.nombre : nombreFallback;
+        notifier.agregarItem(ItemVentaModel(
+          idProducto: idRegalo,
+          idCategoria: coincidencias.isNotEmpty ? coincidencias.first.idCategoria : '',
+          nombreProducto: '$nombreRegalo (regalo · ${promo.nombre})',
+          precioVenta: precioRegaloConIsv > 0 ? precioRegaloConIsv / 1.15 : 0,
+          cantidad: promo.cantidadRegalo.toDouble(),
+          subtotal: 0,
+          precioCompraUsado: coincidencias.isNotEmpty ? coincidencias.first.precioCompra : 0,
+          descuentoPorcentaje: 100,
+        ));
+      }
     }
   }
 

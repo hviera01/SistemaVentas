@@ -4,14 +4,15 @@ import '../../data/promocion_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
 
 /// Diálogo interactivo que se muestra al agregar (o al ajustar la cantidad
-/// de) un producto que cumple una promoción vigente y aplicable al método
-/// de pago de la venta en curso. El cajero decide si se aplica o no — si
-/// rechaza, el producto sigue a precio normal.
+/// de) un producto que cumple una promoción vigente y aplicable a la
+/// condición/método de pago de la venta en curso. El cajero decide si se
+/// aplica o no — si rechaza, el producto sigue a precio normal.
 class PromocionDetectadaDialog extends StatelessWidget {
   final PromocionModel promocion;
   // Contexto adicional para explicar la oferta en combo/regalo: precio
   // normal por unidad del producto base (con ISV), para mostrar cuánto se
-  // ahorra.
+  // ahorra. Para comboMultiproducto es el total normal (con ISV) de los
+  // productos del combo ya en el carrito.
   final double? precioUnitarioBase;
 
   const PromocionDetectadaDialog({super.key, required this.promocion, this.precioUnitarioBase});
@@ -23,6 +24,7 @@ class PromocionDetectadaDialog extends StatelessWidget {
       case TipoPromocion.precioFijo:
         return '¡Este producto tiene precio especial!';
       case TipoPromocion.comboCantidad:
+      case TipoPromocion.comboMultiproducto:
         return '¡Aplica para un combo!';
       case TipoPromocion.regalo:
         return '¡Aplica para un regalo!';
@@ -39,8 +41,13 @@ class PromocionDetectadaDialog extends StatelessWidget {
         final ahorro = precioUnitarioBase == null ? null : (precioUnitarioBase! * promocion.cantidadRequerida) - promocion.precioCombo;
         return 'Llevando ${promocion.cantidadRequerida} unidades de "${promocion.nombreProductoBase}", el total baja a ${formatearMoneda(promocion.precioCombo)}'
             '${ahorro != null && ahorro > 0 ? ' (ahorro de ${formatearMoneda(ahorro)})' : ''} por la promoción "${promocion.nombre}".';
+      case TipoPromocion.comboMultiproducto:
+        final ahorro = precioUnitarioBase == null ? null : precioUnitarioBase! - promocion.precioCombo;
+        return 'Ya tenés en el carrito los ${promocion.nombresProductosCombo.length} productos del combo "${promocion.nombre}" (${promocion.nombresProductosCombo.join(', ')}). El paquete completo se paga ${formatearMoneda(promocion.precioCombo)}'
+            '${ahorro != null && ahorro > 0 ? ' (ahorro de ${formatearMoneda(ahorro)})' : ''}.';
       case TipoPromocion.regalo:
-        return 'Llevando ${promocion.cantidadRequerida} unidades de "${promocion.nombreProductoBase}", se regalan ${promocion.cantidadRegalo} unidades de "${promocion.nombreProductoRegalo}" por la promoción "${promocion.nombre}".';
+        final productos = promocion.nombresProductosRegalo.join(', ');
+        return 'Llevando ${promocion.cantidadRequerida} unidades de "${promocion.nombreProductoBase}", se regalan ${promocion.cantidadRegalo} unidades de cada uno de: $productos, por la promoción "${promocion.nombre}".';
     }
   }
 

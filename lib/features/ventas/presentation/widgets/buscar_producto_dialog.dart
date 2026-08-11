@@ -32,7 +32,13 @@ class BuscarProductoDialog extends ConsumerStatefulWidget {
   // romper otros lugares que todavía no pasan este parámetro.
   final String condicion;
 
-  const BuscarProductoDialog({super.key, this.condicion = 'Contado'});
+  // Método de pago ya elegido en la venta en curso ('Efectivo' | 'Tarjeta' |
+  // 'Transferencia' | 'Mixto'), filtro independiente de [condicion] (ver
+  // PromocionModel.aplicaMetodoPago). Con 'Efectivo' por defecto, el mismo
+  // valor por defecto que trae CarritoVentaState.metodoPago.
+  final String metodoPago;
+
+  const BuscarProductoDialog({super.key, this.condicion = 'Contado', this.metodoPago = 'Efectivo'});
 
   @override
   ConsumerState<BuscarProductoDialog> createState() => _BuscarProductoDialogState();
@@ -529,7 +535,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   }
 
   Widget? _badgePromo(ProductoModel p, List<PromocionModel> promociones) {
-    final promo = promoParaBadge(promociones: promociones, idProducto: p.id, condicion: widget.condicion);
+    final promo = promoParaBadge(promociones: promociones, idProducto: p.id, condicion: widget.condicion, metodoPago: widget.metodoPago);
     if (promo == null) return null;
     return Tooltip(
       message: promo.nombre,

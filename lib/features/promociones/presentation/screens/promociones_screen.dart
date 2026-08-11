@@ -262,7 +262,13 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
             children: [
               Icon(Icons.payments_outlined, size: 13, color: Colors.grey.shade400),
               const SizedBox(width: 4),
-              Text(p.alcancePago == 'Todos' ? 'Todos los métodos de pago' : 'Solo ${p.alcancePago}', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+              Expanded(
+                child: Text(
+                  '${p.alcancePago == 'Todos' ? 'Cualquier condición' : 'Solo ${p.alcancePago}'} · ${p.metodoPagoAlcance == 'Todos' ? 'cualquier método de pago' : 'solo ${p.metodoPagoAlcance}'}',
+                  style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ],
@@ -278,8 +284,10 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
         return '${formatearMoneda(p.valor)} c/u en: ${p.nombresProductos.join(', ')}';
       case TipoPromocion.comboCantidad:
         return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}" se pagan ${formatearMoneda(p.precioCombo)} en total.';
+      case TipoPromocion.comboMultiproducto:
+        return 'Combo de: ${p.nombresProductosCombo.join(', ')} → ${formatearMoneda(p.precioCombo)} el paquete.';
       case TipoPromocion.regalo:
-        return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}" se regalan ${p.cantidadRegalo} de "${p.nombreProductoRegalo}".';
+        return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}" se regalan ${p.cantidadRegalo} de cada uno de: ${p.nombresProductosRegalo.join(', ')}.';
     }
   }
 }

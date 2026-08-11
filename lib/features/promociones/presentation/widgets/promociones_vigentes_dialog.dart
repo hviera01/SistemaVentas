@@ -95,6 +95,10 @@ class PromocionesVigentesDialog extends ConsumerWidget {
             const SizedBox(height: 4),
             Text('Solo aplica a ventas al ${p.alcancePago}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
           ],
+          if (p.metodoPagoAlcance != 'Todos') ...[
+            const SizedBox(height: 4),
+            Text('Solo aplica pagando con ${p.metodoPagoAlcance}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
+          ],
         ],
       ),
     );
@@ -108,8 +112,10 @@ class PromocionesVigentesDialog extends ConsumerWidget {
         return '${formatearMoneda(p.valor)} c/u en: ${p.nombresProductos.join(', ')}';
       case TipoPromocion.comboCantidad:
         return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}", se pagan ${formatearMoneda(p.precioCombo)} en total.';
+      case TipoPromocion.comboMultiproducto:
+        return 'Combo de ${p.nombresProductosCombo.join(', ')}: ${formatearMoneda(p.precioCombo)} el paquete completo.';
       case TipoPromocion.regalo:
-        return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}", se regalan ${p.cantidadRegalo} de "${p.nombreProductoRegalo}".';
+        return 'Llevando ${p.cantidadRequerida} de "${p.nombreProductoBase}", se regalan ${p.cantidadRegalo} de cada uno de: ${p.nombresProductosRegalo.join(', ')}.';
     }
   }
 }
