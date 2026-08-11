@@ -234,29 +234,25 @@ class ProductoRepository {
   /// `precioCompra` vigente del producto si no se indica. Si baja
   /// existencia, consume lotes por FIFO igual que una venta, para que la
   /// cantidad restante sumada en los lotes no se desalinee del stock total.
-  Future<void> ajustarStock({
+  /// Ingreso manual de existencia (Inventario): igual que si viniera de una
+  /// compra, queda como su propio lote de costo (ver LoteCostoRepository),
+  /// para que una salida futura -manual o por venta- pueda costearse con el
+  /// costo real de este ingreso puntual.
+  Future<void> registrarIngreso({
     required String id,
-    required double stockActual,
-    required double stockNuevo,
+    required double cantidad,
+    required double costoUnitario,
     required String usuario,
     String motivo = '',
-    double? costoUnitario,
   }) async {
+    if (cantidad <= 0) throw Exception('La cantidad debe ser mayor a 0');
     final ref = _col.doc(id);
     final lotes = LoteCostoRepository();
-    final esIncremento = stockNuevo > stockActual;
-    final diferencia = (stockNuevo - stockActual).abs();
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(ref);
-      final precioCompraActual = ((snap.data()?['precioCompra'] ?? 0) as num).toDouble();
-
-      EstadoLotesProducto? estadoLotes;
-      if (!esIncremento && diferencia > 0) {
-        final query = await lotes.consultarLotes(id);
-        estadoLotes = lotes.inicializarEstado(query);
-        lotes.consumir(estadoLotes, diferencia, costoFallback: precioCompraActual);
-      }
+      final stockActual = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+      final stockNuevo = stockActual + cantidad;
 
       transaction.update(ref, {'stock': stockNuevo});
       final historialRef = ref.collection('historial').doc();
@@ -264,15 +260,54 @@ class ProductoRepository {
         'stockAnterior': stockActual,
         'stockNuevo': stockNuevo,
         'usuario': usuario,
-        'motivo': motivo,
+        'motivo': motivo.trim().isEmpty ? 'Ingreso manual' : motivo.trim(),
         'fecha': FieldValue.serverTimestamp(),
       });
+      lotes.crearLote(transaction, id, cantidad: cantidad, costoUnitario: costoUnitario, fecha: DateTime.now(), origen: 'ajuste');
+    });
+  }
 
-      if (esIncremento && diferencia > 0) {
-        lotes.crearLote(transaction, id, cantidad: diferencia, costoUnitario: costoUnitario ?? precioCompraActual, fecha: DateTime.now(), origen: 'ajuste');
-      } else if (estadoLotes != null) {
-        lotes.aplicarEstado(transaction, estadoLotes);
+  /// Salida manual de existencia (Inventario): a diferencia de una venta
+  /// (que consume lotes por FIFO automático), acá es el usuario quien elige
+  /// a mano de qué lote/costo sale -[idLote] null significa "sin lote
+  /// específico", para stock viejo que quedó sin lotes asociados-.
+  Future<void> registrarSalida({
+    required String id,
+    required double cantidad,
+    String? idLote,
+    required String usuario,
+    String motivo = '',
+  }) async {
+    if (cantidad <= 0) throw Exception('La cantidad debe ser mayor a 0');
+    final ref = _col.doc(id);
+    final loteRef = idLote == null ? null : LoteCostoRepository().colLotes(id).doc(idLote);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapProducto = await transaction.get(ref);
+      final stockActual = ((snapProducto.data()?['stock'] ?? 0) as num).toDouble();
+
+      if (loteRef != null) {
+        final snapLote = await transaction.get(loteRef);
+        if (!snapLote.exists) throw Exception('Ese lote ya no existe, actualizá e intentá de nuevo');
+        final restanteLote = ((snapLote.data()?['cantidadRestante'] ?? 0) as num).toDouble();
+        if (cantidad > restanteLote) {
+          throw Exception('Ese lote solo tiene ${restanteLote.toStringAsFixed(restanteLote == restanteLote.roundToDouble() ? 0 : 2)} unidades disponibles');
+        }
+        transaction.update(loteRef, {'cantidadRestante': restanteLote - cantidad});
+      } else if (cantidad > stockActual) {
+        throw Exception('No hay suficiente existencia sin lote específico');
       }
+
+      final stockNuevo = stockActual - cantidad;
+      transaction.update(ref, {'stock': stockNuevo});
+      final historialRef = ref.collection('historial').doc();
+      transaction.set(historialRef, {
+        'stockAnterior': stockActual,
+        'stockNuevo': stockNuevo,
+        'usuario': usuario,
+        'motivo': motivo.trim().isEmpty ? 'Salida manual' : motivo.trim(),
+        'fecha': FieldValue.serverTimestamp(),
+      });
     });
   }
 
