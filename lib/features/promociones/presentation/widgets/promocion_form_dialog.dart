@@ -7,7 +7,7 @@ import '../../providers/promociones_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'seleccionar_productos_dialog.dart';
 
-const _metodosPagoAlcance = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
+const _opcionesMetodoPago = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
 
 class PromocionFormDialog extends ConsumerStatefulWidget {
   final PromocionModel? promocion;
@@ -40,7 +40,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
   DateTime? _fechaFin;
   bool _indefinida = true;
   String _alcancePago = 'Todos';
-  String _metodoPagoAlcance = 'Todos';
+  List<String> _metodosPagoAlcance = [];
   bool _activo = true;
   bool _guardando = false;
 
@@ -70,7 +70,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       _fechaFin = p.fechaFin;
       _indefinida = p.esIndefinida;
       _alcancePago = p.alcancePago;
-      _metodoPagoAlcance = p.metodoPagoAlcance;
+      _metodosPagoAlcance = [...p.metodosPagoAlcance];
       _activo = p.activo;
     }
   }
@@ -204,7 +204,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       fechaInicio: _fechaInicio,
       fechaFin: _indefinida ? null : _fechaFin,
       alcancePago: _alcancePago,
-      metodoPagoAlcance: _metodoPagoAlcance,
+      metodosPagoAlcance: _metodosPagoAlcance,
       activo: _activo,
       creadoEn: widget.promocion?.creadoEn,
       creadoPor: widget.promocion?.creadoPor ?? usuario,
@@ -397,12 +397,25 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
     return Row(children: [opcion('Todos', 'Todos'), opcion('Contado', 'Contado'), opcion('Crédito', 'Credito')]);
   }
 
+  // Multi-selección: "Todos" equivale a la lista vacía (se puede combinar
+  // Efectivo + Transferencia, por ejemplo, sin aceptar Tarjeta). Tocar
+  // "Todos" limpia cualquier selección puntual; tocar un método puntual
+  // mientras "Todos" está activo pasa a restringir solo a ese método.
   Widget _selectorMetodoPago() {
     Widget opcion(String texto, String valor) {
-      final activo = _metodoPagoAlcance == valor;
+      final esTodos = valor == 'Todos';
+      final activo = esTodos ? _metodosPagoAlcance.isEmpty : _metodosPagoAlcance.contains(valor);
       return Expanded(
         child: InkWell(
-          onTap: () => setState(() => _metodoPagoAlcance = valor),
+          onTap: () => setState(() {
+            if (esTodos) {
+              _metodosPagoAlcance = [];
+            } else if (_metodosPagoAlcance.contains(valor)) {
+              _metodosPagoAlcance = [..._metodosPagoAlcance]..remove(valor);
+            } else {
+              _metodosPagoAlcance = [..._metodosPagoAlcance, valor];
+            }
+          }),
           borderRadius: BorderRadius.circular(10),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -414,7 +427,14 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       );
     }
 
-    return Row(children: [for (final m in _metodosPagoAlcance) opcion(m, m)]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [for (final m in _opcionesMetodoPago) opcion(m, m)]),
+        const SizedBox(height: 4),
+        Text('Podés elegir varios métodos a la vez (ej. Efectivo y Transferencia).', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+      ],
+    );
   }
 
   Widget _campoFecha(String label, DateTime fecha, VoidCallback onTap, DateFormat formato) {

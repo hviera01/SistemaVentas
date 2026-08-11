@@ -63,15 +63,18 @@ class PromocionModel {
   /// 'Todos' | 'Contado' | 'Credito' — coincide con el campo `condicion` que
   /// ya usa el resto del sistema (ver CarritoVentaState.condicion). El
   /// nombre "alcancePago" es histórico y en realidad filtra por CONDICIÓN,
-  /// no por método de pago (ver [metodoPagoAlcance] para eso) — no se
+  /// no por método de pago (ver [metodosPagoAlcance] para eso) — no se
   /// renombra para no romper promociones ya creadas en producción.
   final String alcancePago;
 
-  /// 'Todos' | 'Efectivo' | 'Tarjeta' | 'Transferencia' — filtro
-  /// independiente de [alcancePago], coincide con
-  /// CarritoVentaState.metodoPago ('Mixto' incluido ahí, pero nunca
-  /// matchea un alcance específico acá, solo 'Todos').
-  final String metodoPagoAlcance;
+  /// Vacía = todos los métodos de pago. Si no, uno o más de 'Efectivo' |
+  /// 'Tarjeta' | 'Transferencia' (ej. el usuario puede aceptar la promo con
+  /// Efectivo Y Transferencia, pero no con Tarjeta). Filtro independiente de
+  /// [alcancePago]. 'Mixto' (CarritoVentaState.metodoPago) nunca matchea una
+  /// lista restringida, solo vacía — no tendría sentido restringir a
+  /// "Tarjeta" y que aplicara en un pago mixto que ni siquiera se sabe
+  /// cuánto fue con tarjeta.
+  final List<String> metodosPagoAlcance;
 
   final bool activo;
   final DateTime? creadoEn;
@@ -96,7 +99,7 @@ class PromocionModel {
     required this.fechaInicio,
     this.fechaFin,
     this.alcancePago = 'Todos',
-    this.metodoPagoAlcance = 'Todos',
+    this.metodosPagoAlcance = const [],
     this.activo = true,
     this.creadoEn,
     this.creadoPor = '',
@@ -127,13 +130,13 @@ class PromocionModel {
   }
 
   /// [metodoPago]: 'Efectivo' | 'Tarjeta' | 'Transferencia' | 'Mixto' (ver
-  /// CarritoVentaState.metodoPago). 'Mixto' nunca matchea un alcance
-  /// específico, solo 'Todos' — no tendría sentido restringir un combo a
-  /// "Tarjeta" y que aplicara en un pago mixto que ni siquiera se sabe
-  /// cuánto fue con tarjeta.
+  /// CarritoVentaState.metodoPago). 'Mixto' nunca matchea una lista
+  /// restringida, solo vacía (todos) — no tendría sentido restringir un
+  /// combo a "Tarjeta" y que aplicara en un pago mixto que ni siquiera se
+  /// sabe cuánto fue con tarjeta.
   bool aplicaMetodoPago(String metodoPago) {
-    if (metodoPagoAlcance == 'Todos') return true;
-    return metodoPagoAlcance == metodoPago;
+    if (metodosPagoAlcance.isEmpty) return true;
+    return metodosPagoAlcance.contains(metodoPago);
   }
 
   bool aplicaAlProducto(String idProducto) {
@@ -176,6 +179,16 @@ class PromocionModel {
         ? List<String>.from(nombresRegaloNuevo)
         : (nombreRegaloViejo != null && nombreRegaloViejo.isNotEmpty ? [nombreRegaloViejo] : const <String>[]);
 
+    // Migración de documentos viejos (creados antes de permitir varios
+    // métodos de pago a la vez): si no hay metodosPagoAlcance todavía, pero
+    // sí el campo único metodoPagoAlcance de antes ('Todos' | un método),
+    // se convierte a lista para no romper esas promociones ya creadas.
+    final metodosPagoNuevo = data['metodosPagoAlcance'];
+    final metodoPagoViejo = data['metodoPagoAlcance'] as String?;
+    final metodosPagoAlcance = metodosPagoNuevo is List
+        ? List<String>.from(metodosPagoNuevo)
+        : (metodoPagoViejo != null && metodoPagoViejo.isNotEmpty && metodoPagoViejo != 'Todos' ? [metodoPagoViejo] : const <String>[]);
+
     return PromocionModel(
       id: id,
       nombre: data['nombre'] ?? '',
@@ -195,7 +208,7 @@ class PromocionModel {
       fechaInicio: (data['fechaInicio'] as Timestamp?)?.toDate() ?? DateTime.now(),
       fechaFin: (data['fechaFin'] as Timestamp?)?.toDate(),
       alcancePago: data['alcancePago'] ?? 'Todos',
-      metodoPagoAlcance: data['metodoPagoAlcance'] ?? 'Todos',
+      metodosPagoAlcance: metodosPagoAlcance,
       activo: data['activo'] ?? true,
       creadoEn: (data['creadoEn'] as Timestamp?)?.toDate(),
       creadoPor: data['creadoPor'] ?? '',
@@ -221,7 +234,7 @@ class PromocionModel {
       'fechaInicio': Timestamp.fromDate(fechaInicio),
       'fechaFin': fechaFin == null ? null : Timestamp.fromDate(fechaFin!),
       'alcancePago': alcancePago,
-      'metodoPagoAlcance': metodoPagoAlcance,
+      'metodosPagoAlcance': metodosPagoAlcance,
       'activo': activo,
       'creadoEn': creadoEn == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(creadoEn!),
       'creadoPor': creadoPor,

@@ -95,9 +95,9 @@ class PromocionesVigentesDialog extends ConsumerWidget {
             const SizedBox(height: 4),
             Text('Solo aplica a ventas al ${p.alcancePago}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
           ],
-          if (p.metodoPagoAlcance != 'Todos') ...[
+          if (p.metodosPagoAlcance.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text('Solo aplica pagando con ${p.metodoPagoAlcance}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
+            Text('Solo aplica pagando con ${p.metodosPagoAlcance.join(' o ')}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
           ],
         ],
       ),

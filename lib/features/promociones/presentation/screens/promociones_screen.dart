@@ -264,7 +264,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${p.alcancePago == 'Todos' ? 'Cualquier condición' : 'Solo ${p.alcancePago}'} · ${p.metodoPagoAlcance == 'Todos' ? 'cualquier método de pago' : 'solo ${p.metodoPagoAlcance}'}',
+                  '${p.alcancePago == 'Todos' ? 'Cualquier condición' : 'Solo ${p.alcancePago}'} · ${p.metodosPagoAlcance.isEmpty ? 'cualquier método de pago' : 'solo ${p.metodosPagoAlcance.join(' o ')}'}',
                   style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500),
                   overflow: TextOverflow.ellipsis,
                 ),
