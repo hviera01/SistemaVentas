@@ -586,9 +586,11 @@ Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _explicacion(
-        'Analítica pensada para decisiones: hacia dónde van las ventas, qué tan rentable es cada producto, qué conviene reponer primero y a qué proveedor priorizar. Se calcula con los mismos datos del resto del reporte, sin consultas adicionales.',
+        'Analítica pensada para decisiones: hacia dónde van las ventas, qué tan rentable es el negocio, qué conviene reponer primero y a qué proveedor priorizar. Se calcula con los mismos datos del resto del reporte, sin consultas adicionales. El ranking de productos por rentabilidad está en la pestaña "Ranking de Productos".',
       ),
-      _tarjetaPronostico(ia.pronosticoVentas),
+      _tarjetaPronostico(ia.pronosticoVentas, data),
+      const SizedBox(height: 16),
+      _tarjetaComparacionMesAnterior(data.serieMensual),
       const SizedBox(height: 16),
       Wrap(
         spacing: 12,
@@ -600,11 +602,17 @@ Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
         ],
       ),
       const SizedBox(height: 20),
-      Text('Producto Más Rentable', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      Text('Composición de la Venta', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
-      Text('Ranking por margen total (venta − costo) del periodo, no por cantidad vendida.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      Text('De cada Lempira vendido en el periodo, cuánto se fue en costo de venta, cuánto en gastos y cuánto quedó de utilidad neta.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
       const SizedBox(height: 10),
-      _tablaRanking('Mayor ganancia', data.topGananciaPorProducto, esCantidad: false),
+      _graficoComposicionVenta(data, esMovil),
+      const SizedBox(height: 20),
+      Text('Tendencia de Margen Bruto Mensual', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text('Margen aproximado por mes: (ventas − compras) ÷ ventas. Usa compras del mes como estimado del costo, no el costo exacto de lo vendido.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      const SizedBox(height: 10),
+      _graficoTendenciaMargen(data.serieMensual),
       const SizedBox(height: 20),
       Text('Sugerencia de Compras', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
@@ -626,14 +634,20 @@ Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
 
 const _diasUmbralReposicionTexto = '14';
 
-Widget _tarjetaPronostico(PronosticoVentas p) {
+Widget _tarjetaPronostico(PronosticoVentas p, ReporteFinancieroData data) {
   final colorTendencia = p.tendenciaMensual == 0 ? Colors.grey.shade500 : (p.tendenciaAlAlza ? const Color(0xFF16A34A) : const Color(0xFFC62828));
   final iconoTendencia = p.tendenciaMensual == 0 ? Icons.trending_flat : (p.tendenciaAlAlza ? Icons.trending_up : Icons.trending_down);
+  // Utilidad neta proyectada: aplica el margen neto real de este periodo
+  // (utilidadNeta / ventasPeriodo) al monto de ventas pronosticado. Es una
+  // extrapolación simple -asume que gastos y costos guardan la misma
+  // proporción el próximo mes-, no una proyección contable formal.
+  final margenNetoActual = data.ventasPeriodo <= 0 ? 0.0 : data.utilidadNeta / data.ventasPeriodo;
+  final utilidadProyectada = p.montoEstimado * margenNetoActual;
   return _tarjeta(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PRONÓSTICO DE VENTAS · PRÓXIMO MES', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        Text('PRONÓSTICO · PRÓXIMO MES', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
         const SizedBox(height: 8),
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -660,7 +674,212 @@ Widget _tarjetaPronostico(PronosticoVentas p) {
         ),
         const SizedBox(height: 8),
         Text('${p.metodo} · promedio de los últimos meses: ${formatearMoneda(p.promedioUltimosMeses)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+        const Divider(height: 24),
+        Text('UTILIDAD NETA PROYECTADA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        const SizedBox(height: 6),
+        Text(formatearMoneda(utilidadProyectada), style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A))),
+        const SizedBox(height: 4),
+        Text('Aplica el margen neto de este periodo (${(margenNetoActual * 100).toStringAsFixed(1)}%) al pronóstico de ventas. Estimado, no proyección contable.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
       ],
+    ),
+  );
+}
+
+/// Compara el último mes cerrado de [serie] contra el anterior (ventas y
+/// compras), con variación porcentual — distinto de la sección
+/// "Comparación mensual" del reporte, que muestra el histórico completo
+/// sin resaltar el cambio mes a mes.
+Widget _tarjetaComparacionMesAnterior(List<PuntoMensual> serie) {
+  if (serie.length < 2) {
+    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para comparar.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final actual = serie[serie.length - 1];
+  final anterior = serie[serie.length - 2];
+  final formatoMes = DateFormat('MMMM yyyy', 'es');
+  return _tarjeta(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${_capitalizar(formatoMes.format(actual.mes))} vs. ${_capitalizar(formatoMes.format(anterior.mes))}', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 24,
+          runSpacing: 12,
+          children: [
+            _comparacionVariacion('Ventas', actual.totalVentas, anterior.totalVentas, colorVentasFinanciero),
+            _comparacionVariacion('Compras', actual.totalCompras, anterior.totalCompras, colorComprasFinanciero),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+String _capitalizar(String texto) => texto.isEmpty ? texto : '${texto[0].toUpperCase()}${texto.substring(1)}';
+
+Widget _comparacionVariacion(String etiqueta, double actual, double anterior, Color color) {
+  final variacion = anterior <= 0 ? null : ((actual - anterior) / anterior) * 100;
+  final subio = variacion != null && variacion >= 0;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.4)),
+      const SizedBox(height: 4),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(formatearMoneda(actual), style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+          if (variacion != null) ...[
+            const SizedBox(width: 8),
+            Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+            Text('${variacion.abs().toStringAsFixed(1)}%', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828))),
+          ],
+        ],
+      ),
+    ],
+  );
+}
+
+/// Dona con la composición de cada Lempira vendido en el periodo: costo de
+/// ventas, gastos operativos y lo que queda de utilidad neta. Usa los
+/// mismos totales que ya se muestran arriba del reporte (Ventas, Costo de
+/// Ventas, Gastos, Utilidad Neta), solo que en formato visual.
+Widget _graficoComposicionVenta(ReporteFinancieroData data, bool esMovil) {
+  final ventas = data.ventasPeriodo;
+  if (ventas <= 0) {
+    return _tarjeta(child: Text('Sin ventas en el periodo para calcular la composición.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final costo = data.costoVentas.clamp(0, ventas).toDouble();
+  final gastos = data.gastosPeriodo.clamp(0, ventas).toDouble();
+  final utilidad = (ventas - costo - gastos).clamp(0, ventas).toDouble();
+  final segmentos = [
+    ('Costo de ventas', costo, const Color(0xFFF59E0B)),
+    ('Gastos', gastos, const Color(0xFF8B5CF6)),
+    ('Utilidad neta', utilidad, const Color(0xFF16A34A)),
+  ].where((s) => s.$2 > 0).toList();
+
+  return _tarjeta(
+    child: esMovil
+        ? Column(children: [_donaComposicion(segmentos, ventas), const SizedBox(height: 16), _leyendaComposicion(segmentos, ventas)])
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _donaComposicion(segmentos, ventas),
+              const SizedBox(width: 24),
+              Expanded(child: _leyendaComposicion(segmentos, ventas)),
+            ],
+          ),
+  );
+}
+
+Widget _donaComposicion(List<(String, double, Color)> segmentos, double total) {
+  return SizedBox(
+    height: 170,
+    width: 170,
+    child: PieChart(
+      PieChartData(
+        sectionsSpace: 2,
+        centerSpaceRadius: 45,
+        sections: [
+          for (final s in segmentos)
+            PieChartSectionData(
+              value: s.$2,
+              color: s.$3,
+              title: '${(s.$2 / total * 100).toStringAsFixed(0)}%',
+              titleStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+              radius: 50,
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _leyendaComposicion(List<(String, double, Color)> segmentos, double total) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final s in segmentos)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            children: [
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: s.$3, borderRadius: BorderRadius.circular(3))),
+              const SizedBox(width: 8),
+              Expanded(child: Text(s.$1, style: GoogleFonts.poppins(fontSize: 12.5))),
+              Text(formatearMoneda(s.$2), style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+    ],
+  );
+}
+
+/// Línea de margen bruto aproximado mes a mes, para ver si el negocio viene
+/// mejorando o empeorando su rentabilidad relativa (no solo el monto de
+/// ventas, que es lo que ya muestra "Comparación mensual").
+Widget _graficoTendenciaMargen(List<PuntoMensual> serie) {
+  if (serie.length < 2) {
+    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para ver una tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final formatoMes = DateFormat('MMM yy', 'es');
+  final puntos = <FlSpot>[
+    for (var i = 0; i < serie.length; i++)
+      if (serie[i].totalVentas > 0) FlSpot(i.toDouble(), ((serie[i].totalVentas - serie[i].totalCompras) / serie[i].totalVentas) * 100),
+  ];
+  if (puntos.length < 2) {
+    return _tarjeta(child: Text('No hay suficientes meses con ventas para calcular la tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final minY = puntos.map((p) => p.y).reduce((a, b) => a < b ? a : b);
+  final maxY = puntos.map((p) => p.y).reduce((a, b) => a > b ? a : b);
+  return _tarjeta(
+    child: SizedBox(
+      height: 200,
+      child: LineChart(
+        LineChartData(
+          minY: (minY - 5).clamp(-100, 100).toDouble(),
+          maxY: (maxY + 5).clamp(-100, 100).toDouble(),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipItems: (spots) => spots.map((s) => LineTooltipItem('${s.y.toStringAsFixed(1)}%', GoogleFonts.poppins(color: Colors.white, fontSize: 11))).toList(),
+            ),
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) => Text('${value.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade600)),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final i = value.toInt();
+                  if (i < 0 || i >= serie.length) return const SizedBox();
+                  return Padding(padding: const EdgeInsets.only(top: 8), child: Text(formatoMes.format(serie[i].mes), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade600)));
+                },
+              ),
+            ),
+          ),
+          gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.shade200, strokeWidth: 1)),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: puntos,
+              isCurved: true,
+              color: const Color(0xFF16A34A),
+              barWidth: 3,
+              dotData: const FlDotData(show: true),
+              belowBarData: BarAreaData(show: true, color: const Color(0xFF16A34A).withOpacity(0.08)),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }
