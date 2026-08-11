@@ -14,6 +14,12 @@ class LoteCostoModel {
   final DateTime fecha;
   final String origen; // 'compra' | 'ajuste'
   final String? idCompra;
+  // Orden manual (0 = sale primero). Null = todavía nadie lo reordenó a
+  // mano, así que se ordena por fecha (el comportamiento FIFO de siempre).
+  // Ver LoteCostoRepository.reordenarLotes: al reordenar se le asigna
+  // prioridad a TODOS los lotes con existencia de una vez, para no mezclar
+  // lotes "con prioridad" y "sin prioridad" de forma ambigua.
+  final int? prioridad;
 
   LoteCostoModel({
     required this.id,
@@ -23,6 +29,7 @@ class LoteCostoModel {
     required this.fecha,
     required this.origen,
     this.idCompra,
+    this.prioridad,
   });
 
   factory LoteCostoModel.fromMap(String id, Map<String, dynamic> data) {
@@ -34,6 +41,7 @@ class LoteCostoModel {
       fecha: (data['fecha'] as Timestamp?)?.toDate() ?? DateTime.now(),
       origen: data['origen'] ?? 'compra',
       idCompra: data['idCompra'],
+      prioridad: (data['prioridad'] as num?)?.toInt(),
     );
   }
 
@@ -45,6 +53,7 @@ class LoteCostoModel {
       'fecha': Timestamp.fromDate(fecha),
       'origen': origen,
       'idCompra': idCompra,
+      'prioridad': prioridad,
     };
   }
 }

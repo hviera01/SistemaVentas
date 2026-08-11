@@ -206,7 +206,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                'Existencia total: ${_formatoCantidad(totalRestante)} unidades repartidas en ${lotes.where((l) => l.cantidadRestante > 0).length} lote(s) — el más antiguo con existencia se vende primero.',
+                'Existencia total: ${_formatoCantidad(totalRestante)} unidades repartidas en ${lotes.where((l) => l.cantidadRestante > 0).length} lote(s) — se vende primero el que está arriba. Usá las flechas para cambiar el orden.',
                 style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
               ),
             ),
@@ -227,9 +227,27 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
     );
   }
 
+  // Cambia a mano cuál lote sale primero, moviendo uno hacia arriba/abajo
+  // entre los que todavía tienen existencia — se puede repetir cuantas
+  // veces se quiera, aunque el lote ya tenga ventas parciales encima.
+  Future<void> _moverLote(List<LoteCostoModel> activos, int indice, int delta) async {
+    final nuevoIndice = indice + delta;
+    if (nuevoIndice < 0 || nuevoIndice >= activos.length) return;
+    final reordenados = List<LoteCostoModel>.from(activos);
+    final tmp = reordenados[indice];
+    reordenados[indice] = reordenados[nuevoIndice];
+    reordenados[nuevoIndice] = tmp;
+    try {
+      await ref.read(loteCostoRepositoryProvider).reordenarLotes(widget.producto.id, reordenados.map((l) => l.id).toList());
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo reordenar: $e')));
+    }
+  }
+
   Widget _tablaLotes(List<LoteCostoModel> lotes, DateFormat formatoDia, String idPrimerLoteVigente) {
     final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
-    const anchoTabla = 680.0;
+    final activos = lotes.where((l) => l.cantidadRestante > 0).toList();
+    const anchoTabla = 750.0;
     return Container(
       decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
       child: SingleChildScrollView(
@@ -248,6 +266,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                     SizedBox(width: 110, child: Text('CANT. ORIGINAL', textAlign: TextAlign.right, style: estiloHeader)),
                     SizedBox(width: 110, child: Text('CANT. RESTANTE', textAlign: TextAlign.right, style: estiloHeader)),
                     SizedBox(width: 100, child: Text('COSTO UNIT.', textAlign: TextAlign.right, style: estiloHeader)),
+                    SizedBox(width: 70, child: Text('ORDEN', textAlign: TextAlign.center, style: estiloHeader)),
                     const Expanded(child: SizedBox()),
                   ],
                 ),
@@ -260,6 +279,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                     final l = lotes[index];
                     final agotado = l.cantidadRestante <= 0;
                     final esProximo = l.id == idPrimerLoteVigente && !agotado;
+                    final indiceActivo = agotado ? -1 : activos.indexWhere((a) => a.id == l.id);
                     return InkWell(
                       onTap: () => _verDetalleLote(l),
                       child: Container(
@@ -279,6 +299,34 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                               ),
                             ),
                             SizedBox(width: 100, child: Text(formatearMoneda(l.costoUnitario), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(
+                              width: 70,
+                              child: indiceActivo < 0
+                                  ? null
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          tooltip: 'Que salga antes',
+                                          icon: const Icon(Icons.keyboard_arrow_up, size: 18),
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                          color: indiceActivo == 0 ? Colors.grey.shade300 : const Color(0xFFC62828),
+                                          onPressed: indiceActivo == 0 ? null : () => _moverLote(activos, indiceActivo, -1),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Que salga después',
+                                          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                          color: indiceActivo == activos.length - 1 ? Colors.grey.shade300 : const Color(0xFFC62828),
+                                          onPressed: indiceActivo == activos.length - 1 ? null : () => _moverLote(activos, indiceActivo, 1),
+                                        ),
+                                      ],
+                                    ),
+                            ),
                             Expanded(
                               child: esProximo
                                   ? Padding(

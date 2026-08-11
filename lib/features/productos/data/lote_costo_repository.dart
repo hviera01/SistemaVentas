@@ -67,22 +67,59 @@ class LoteCostoRepository {
   }
 
   /// Para mostrar en pantalla: todos los lotes de un producto (agotados o
-  /// no), del más viejo al más nuevo — o sea, en el mismo orden en que el
-  /// costeo FIFO los va a ir consumiendo. Sirve para ver de un vistazo
-  /// cuántas unidades quedan a cada costo y cuál va a salir primero.
+  /// no), en el orden en que el costeo FIFO los va a ir consumiendo — por
+  /// fecha (el más viejo primero), salvo que el usuario haya reordenado a
+  /// mano con [reordenarLotes], en cuyo caso manda esa prioridad manual.
+  /// Sirve para ver de un vistazo cuántas unidades quedan a cada costo y
+  /// cuál va a salir primero.
   Stream<List<LoteCostoModel>> obtenerLotes(String idProducto) {
     return colLotes(idProducto).orderBy('fecha').snapshots().map((snap) {
-      return snap.docs.map((d) => LoteCostoModel.fromMap(d.id, d.data())).toList();
+      final lotes = snap.docs.map((d) => LoteCostoModel.fromMap(d.id, d.data())).toList();
+      lotes.sort(_compararPorPrioridad);
+      return lotes;
     });
+  }
+
+  int _compararPorPrioridad(LoteCostoModel a, LoteCostoModel b) {
+    if (a.prioridad != null && b.prioridad != null) return a.prioridad!.compareTo(b.prioridad!);
+    if (a.prioridad != null) return -1;
+    if (b.prioridad != null) return 1;
+    return a.fecha.compareTo(b.fecha);
+  }
+
+  /// Cambia a mano cuál lote sale primero: se le asigna una prioridad nueva
+  /// (0 = primero) a TODOS los lotes con existencia pasados en
+  /// [idsEnOrdenDeseado], según el orden de esa lista — así nunca queda un
+  /// lote "con prioridad" mezclado de forma ambigua con uno "sin prioridad"
+  /// (que seguiría ordenándose por fecha). Se puede volver a llamar cuantas
+  /// veces se quiera, aunque el lote elegido ya tenga ventas parciales.
+  Future<void> reordenarLotes(String idProducto, List<String> idsEnOrdenDeseado) async {
+    final batch = _db.batch();
+    for (var i = 0; i < idsEnOrdenDeseado.length; i++) {
+      batch.update(colLotes(idProducto).doc(idsEnOrdenDeseado[i]), {'prioridad': i});
+    }
+    await batch.commit();
   }
 
   /// Arma el estado de trabajo a partir del resultado de [consultarLotes].
   /// Cuando el carrito tiene más de una línea del mismo producto, las dos
   /// deben consumir del mismo estado en vez de cada una partir de la query
   /// original: si no, contarían dos veces la misma capacidad de un lote.
+  /// Los documentos se reordenan acá por prioridad manual (ver
+  /// [reordenarLotes]) antes de armar el mapa, para que una venta real
+  /// consuma en el mismo orden que se ve en "Costos por lote (FIFO)".
   EstadoLotesProducto inicializarEstado(QuerySnapshot<Map<String, dynamic>> query) {
+    final docsOrdenados = query.docs.toList()
+      ..sort((a, b) {
+        final prioA = (a.data()['prioridad'] as num?)?.toInt();
+        final prioB = (b.data()['prioridad'] as num?)?.toInt();
+        if (prioA != null && prioB != null) return prioA.compareTo(prioB);
+        if (prioA != null) return -1;
+        if (prioB != null) return 1;
+        return 0; // ya vienen ordenados por fecha desde consultarLotes()
+      });
     final estado = <DocumentReference<Map<String, dynamic>>, EstadoLote>{};
-    for (final doc in query.docs) {
+    for (final doc in docsOrdenados) {
       estado[doc.reference] = EstadoLote(
         restante: ((doc.data()['cantidadRestante'] ?? 0) as num).toDouble(),
         costoUnitario: ((doc.data()['costoUnitario'] ?? 0) as num).toDouble(),
