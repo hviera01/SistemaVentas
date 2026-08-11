@@ -39,6 +39,7 @@ class ReporteFinancieroExportService {
           _seccionAbonos(data),
           _seccionRecomendacion(data),
           _seccionBalance(data),
+          _seccionInteligencia(data),
         ],
       ),
     );
@@ -265,6 +266,48 @@ class ReporteFinancieroExportService {
         _filaValor('Cuentas por pagar', b.cuentasPorPagar),
         _filaValor('Patrimonio (estimado)', b.patrimonio),
         _filaValor('Total Pasivos + Patrimonio', b.totalPasivos + b.patrimonio),
+      ],
+    );
+  }
+
+  pw.Widget _seccionInteligencia(ReporteFinancieroData data) {
+    final ia = data.inteligenciaNegocio;
+    final p = ia.pronosticoVentas;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _titulo('Inteligencia de Negocios'),
+        pw.Text('Pronóstico de ventas · próximo mes: ${formatearMoneda(p.montoEstimado)} (${p.metodo})', style: const pw.TextStyle(fontSize: 9)),
+        pw.SizedBox(height: 6),
+        _filaValor('Rotación de inventario', ia.rotacionInventario),
+        _filaValor('Ticket promedio', ia.ticketPromedio),
+        _filaValor('Valor de stock muerto', ia.valorStockMuerto),
+        pw.SizedBox(height: 10),
+        pw.Text('Sugerencia de Compras', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+        if (ia.sugerenciasCompra.isEmpty)
+          pw.Text('Ningún producto activo está por agotarse a su ritmo de venta reciente.', style: const pw.TextStyle(fontSize: 9))
+        else
+          _tabla(
+            ['Producto', 'Stock', 'Días para agotarse', 'Proveedor'],
+            [
+              for (final s in ia.sugerenciasCompra)
+                [
+                  s.nombreProducto,
+                  _formatoCantidad(s.stockActual),
+                  s.diasParaAgotarse.toStringAsFixed(0),
+                  s.proveedor == null ? '-' : (s.proveedorAlDia ? s.proveedor! : '${s.proveedor} (vencido)'),
+                ],
+            ],
+          ),
+        pw.SizedBox(height: 10),
+        pw.Text('Clientes que Más Compran', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+        if (ia.clientesTop.isEmpty)
+          pw.Text('Sin compras de clientes identificados en el rango seleccionado.', style: const pw.TextStyle(fontSize: 9))
+        else
+          _tabla(
+            ['Cliente', 'Compras', 'Total'],
+            [for (final c in ia.clientesTop) [c.cliente, c.cantidadCompras.toString(), formatearMoneda(c.totalComprado)]],
+          ),
       ],
     );
   }

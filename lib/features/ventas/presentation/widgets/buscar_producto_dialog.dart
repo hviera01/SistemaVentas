@@ -7,6 +7,8 @@ import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
+import '../../../promociones/data/promocion_model.dart';
+import '../../../promociones/providers/promociones_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
@@ -24,7 +26,13 @@ class ProductoConPrecio {
 }
 
 class BuscarProductoDialog extends ConsumerStatefulWidget {
-  const BuscarProductoDialog({super.key});
+  // Condición de la venta en curso ('Contado' | 'Credito'), para saber qué
+  // promociones son aplicables al armar el badge de cada producto (ver
+  // PromocionModel.aplicaCondicion). Con 'Contado' por defecto para no
+  // romper otros lugares que todavía no pasan este parámetro.
+  final String condicion;
+
+  const BuscarProductoDialog({super.key, this.condicion = 'Contado'});
 
   @override
   ConsumerState<BuscarProductoDialog> createState() => _BuscarProductoDialogState();
@@ -274,6 +282,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     final categoriasAsync = ref.watch(categoriasStreamProvider);
     final categoriasLista = categoriasAsync.value ?? <dynamic>[];
     final mapaCategorias = {for (final c in categoriasLista) c.id as String: c.descripcion as String};
+    final promociones = ref.watch(promocionesStreamProvider).value ?? const <PromocionModel>[];
 
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 720;
@@ -418,7 +427,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                               separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                               itemBuilder: (context, i) {
                                 final p = lista[i];
-                                return esMovil ? _tarjetaMovil(i, p, mapaCategorias) : _filaTabla(i, p, mapaCategorias);
+                                return esMovil ? _tarjetaMovil(i, p, mapaCategorias, promociones) : _filaTabla(i, p, mapaCategorias, promociones);
                               },
                             ),
                           ),
@@ -519,6 +528,26 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
+  Widget? _badgePromo(ProductoModel p, List<PromocionModel> promociones) {
+    final promo = promoParaBadge(promociones: promociones, idProducto: p.id, condicion: widget.condicion);
+    if (promo == null) return null;
+    return Tooltip(
+      message: promo.nombre,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_offer, size: 11, color: Colors.white),
+            const SizedBox(width: 3),
+            Text(promo.etiquetaCorta, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _celdaPrecio(ProductoModel p) {
     final precio = _precioActivo(p);
     if (precio == null) {
@@ -534,7 +563,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones) {
     final bajoStock = p.stock <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
@@ -562,7 +591,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                 flex: 6,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600))),
+                      if (_badgePromo(p, promociones) case final badge?) ...[const SizedBox(width: 8), badge],
+                    ],
+                  ),
                 ),
               ),
               Expanded(
@@ -614,7 +649,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones) {
     final bajoStock = p.stock <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
@@ -644,7 +679,12 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Row(
+                          children: [
+                            Flexible(child: Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600))),
+                            if (_badgePromo(p, promociones) case final badge?) ...[const SizedBox(width: 8), badge],
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Text('${p.codigo} · ${mapaCategorias[p.idCategoria] ?? '-'}', softWrap: true, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
                       ],

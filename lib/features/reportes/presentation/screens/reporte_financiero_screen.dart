@@ -20,6 +20,7 @@ const _tabs = <(String, IconData, _SeccionBuilder)>[
   ('Abonos a Proveedores', Icons.payments_outlined, seccionAbonosComprasCredito),
   ('Recomendación de Pago', Icons.lightbulb_outline, seccionRecomendacionPago),
   ('Balance General', Icons.account_balance_outlined, seccionBalanceGeneral),
+  ('Inteligencia de Negocios', Icons.psychology_outlined, seccionInteligenciaNegocio),
 ];
 
 /// Reporte Financiero: un solo módulo del menú, con todas sus secciones

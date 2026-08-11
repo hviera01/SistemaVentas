@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/escaneo_remoto_repository.dart';
+import '../../data/item_venta_model.dart';
 import '../../data/venta_en_espera_model.dart';
 import '../../data/venta_export_service.dart';
 import '../../data/venta_model.dart';
@@ -25,6 +26,10 @@ import '../../../negocio/presentation/widgets/acceso_especial.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
+import '../../../promociones/data/promocion_model.dart';
+import '../../../promociones/providers/promociones_provider.dart';
+import '../../../promociones/presentation/widgets/promocion_detectada_dialog.dart';
+import '../../../promociones/presentation/widgets/promociones_vigentes_dialog.dart';
 import '../../../../core/services/impresora_red_service.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
@@ -437,8 +442,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // propósito: ahí sí tiene que seguir funcionando el escáner.
     _pausarLectorFisico = true;
     try {
+      final condicionActual = ref.read(carritoVentaProvider).condicion;
       final resultado = await Navigator.of(context).push<ProductoConPrecio>(
-        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()),
+        MaterialPageRoute(fullscreenDialog: true, builder: (context) => BuscarProductoDialog(condicion: condicionActual)),
       );
       if (resultado == null || !mounted) return;
       await _procesarProductoSeleccionado(resultado);
@@ -509,14 +515,141 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           _mostrarMensaje('No se pudo descontar el stock del producto base');
           return;
         }
-        ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: resultado.precio, reembasado: true);
+        await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, reembasado: true);
         return;
       }
       // Si dice que no, se ignora la falta de existencia y se agrega igual
       // (sin marcar reembasado): al vender no baja de 0 (ver venta_repository).
     }
     if (!mounted) return;
-    ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: resultado.precio);
+    await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio);
+  }
+
+  // ---------- Descuentos y Promociones ----------
+
+  /// Agrega el producto al carrito y, si corresponde, ofrece de forma
+  /// interactiva la promoción vigente aplicable (según fecha y el método de
+  /// pago/condición ya elegidos en la venta): el cajero decide si la acepta
+  /// o no, si rechaza se queda al precio normal. Si el producto cae en más
+  /// de una promoción de porcentaje/precio fijo a la vez, se aplica solo la
+  /// de mayor beneficio para el cliente (ver mejorPromoPrecio). Combo/regalo
+  /// se revisa aparte porque depende de la cantidad llevada, no del precio
+  /// unitario, y solo se ofrece la primera vez que se alcanza la cantidad
+  /// requerida (no en cada unidad de más).
+  Future<void> _agregarProductoConPromos(ProductoModel producto, {required double precioSeleccionado, bool reembasado = false}) async {
+    final carritoAntes = ref.read(carritoVentaProvider);
+    final condicion = carritoAntes.condicion;
+    final cantidadAntes = carritoAntes.items.where((i) => i.idProducto == producto.id).fold<double>(0, (s, i) => s + i.cantidad);
+    final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
+
+    ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: precioSeleccionado, reembasado: reembasado);
+    if (!mounted) return;
+    final indiceNuevo = ref.read(carritoVentaProvider).items.length - 1;
+
+    final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion);
+    if (promoPrecio != null) {
+      final aceptar = await showDialog<bool>(context: context, builder: (context) => PromocionDetectadaDialog(promocion: promoPrecio));
+      if (!mounted) return;
+      if (aceptar == true) {
+        if (promoPrecio.tipo == TipoPromocion.porcentaje) {
+          ref.read(carritoVentaProvider.notifier).actualizarLinea(indiceNuevo, descuentoPorcentaje: promoPrecio.valor);
+        } else {
+          ref.read(carritoVentaProvider.notifier).actualizarLinea(indiceNuevo, precioConIsv: promoPrecio.valor);
+        }
+        _mostrarMensaje('Promoción "${promoPrecio.nombre}" aplicada.');
+        // No se ofrece combo/regalo además en la misma unidad: solo se
+        // aplica una promoción por vez, la de mayor beneficio ya elegida
+        // arriba. Si el cajero la hubiera rechazado, sí se revisa combo más
+        // abajo (ver el "if" que sigue).
+        return;
+      }
+    }
+
+    final cantidadDespues = cantidadAntes + 1;
+    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: producto.id, cantidadEnCarrito: cantidadDespues, condicion: condicion);
+    if (promoCombo != null && cantidadAntes < promoCombo.cantidadRequerida) {
+      await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioSeleccionado);
+    }
+  }
+
+  Future<void> _ofrecerComboORegalo(PromocionModel promo, {required double precioUnitarioBase}) async {
+    if (!mounted) return;
+    final aceptar = await showDialog<bool>(context: context, builder: (context) => PromocionDetectadaDialog(promocion: promo, precioUnitarioBase: precioUnitarioBase));
+    if (!mounted || aceptar != true) return;
+    _aplicarComboORegalo(promo);
+    _mostrarMensaje('Promoción "${promo.nombre}" aplicada.');
+  }
+
+  /// Revisa, después de cambiar la cantidad de una línea (tabla del
+  /// carrito), si ese cambio hace que se alcance por primera vez la
+  /// cantidad requerida de algún combo/regalo — mismo criterio que al
+  /// agregar el producto, pero comparando el total de esa línea más las
+  /// demás líneas del mismo producto antes y después del cambio.
+  Future<void> _revisarPromoComboTrasCambioCantidad(int index, double cantidadAnteriorLinea, double cantidadNuevaLinea) async {
+    final carrito = ref.read(carritoVentaProvider);
+    if (index >= carrito.items.length) return;
+    final idProducto = carrito.items[index].idProducto;
+    final totalOtrasLineas = [
+      for (var i = 0; i < carrito.items.length; i++)
+        if (i != index && carrito.items[i].idProducto == idProducto) carrito.items[i].cantidad,
+    ].fold<double>(0, (s, c) => s + c);
+    final cantidadAntes = totalOtrasLineas + cantidadAnteriorLinea;
+    final cantidadDespues = totalOtrasLineas + cantidadNuevaLinea;
+    if (cantidadDespues <= cantidadAntes) return;
+
+    final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
+    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: idProducto, cantidadEnCarrito: cantidadDespues, condicion: carrito.condicion);
+    if (promoCombo == null || cantidadAntes >= promoCombo.cantidadRequerida) return;
+    final precioUnit = redondearMoneda(carrito.items[index].precioVenta * 1.15);
+    await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioUnit);
+  }
+
+  /// Aplica el combo/regalo aceptado: para combo por cantidad, reparte un
+  /// descuento uniforme entre todas las líneas del producto base para que
+  /// el total de las unidades requeridas quede en el precio del combo
+  /// (si hay unidades de más en el carrito, esas se cobran a precio normal
+  /// dentro del mismo cálculo). Para regalo, agrega una línea nueva del
+  /// producto regalado a precio 0 (100% de descuento), sin tocar el precio
+  /// del producto llevado.
+  void _aplicarComboORegalo(PromocionModel promo) {
+    final notifier = ref.read(carritoVentaProvider.notifier);
+    if (promo.tipo == TipoPromocion.comboCantidad) {
+      final carrito = ref.read(carritoVentaProvider);
+      final indices = [for (var i = 0; i < carrito.items.length; i++) if (carrito.items[i].idProducto == promo.idProductoBase) i];
+      if (indices.isEmpty) return;
+      final cantidadTotal = indices.fold<double>(0, (s, i) => s + carrito.items[i].cantidad);
+      final totalNormalConIsv = indices.fold<double>(0, (s, i) {
+        final item = carrito.items[i];
+        return s + redondearMoneda(item.precioVenta * 1.15) * item.cantidad;
+      });
+      if (totalNormalConIsv <= 0) return;
+      final extra = (cantidadTotal - promo.cantidadRequerida).clamp(0, double.infinity);
+      final precioPromedioNormal = totalNormalConIsv / cantidadTotal;
+      final objetivo = promo.precioCombo + extra * precioPromedioNormal;
+      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100).clamp(0, 100).toDouble();
+      for (final i in indices) {
+        notifier.actualizarLinea(i, descuentoPorcentaje: descuentoPct);
+      }
+    } else {
+      final productos = ref.read(productosStreamProvider).value ?? const <ProductoModel>[];
+      final coincidencias = productos.where((p) => p.id == promo.idProductoRegalo).toList();
+      final precioRegaloConIsv = coincidencias.isNotEmpty ? coincidencias.first.precioVenta : 0.0;
+      final nombreRegalo = coincidencias.isNotEmpty ? coincidencias.first.nombre : promo.nombreProductoRegalo;
+      notifier.agregarItem(ItemVentaModel(
+        idProducto: promo.idProductoRegalo,
+        idCategoria: coincidencias.isNotEmpty ? coincidencias.first.idCategoria : '',
+        nombreProducto: '$nombreRegalo (regalo · ${promo.nombre})',
+        precioVenta: precioRegaloConIsv > 0 ? precioRegaloConIsv / 1.15 : 0,
+        cantidad: promo.cantidadRegalo.toDouble(),
+        subtotal: 0,
+        precioCompraUsado: coincidencias.isNotEmpty ? coincidencias.first.precioCompra : 0,
+        descuentoPorcentaje: 100,
+      ));
+    }
+  }
+
+  Future<void> _abrirPromocionesVigentes() async {
+    await showDialog(context: context, builder: (context) => const PromocionesVigentesDialog());
   }
 
   /// Busca un producto por código exacto (código de barras o código interno)
@@ -676,9 +809,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final carrito = ref.read(carritoVentaProvider);
     if (index >= carrito.items.length) return;
     final item = carrito.items[index];
+    final cantidadAnterior = item.cantidad;
 
     if (!_categoriaControlaStock(item.idCategoria)) {
       ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
+      await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
       return;
     }
 
@@ -704,6 +839,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         // propósito seguir sin reembasar: se deja la cantidad tal como la
         // puso (al vender no baja de 0, ver venta_repository).
         ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
+        await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
         return;
       }
 
@@ -733,12 +869,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         return;
       }
       ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: calculo.cantidadFinal, reembasado: true);
+      await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, calculo.cantidadFinal);
       return;
     } else if (stockDisponible < nuevaCantidad && carrito.esCotizacion) {
       _mostrarMensaje('Advertencia: "${item.nombreProducto}" no tiene stock suficiente, pero se actualizará en la cotización.');
     }
 
     ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
+    await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
   }
 
   Future<void> _actualizarPrecio(int index, double nuevoPrecioConIsv) async {
@@ -1849,6 +1987,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             ),
                           ),
                         ],
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Ver promociones vigentes',
+                          onPressed: _abrirPromocionesVigentes,
+                          icon: const Icon(Icons.local_offer_outlined, size: 20),
+                          color: Colors.grey.shade600,
+                        ),
                       ],
                     ),
                   ],
@@ -1867,6 +2012,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       tooltip: 'Ver la tabla más grande',
                       onPressed: _expandirTablaProductos,
                       icon: const Icon(Icons.open_in_full, size: 18),
+                      color: Colors.grey.shade600,
+                    ),
+                    IconButton(
+                      tooltip: 'Ver promociones vigentes',
+                      onPressed: _abrirPromocionesVigentes,
+                      icon: const Icon(Icons.local_offer_outlined, size: 18),
                       color: Colors.grey.shade600,
                     ),
                     const Spacer(),

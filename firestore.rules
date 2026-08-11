@@ -124,6 +124,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /promociones/{idPromocion} {
+      allow read, write: if true;
+    }
+
     // Las reglas anidadas de arriba (ventasCredito/{id}/abonos y
     // comprasCredito/{id}/abonosCompra) solo cubren lecturas bajo un padre
     // conocido. Las consultas collectionGroup (usadas para sumar abonos por

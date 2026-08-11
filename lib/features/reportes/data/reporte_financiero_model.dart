@@ -120,6 +120,86 @@ class BalanceGeneral {
   double get patrimonio => totalActivos - totalPasivos;
 }
 
+/// Pronóstico simple de ventas para el próximo mes calendario, a partir de
+/// la serie de los últimos 6 meses (`ReporteFinancieroData.serieMensual`).
+/// Con 3 o más meses de datos usa una regresión lineal simple (mínimos
+/// cuadrados); con menos, cae a un promedio móvil. No es Machine Learning
+/// ni pretende serlo — es una proyección de referencia.
+class PronosticoVentas {
+  final double montoEstimado;
+  final double promedioUltimosMeses;
+  final double tendenciaMensual;
+  final String metodo;
+
+  PronosticoVentas({
+    required this.montoEstimado,
+    required this.promedioUltimosMeses,
+    required this.tendenciaMensual,
+    required this.metodo,
+  });
+
+  bool get tendenciaAlAlza => tendenciaMensual > 0;
+}
+
+/// Sugerencia de reposición: un producto activo cuyo stock, a la velocidad
+/// de venta reciente que tuvo en el rango del reporte, se agotaría pronto.
+/// Se pondera con el estado de cuenta del proveedor más reciente conocido
+/// para ese producto: si ese proveedor tiene cuentas vencidas, se avisa en
+/// vez de sugerir comprarle más sin más contexto.
+class SugerenciaCompra {
+  final String idProducto;
+  final String nombreProducto;
+  final double stockActual;
+  final double ventaDiariaPromedio;
+  final double diasParaAgotarse;
+  final String? proveedor;
+  final double deudaVencidaProveedor;
+  final bool proveedorAlDia;
+
+  SugerenciaCompra({
+    required this.idProducto,
+    required this.nombreProducto,
+    required this.stockActual,
+    required this.ventaDiariaPromedio,
+    required this.diasParaAgotarse,
+    required this.proveedor,
+    required this.deudaVencidaProveedor,
+    required this.proveedorAlDia,
+  });
+}
+
+/// Un cliente dentro del ranking de mayores compradores del periodo.
+class ClienteTop {
+  final String cliente;
+  final double totalComprado;
+  final int cantidadCompras;
+
+  ClienteTop({required this.cliente, required this.totalComprado, required this.cantidadCompras});
+}
+
+/// Sección "Inteligencia de Negocios": analítica pensada para decisiones
+/// (qué comprar, a quién priorizar, qué tan rentable es cada producto,
+/// hacia dónde van las ventas). Se arma enteramente con datos que el resto
+/// del Reporte Financiero ya pidió a Firestore — no dispara ninguna
+/// consulta adicional.
+class InteligenciaNegocioData {
+  final PronosticoVentas pronosticoVentas;
+  final List<SugerenciaCompra> sugerenciasCompra;
+  final double rotacionInventario;
+  final List<ClienteTop> clientesTop;
+  final double ticketPromedio;
+  final double valorStockMuerto;
+
+  InteligenciaNegocioData({
+    required this.pronosticoVentas,
+    required this.sugerenciasCompra,
+    required this.rotacionInventario,
+    required this.clientesTop,
+    required this.ticketPromedio,
+    required this.valorStockMuerto,
+  });
+}
+
 /// Resultado agregado completo del Reporte Financiero para un rango de
 /// fechas. Se calcula una sola vez y lo consumen tanto la pantalla como el
 /// PDF, para no recalcular ni arriesgar que muestren números distintos.
@@ -150,6 +230,7 @@ class ReporteFinancieroData {
 
   final RecomendacionPago recomendacionPago;
   final BalanceGeneral balanceGeneral;
+  final InteligenciaNegocioData inteligenciaNegocio;
 
   ReporteFinancieroData({
     required this.inicio,
@@ -172,6 +253,7 @@ class ReporteFinancieroData {
     required this.abonosPorProveedor,
     required this.recomendacionPago,
     required this.balanceGeneral,
+    required this.inteligenciaNegocio,
   });
 
   double get margenBrutoPorcentaje => ventasPeriodo <= 0 ? 0 : (utilidadBruta / ventasPeriodo) * 100;

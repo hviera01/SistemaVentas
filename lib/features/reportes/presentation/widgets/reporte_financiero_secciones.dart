@@ -578,6 +578,211 @@ Widget seccionBalanceGeneral(ReporteFinancieroData data, bool esMovil) {
   );
 }
 
+// ---------- Inteligencia de Negocios ----------
+
+Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
+  final ia = data.inteligenciaNegocio;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _explicacion(
+        'Analítica pensada para decisiones: hacia dónde van las ventas, qué tan rentable es cada producto, qué conviene reponer primero y a qué proveedor priorizar. Se calcula con los mismos datos del resto del reporte, sin consultas adicionales.',
+      ),
+      _tarjetaPronostico(ia.pronosticoVentas),
+      const SizedBox(height: 16),
+      Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          _statMini('Rotación de inventario', '${ia.rotacionInventario.toStringAsFixed(2)}x', 'Veces que se vendió el inventario completo en el periodo', const Color(0xFF3B82F6)),
+          _statMini('Ticket promedio', formatearMoneda(ia.ticketPromedio), 'Venta promedio por transacción', const Color(0xFF16A34A)),
+          _statMini('Valor de stock muerto', formatearMoneda(ia.valorStockMuerto), 'Inventario a costo sin ninguna venta en el periodo', const Color(0xFF64748B)),
+        ],
+      ),
+      const SizedBox(height: 20),
+      Text('Producto Más Rentable', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text('Ranking por margen total (venta − costo) del periodo, no por cantidad vendida.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      const SizedBox(height: 10),
+      _tablaRanking('Mayor ganancia', data.topGananciaPorProducto, esCantidad: false),
+      const SizedBox(height: 20),
+      Text('Sugerencia de Compras', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text(
+        'Productos activos que, a su ritmo de venta reciente, se agotarían en menos de $_diasUmbralReposicionTexto días. Se avisa cuando el proveedor asociado tiene cuentas vencidas.',
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+      ),
+      const SizedBox(height: 10),
+      _tablaSugerenciasCompra(ia.sugerenciasCompra, esMovil),
+      const SizedBox(height: 20),
+      Text('Clientes que Más Compran', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text('Top 10 por monto comprado en el periodo (no incluye Consumidor Final).', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      const SizedBox(height: 10),
+      _tablaClientesTop(ia.clientesTop),
+    ],
+  );
+}
+
+const _diasUmbralReposicionTexto = '14';
+
+Widget _tarjetaPronostico(PronosticoVentas p) {
+  final colorTendencia = p.tendenciaMensual == 0 ? Colors.grey.shade500 : (p.tendenciaAlAlza ? const Color(0xFF16A34A) : const Color(0xFFC62828));
+  final iconoTendencia = p.tendenciaMensual == 0 ? Icons.trending_flat : (p.tendenciaAlAlza ? Icons.trending_up : Icons.trending_down);
+  return _tarjeta(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('PRONÓSTICO DE VENTAS · PRÓXIMO MES', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        const SizedBox(height: 8),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 14,
+          runSpacing: 8,
+          children: [
+            Text(formatearMoneda(p.montoEstimado), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: colorTendencia.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(iconoTendencia, size: 15, color: colorTendencia),
+                  const SizedBox(width: 4),
+                  Text(
+                    p.tendenciaMensual == 0 ? 'Sin tendencia clara' : '${formatearMoneda(p.tendenciaMensual.abs())}/mes',
+                    style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: colorTendencia),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text('${p.metodo} · promedio de los últimos meses: ${formatearMoneda(p.promedioUltimosMeses)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+      ],
+    ),
+  );
+}
+
+Widget _statMini(String titulo, String valor, String explicacion, Color color) {
+  return Container(
+    width: 230,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(titulo.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.4)),
+        const SizedBox(height: 6),
+        Text(valor, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+        const SizedBox(height: 4),
+        Text(explicacion, style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+      ],
+    ),
+  );
+}
+
+Widget _tablaSugerenciasCompra(List<SugerenciaCompra> lista, bool esMovil) {
+  if (lista.isEmpty) {
+    return _tarjeta(child: Text('Ningún producto activo está por agotarse a su ritmo de venta reciente.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  return _tarjeta(
+    child: Column(
+      children: [
+        for (final s in lista) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(s.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                    ),
+                    Expanded(child: Text('Stock: ${formatoCantidadFinanciero(s.stockActual)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+                    Expanded(
+                      child: Text(
+                        '${s.diasParaAgotarse.toStringAsFixed(0)} día(s)',
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: s.diasParaAgotarse <= 3 ? const Color(0xFFC62828) : const Color(0xFFF59E0B)),
+                      ),
+                    ),
+                  ],
+                ),
+                if (s.proveedor != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(s.proveedorAlDia ? Icons.check_circle_outline : Icons.warning_amber_outlined, size: 13, color: s.proveedorAlDia ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          s.proveedorAlDia
+                              ? 'Proveedor: ${s.proveedor} · al día'
+                              : 'Proveedor: ${s.proveedor} · tiene cuentas vencidas por ${formatearMoneda(s.deudaVencidaProveedor)}, priorizar el pago antes de comprarle más',
+                          style: GoogleFonts.poppins(fontSize: 11, color: s.proveedorAlDia ? Colors.grey.shade600 : const Color(0xFFC62828)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  const SizedBox(height: 4),
+                  Text('Sin proveedor reciente registrado para este producto.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400)),
+                ],
+              ],
+            ),
+          ),
+          if (s != lista.last) Divider(height: 1, color: Colors.grey.shade200),
+        ],
+      ],
+    ),
+  );
+}
+
+Widget _tablaClientesTop(List<ClienteTop> lista) {
+  if (lista.isEmpty) {
+    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final maximo = lista.first.totalComprado;
+  return _tarjeta(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final c in lista)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text(c.cliente, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    const SizedBox(width: 10),
+                    SizedBox(width: 100, child: Text(formatearMoneda(c.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: maximo <= 0 ? 0 : (c.totalComprado / maximo).clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFF0F1F5),
+                    color: const Color(0xFF3B82F6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
 Widget _filaBalance(String etiqueta, double valor, {bool negrita = false}) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),

@@ -13,6 +13,7 @@ import '../../compras_credito/data/abono_compra_model.dart';
 import '../../ventas_credito/data/venta_credito_repository.dart';
 import '../../ventas_credito/data/abono_model.dart';
 import '../../caja/data/cierre_caja_repository.dart';
+import '../../compras_credito/data/compra_credito_model.dart';
 
 /// Cuánto del efectivo estimado se sugiere reservar como colchón de
 /// seguridad antes de recomendar pagos a proveedores.
@@ -295,6 +296,23 @@ class ReporteFinancieroRepository {
       cuentasPorPagar: cuentasPorPagar,
     );
 
+    final diasPeriodo = (finInclusive.difference(inicio).inHours / 24).ceil().clamp(1, 100000);
+    final inteligenciaNegocio = InteligenciaNegocioData(
+      pronosticoVentas: _calcularPronostico(serieMensual),
+      sugerenciasCompra: _calcularSugerenciasCompra(
+        productos: productos,
+        itemsVenta: itemsVenta,
+        comprasValidas: comprasValidas,
+        detalleComprasPorCompra: detalleComprasPorCompra,
+        comprasCreditoDocs: comprasCreditoSnap.docs,
+        diasPeriodo: diasPeriodo,
+      ),
+      rotacionInventario: inventarioACosto <= 0 ? 0 : costoVentas / inventarioACosto,
+      clientesTop: _agruparClientesTop(ventasValidas),
+      ticketPromedio: ventasValidas.isEmpty ? 0 : ventasPeriodo / ventasValidas.length,
+      valorStockMuerto: productosSinVenta.fold<double>(0, (s, p) => s + p.valorInventario),
+    );
+
     return ReporteFinancieroData(
       inicio: inicio,
       fin: finInclusive,
@@ -316,7 +334,130 @@ class ReporteFinancieroRepository {
       abonosPorProveedor: abonosPorProveedor,
       recomendacionPago: recomendacionPago,
       balanceGeneral: balanceGeneral,
+      inteligenciaNegocio: inteligenciaNegocio,
     );
+  }
+
+  /// Regresión lineal simple (mínimos cuadrados) sobre la serie mensual ya
+  /// calculada para "Comparación Mensual", proyectando un mes más. Con
+  /// menos de 3 puntos la pendiente no es confiable, así que se usa
+  /// directamente el promedio como estimado.
+  PronosticoVentas _calcularPronostico(List<PuntoMensual> serie) {
+    final montos = serie.map((p) => p.totalVentas).toList();
+    final promedio = montos.isEmpty ? 0.0 : montos.reduce((a, b) => a + b) / montos.length;
+    if (montos.length < 3) {
+      return PronosticoVentas(montoEstimado: promedio, promedioUltimosMeses: promedio, tendenciaMensual: 0, metodo: 'Promedio simple');
+    }
+    final n = montos.length;
+    final xs = List<int>.generate(n, (i) => i);
+    final mediaX = xs.reduce((a, b) => a + b) / n;
+    final mediaY = promedio;
+    var numerador = 0.0;
+    var denominador = 0.0;
+    for (var i = 0; i < n; i++) {
+      numerador += (xs[i] - mediaX) * (montos[i] - mediaY);
+      denominador += (xs[i] - mediaX) * (xs[i] - mediaX);
+    }
+    final pendiente = denominador == 0 ? 0.0 : numerador / denominador;
+    final interseccion = mediaY - pendiente * mediaX;
+    final estimado = (pendiente * n + interseccion).clamp(0, double.infinity).toDouble();
+    return PronosticoVentas(montoEstimado: estimado, promedioUltimosMeses: promedio, tendenciaMensual: pendiente, metodo: 'Regresión lineal (últimos $n meses)');
+  }
+
+  /// Cuánta deuda vencida (y total) tiene cada proveedor ahora mismo, para
+  /// no sugerir comprarle más a uno que ya está muy atrasado. Reusa los
+  /// mismos documentos de `comprasCredito` con saldo pendiente que ya se
+  /// pidieron para el Balance General — no dispara consultas nuevas.
+  Map<String, ({double vencida, double total})> _estadoCuentaPorProveedor(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final resultado = <String, ({double vencida, double total})>{};
+    for (final doc in docs) {
+      final credito = CompraCreditoModel.fromMap(doc.id, doc.data());
+      if (credito.idProveedor.isEmpty) continue;
+      final actual = resultado[credito.idProveedor] ?? (vencida: 0.0, total: 0.0);
+      resultado[credito.idProveedor] = (
+        vencida: actual.vencida + (credito.vencida ? credito.saldoPendiente : 0),
+        total: actual.total + credito.saldoPendiente,
+      );
+    }
+    return resultado;
+  }
+
+  /// Productos activos cuyo stock, a la velocidad de venta que tuvieron en
+  /// el rango del reporte, se agotaría pronto (menos de [_diasUmbralReposicion]
+  /// días). Se pondera con el estado de cuenta del proveedor más reciente
+  /// conocido para cada producto (la compra más nueva del rango que lo
+  /// incluya). Todo con datos ya pedidos para el resto del reporte.
+  static const _diasUmbralReposicion = 14;
+
+  List<SugerenciaCompra> _calcularSugerenciasCompra({
+    required List<ProductoModel> productos,
+    required List<ItemVentaModel> itemsVenta,
+    required List<ReporteCompraModel> comprasValidas,
+    required List<List<ItemCompraModel>> detalleComprasPorCompra,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> comprasCreditoDocs,
+    required int diasPeriodo,
+  }) {
+    // Proveedor más reciente conocido por producto: comprasValidas ya viene
+    // ordenado de más nueva a más vieja (ver ReporteRepository.obtenerReporteCompras),
+    // así que la primera compra que mencione un producto es la más reciente.
+    final proveedorPorProducto = <String, (String idProveedor, String nombre)>{};
+    for (var i = 0; i < comprasValidas.length && i < detalleComprasPorCompra.length; i++) {
+      final compra = comprasValidas[i];
+      if (compra.idProveedor.isEmpty) continue;
+      for (final item in detalleComprasPorCompra[i]) {
+        proveedorPorProducto.putIfAbsent(item.idProducto, () => (compra.idProveedor, compra.razonSocial));
+      }
+    }
+
+    final estadoProveedores = _estadoCuentaPorProveedor(comprasCreditoDocs);
+
+    final cantidadVendidaPorProducto = <String, double>{};
+    for (final item in itemsVenta) {
+      cantidadVendidaPorProducto[item.idProducto] = (cantidadVendidaPorProducto[item.idProducto] ?? 0) + item.cantidad;
+    }
+
+    final sugerencias = <SugerenciaCompra>[];
+    for (final producto in productos) {
+      if (!producto.estado) continue;
+      final vendida = cantidadVendidaPorProducto[producto.id];
+      if (vendida == null || vendida <= 0) continue;
+      final ventaDiaria = vendida / diasPeriodo;
+      if (ventaDiaria <= 0) continue;
+      final diasParaAgotarse = producto.stock / ventaDiaria;
+      if (diasParaAgotarse >= _diasUmbralReposicion) continue;
+
+      final proveedorInfo = proveedorPorProducto[producto.id];
+      final estado = proveedorInfo == null ? null : estadoProveedores[proveedorInfo.$1];
+
+      sugerencias.add(SugerenciaCompra(
+        idProducto: producto.id,
+        nombreProducto: producto.nombre,
+        stockActual: producto.stock,
+        ventaDiariaPromedio: ventaDiaria,
+        diasParaAgotarse: diasParaAgotarse,
+        proveedor: proveedorInfo?.$2,
+        deudaVencidaProveedor: estado?.vencida ?? 0,
+        proveedorAlDia: (estado?.vencida ?? 0) <= 0,
+      ));
+    }
+    sugerencias.sort((a, b) => a.diasParaAgotarse.compareTo(b.diasParaAgotarse));
+    return sugerencias.take(_topN).toList();
+  }
+
+  List<ClienteTop> _agruparClientesTop(List<ReporteVentaModel> ventas) {
+    final totalPorCliente = <String, double>{};
+    final conteoPorCliente = <String, int>{};
+    for (final v in ventas) {
+      final cliente = v.nombreCliente.isEmpty ? 'CONSUMIDOR FINAL' : v.nombreCliente;
+      totalPorCliente[cliente] = (totalPorCliente[cliente] ?? 0) + v.totalAPagar;
+      conteoPorCliente[cliente] = (conteoPorCliente[cliente] ?? 0) + 1;
+    }
+    final lista = totalPorCliente.keys
+        .where((c) => c != 'CONSUMIDOR FINAL')
+        .map((c) => ClienteTop(cliente: c, totalComprado: totalPorCliente[c] ?? 0, cantidadCompras: conteoPorCliente[c] ?? 0))
+        .toList()
+      ..sort((a, b) => b.totalComprado.compareTo(a.totalComprado));
+    return lista.take(_topN).toList();
   }
 
   List<RankingProducto> _rankearPorCantidad(Iterable<(String, String, double)> lineas) {
