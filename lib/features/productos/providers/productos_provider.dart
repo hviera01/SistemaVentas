@@ -19,15 +19,27 @@ final productosStreamProvider = StreamProvider<List<ProductoModel>>((ref) {
   return ref.watch(productoRepositoryProvider).obtenerProductos();
 });
 
-final historialStockProvider = StreamProvider.family<List<HistorialStockModel>, String>((ref, idProducto) {
+// FutureProvider.autoDispose (no StreamProvider): son historiales de solo
+// lectura que no necesitan reactividad en vivo, así que se piden una sola
+// vez en vez de dejar un listener de Firestore abierto mientras el diálogo
+// está en pantalla. `autoDispose` es clave acá: sin él, un FutureProvider
+// .family sin listeners igual mantiene cacheado para siempre el resultado
+// de cada idProducto que se haya consultado alguna vez en la sesión, y al
+// reabrir el historial de ese mismo producto se vería una foto vieja en vez
+// de pedir de nuevo. Con autoDispose, al cerrar el diálogo (0 listeners) se
+// descarta el caché y la próxima vez se vuelve a pedir fresco. Los diálogos
+// que los consumen (`historial_stock_dialog.dart`,
+// `historial_movimientos_dialog.dart`) siguen funcionando igual porque
+// `AsyncValue.when` es compatible entre Stream y FutureProvider.
+final historialStockProvider = FutureProvider.autoDispose.family<List<HistorialStockModel>, String>((ref, idProducto) {
   return ref.watch(productoRepositoryProvider).obtenerHistorialStock(idProducto);
 });
 
-final historialPreciosCompraProvider = StreamProvider.family<List<HistorialPrecioCompraModel>, String>((ref, idProducto) {
+final historialPreciosCompraProvider = FutureProvider.autoDispose.family<List<HistorialPrecioCompraModel>, String>((ref, idProducto) {
   return ref.watch(productoRepositoryProvider).obtenerHistorialPreciosCompra(idProducto);
 });
 
-final historialVentasProductoProvider = StreamProvider.family<List<HistorialVentaProductoModel>, String>((ref, idProducto) {
+final historialVentasProductoProvider = FutureProvider.autoDispose.family<List<HistorialVentaProductoModel>, String>((ref, idProducto) {
   return ref.watch(productoRepositoryProvider).obtenerHistorialVentas(idProducto);
 });
 
