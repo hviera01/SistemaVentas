@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,13 @@ import '../../../../core/data/modulos_menu.dart';
 import '../../../../core/utils/pantalla_builder.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../providers/resumen_ventas_provider.dart';
+
+// Solo el navegador de un celular (no la PC, no la app de escritorio): ahí
+// es donde tiene sentido un atajo directo a "Nueva Venta" / "Nueva Compra" /
+// "Buscar Producto" en el inicio, para no tener que pasar por el menú de
+// módulos con la pantalla chica.
+bool get _esWebMovil =>
+    kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -97,6 +105,10 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text('Seleccioná una opción para comenzar', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
                   const SizedBox(height: 20),
+                  if (_esWebMovil) ...[
+                    _accesosDirectos(ref),
+                    const SizedBox(height: 20),
+                  ],
                   _resumenVentas(ref, esMovil),
                   const SizedBox(height: 24),
                   GridView.builder(
@@ -119,6 +131,83 @@ class HomeScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  // Atajos de "Nueva Venta" / "Nueva Compra" / "Buscar Producto" para el
+  // inicio en web móvil (ver _esWebMovil): cada uno abre directo la pestaña
+  // correspondiente, sin pasar por el menú de módulos.
+  Widget _accesosDirectos(WidgetRef ref) {
+    final atajos = [
+      (
+        titulo: 'Nueva Venta',
+        icono: Icons.add_shopping_cart_outlined,
+        color: const Color(0xFF22C55E),
+        sub: SubModulo(titulo: 'Registrar Venta', icono: Icons.add_shopping_cart_outlined, moduleKey: 'ventas_registrar'),
+      ),
+      (
+        titulo: 'Nueva Compra',
+        icono: Icons.add_box_outlined,
+        color: const Color(0xFFF59E0B),
+        sub: SubModulo(titulo: 'Registrar Compra', icono: Icons.add_box_outlined, moduleKey: 'compras_registrar'),
+      ),
+      (
+        titulo: 'Buscar Producto',
+        icono: Icons.search_rounded,
+        color: const Color(0xFF3B82F6),
+        sub: SubModulo(titulo: 'Buscar Producto', icono: Icons.search_rounded, moduleKey: 'ventas_buscar_producto'),
+      ),
+    ];
+
+    return SizedBox(
+      height: 86,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: atajos.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final atajo = atajos[index];
+          return _botonAtajo(ref, atajo.titulo, atajo.icono, atajo.color, atajo.sub);
+        },
+      ),
+    );
+  }
+
+  Widget _botonAtajo(WidgetRef ref, String titulo, IconData icono, Color color, SubModulo sub) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _abrirSubModulo(ref, sub),
+        child: Container(
+          width: 96,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 12, offset: const Offset(0, 5))],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icono, color: color, size: 18),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                titulo,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

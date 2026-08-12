@@ -59,7 +59,13 @@ class RegistrarVentaScreen extends ConsumerStatefulWidget {
   // pestaña activa antes de responder, para no disparar en todas a la vez.
   final String? tabId;
 
-  const RegistrarVentaScreen({super.key, this.tabId});
+  // Usado por el atajo "Buscar Producto" del inicio (ver HomeScreen, solo
+  // web móvil): en vez de abrir esta pantalla con el carrito vacío y
+  // esperar a que el usuario toque "Agregar Producto", la abre y dispara el
+  // diálogo de búsqueda directo, como si ya lo hubiera tocado.
+  final bool autoAbrirBusqueda;
+
+  const RegistrarVentaScreen({super.key, this.tabId, this.autoAbrirBusqueda = false});
 
   @override
   ConsumerState<RegistrarVentaScreen> createState() => _RegistrarVentaScreenState();
@@ -197,6 +203,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _regExoneradoController.text = ventaOrigen.regExonerado;
       _regSagController.text = ventaOrigen.regSag;
       _descuentoGlobalController.text = ventaOrigen.descuentoGlobal == 0 ? '' : _formatoCantidad(ventaOrigen.descuentoGlobal);
+    }
+
+    if (widget.autoAbrirBusqueda) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _agregarProductoDesdeBusqueda();
+      });
     }
   }
 

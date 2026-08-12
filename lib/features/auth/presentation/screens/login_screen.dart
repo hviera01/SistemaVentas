@@ -1,8 +1,16 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
+
+// Solo el navegador de un celular (no la PC, no la app de escritorio):
+// ahí conviene el teclado numérico porque el código de acceso y la
+// contraseña de esta app son siempre dígitos, y el teclado numérico ocupa
+// menos pantalla que el completo.
+bool get _esWebMovil =>
+    kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -134,6 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 34),
                           TextField(
                             controller: _codigoController,
+                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'Código de acceso',
@@ -151,6 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextField(
                             controller: _claveController,
                             obscureText: _ocultarClave,
+                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
                             style: GoogleFonts.poppins(fontSize: 14),
                             onSubmitted: (_) => _iniciarSesion(),
                             decoration: InputDecoration(
