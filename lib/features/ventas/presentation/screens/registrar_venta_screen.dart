@@ -114,6 +114,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _ctrlCodigoBarras = TextEditingController();
   final _focusCodigoBarras = FocusNode();
 
+  // Nodo "ancla" sin campo de texto detrás (ver _campoInlineNumero), usado
+  // solo en web móvil para robarle el foco a un campo justo después de
+  // confirmar con el teclado numérico en pantalla. En escritorio esto se
+  // resuelve pidiéndole el foco a _focusCodigoBarras, pero ese es un
+  // TextField de verdad: en el navegador de un celular, apenas un TextField
+  // -aunque esté invisible (Offstage)- recibe foco, el sistema abre el
+  // teclado nativo encima. Este nodo vive en un Focus a secas (sin
+  // EditableText adentro), así que puede quedarse con el foco sin disparar
+  // ningún teclado.
+  final _focusAnclaMovil = FocusNode(debugLabel: 'ancla_teclado_web_movil');
+
   // Detección del lector de código de barras físico a nivel de hardware
   // (ver _manejarAtajoTeclado/_detectarEscaneoFisico), independiente de qué
   // campo tenga el foco en ese momento: un lector escribe cada carácter
@@ -374,6 +385,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (codigoEscaneo != null) _escaneoRemoto.eliminarSesion(codigoEscaneo);
     _ctrlCodigoBarras.dispose();
     _focusCodigoBarras.dispose();
+    _focusAnclaMovil.dispose();
     _nombreClienteController.dispose();
     _documentoClienteController.dispose();
     _ocController.dispose();
@@ -1610,7 +1622,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _alScrollearMovil());
     }
 
-    return Container(
+    // Ver _focusAnclaMovil: este Focus envuelve toda la pantalla para que
+    // ese nodo (usado solo en web móvil) siempre tenga dónde vivir, sin
+    // interferir con el foco de los campos de adentro.
+    return Focus(
+      focusNode: _focusAnclaMovil,
+      canRequestFocus: true,
+      skipTraversal: true,
+      child: Container(
       color: const Color(0xFFF2F3F7),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1657,6 +1676,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }
@@ -2584,17 +2604,26 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         // diálogo del teclado numérico en pantalla, ver más abajo, así que
         // no hay restauración de foco de la que cuidarse).
         if (focusNode.hasFocus) focusNode.unfocus();
+      } else if (_esWebMovil) {
+        // En web móvil, igual que en escritorio, un "unfocus()" solo no
+        // alcanza (mismo motivo que el bloque de escritorio, abajo), así
+        // que también hay que robarle el foco a otro nodo. Pero acá NO
+        // puede ser _focusCodigoBarras: ese es un TextField de verdad, y
+        // aunque esté invisible (Offstage), el navegador del celular abre
+        // su teclado nativo apenas ese campo recibe foco. _focusAnclaMovil
+        // es un nodo sin campo de texto detrás, así que resuelve lo mismo
+        // sin disparar ningún teclado.
+        _focusAnclaMovil.requestFocus();
       } else {
-        // En escritorio y en web móvil, simplemente "unfocus()" no alcanza:
-        // si el valor se acaba de confirmar viniendo del diálogo del
-        // teclado numérico (ver abrirTecladoNumerico), al cerrarse ese
-        // diálogo Flutter le devuelve el foco solo al campo que lo tenía
-        // antes de abrirlo -este mismo-, lo que reseleccionaba todo el
-        // texto de nuevo después de "arreglarlo". Pedirle el foco a otro
-        // campo concreto (el de código de barras invisible, ver
-        // _campoCodigoBarras) en vez de solo soltarlo evita esa
-        // restauración: ya hay algo nuevo con el foco, así que no queda
-        // nada pendiente de "recuperar".
+        // En escritorio, simplemente "unfocus()" no alcanza: si el valor se
+        // acaba de confirmar viniendo del diálogo del teclado numérico (ver
+        // abrirTecladoNumerico), al cerrarse ese diálogo Flutter le
+        // devuelve el foco solo al campo que lo tenía antes de abrirlo
+        // -este mismo-, lo que reseleccionaba todo el texto de nuevo
+        // después de "arreglarlo". Pedirle el foco a otro campo concreto
+        // (el de código de barras invisible, ver _campoCodigoBarras) en vez
+        // de solo soltarlo evita esa restauración: ya hay algo nuevo con el
+        // foco, así que no queda nada pendiente de "recuperar".
         _focusCodigoBarras.requestFocus();
       }
     }
