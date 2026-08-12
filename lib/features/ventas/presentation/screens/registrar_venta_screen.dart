@@ -136,6 +136,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // muestra en el celular (APK o navegador móvil).
   bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
+  // Específicamente el navegador de un celular (no la app APK, no
+  // escritorio): usado para el teclado numérico en pantalla de
+  // cantidad/precio/descuento (ver _campoInlineNumero) y la barra flotante
+  // de totales (ver _barraFlotanteTotales), que solo tienen sentido en web
+  // móvil.
+  bool get _esWebMovil => kIsWeb && _esPlataformaMovil;
+
+  // Controla el scroll de toda la pantalla en web móvil, para saber cuándo
+  // la tarjeta de totales real (al fondo) ya está a la vista y así ocultar
+  // la barra flotante de totales (ver _barraFlotanteTotales/_alScrollearMovil):
+  // sin esto quedarían las dos superpuestas.
+  final _scrollControllerMovil = ScrollController();
+  bool _mostrarBarraFlotante = true;
+
   // Escaneo remoto por celular (ver EscanearRemotoDialog/EscaneoRemotoScreen):
   // la sesión y su escucha viven acá, en el estado de la pantalla, no dentro
   // del diálogo del QR — así el celular puede seguir mandando códigos
@@ -170,6 +184,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // envolver el árbol en Focus/Shortcuts, que competiría con los
     // TextField de cantidad/precio/descripción ya presentes).
     HardwareKeyboard.instance.addHandler(_manejarAtajoTeclado);
+
+    if (_esWebMovil) _scrollControllerMovil.addListener(_alScrollearMovil);
 
     // En escritorio, cada vez que el foco queda en nada (el usuario tocó
     // afuera de un campo, o cerró un diálogo) se lo devuelve al campo de
@@ -210,6 +226,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         if (mounted) _agregarProductoDesdeBusqueda();
       });
     }
+  }
+
+  // Muestra/oculta la barra flotante de totales (ver _barraFlotanteTotales)
+  // según qué tan cerca del final del scroll está el usuario: cuando la
+  // tarjeta de totales real (el último elemento de la pantalla) ya está a
+  // la vista, no hace falta la flotante encima. 220 es más alto que esa
+  // tarjeta a propósito, para que la flotante desaparezca un poco antes de
+  // que la real termine de entrar, no justo al mismo tiempo.
+  void _alScrollearMovil() {
+    if (!mounted || !_scrollControllerMovil.hasClients) return;
+    final posicion = _scrollControllerMovil.position;
+    final cercaDelFinal = posicion.maxScrollExtent <= 0 || (posicion.maxScrollExtent - posicion.pixels) < 220;
+    final debeMostrarse = !cercaDelFinal;
+    if (debeMostrarse != _mostrarBarraFlotante) setState(() => _mostrarBarraFlotante = debeMostrarse);
   }
 
   void _alCambiarFocoGlobal() {
@@ -333,6 +363,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (!_esPlataformaMovil) {
       FocusManager.instance.removeListener(_alCambiarFocoGlobal);
     }
+    if (_esWebMovil) _scrollControllerMovil.removeListener(_alScrollearMovil);
+    _scrollControllerMovil.dispose();
     // Best-effort: no se espera a que termine (dispose no puede ser async),
     // pero cierra la sesión de escaneo remoto si quedó una activa al
     // abandonar esta pestaña de venta.
@@ -1569,6 +1601,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // correcto para esta pestaña) cada vez que el carrito cambia — ver
     // _expandirTablaProductos para el porqué no puede leerlo por su cuenta.
     WidgetsBinding.instance.addPostFrameCallback((_) => _refrescarDialogoExpandido?.call(() {}));
+    // Recalcula la visibilidad de la barra flotante de totales (ver
+    // _alScrollearMovil) en cada cambio del carrito, no solo cuando el
+    // usuario mueve el scroll a mano: agregar un producto sin haber
+    // scrolleado corre la tarjeta de totales real más abajo, y sin esto la
+    // flotante se quedaría oculta aunque la real ya no esté a la vista.
+    if (_esWebMovil) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _alScrollearMovil());
+    }
 
     return Container(
       color: const Color(0xFFF2F3F7),
@@ -1584,7 +1624,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           // quedaba chica y obligaba a scrollear adentro de una zona
           // chiquita en vez de aprovechar el alto real de la ventana.
           final altoTabla = (constraints.maxHeight * 0.72).clamp(420.0, 1400.0);
-          return SingleChildScrollView(
+          final contenido = SingleChildScrollView(
+            controller: _esWebMovil ? _scrollControllerMovil : null,
             padding: EdgeInsets.all(esMovil ? 14 : 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1601,7 +1642,70 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ],
             ),
           );
+
+          if (!_esWebMovil) return contenido;
+
+          // En web móvil, con varios productos cargados, la tarjeta de
+          // totales real queda lejos abajo: esta barra flotante (ver
+          // _barraFlotanteTotales) deja el total y "Crear Venta" siempre a
+          // mano mientras se scrollea la tabla, sin duplicarse cuando la
+          // real ya está a la vista (ver _alScrollearMovil).
+          return Stack(
+            children: [
+              contenido,
+              _barraFlotanteTotales(carrito),
+            ],
+          );
         },
+      ),
+    );
+  }
+
+  Widget _barraFlotanteTotales(CarritoVentaState carrito) {
+    final visible = _mostrarBarraFlotante && carrito.items.isNotEmpty;
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      left: 12,
+      right: 12,
+      bottom: visible ? 12 : -100,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: Material(
+          elevation: 12,
+          shadowColor: Colors.black.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF1A1A1A),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: _guardando ? null : _confirmarVenta,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.4)),
+                        Text(formatearMoneda(carrito.totalAPagar), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _guardando
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(12)),
+                          child: Text(_textoBoton, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                        ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2444,10 +2548,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // del primer build. La guarda de "no cambió respecto al ya aplicado" evita
   // volver a llamar a alConfirmar y así el problema original no vuelve.
   Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
-    // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en web
-    // no sirve de nada) sí detecta el sistema operativo real aunque se esté
-    // usando desde el navegador.
-    final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+    // Antes esto agrupaba "Android/iOS" sin importar si era la app (APK) o
+    // el navegador del celular, y ambos se quedaban con el teclado nativo
+    // del sistema. Ahora solo la app nativa lo conserva: el navegador del
+    // celular (ver _esWebMovil) pasa a abrir el mismo teclado numérico en
+    // pantalla que ya usa escritorio, para no depender del teclado nativo
+    // del navegador (que tapa media pantalla y deja ver el cursor).
+    final esMovilNativo = !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
     final focusNode = _focusInline.putIfAbsent(claveFoco, () {
       final node = FocusNode();
@@ -2472,21 +2579,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // deja de seleccionar el texto): que quede como si el usuario hubiera
       // tocado en cualquier otro lado en blanco, sin cursor parpadeando ni
       // texto resaltado.
-      if (esMovil) {
-        // En el celular alcanza con soltar el foco (ahí no existe el
+      if (esMovilNativo) {
+        // En la app nativa alcanza con soltar el foco (ahí no existe el
         // diálogo del teclado numérico en pantalla, ver más abajo, así que
         // no hay restauración de foco de la que cuidarse).
         if (focusNode.hasFocus) focusNode.unfocus();
       } else {
-        // En escritorio, simplemente "unfocus()" no alcanza: si el valor se
-        // acaba de confirmar viniendo del diálogo del teclado numérico (ver
-        // abrirTecladoNumerico), al cerrarse ese diálogo Flutter le
-        // devuelve el foco solo al campo que lo tenía antes de abrirlo
-        // -este mismo-, lo que reseleccionaba todo el texto de nuevo
-        // después de "arreglarlo". Pedirle el foco a otro campo concreto
-        // (el de código de barras invisible, ver _campoCodigoBarras) en vez
-        // de solo soltarlo evita esa restauración: ya hay algo nuevo con el
-        // foco, así que no queda nada pendiente de "recuperar".
+        // En escritorio y en web móvil, simplemente "unfocus()" no alcanza:
+        // si el valor se acaba de confirmar viniendo del diálogo del
+        // teclado numérico (ver abrirTecladoNumerico), al cerrarse ese
+        // diálogo Flutter le devuelve el foco solo al campo que lo tenía
+        // antes de abrirlo -este mismo-, lo que reseleccionaba todo el
+        // texto de nuevo después de "arreglarlo". Pedirle el foco a otro
+        // campo concreto (el de código de barras invisible, ver
+        // _campoCodigoBarras) en vez de solo soltarlo evita esa
+        // restauración: ya hay algo nuevo con el foco, así que no queda
+        // nada pendiente de "recuperar".
         _focusCodigoBarras.requestFocus();
       }
     }
@@ -2529,18 +2637,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     );
 
-    if (esMovil) return campo;
+    if (esMovilNativo) return campo;
 
-    // En escritorio, un clic en el campo debe abrir el teclado numérico de
-    // una vez, sin que primero se vea el cursor de texto parpadeando (lo que
-    // pasaba porque el propio TextField toma el foco apenas se presiona,
-    // antes de que onTap llegue a dispararse: con un clic rápido incluso
-    // alcanzaba a dejar escribir directo ahí). El GestureDetector de afuera
-    // es quien recibe el toque; AbsorbPointer evita que ese mismo toque le
-    // llegue al TextField, así que nunca se enfoca ni parpadea el cursor
-    // con el mouse. El foco por teclado físico (Tab) no pasa por gestos de
-    // puntero, así que seguir tipeando y dándole Enter sin abrir el diálogo
-    // sigue funcionando igual que antes.
+    // En escritorio y en web móvil, un toque en el campo debe abrir el
+    // teclado numérico de una vez, sin que primero se vea el cursor de
+    // texto parpadeando ni se abra el teclado nativo (lo que pasaba porque
+    // el propio TextField toma el foco apenas se presiona, antes de que
+    // onTap llegue a dispararse: con un toque rápido incluso alcanzaba a
+    // dejar escribir directo ahí). El GestureDetector de afuera es quien
+    // recibe el toque; AbsorbPointer evita que ese mismo toque le llegue al
+    // TextField, así que nunca se enfoca ni parpadea el cursor, sea con
+    // mouse o con el dedo. El foco por teclado físico (Tab) no pasa por
+    // gestos de puntero, así que seguir tipeando y dándole Enter sin abrir
+    // el diálogo sigue funcionando igual que antes.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: abrirTecladoNumerico,
