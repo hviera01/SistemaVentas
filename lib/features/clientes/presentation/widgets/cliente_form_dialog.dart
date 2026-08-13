@@ -16,7 +16,7 @@ class ClienteFormDialog extends ConsumerStatefulWidget {
 class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
   final _dniController = TextEditingController();
   final _nombreController = TextEditingController();
-  final _correoController = TextEditingController();
+  final _direccionController = TextEditingController();
   final _telefonoController = TextEditingController();
   bool _activo = true;
   bool _guardando = false;
@@ -29,7 +29,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     if (c != null) {
       _dniController.text = c.dni;
       _nombreController.text = c.nombreCompleto;
-      _correoController.text = c.correo;
+      _direccionController.text = c.direccion;
       _telefonoController.text = c.telefono;
       _activo = c.estado;
     }
@@ -39,7 +39,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
   void dispose() {
     _dniController.dispose();
     _nombreController.dispose();
-    _correoController.dispose();
+    _direccionController.dispose();
     _telefonoController.dispose();
     super.dispose();
   }
@@ -60,7 +60,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
         await repo.crear(
           dni: _dniController.text.trim(),
           nombreCompleto: nombre,
-          correo: _correoController.text.trim(),
+          direccion: _direccionController.text.trim(),
           telefono: _telefonoController.text.trim(),
           estado: _activo,
         );
@@ -69,7 +69,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
           id: widget.cliente!.id,
           dni: _dniController.text.trim(),
           nombreCompleto: nombre,
-          correo: _correoController.text.trim(),
+          direccion: _direccionController.text.trim(),
           telefono: _telefonoController.text.trim(),
           estado: _activo,
         );
@@ -180,9 +180,9 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
-                      controller: _correoController,
+                      controller: _direccionController,
                       style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Correo electrónico (opcional)'),
+                      decoration: _decoracion('Dirección (opcional)'),
                     ),
                     const SizedBox(height: 14),
                     TextField(

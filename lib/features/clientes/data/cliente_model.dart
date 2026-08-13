@@ -2,7 +2,7 @@ class ClienteModel {
   final String id;
   final String dni;
   final String nombreCompleto;
-  final String correo;
+  final String direccion;
   final String telefono;
   final bool estado;
 
@@ -10,7 +10,7 @@ class ClienteModel {
     required this.id,
     required this.dni,
     required this.nombreCompleto,
-    required this.correo,
+    required this.direccion,
     required this.telefono,
     required this.estado,
   });
@@ -20,11 +20,11 @@ class ClienteModel {
       id: id,
       dni: data['dni'] ?? '',
       nombreCompleto: data['nombreCompleto'] ?? '',
-      correo: data['correo'] ?? '',
+      direccion: data['direccion'] ?? '',
       telefono: data['telefono'] ?? '',
       estado: data['estado'] ?? true,
     );
   }
 
-  String get textoBusqueda => '$dni $nombreCompleto $correo $telefono';
+  String get textoBusqueda => '$dni $nombreCompleto $direccion $telefono';
 }

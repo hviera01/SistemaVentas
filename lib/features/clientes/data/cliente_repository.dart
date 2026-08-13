@@ -13,7 +13,7 @@ class ClienteRepository {
   Future<void> crear({
     required String dni,
     required String nombreCompleto,
-    required String correo,
+    required String direccion,
     required String telefono,
     required bool estado,
   }) async {
@@ -26,7 +26,7 @@ class ClienteRepository {
     await _col.add({
       'dni': dni,
       'nombreCompleto': nombreCompleto,
-      'correo': correo,
+      'direccion': direccion,
       'telefono': telefono,
       'estado': estado,
       'fechaRegistro': FieldValue.serverTimestamp(),
@@ -37,7 +37,7 @@ class ClienteRepository {
     required String id,
     required String dni,
     required String nombreCompleto,
-    required String correo,
+    required String direccion,
     required String telefono,
     required bool estado,
   }) async {
@@ -51,7 +51,7 @@ class ClienteRepository {
     await _col.doc(id).update({
       'dni': dni,
       'nombreCompleto': nombreCompleto,
-      'correo': correo,
+      'direccion': direccion,
       'telefono': telefono,
       'estado': estado,
     });

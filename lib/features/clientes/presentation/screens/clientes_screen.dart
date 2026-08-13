@@ -221,7 +221,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
-                hintText: 'Buscar por DNI, nombre, correo o teléfono...',
+                hintText: 'Buscar por DNI, nombre, dirección o teléfono...',
                 hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
                 border: InputBorder.none,
                 isDense: true,
@@ -239,7 +239,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
   Widget _tabla(List<ClienteModel> lista) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final mostrarCorreo = constraints.maxWidth >= 950;
+        final mostrarDireccion = constraints.maxWidth >= 950;
 
         return ListView.builder(
           itemCount: lista.length + 1,
@@ -253,7 +253,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   children: [
                     _celdaHeader('DNI', 2),
                     _celdaHeader('NOMBRE COMPLETO', 3),
-                    if (mostrarCorreo) _celdaHeader('CORREO', 3),
+                    if (mostrarDireccion) _celdaHeader('DIRECCIÓN', 3),
                     _celdaHeader('TELÉFONO', 2),
                     _celdaHeader('ESTADO', 1),
                     const SizedBox(width: 56),
@@ -275,7 +275,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                       children: [
                         _celda(2, cliente.dni.isEmpty ? '-' : cliente.dni, peso: FontWeight.w600),
                         _celda(3, cliente.nombreCompleto.isEmpty ? '-' : cliente.nombreCompleto),
-                        if (mostrarCorreo) _celda(3, cliente.correo.isEmpty ? '-' : cliente.correo, gris: true),
+                        if (mostrarDireccion) _celda(3, cliente.direccion.isEmpty ? '-' : cliente.direccion, gris: true),
                         _celda(2, cliente.telefono.isEmpty ? '-' : cliente.telefono, gris: true),
                         Expanded(flex: 1, child: _chipEstado(cliente.estado)),
                         SizedBox(width: 56, child: _celdaAcciones(cliente)),
@@ -376,7 +376,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   runSpacing: 8,
                   children: [
                     if (cliente.dni.isNotEmpty) _chipInfo('DNI', cliente.dni),
-                    if (cliente.correo.isNotEmpty) _chipInfo('Correo', cliente.correo),
+                    if (cliente.direccion.isNotEmpty) _chipInfo('Dirección', cliente.direccion),
                     if (cliente.telefono.isNotEmpty) _chipInfo('Teléfono', cliente.telefono),
                     _chipEstado(cliente.estado),
                   ],

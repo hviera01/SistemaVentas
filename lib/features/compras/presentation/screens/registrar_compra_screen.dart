@@ -454,6 +454,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return redondearMoneda(sinDescuento - (item.subtotal as double));
   }
 
+  // "Importe" de la fila se muestra BRUTO (cantidad × costo unitario, sin
+  // restarle el descuento de esa línea) a propósito, igual que en una
+  // factura de proveedor: el descuento de línea ya se ve aparte, en
+  // "Descuento" (ver _descuentoLineaMonto) y en el renglón "Descuentos y
+  // Rebajas" de los totales, no hace falta que también desaparezca del
+  // importe. item.subtotal (neto, usado para el ISV/Total a pagar reales y
+  // para lo que se guarda en Firestore) no cambia en ningún otro lado: esto
+  // es solo para este texto en pantalla.
+  double _importeBrutoItem(dynamic item) => redondearMoneda((item.precioCompra as double) * (item.cantidad as double));
+
   // ---------- Limpiar ----------
 
   void _limpiarTodo() {
@@ -1315,7 +1325,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true))),
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
               Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-              Expanded(flex: 2, child: Text(formatearMoneda(item.subtotal as double), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+              Expanded(flex: 2, child: Text(formatearMoneda(_importeBrutoItem(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
               SizedBox(
                 width: 40,
                 child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
@@ -1391,7 +1401,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Descuento: ${formatearMoneda(_descuentoLineaMonto(item))}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-              Text('Importe: ${formatearMoneda(item.subtotal as double)}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+              Text('Importe: ${formatearMoneda(_importeBrutoItem(item))}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
             ],
           ),
         ],
