@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,6 +65,20 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   static const _intervaloMaximoEscanerFisico = Duration(milliseconds: 45);
 
   bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
+  // Específicamente el navegador de un celular (no la app APK, no
+  // escritorio): ver _campoInlineNumero, donde hace que el teclado
+  // numérico en pantalla (el mismo diálogo que ya usa escritorio) se abra
+  // ahí también, en vez del teclado nativo del navegador.
+  bool get _esWebMovil => kIsWeb && _esPlataformaMovil;
+
+  // Nodo "ancla" sin campo de texto detrás, usado solo en web móvil para
+  // robarle el foco a un campo justo después de confirmar con el teclado
+  // numérico en pantalla (ver el mismo mecanismo, con la misma explicación,
+  // en RegistrarVentaScreen/_focusAnclaMovil): _focusCodigoBarras es un
+  // TextField de verdad, y aunque esté invisible, el navegador del celular
+  // le abre su teclado nativo apenas recibe foco.
+  final _focusAnclaMovil = FocusNode(debugLabel: 'ancla_teclado_web_movil');
 
   // true mientras Buscar Producto (con su propio campo de texto libre) está
   // abierto: pausa la detección del lector físico y el refoco automático
@@ -182,6 +196,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     }
     _ctrlCodigoBarras.dispose();
     _focusCodigoBarras.dispose();
+    _focusAnclaMovil.dispose();
     _noFacturaController.dispose();
     _descuentoGlobalController.dispose();
     _isvController.dispose();
@@ -499,7 +514,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     // el carrito cambia (ver _expandirTablaProductos).
     WidgetsBinding.instance.addPostFrameCallback((_) => _refrescarDialogoExpandido?.call(() {}));
 
-    return Container(
+    // Ver _focusAnclaMovil: este Focus envuelve toda la pantalla para que
+    // ese nodo (usado solo en web móvil) siempre tenga dónde vivir, sin
+    // interferir con el foco de los campos de adentro.
+    return Focus(
+      focusNode: _focusAnclaMovil,
+      canRequestFocus: true,
+      skipTraversal: true,
+      child: Container(
       color: const Color(0xFFF2F3F7),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -523,6 +545,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -1112,7 +1135,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // atado a los del primer build (que sería el bug si el listener capturara
   // esos parámetros directamente).
   Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
-    final esMovilPlataforma = _esPlataformaMovil;
+    // Antes esto agrupaba "Android/iOS" sin importar si era la app (APK) o
+    // el navegador del celular, y ambos se quedaban con el teclado nativo
+    // del sistema. Ahora solo la app nativa lo conserva: el navegador del
+    // celular (ver _esWebMovil) pasa a abrir el mismo teclado numérico en
+    // pantalla que ya usa escritorio (mismo arreglo que en
+    // RegistrarVentaScreen).
+    final esMovilNativo = !kIsWeb && _esPlataformaMovil;
 
     final focusNode = _focusInline.putIfAbsent(claveFoco, () {
       final node = FocusNode();
@@ -1128,8 +1157,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       if (valor == null) return;
       if ((valor - valorActual).abs() >= 0.005) alConfirmar(valor);
       if (dosDecimales) controlador.text = valor.toStringAsFixed(2);
-      if (esMovilPlataforma) {
+      if (esMovilNativo) {
         if (focusNode.hasFocus) focusNode.unfocus();
+      } else if (_esWebMovil) {
+        // En web móvil no puede ser _focusCodigoBarras (ver el comentario
+        // de _focusAnclaMovil): eso abriría el teclado nativo del celular.
+        _focusAnclaMovil.requestFocus();
       } else {
         // Igual que en RegistrarVentaScreen: pedirle el foco a otro campo
         // concreto (el de código de barras invisible) en vez de solo
@@ -1174,7 +1207,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     );
 
-    if (esMovilPlataforma) return campo;
+    if (esMovilNativo) return campo;
 
     // En escritorio, el clic debe abrir el teclado numérico de una vez, sin
     // que se alcance a ver el cursor de texto parpadeando primero (ver el
