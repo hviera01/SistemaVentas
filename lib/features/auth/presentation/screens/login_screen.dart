@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/face_id_storage.dart';
 import '../../../../core/utils/webauthn.dart';
+import '../../../../core/widgets/face_id_icon.dart';
 import '../../providers/auth_provider.dart';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio):
@@ -320,7 +321,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                 height: 26,
                                                 child: CircularProgressIndicator(strokeWidth: 2.4, color: Color(0xFF0F1B3D)),
                                               )
-                                            : const Icon(Icons.face_retouching_natural_outlined, size: 26, color: Color(0xFF0F1B3D)),
+                                            : const FaceIdIcon(size: 26, color: Color(0xFF0F1B3D)),
                                       ),
                                     ),
                                   ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/impresora_red_service.dart';
 import '../../../../core/utils/face_id_storage.dart';
 import '../../../../core/utils/webauthn.dart';
+import '../../../../core/widgets/face_id_icon.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../ventas/providers/ventas_provider.dart';
 import '../../data/negocio_model.dart';
@@ -877,7 +878,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _tituloSeccion('Face ID en este celular', Icons.face_retouching_natural_outlined),
+          Row(
+            children: [
+              const FaceIdIcon(size: 19, color: Color(0xFFC62828)),
+              const SizedBox(width: 8),
+              Text('Face ID en este celular', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+            ],
+          ),
           const SizedBox(height: 6),
           Text(
             'Activá Face ID en este celular para entrar a esta cuenta sin escribir código y contraseña cada vez. Es por celular y por cuenta: si otra persona usa este mismo teléfono, tiene que activar el suyo por separado.',
@@ -904,7 +911,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           else
             FilledButton.icon(
               onPressed: _procesandoFaceId ? null : _activarFaceId,
-              icon: const Icon(Icons.face_retouching_natural_outlined, size: 18),
+              icon: const FaceIdIcon(size: 18, color: Colors.white),
               label: Text('Activar Face ID', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
               style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
