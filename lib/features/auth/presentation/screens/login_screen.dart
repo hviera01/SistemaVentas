@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/webauthn.dart';
+import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import '../../providers/auth_provider.dart';
 
 // Claves de SharedPreferences donde queda el Face ID activado en este
@@ -76,7 +78,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // El login falló: el mensaje de error ya se muestra solo (ver
     // authState.error más abajo), acá no hay nada más que hacer.
     if (usuario == null) return;
+    // Le avisa al navegador que el usuario ya terminó de "llenar el
+    // formulario", que es la señal que usa para ofrecer guardar el usuario
+    // (código de acceso, ver autofillHints más abajo) y la contraseña en su
+    // gestor nativo (Guardacontraseñas de iOS, etc.) -sin esto, en una app
+    // sin un <form> real como esta, ese aviso puede no llegar nunca-.
+    TextInput.finishAutofillContext();
     if (_esWebMovil) await _ofrecerActivarFaceId(codigo: codigo, clave: clave);
+  }
+
+  // Abre el mismo teclado numérico en pantalla que ya se usa en Registrar
+  // Venta (cantidad/precio/descuento) para código de acceso y contraseña en
+  // web móvil: el teclado nativo del celular para un campo numérico no
+  // tiene tecla de "Enter/Listo" en la mayoría de navegadores (Safari
+  // incluido), así que sin esto no había forma de confirmar sin tocar
+  // además el botón "Ingresar" a mano.
+  Future<void> _abrirTecladoCodigo() async {
+    final texto = await showDialog<String>(
+      context: context,
+      builder: (context) => TecladoNumericoDialog(titulo: 'Código de acceso', valorInicial: _codigoController.text),
+    );
+    if (texto == null || !mounted) return;
+    setState(() => _codigoController.text = texto);
+  }
+
+  // Igual que _abrirTecladoCodigo, pero además: tocar "Listo" acá es la
+  // señal de "ya terminé de escribir todo" (código y contraseña), así que
+  // dispara el login solo, sin necesitar un toque más en "Ingresar".
+  Future<void> _abrirTecladoClave() async {
+    final texto = await showDialog<String>(
+      context: context,
+      builder: (context) => TecladoNumericoDialog(titulo: 'Contraseña', valorInicial: _claveController.text),
+    );
+    if (texto == null || !mounted) return;
+    setState(() => _claveController.text = texto);
+    if (_codigoController.text.trim().isNotEmpty) _iniciarSesion();
   }
 
   // Justo después de un login manual exitoso (nunca antes: recién ahí se
@@ -324,46 +360,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const SizedBox(height: 14),
                           ],
-                          TextField(
-                            controller: _codigoController,
-                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: InputDecoration(
-                              labelText: 'Código de acceso',
-                              labelStyle: GoogleFonts.poppins(fontSize: 13),
-                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                              filled: true,
-                              fillColor: const Color(0xFFE8EAF0),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          TextField(
-                            controller: _claveController,
-                            obscureText: _ocultarClave,
-                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            onSubmitted: (_) => _iniciarSesion(),
-                            decoration: InputDecoration(
-                              labelText: 'Contraseña',
-                              labelStyle: GoogleFonts.poppins(fontSize: 13),
-                              prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _ocultarClave ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                  size: 20,
+                          AutofillGroup(
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: _codigoController,
+                                  readOnly: _esWebMovil,
+                                  onTap: _esWebMovil ? _abrirTecladoCodigo : null,
+                                  keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
+                                  autofillHints: const [AutofillHints.username],
+                                  style: GoogleFonts.poppins(fontSize: 14),
+                                  decoration: InputDecoration(
+                                    labelText: 'Código de acceso',
+                                    labelStyle: GoogleFonts.poppins(fontSize: 13),
+                                    prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                                    filled: true,
+                                    fillColor: const Color(0xFFE8EAF0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
                                 ),
-                                onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFE8EAF0),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none,
-                              ),
+                                const SizedBox(height: 18),
+                                TextField(
+                                  controller: _claveController,
+                                  obscureText: _ocultarClave,
+                                  readOnly: _esWebMovil,
+                                  onTap: _esWebMovil ? _abrirTecladoClave : null,
+                                  keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
+                                  autofillHints: const [AutofillHints.password],
+                                  style: GoogleFonts.poppins(fontSize: 14),
+                                  onSubmitted: (_) => _iniciarSesion(),
+                                  decoration: InputDecoration(
+                                    labelText: 'Contraseña',
+                                    labelStyle: GoogleFonts.poppins(fontSize: 13),
+                                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _ocultarClave ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        size: 20,
+                                      ),
+                                      onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color(0xFFE8EAF0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (authState.error != null) ...[
