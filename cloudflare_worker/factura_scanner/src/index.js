@@ -31,8 +31,9 @@ Reglas para cada línea de producto (no incluyas totales, subtotales ni impuesto
 - nombre: la descripción tal como aparece impresa, sin inventar nada.
 - unidad: si hay una columna separada de unidad de medida (por ejemplo GLN, CUBETA, UND, CJA, LTS), ponela acá tal cual. Si no hay esa columna, null.
 - cantidad: la cantidad numérica de esa línea.
-- precioUnitario: el precio unitario (por unidad), no el subtotal de la línea.
-- descuentoPorcentaje: el % de descuento de esa línea si lo hay, si no, 0.
+- precioUnitario: el precio unitario ANTES de aplicar el descuento de esa línea (el precio de lista, tal como aparece impreso en la columna de precio). NUNCA restes el descuento del precio ni reportes un precio ya rebajado: el descuento va aparte, en descuentoPorcentaje.
+- descuentoPorcentaje: el % de descuento de esa línea si la factura tiene una columna de descuento/rebaja para esa línea (por ejemplo "Descuentos y rebajas otorgados"). Si no hay descuento, 0.
+- Verificación: cantidad × precioUnitario × (1 - descuentoPorcentaje/100) tiene que dar el total de esa línea tal como aparece impreso en la factura (columna "Total línea" o equivalente). Si no coincide, es señal de que pusiste el precio ya rebajado en vez del precio de lista: corregilo antes de responder.
 
 Si alguna foto es ilegible o falta un dato, usá null para ese campo en vez de inventar. No agregues texto fuera de la herramienta.`;
 

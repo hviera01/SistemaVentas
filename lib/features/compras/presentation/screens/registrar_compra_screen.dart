@@ -284,7 +284,17 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       if (resultado.idProveedor != null && resultado.documentoProveedor != null && resultado.razonSocialProveedor != null) {
         notifier.establecerProveedor(idProveedor: resultado.idProveedor!, documentoProveedor: resultado.documentoProveedor!, razonSocial: resultado.razonSocialProveedor!);
       }
-      if (resultado.noFactura.isNotEmpty) notifier.establecerNoFactura(resultado.noFactura);
+      // A diferencia de proveedor/fecha/condición (que la UI pinta leyendo
+      // directo de carrito.xxx en cada build), "No. Factura" se muestra con
+      // su propio TextEditingController -_noFacturaController-, que no se
+      // entera solo si el estado del carrito cambia desde otro lado que no
+      // sea el propio onChanged de ese campo. Sin este segundo asignamiento
+      // el número quedaba guardado en el carrito pero invisible en la
+      // pantalla (justo lo que se vio al escanear la factura de Lanco).
+      if (resultado.noFactura.isNotEmpty) {
+        _noFacturaController.text = resultado.noFactura;
+        notifier.establecerNoFactura(resultado.noFactura);
+      }
       notifier.establecerFecha(resultado.fecha);
       notifier.establecerCondicion(resultado.condicion);
       if (resultado.condicion == 'Credito' && resultado.fechaVencimiento != null) notifier.establecerFechaVencimiento(resultado.fechaVencimiento!);
