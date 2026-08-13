@@ -44,6 +44,20 @@ class CarritoCompraState {
 
   double get descuentoTotalMonto => redondearMoneda(_subtotalLineasSinDescuentoGlobal - subtotal);
 
+  /// Suma de los descuentos propios de cada línea (precio × cantidad, antes
+  /// de ese descuento, menos el subtotal ya rebajado de la línea) — para
+  /// mostrarlo como un renglón aparte en los totales ("Descuentos y
+  /// Rebajas", igual que lo muestran las facturas de los proveedores) en
+  /// vez de que cada descuento de línea solo se note escondido dentro del
+  /// importe de su propia fila. No es lo mismo que [descuentoTotalMonto]:
+  /// ese es solo el descuento GLOBAL (el campo aparte "Descuento global %"
+  /// de esta pantalla); acá se sabe cuánto se descontó línea por línea.
+  double get descuentoLineasMonto {
+    final bruto = items.fold<double>(0, (s, i) => s + redondearMoneda(i.precioCompra * i.cantidad));
+    final neto = items.fold<double>(0, (s, i) => s + i.subtotal);
+    return redondearMoneda(bruto - neto);
+  }
+
   double get impuesto => redondearMoneda(subtotal * isvPorcentaje / 100);
 
   double get totalAPagar => redondearMoneda(subtotal + impuesto + ajusteManual);

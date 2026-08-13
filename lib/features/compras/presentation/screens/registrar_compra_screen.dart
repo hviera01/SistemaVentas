@@ -1413,8 +1413,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             spacing: 24,
             runSpacing: 10,
             children: [
-              _filaTotalTexto('Subtotal', carrito.subtotal),
-              if (carrito.descuentoTotalMonto > 0) _filaTotalTexto('Descuento total', carrito.descuentoTotalMonto),
+              // "Subtotal" se muestra BRUTO (antes de los descuentos de
+              // línea y del descuento global) a propósito, para que el
+              // orden de esta tarjeta se lea igual que en una factura de
+              // proveedor: Subtotal → Descuentos y Rebajas → ISV → Total.
+              // carrito.subtotal (ya neto) no cambia en ningún otro lado -
+              // el ISV y el Total a pagar siguen calculándose sobre ese
+              // valor neto real, esto es solo para esta fila de texto-.
+              _filaTotalTexto('Subtotal', carrito.subtotal + carrito.descuentoLineasMonto + carrito.descuentoTotalMonto),
+              if (carrito.descuentoLineasMonto > 0) _filaTotalTexto('Descuentos y Rebajas', carrito.descuentoLineasMonto),
+              if (carrito.descuentoTotalMonto > 0) _filaTotalTexto('Descuento global', carrito.descuentoTotalMonto),
               _filaTotalTexto('ISV (${_formatoCantidad(carrito.isvPorcentaje)}%)', carrito.impuesto),
               if (carrito.ajusteManual != 0) _filaTotalTexto('Ajuste', carrito.ajusteManual),
             ],
