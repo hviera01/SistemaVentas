@@ -92,38 +92,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (prefs.getString(_prefsFaceIdCredencial) != null) return;
     if (!await webAuthnDisponible()) return;
     if (!mounted) return;
-    final activar = await showDialog<bool>(
+
+    // El pedido de Face ID (webAuthnRegistrar) se dispara DIRECTO desde el
+    // toque en "Activar", sin ningún await antes: Safari en iPhone exige
+    // que WebAuthn se pida dentro del mismo gesto del usuario (activación
+    // transitoria). Si se pidiera después de cerrar este diálogo y volver
+    // acá afuera, Safari lo rechaza en silencio -eso era lo que pasaba
+    // antes: se tocaba "Activar" y no pasaba nada-. Por eso el diálogo
+    // devuelve directamente el id del credencial (o null si canceló/falló)
+    // en vez de solo un bool.
+    final credencialId = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Activar Face ID', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
         content: Text(
           '¿Querés entrar más rápido la próxima vez usando Face ID en este celular? Vas a poder desactivarlo desde la pantalla de login cuando quieras.',
           style: GoogleFonts.poppins(fontSize: 13.5),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Ahora no')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Ahora no')),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () async {
+              try {
+                final id = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
+                if (dialogContext.mounted) Navigator.pop(dialogContext, id);
+                if (id == null && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No se pudo activar Face ID en este navegador')),
+                  );
+                }
+              } catch (e) {
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('No se pudo activar Face ID: $e')),
+                  );
+                }
+              }
+            },
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D)),
             child: const Text('Activar'),
           ),
         ],
       ),
     );
-    if (activar != true || !mounted) return;
+    if (credencialId == null || !mounted) return;
 
-    final credencialId = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
-    if (credencialId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo activar Face ID en este navegador')),
-        );
-      }
-      return;
-    }
     await prefs.setString(_prefsFaceIdCredencial, credencialId);
     await prefs.setString(_prefsFaceIdCodigo, base64Encode(utf8.encode(codigo)));
     await prefs.setString(_prefsFaceIdClave, base64Encode(utf8.encode(clave)));
+    setState(() => _credencialFaceId = credencialId);
   }
 
   Future<void> _entrarConFaceId() async {

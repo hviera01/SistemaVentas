@@ -41,53 +41,52 @@ Uint8List _bytesAleatorios(int cantidad) {
   return Uint8List.fromList(List.generate(cantidad, (_) => aleatorio.nextInt(256)));
 }
 
+// A diferencia de autenticadorPlataformaDisponible/verificarCredencial (que
+// tragan cualquier error y devuelven false/null, porque ahí un fallo debe
+// caer en silencio al login manual sin asustar al usuario en cada intento),
+// esta función deja que la excepción suba: LoginScreen la muestra en un
+// SnackBar, porque acá sí hace falta poder ver el motivo real (por ejemplo,
+// "NotAllowedError" de Safari) para diagnosticar por qué no se activó.
 Future<String?> registrarCredencial({required String usuarioId, required String usuarioNombre}) async {
-  try {
-    final credentials = _navigator.getProperty('credentials'.toJS) as JSObject?;
-    if (credentials == null) return null;
+  final credentials = _navigator.getProperty('credentials'.toJS) as JSObject?;
+  if (credentials == null) return null;
 
-    final rp = JSObject()..setProperty('name'.toJS, 'Super Color'.toJS);
+  final rp = JSObject()..setProperty('name'.toJS, 'Super Color'.toJS);
 
-    final user = JSObject()
-      ..setProperty('id'.toJS, _bytesAleatorios(16).toJS)
-      ..setProperty('name'.toJS, usuarioId.toJS)
-      ..setProperty('displayName'.toJS, usuarioNombre.toJS);
+  final user = JSObject()
+    ..setProperty('id'.toJS, _bytesAleatorios(16).toJS)
+    ..setProperty('name'.toJS, usuarioId.toJS)
+    ..setProperty('displayName'.toJS, usuarioNombre.toJS);
 
-    final parametroES256 = JSObject()
-      ..setProperty('type'.toJS, 'public-key'.toJS)
-      ..setProperty('alg'.toJS, (-7).toJS);
-    final parametroRS256 = JSObject()
-      ..setProperty('type'.toJS, 'public-key'.toJS)
-      ..setProperty('alg'.toJS, (-257).toJS);
+  final parametroES256 = JSObject()
+    ..setProperty('type'.toJS, 'public-key'.toJS)
+    ..setProperty('alg'.toJS, (-7).toJS);
+  final parametroRS256 = JSObject()
+    ..setProperty('type'.toJS, 'public-key'.toJS)
+    ..setProperty('alg'.toJS, (-257).toJS);
 
-    final seleccionAutenticador = JSObject()
-      ..setProperty('authenticatorAttachment'.toJS, 'platform'.toJS)
-      ..setProperty('userVerification'.toJS, 'required'.toJS)
-      ..setProperty('residentKey'.toJS, 'preferred'.toJS);
+  final seleccionAutenticador = JSObject()
+    ..setProperty('authenticatorAttachment'.toJS, 'platform'.toJS)
+    ..setProperty('userVerification'.toJS, 'required'.toJS)
+    ..setProperty('residentKey'.toJS, 'preferred'.toJS);
 
-    final publicKey = JSObject()
-      ..setProperty('challenge'.toJS, _bytesAleatorios(32).toJS)
-      ..setProperty('rp'.toJS, rp)
-      ..setProperty('user'.toJS, user)
-      ..setProperty('pubKeyCredParams'.toJS, [parametroES256, parametroRS256].toJS)
-      ..setProperty('authenticatorSelection'.toJS, seleccionAutenticador)
-      ..setProperty('timeout'.toJS, 60000.toJS)
-      ..setProperty('attestation'.toJS, 'none'.toJS);
+  final publicKey = JSObject()
+    ..setProperty('challenge'.toJS, _bytesAleatorios(32).toJS)
+    ..setProperty('rp'.toJS, rp)
+    ..setProperty('user'.toJS, user)
+    ..setProperty('pubKeyCredParams'.toJS, [parametroES256, parametroRS256].toJS)
+    ..setProperty('authenticatorSelection'.toJS, seleccionAutenticador)
+    ..setProperty('timeout'.toJS, 60000.toJS)
+    ..setProperty('attestation'.toJS, 'none'.toJS);
 
-    final opciones = JSObject()..setProperty('publicKey'.toJS, publicKey);
+  final opciones = JSObject()..setProperty('publicKey'.toJS, publicKey);
 
-    final promesa = credentials.callMethod('create'.toJS, opciones) as JSPromise<JSAny?>;
-    final credencial = await promesa.toDart as JSObject?;
-    if (credencial == null) return null;
+  final promesa = credentials.callMethod('create'.toJS, opciones) as JSPromise<JSAny?>;
+  final credencial = await promesa.toDart as JSObject?;
+  if (credencial == null) return null;
 
-    final rawId = credencial.getProperty('rawId'.toJS) as JSArrayBuffer;
-    return _base64UrlDesdeBuffer(rawId);
-  } catch (_) {
-    // El usuario canceló el diálogo de Face ID, el navegador no soporta
-    // WebAuthn, o cualquier otro motivo: no hay credencial, se cae de vuelta
-    // al login manual (ver LoginScreen).
-    return null;
-  }
+  final rawId = credencial.getProperty('rawId'.toJS) as JSArrayBuffer;
+  return _base64UrlDesdeBuffer(rawId);
 }
 
 Future<bool> verificarCredencial(String credencialIdBase64Url) async {
