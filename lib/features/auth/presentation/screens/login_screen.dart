@@ -97,8 +97,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _ofrecerActivarFaceId({required String codigo, required String clave}) async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getString(_prefsFaceIdCredencial) != null) return;
-    if (!await webAuthnDisponible()) return;
+    final disponible = await webAuthnDisponible();
     if (!mounted) return;
+    if (!disponible) {
+      // Antes esto se salía en silencio: quien probara desde un modo donde
+      // Face ID no está disponible (por ejemplo, la app agregada a Inicio
+      // en iPhone, que en algunas versiones de iOS restringe WebAuthn a
+      // Safari normal y no al modo "standalone") no tenía forma de saber
+      // por qué nunca le salió la pregunta de activarlo.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Face ID no está disponible en este modo/navegador')),
+      );
+      return;
+    }
 
     // El pedido de Face ID (webAuthnRegistrar) se dispara DIRECTO desde el
     // toque en "Activar", sin ningún await antes: Safari en iPhone exige
