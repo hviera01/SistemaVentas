@@ -1,27 +1,12 @@
-import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/utils/face_id_storage.dart';
 import '../../../../core/utils/webauthn.dart';
 import '../../providers/auth_provider.dart';
-
-// Claves de SharedPreferences donde queda el Face ID activado en este
-// navegador (ver _ofrecerActivarFaceId/_entrarConFaceId). El código y la
-// clave se guardan en base64 -no es cifrado real, solo evita que queden a
-// simple vista en el storage- porque esta app no usa Firebase Auth: el
-// login es código+clave contra Firestore (ver AuthRepository), así que no
-// hay forma de "pasar" un login ya hecho sin volver a mandar esos dos
-// datos. Quien lea el storage del navegador (por ejemplo con las
-// herramientas de desarrollador) puede recuperarlos igual: Face ID acá
-// evita que se vean tipeados cada vez, no reemplaza guardar algo sensible
-// en un dispositivo que no sea de confianza.
-const _prefsFaceIdCredencial = 'faceId_credencial';
-const _prefsFaceIdCodigo = 'faceId_codigo';
-const _prefsFaceIdClave = 'faceId_clave';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio):
 // ahí conviene el teclado numérico porque el código de acceso y la
@@ -55,8 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _cargarCredencialFaceId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final credencial = prefs.getString(_prefsFaceIdCredencial);
+    final credencial = await credencialFaceIdGuardada();
     if (mounted) setState(() => _credencialFaceId = credencial);
   }
 
@@ -83,83 +67,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // gestor nativo (Guardacontraseñas de iOS, etc.) -sin esto, en una app
     // sin un <form> real como esta, ese aviso puede no llegar nunca-.
     TextInput.finishAutofillContext();
-    if (_esWebMovil) await _ofrecerActivarFaceId(codigo: codigo, clave: clave);
-  }
-
-  // Justo después de un login manual exitoso (nunca antes: recién ahí se
-  // tiene la clave en texto plano a mano, ver el comentario grande sobre
-  // _prefsFaceIdCredencial), ofrece activar Face ID en este navegador si
-  // el celular lo soporta y todavía no está activado acá. AuthGate
-  // reemplaza esta pantalla por AppShell apenas cambia el estado de sesión,
-  // pero el diálogo se muestra con el Navigator raíz (showDialog por
-  // defecto), así que queda flotando por encima sin problema aunque la
-  // pantalla de fondo cambie mientras tanto.
-  Future<void> _ofrecerActivarFaceId({required String codigo, required String clave}) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (prefs.getString(_prefsFaceIdCredencial) != null) return;
-    final disponible = await webAuthnDisponible();
-    if (!mounted) return;
-    if (!disponible) {
-      // Antes esto se salía en silencio: quien probara desde un modo donde
-      // Face ID no está disponible (por ejemplo, la app agregada a Inicio
-      // en iPhone, que en algunas versiones de iOS restringe WebAuthn a
-      // Safari normal y no al modo "standalone") no tenía forma de saber
-      // por qué nunca le salió la pregunta de activarlo.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Face ID no está disponible en este modo/navegador')),
-      );
-      return;
-    }
-
-    // El pedido de Face ID (webAuthnRegistrar) se dispara DIRECTO desde el
-    // toque en "Activar", sin ningún await antes: Safari en iPhone exige
-    // que WebAuthn se pida dentro del mismo gesto del usuario (activación
-    // transitoria). Si se pidiera después de cerrar este diálogo y volver
-    // acá afuera, Safari lo rechaza en silencio -eso era lo que pasaba
-    // antes: se tocaba "Activar" y no pasaba nada-. Por eso el diálogo
-    // devuelve directamente el id del credencial (o null si canceló/falló)
-    // en vez de solo un bool.
-    final credencialId = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Activar Face ID', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text(
-          '¿Querés entrar más rápido la próxima vez usando Face ID en este celular? Vas a poder desactivarlo desde la pantalla de login cuando quieras.',
-          style: GoogleFonts.poppins(fontSize: 13.5),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Ahora no')),
-          FilledButton(
-            onPressed: () async {
-              try {
-                final id = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
-                if (dialogContext.mounted) Navigator.pop(dialogContext, id);
-                if (id == null && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No se pudo activar Face ID en este navegador')),
-                  );
-                }
-              } catch (e) {
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('No se pudo activar Face ID: $e')),
-                  );
-                }
-              }
-            },
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D)),
-            child: const Text('Activar'),
-          ),
-        ],
-      ),
-    );
-    if (credencialId == null || !mounted) return;
-
-    await prefs.setString(_prefsFaceIdCredencial, credencialId);
-    await prefs.setString(_prefsFaceIdCodigo, base64Encode(utf8.encode(codigo)));
-    await prefs.setString(_prefsFaceIdClave, base64Encode(utf8.encode(clave)));
-    setState(() => _credencialFaceId = credencialId);
+    // La activación de Face ID en sí ya NO se ofrece acá (ver Negocio >
+    // "Face ID en este celular"): justo después de un login exitoso,
+    // AuthGate reemplaza esta pantalla por AppShell casi de inmediato, y
+    // cualquier await de por medio (SharedPreferences, WebAuthn) le daba
+    // tiempo de sobra a esa transición para desmontar LoginScreen antes de
+    // llegar a mostrar nada -por eso a veces "no pasaba nada" al loguearse-.
+    // Negocio es una pantalla estable que no se cierra sola, así que ahí sí
+    // se puede activar con confianza.
   }
 
   Future<void> _entrarConFaceId() async {
@@ -169,14 +84,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final verificado = await webAuthnVerificar(credencial);
       if (!verificado) return;
-      final prefs = await SharedPreferences.getInstance();
-      final codigoGuardado = prefs.getString(_prefsFaceIdCodigo);
-      final claveGuardada = prefs.getString(_prefsFaceIdClave);
-      if (codigoGuardado == null || claveGuardada == null) return;
-      final codigo = utf8.decode(base64Decode(codigoGuardado));
-      final clave = utf8.decode(base64Decode(claveGuardada));
+      final credenciales = await credencialesLoginGuardadas();
+      if (credenciales == null) return;
       if (!mounted) return;
-      await ref.read(authProvider.notifier).login(codigo, clave);
+      await ref.read(authProvider.notifier).login(credenciales.codigo, credenciales.clave);
     } finally {
       if (mounted) setState(() => _verificandoFaceId = false);
     }
@@ -187,10 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // borra lo guardado en este navegador y vuelve a mostrar el formulario
   // normal de código+clave.
   Future<void> _olvidarFaceId() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_prefsFaceIdCredencial);
-    await prefs.remove(_prefsFaceIdCodigo);
-    await prefs.remove(_prefsFaceIdClave);
+    await olvidarCredencialesFaceId();
     if (mounted) setState(() => _credencialFaceId = null);
   }
 

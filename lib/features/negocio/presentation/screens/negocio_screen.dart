@@ -1,14 +1,23 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../../core/utils/face_id_storage.dart';
+import '../../../../core/utils/webauthn.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../../../ventas/providers/ventas_provider.dart';
 import '../../data/negocio_model.dart';
 import '../../providers/negocio_provider.dart';
 import '../widgets/negocio_logo_picker.dart';
 import '../widgets/selector_impresora.dart';
+
+// Específicamente el navegador de un celular (no la PC, no la app de
+// escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID que ya usa
+// LoginScreen para entrar más rápido.
+bool get _esWebMovil =>
+    kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
 class NegocioScreen extends ConsumerWidget {
   const NegocioScreen({super.key});
@@ -64,9 +73,24 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   bool _guardandoProximoFactura = false;
   String? _error;
 
+  // Face ID en este celular (ver _tarjetaFaceId): id (base64url) del
+  // credencial ya activado acá, o null si todavía no se activó. Se carga
+  // async porque SharedPreferences no es síncrono la primera vez.
+  String? _credencialFaceId;
+  bool _cargandoFaceId = true;
+  // El propio diálogo de _activarFaceId ya se bloquea solo mientras
+  // procesa (ver "procesando" ahí adentro); esto solo evita un segundo
+  // toque en el botón de la tarjeta mientras ese diálogo está abierto.
+  final _procesandoFaceId = false;
+
   @override
   void initState() {
     super.initState();
+    if (_esWebMovil) {
+      _cargarEstadoFaceId();
+    } else {
+      _cargandoFaceId = false;
+    }
     final m = widget.modelo;
     _nombreController.text = m.nombre;
     _correoController.text = m.correo;
@@ -83,6 +107,138 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     _ipRedController.text = m.impresoraRedIp;
     _puertoRedController.text = m.impresoraRedPuerto.toString();
     _cargarProximoFactura();
+  }
+
+  Future<void> _cargarEstadoFaceId() async {
+    final credencial = await credencialFaceIdGuardada();
+    if (mounted) setState(() { _credencialFaceId = credencial; _cargandoFaceId = false; });
+  }
+
+  // A diferencia del intento original en LoginScreen (donde se ofrecía
+  // activar Face ID justo después de loguearse, y a veces "no pasaba nada"
+  // porque AuthGate ya había reemplazado esa pantalla por AppShell antes de
+  // llegar a mostrar el diálogo), esta pantalla no se cierra sola: se puede
+  // activar acá con confianza en cualquier momento. Como Negocio no tiene a
+  // mano la clave en texto plano del usuario (nunca se guarda en ningún
+  // provider, por seguridad), este diálogo la vuelve a pedir y la valida de
+  // verdad contra Firestore (mismo AuthRepository.login que usa el login
+  // normal, con sus mismos bloqueos por intentos fallidos) antes de
+  // activar Face ID con esas credenciales.
+  Future<void> _activarFaceId() async {
+    final disponible = await webAuthnDisponible();
+    if (!mounted) return;
+    if (!disponible) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Face ID no está disponible en este modo/navegador')),
+      );
+      return;
+    }
+
+    final ctrlCodigo = TextEditingController();
+    final ctrlClave = TextEditingController();
+    // Declarado afuera del builder de StatefulBuilder a propósito: si
+    // viviera adentro, cada setDialogState() -que vuelve a correr todo el
+    // cuerpo del builder- lo reiniciaría a false, perdiendo el estado
+    // "procesando" justo cuando más importa (mientras se valida y se pide
+    // Face ID).
+    var procesando = false;
+    final credencialId = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: Text('Activar Face ID', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Confirmá el código de acceso y la contraseña que Face ID va a recordar en este celular.',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ctrlCodigo,
+                  autofocus: true,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Código de acceso',
+                    filled: true,
+                    fillColor: const Color(0xFFE8EAF0),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: ctrlClave,
+                  obscureText: true,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    filled: true,
+                    fillColor: const Color(0xFFE8EAF0),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: procesando ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: procesando
+                    ? null
+                    : () async {
+                        final codigo = ctrlCodigo.text.trim();
+                        final clave = ctrlClave.text.trim();
+                        if (codigo.isEmpty || clave.isEmpty) return;
+                        setDialogState(() => procesando = true);
+                        try {
+                          await ref.read(authRepositoryProvider).login(codigo, clave);
+                          // El pedido de Face ID se dispara DIRECTO acá,
+                          // sin ningún await de más antes: Safari en
+                          // iPhone exige que WebAuthn se pida dentro del
+                          // mismo gesto del usuario (activación
+                          // transitoria), y ya se gastó parte de esa
+                          // ventana en la validación de arriba.
+                          final id = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
+                          if (dialogContext.mounted) Navigator.pop(dialogContext, id);
+                        } catch (e) {
+                          setDialogState(() => procesando = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('No se pudo activar: $e')),
+                            );
+                          }
+                        }
+                      },
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D)),
+                child: procesando
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Activar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final codigo = ctrlCodigo.text.trim();
+    final clave = ctrlClave.text.trim();
+    ctrlCodigo.dispose();
+    ctrlClave.dispose();
+    if (credencialId == null || !mounted) return;
+
+    await guardarCredencialesFaceId(credencialId: credencialId, codigo: codigo, clave: clave);
+    if (!mounted) return;
+    setState(() => _credencialFaceId = credencialId);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Face ID activado en este celular')));
+  }
+
+  Future<void> _olvidarFaceId() async {
+    await olvidarCredencialesFaceId();
+    if (mounted) setState(() => _credencialFaceId = null);
   }
 
   Future<void> _cargarProximoFactura() async {
@@ -290,6 +446,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               SliverToBoxAdapter(child: _tarjetaImpresoras(esMovil)),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaFactura()),
+              if (_esWebMovil) ...[
+                SliverToBoxAdapter(child: const SizedBox(height: 18)),
+                SliverToBoxAdapter(child: _tarjetaFaceId()),
+              ],
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
             ],
           ),
@@ -706,6 +866,47 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   ),
                 ),
               ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tarjetaFaceId() {
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion('Face ID en este celular', Icons.face_retouching_natural_outlined),
+          const SizedBox(height: 6),
+          Text(
+            'Activá Face ID en este celular para entrar a esta cuenta sin escribir código y contraseña cada vez. Es por celular y por cuenta: si otra persona usa este mismo teléfono, tiene que activar el suyo por separado.',
+            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 16),
+          if (_cargandoFaceId)
+            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(strokeWidth: 2)))
+          else if (_credencialFaceId != null)
+            Row(
+              children: [
+                const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Face ID activo en este celular', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF16A34A))),
+                ),
+                OutlinedButton(
+                  onPressed: _olvidarFaceId,
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFF3B9B9)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: Text('Olvidar', style: GoogleFonts.poppins(fontSize: 13)),
+                ),
+              ],
+            )
+          else
+            FilledButton.icon(
+              onPressed: _procesandoFaceId ? null : _activarFaceId,
+              icon: const Icon(Icons.face_retouching_natural_outlined, size: 18),
+              label: Text('Activar Face ID', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
         ],
       ),
