@@ -1,9 +1,26 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/utils/webauthn.dart';
 import '../../providers/auth_provider.dart';
+
+// Claves de SharedPreferences donde queda el Face ID activado en este
+// navegador (ver _ofrecerActivarFaceId/_entrarConFaceId). El código y la
+// clave se guardan en base64 -no es cifrado real, solo evita que queden a
+// simple vista en el storage- porque esta app no usa Firebase Auth: el
+// login es código+clave contra Firestore (ver AuthRepository), así que no
+// hay forma de "pasar" un login ya hecho sin volver a mandar esos dos
+// datos. Quien lea el storage del navegador (por ejemplo con las
+// herramientas de desarrollador) puede recuperarlos igual: Face ID acá
+// evita que se vean tipeados cada vez, no reemplaza guardar algo sensible
+// en un dispositivo que no sea de confianza.
+const _prefsFaceIdCredencial = 'faceId_credencial';
+const _prefsFaceIdCodigo = 'faceId_codigo';
+const _prefsFaceIdClave = 'faceId_clave';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio):
 // ahí conviene el teclado numérico porque el código de acceso y la
@@ -24,6 +41,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _claveController = TextEditingController();
   bool _ocultarClave = true;
 
+  // Id (base64url) del credencial de Face ID/Touch ID ya activado en este
+  // navegador, o null si todavía no se activó acá. Se carga async en
+  // initState porque SharedPreferences no es síncrono la primera vez.
+  String? _credencialFaceId;
+  bool _verificandoFaceId = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_esWebMovil) _cargarCredencialFaceId();
+  }
+
+  Future<void> _cargarCredencialFaceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final credencial = prefs.getString(_prefsFaceIdCredencial);
+    if (mounted) setState(() => _credencialFaceId = credencial);
+  }
+
   @override
   void dispose() {
     _codigoController.dispose();
@@ -31,11 +66,96 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _iniciarSesion() {
+  Future<void> _iniciarSesion() async {
     final codigo = _codigoController.text.trim();
     final clave = _claveController.text.trim();
     if (codigo.isEmpty || clave.isEmpty) return;
-    ref.read(authProvider.notifier).login(codigo, clave);
+    await ref.read(authProvider.notifier).login(codigo, clave);
+    if (!mounted) return;
+    final usuario = ref.read(authProvider).usuario;
+    // El login falló: el mensaje de error ya se muestra solo (ver
+    // authState.error más abajo), acá no hay nada más que hacer.
+    if (usuario == null) return;
+    if (_esWebMovil) await _ofrecerActivarFaceId(codigo: codigo, clave: clave);
+  }
+
+  // Justo después de un login manual exitoso (nunca antes: recién ahí se
+  // tiene la clave en texto plano a mano, ver el comentario grande sobre
+  // _prefsFaceIdCredencial), ofrece activar Face ID en este navegador si
+  // el celular lo soporta y todavía no está activado acá. AuthGate
+  // reemplaza esta pantalla por AppShell apenas cambia el estado de sesión,
+  // pero el diálogo se muestra con el Navigator raíz (showDialog por
+  // defecto), así que queda flotando por encima sin problema aunque la
+  // pantalla de fondo cambie mientras tanto.
+  Future<void> _ofrecerActivarFaceId({required String codigo, required String clave}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString(_prefsFaceIdCredencial) != null) return;
+    if (!await webAuthnDisponible()) return;
+    if (!mounted) return;
+    final activar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Activar Face ID', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          '¿Querés entrar más rápido la próxima vez usando Face ID en este celular? Vas a poder desactivarlo desde la pantalla de login cuando quieras.',
+          style: GoogleFonts.poppins(fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Ahora no')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D)),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+    if (activar != true || !mounted) return;
+
+    final credencialId = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
+    if (credencialId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo activar Face ID en este navegador')),
+        );
+      }
+      return;
+    }
+    await prefs.setString(_prefsFaceIdCredencial, credencialId);
+    await prefs.setString(_prefsFaceIdCodigo, base64Encode(utf8.encode(codigo)));
+    await prefs.setString(_prefsFaceIdClave, base64Encode(utf8.encode(clave)));
+  }
+
+  Future<void> _entrarConFaceId() async {
+    final credencial = _credencialFaceId;
+    if (credencial == null || _verificandoFaceId) return;
+    setState(() => _verificandoFaceId = true);
+    try {
+      final verificado = await webAuthnVerificar(credencial);
+      if (!verificado) return;
+      final prefs = await SharedPreferences.getInstance();
+      final codigoGuardado = prefs.getString(_prefsFaceIdCodigo);
+      final claveGuardada = prefs.getString(_prefsFaceIdClave);
+      if (codigoGuardado == null || claveGuardada == null) return;
+      final codigo = utf8.decode(base64Decode(codigoGuardado));
+      final clave = utf8.decode(base64Decode(claveGuardada));
+      if (!mounted) return;
+      await ref.read(authProvider.notifier).login(codigo, clave);
+    } finally {
+      if (mounted) setState(() => _verificandoFaceId = false);
+    }
+  }
+
+  // Por si el celular no es el del usuario que activó Face ID acá antes (un
+  // celular compartido, por ejemplo), o simplemente ya no lo quiere más:
+  // borra lo guardado en este navegador y vuelve a mostrar el formulario
+  // normal de código+clave.
+  Future<void> _olvidarFaceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsFaceIdCredencial);
+    await prefs.remove(_prefsFaceIdCodigo);
+    await prefs.remove(_prefsFaceIdClave);
+    if (mounted) setState(() => _credencialFaceId = null);
   }
 
   @override
@@ -140,6 +260,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 34),
+                          if (_esWebMovil && _credencialFaceId != null) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: OutlinedButton.icon(
+                                onPressed: _verificandoFaceId ? null : _entrarConFaceId,
+                                icon: _verificandoFaceId
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF0F1B3D)),
+                                      )
+                                    : const Icon(Icons.face_retouching_natural_outlined, size: 22),
+                                label: Text(
+                                  'Entrar con Face ID',
+                                  style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w600),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF0F1B3D),
+                                  side: const BorderSide(color: Color(0xFF0F1B3D), width: 1.4),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _olvidarFaceId,
+                                child: Text(
+                                  '¿No sos vos? Olvidar Face ID',
+                                  style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.grey.shade300)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text('o', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+                                ),
+                                Expanded(child: Divider(color: Colors.grey.shade300)),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                          ],
                           TextField(
                             controller: _codigoController,
                             keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,

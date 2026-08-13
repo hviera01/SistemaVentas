@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,9 +90,24 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   // chica) detecta el sistema operativo real del equipo.
   bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
+  // Específicamente el navegador de un celular (no la PC, no la app de
+  // escritorio): ver el comentario en initState sobre por qué solo ahí se
+  // ordena por existencia de entrada.
+  bool get _esWebMovil => kIsWeb && _esPlataformaMovil;
+
   @override
   void initState() {
     super.initState();
+    // En web móvil se muestra primero el producto con más existencia por
+    // defecto: ayuda a elegir rápido en la pantalla chica, donde ni se ve
+    // la columna "Existencia" (ver _encabezadoTabla, solo en la tabla de
+    // escritorio) ni hay forma de tocarla para ordenar a mano. En
+    // escritorio se deja tal cual estaba: sin ordenar, en el orden que ya
+    // trae el stream (el cajero puede ordenar a mano tocando la columna).
+    if (_esWebMovil) {
+      _columnaOrden = 'existencia';
+      _ordenAscendente = false;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusBusqueda.requestFocus();
     });
