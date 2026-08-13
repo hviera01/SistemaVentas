@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/face_id_storage.dart';
@@ -62,12 +61,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // El login falló: el mensaje de error ya se muestra solo (ver
     // authState.error más abajo), acá no hay nada más que hacer.
     if (usuario == null) return;
-    // Le avisa al navegador que el usuario ya terminó de "llenar el
-    // formulario", que es la señal que usa para ofrecer guardar el usuario
-    // (código de acceso, ver autofillHints más abajo) y la contraseña en su
-    // gestor nativo (Guardacontraseñas de iOS, etc.) -sin esto, en una app
-    // sin un <form> real como esta, ese aviso puede no llegar nunca-.
-    TextInput.finishAutofillContext();
     // La activación de Face ID en sí ya NO se ofrece acá (ver Negocio >
     // "Face ID en este celular"): justo después de un login exitoso,
     // AuthGate reemplaza esta pantalla por AppShell casi de inmediato, y
@@ -205,54 +198,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 34),
-                          AutofillGroup(
-                            child: Column(
-                              children: [
-                                TextField(
-                                  controller: _codigoController,
-                                  keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
-                                  autofillHints: const [AutofillHints.username],
-                                  style: GoogleFonts.poppins(fontSize: 14),
-                                  decoration: InputDecoration(
-                                    labelText: 'Código de acceso',
-                                    labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                    prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                                    filled: true,
-                                    fillColor: const Color(0xFFE8EAF0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
+                          TextField(
+                            controller: _codigoController,
+                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              labelText: 'Código de acceso',
+                              labelStyle: GoogleFonts.poppins(fontSize: 13),
+                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                              filled: true,
+                              fillColor: const Color(0xFFE8EAF0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          TextField(
+                            controller: _claveController,
+                            obscureText: _ocultarClave,
+                            keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            onSubmitted: (_) => _iniciarSesion(),
+                            decoration: InputDecoration(
+                              labelText: 'Contraseña',
+                              labelStyle: GoogleFonts.poppins(fontSize: 13),
+                              prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _ocultarClave ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  size: 20,
                                 ),
-                                const SizedBox(height: 18),
-                                TextField(
-                                  controller: _claveController,
-                                  obscureText: _ocultarClave,
-                                  keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
-                                  autofillHints: const [AutofillHints.password],
-                                  style: GoogleFonts.poppins(fontSize: 14),
-                                  onSubmitted: (_) => _iniciarSesion(),
-                                  decoration: InputDecoration(
-                                    labelText: 'Contraseña',
-                                    labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _ocultarClave ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                        size: 20,
-                                      ),
-                                      onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFFE8EAF0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFE8EAF0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
                           ),
                           if (authState.error != null) ...[
