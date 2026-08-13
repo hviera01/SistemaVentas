@@ -18,6 +18,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import '../widgets/buscar_producto_compra_dialog.dart';
+import '../widgets/escanear_factura_dialog.dart';
 import 'detalle_compra_screen.dart';
 
 const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
@@ -261,6 +262,20 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       );
       if (producto == null || !mounted) return;
       ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(producto);
+    } finally {
+      _pausarLectorFisico = false;
+    }
+  }
+
+  // Solo web móvil (ver _esWebMovil): abre la pantalla de escanear factura
+  // con IA (ver EscanearFacturaDialog). No guarda nada sola, solo precarga
+  // líneas para que el cajero las revise.
+  Future<void> _escanearFactura() async {
+    _pausarLectorFisico = true;
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const EscanearFacturaDialog()),
+      );
     } finally {
       _pausarLectorFisico = false;
     }
@@ -913,6 +928,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                         ],
                       ],
                     ),
+                    if (_esWebMovil) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _escanearFactura,
+                          icon: const Icon(Icons.document_scanner_outlined, size: 17),
+                          label: Text('Escanear Factura (con foto)', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0F1B3D),
+                            side: const BorderSide(color: Color(0xFF0F1B3D)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 )
               : Row(

@@ -114,6 +114,31 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
     state = state.copyWith(items: [...state.items, item]);
   }
 
+  /// Agrega un producto ya emparejado desde el escaneo de factura (ver
+  /// EscanearFacturaDialog), con la cantidad/precio/descuento que se leyó
+  /// (y el cajero confirmó) en vez de los valores por defecto de
+  /// [agregarProductoDirecto]. [precioCompra] es el precio unitario tal
+  /// como viene en la factura del proveedor -sin ISV, como ya lo maneja
+  /// esta pantalla en cualquier otra fila-.
+  void agregarItemEscaneado({
+    required ProductoModel producto,
+    required double cantidad,
+    required double precioCompra,
+    required double descuentoPorcentaje,
+  }) {
+    final item = ItemCompraModel(
+      idProducto: producto.id,
+      idCategoria: producto.idCategoria,
+      nombreProducto: producto.nombre,
+      precioCompra: precioCompra,
+      cantidad: cantidad,
+      subtotal: _subtotalLinea(precioCompra, cantidad, descuentoPorcentaje),
+      descuentoPorcentaje: descuentoPorcentaje,
+      precioVentaNuevo: producto.precioVenta,
+    );
+    state = state.copyWith(items: [...state.items, item]);
+  }
+
   void quitarItem(int index) {
     final nuevos = [...state.items]..removeAt(index);
     state = state.copyWith(items: nuevos);
