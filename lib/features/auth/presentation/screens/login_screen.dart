@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/webauthn.dart';
-import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import '../../providers/auth_provider.dart';
 
 // Claves de SharedPreferences donde queda el Face ID activado en este
@@ -85,34 +84,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // sin un <form> real como esta, ese aviso puede no llegar nunca-.
     TextInput.finishAutofillContext();
     if (_esWebMovil) await _ofrecerActivarFaceId(codigo: codigo, clave: clave);
-  }
-
-  // Abre el mismo teclado numérico en pantalla que ya se usa en Registrar
-  // Venta (cantidad/precio/descuento) para código de acceso y contraseña en
-  // web móvil: el teclado nativo del celular para un campo numérico no
-  // tiene tecla de "Enter/Listo" en la mayoría de navegadores (Safari
-  // incluido), así que sin esto no había forma de confirmar sin tocar
-  // además el botón "Ingresar" a mano.
-  Future<void> _abrirTecladoCodigo() async {
-    final texto = await showDialog<String>(
-      context: context,
-      builder: (context) => TecladoNumericoDialog(titulo: 'Código de acceso', valorInicial: _codigoController.text),
-    );
-    if (texto == null || !mounted) return;
-    setState(() => _codigoController.text = texto);
-  }
-
-  // Igual que _abrirTecladoCodigo, pero además: tocar "Listo" acá es la
-  // señal de "ya terminé de escribir todo" (código y contraseña), así que
-  // dispara el login solo, sin necesitar un toque más en "Ingresar".
-  Future<void> _abrirTecladoClave() async {
-    final texto = await showDialog<String>(
-      context: context,
-      builder: (context) => TecladoNumericoDialog(titulo: 'Contraseña', valorInicial: _claveController.text),
-    );
-    if (texto == null || !mounted) return;
-    setState(() => _claveController.text = texto);
-    if (_codigoController.text.trim().isNotEmpty) _iniciarSesion();
   }
 
   // Justo después de un login manual exitoso (nunca antes: recién ahí se
@@ -314,59 +285,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 34),
-                          if (_esWebMovil && _credencialFaceId != null) ...[
-                            SizedBox(
-                              width: double.infinity,
-                              height: 54,
-                              child: OutlinedButton.icon(
-                                onPressed: _verificandoFaceId ? null : _entrarConFaceId,
-                                icon: _verificandoFaceId
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF0F1B3D)),
-                                      )
-                                    : const Icon(Icons.face_retouching_natural_outlined, size: 22),
-                                label: Text(
-                                  'Entrar con Face ID',
-                                  style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w600),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF0F1B3D),
-                                  side: const BorderSide(color: Color(0xFF0F1B3D), width: 1.4),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _olvidarFaceId,
-                                child: Text(
-                                  '¿No sos vos? Olvidar Face ID',
-                                  style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
-                                ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Text('o', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
-                                ),
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                          ],
                           AutofillGroup(
                             child: Column(
                               children: [
                                 TextField(
                                   controller: _codigoController,
-                                  readOnly: _esWebMovil,
-                                  onTap: _esWebMovil ? _abrirTecladoCodigo : null,
                                   keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
                                   autofillHints: const [AutofillHints.username],
                                   style: GoogleFonts.poppins(fontSize: 14),
@@ -386,8 +309,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 TextField(
                                   controller: _claveController,
                                   obscureText: _ocultarClave,
-                                  readOnly: _esWebMovil,
-                                  onTap: _esWebMovil ? _abrirTecladoClave : null,
                                   keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
                                   autofillHints: const [AutofillHints.password],
                                   style: GoogleFonts.poppins(fontSize: 14),
@@ -461,6 +382,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                             ),
                           ),
+                          if (_esWebMovil && _credencialFaceId != null) ...[
+                            const SizedBox(height: 22),
+                            Center(
+                              child: Column(
+                                children: [
+                                  Material(
+                                    color: const Color(0xFFE8EAF0),
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: _verificandoFaceId ? null : _entrarConFaceId,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: _verificandoFaceId
+                                            ? const SizedBox(
+                                                width: 26,
+                                                height: 26,
+                                                child: CircularProgressIndicator(strokeWidth: 2.4, color: Color(0xFF0F1B3D)),
+                                              )
+                                            : const Icon(Icons.face_retouching_natural_outlined, size: 26, color: Color(0xFF0F1B3D)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text('Entrar con Face ID', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                                  TextButton(
+                                    onPressed: _olvidarFaceId,
+                                    child: Text(
+                                      '¿No sos vos? Olvidar Face ID',
+                                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 20),
                           Text(
                             'SUPERCOLOR · La decisión correcta',
