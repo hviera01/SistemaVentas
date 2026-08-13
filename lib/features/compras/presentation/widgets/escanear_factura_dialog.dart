@@ -7,12 +7,49 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/factura_scanner_service.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../productos/data/producto_model.dart';
+import '../../../productos/presentation/widgets/producto_form_dialog.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../proveedores/data/proveedor_model.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
-import '../../providers/carrito_compra_provider.dart';
 import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import 'buscar_producto_compra_dialog.dart';
+
+/// Un producto de la factura ya emparejado con el inventario, listo para
+/// agregarse al carrito de compra tal cual lo devuelve este diálogo.
+class ItemCompraConfirmado {
+  final ProductoModel producto;
+  final double cantidad;
+  final double precioCompra;
+  final double descuentoPorcentaje;
+  ItemCompraConfirmado({required this.producto, required this.cantidad, required this.precioCompra, required this.descuentoPorcentaje});
+}
+
+/// Lo que EscanearFacturaDialog devuelve al cerrarse (ver el comentario en
+/// _confirmarTodo sobre por qué no modifica el carrito directamente): datos
+/// de encabezado ya revisados/corregidos por el cajero + las líneas a
+/// agregar. RegistrarCompraScreen es quien los aplica al carrito de esa
+/// pestaña específica.
+class DatosFacturaConfirmados {
+  final String? idProveedor;
+  final String? documentoProveedor;
+  final String? razonSocialProveedor;
+  final String noFactura;
+  final DateTime fecha;
+  final String condicion;
+  final DateTime? fechaVencimiento;
+  final List<ItemCompraConfirmado> items;
+
+  DatosFacturaConfirmados({
+    required this.idProveedor,
+    required this.documentoProveedor,
+    required this.razonSocialProveedor,
+    required this.noFactura,
+    required this.fecha,
+    required this.condicion,
+    required this.fechaVencimiento,
+    required this.items,
+  });
+}
 
 /// Escanea 1+ fotos de una misma factura de compra (con IA, ver
 /// FacturaScannerService) y precarga sus líneas -emparejadas con el
@@ -168,6 +205,24 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     setState(() => fila.producto = producto);
   }
 
+  // Para cuando la línea leída es de verdad un producto que todavía no
+  // existe en el inventario (no es que la búsqueda por código/nombre haya
+  // fallado, sino que el proveedor mandó algo nuevo): crea el producto de
+  // una vez, con el código y nombre ya precargados con lo que leyó la IA,
+  // en vez de mandar al cajero a Mantenedor > Inventario a mitad de cargar
+  // una factura.
+  Future<void> _crearProductoNuevo(_FilaEscaneada fila) async {
+    final producto = await showDialog<ProductoModel>(
+      context: context,
+      builder: (context) => ProductoFormDialog(
+        codigoInicial: fila.original.codigo,
+        nombreInicial: fila.original.nombre,
+      ),
+    );
+    if (producto == null || !mounted) return;
+    setState(() => fila.producto = producto);
+  }
+
   void _confirmarTodo() {
     final incluidas = _filas.where((f) => f.incluida).toList();
     if (incluidas.isEmpty) {
@@ -182,30 +237,42 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
       return;
     }
 
-    final notifier = ref.read(carritoCompraProvider.notifier);
+    String? documentoProveedor;
+    String? razonSocialProveedor;
     if (_proveedorIdMatch != null) {
       final proveedores = ref.read(proveedoresStreamProvider).value ?? [];
       final proveedor = proveedores.where((p) => p.id == _proveedorIdMatch).toList();
       if (proveedor.isNotEmpty) {
-        notifier.establecerProveedor(idProveedor: proveedor.first.id, documentoProveedor: proveedor.first.rtn, razonSocial: proveedor.first.razonSocial);
+        documentoProveedor = proveedor.first.rtn;
+        razonSocialProveedor = proveedor.first.razonSocial;
       }
     }
-    if (_ctrlNoFactura.text.trim().isNotEmpty) notifier.establecerNoFactura(_ctrlNoFactura.text.trim());
-    notifier.establecerFecha(_fecha);
-    notifier.establecerCondicion(_condicion);
-    if (_condicion == 'Credito' && _fechaVencimiento != null) notifier.establecerFechaVencimiento(_fechaVencimiento!);
 
-    for (final fila in incluidas) {
-      notifier.agregarItemEscaneado(
-        producto: fila.producto!,
-        cantidad: fila.cantidad,
-        precioCompra: fila.precioUnitario,
-        descuentoPorcentaje: fila.descuentoPorcentaje,
-      );
-    }
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Se agregaron ${incluidas.length} producto(s). Revisá la tabla antes de registrar la compra.')),
+    // Esta pantalla se abre con un Navigator.push normal, así que su
+    // subárbol queda FUERA del ProviderScope con el que pantalla_builder.dart
+    // aísla el carrito de cada pestaña de Registrar Compra (ver
+    // carritoCompraProvider.overrideWith ahí). Si acá adentro se llamara a
+    // ref.read(carritoCompraProvider.notifier)..., terminaría escribiendo en
+    // una instancia global distinta a la que la pestaña de verdad está
+    // mirando -la tabla se quedaba vacía después de "Agregar a la compra",
+    // aunque la lectura de la factura hubiera salido bien-. Por eso acá
+    // solo se arman los datos y se devuelven con Navigator.pop: quien los
+    // aplica al carrito es RegistrarCompraScreen, con su propio `ref` (ese
+    // sí, correctamente scopeado), mismo patrón que ya usa "Agregar
+    // Producto" con BuscarProductoCompraDialog.
+    Navigator.of(context).pop(
+      DatosFacturaConfirmados(
+        idProveedor: _proveedorIdMatch,
+        documentoProveedor: documentoProveedor,
+        razonSocialProveedor: razonSocialProveedor,
+        noFactura: _ctrlNoFactura.text.trim(),
+        fecha: _fecha,
+        condicion: _condicion,
+        fechaVencimiento: _condicion == 'Credito' ? _fechaVencimiento : null,
+        items: incluidas
+            .map((f) => ItemCompraConfirmado(producto: f.producto!, cantidad: f.cantidad, precioCompra: f.precioUnitario, descuentoPorcentaje: f.descuentoPorcentaje))
+            .toList(),
+      ),
     );
   }
 
@@ -553,17 +620,46 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               )
             else
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(color: const Color(0xFFFCE4E4), borderRadius: BorderRadius.circular(10)),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline, size: 14, color: Color(0xFFC62828)),
-                    const SizedBox(width: 6),
-                    Expanded(child: Text('Sin coincidencia en el inventario', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)))),
-                    TextButton(
-                      onPressed: () => _buscarManual(fila),
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-                      child: Text('Buscar', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    Row(
+                      children: [
+                        const Icon(Icons.error_outline, size: 14, color: Color(0xFFC62828)),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text('Sin coincidencia en el inventario', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)))),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _buscarManual(fila),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFC62828),
+                              side: const BorderSide(color: Color(0xFFC62828)),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              minimumSize: const Size(0, 0),
+                            ),
+                            child: Text('Buscar existente', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => _crearProductoNuevo(fila),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              minimumSize: const Size(0, 0),
+                            ),
+                            child: Text('Crear nuevo', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.white)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -14,7 +14,15 @@ import '../../../../core/widgets/imagen_producto_network.dart';
 class ProductoFormDialog extends ConsumerStatefulWidget {
   final ProductoModel? producto;
 
-  const ProductoFormDialog({super.key, this.producto});
+  // Precargan código/nombre al crear un producto NUEVO (producto == null);
+  // se ignoran si se está editando uno existente. Vienen de EscanearFactura
+  // (ver Registrar Compra > Escanear Factura, web móvil): cuando una línea
+  // leída de la factura no coincide con nada del inventario, evita que el
+  // cajero tenga que volver a tipear lo que la IA ya leyó bien.
+  final String? codigoInicial;
+  final String? nombreInicial;
+
+  const ProductoFormDialog({super.key, this.producto, this.codigoInicial, this.nombreInicial});
 
   @override
   ConsumerState<ProductoFormDialog> createState() => _ProductoFormDialogState();
@@ -71,6 +79,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       _idCategoria = p.idCategoria;
       _activo = p.estado;
       _imagenUrl = p.imagenUrl;
+    } else {
+      if (widget.codigoInicial != null) _codigoController.text = widget.codigoInicial!;
+      if (widget.nombreInicial != null) _nombreController.text = widget.nombreInicial!;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNombre.requestFocus();

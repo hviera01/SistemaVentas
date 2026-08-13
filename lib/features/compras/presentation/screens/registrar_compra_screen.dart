@@ -268,13 +268,31 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   }
 
   // Solo web móvil (ver _esWebMovil): abre la pantalla de escanear factura
-  // con IA (ver EscanearFacturaDialog). No guarda nada sola, solo precarga
-  // líneas para que el cajero las revise.
+  // con IA (ver EscanearFacturaDialog). Esa pantalla no toca el carrito
+  // ella misma -queda fuera del ProviderScope que aísla el carrito de esta
+  // pestaña, ver el comentario grande en su _confirmarTodo-, así que acá es
+  // donde se aplican los datos que devuelve, con el `ref` correcto.
   Future<void> _escanearFactura() async {
     _pausarLectorFisico = true;
     try {
-      await Navigator.of(context).push(
+      final resultado = await Navigator.of(context).push<DatosFacturaConfirmados>(
         MaterialPageRoute(fullscreenDialog: true, builder: (context) => const EscanearFacturaDialog()),
+      );
+      if (resultado == null || !mounted) return;
+
+      final notifier = ref.read(carritoCompraProvider.notifier);
+      if (resultado.idProveedor != null && resultado.documentoProveedor != null && resultado.razonSocialProveedor != null) {
+        notifier.establecerProveedor(idProveedor: resultado.idProveedor!, documentoProveedor: resultado.documentoProveedor!, razonSocial: resultado.razonSocialProveedor!);
+      }
+      if (resultado.noFactura.isNotEmpty) notifier.establecerNoFactura(resultado.noFactura);
+      notifier.establecerFecha(resultado.fecha);
+      notifier.establecerCondicion(resultado.condicion);
+      if (resultado.condicion == 'Credito' && resultado.fechaVencimiento != null) notifier.establecerFechaVencimiento(resultado.fechaVencimiento!);
+      for (final item in resultado.items) {
+        notifier.agregarItemEscaneado(producto: item.producto, cantidad: item.cantidad, precioCompra: item.precioCompra, descuentoPorcentaje: item.descuentoPorcentaje);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Se agregaron ${resultado.items.length} producto(s). Revisá la tabla antes de registrar la compra.')),
       );
     } finally {
       _pausarLectorFisico = false;
