@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, Tar
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import '../../../core/services/impresora_red_service.dart';
+import '../../../core/services/impresora_usb_windows_service.dart';
 import '../../../core/widgets/pdf_preview_dialog.dart';
+import '../presentation/widgets/ticket_escpos_preview.dart';
 import '../../negocio/data/negocio_model.dart';
 import 'presencia_impresion_repository.dart';
 import 'venta_export_service.dart';
@@ -46,6 +48,9 @@ class ImpresionPendienteService {
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
           generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato),
           impresora: impresora,
+          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio),
+          nombreImpresoraWindows: negocio.impresoraTermicaNombre,
+          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: false),
         ),
       );
       await ventaRepo.marcarPendienteImpresion(venta.id, false);
@@ -83,6 +88,23 @@ class ImpresionPendienteService {
     // Desktop (Windows/macOS/Linux).
     if (negocio.impresoraTermicaUrl.isEmpty) {
       mostrarMensaje('No hay impresora configurada');
+      return;
+    }
+    // Ver el mismo comentario en registrar_venta_screen.dart: en Windows se
+    // manda el ticket como ESC/POS crudo por USB en vez de como PDF, para no
+    // depender del tope de tamaño de página fijo que tienen algunos drivers.
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
+        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        if (ok) {
+          await ventaRepo.marcarPendienteImpresion(venta.id, false);
+        } else {
+          mostrarMensaje('No se pudo imprimir en la impresora configurada');
+        }
+      } catch (_) {
+        mostrarMensaje('No se pudo imprimir en la impresora configurada');
+      }
       return;
     }
     try {

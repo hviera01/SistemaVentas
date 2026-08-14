@@ -21,6 +21,7 @@ import '../../../../core/services/impresora_red_service.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/pantalla_builder.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
+import '../widgets/ticket_escpos_preview.dart';
 import '../../../ventas_credito/data/abono_model.dart';
 import '../../../ventas_credito/data/venta_credito_export_service.dart';
 import '../../../ventas_credito/providers/ventas_credito_provider.dart';
@@ -249,6 +250,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia),
           generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia, formatoImpresora: formato),
           impresora: impresora,
+          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio, forzarCopia: esCopia),
+          nombreImpresoraWindows: negocio.impresoraTermicaNombre,
+          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: esCopia),
         ),
       );
     } catch (e) {
@@ -258,13 +262,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     }
   }
 
-  // El ticket ESC/POS no distingue ORIGINAL/COPIA (esa elección solo existe
-  // en el PDF de escritorio): se manda el mismo ticket de siempre. Si esto
-  // falla y se termina pidiendo la impresión en vivo a la PC, ahí sí se
-  // respeta la elección (la PC imprime el PDF, que sí la soporta).
   Future<void> _reimprimirEscPosORemoto(VentaModel venta, NegocioModel negocio, bool esCopia) async {
     if (negocio.impresoraRedIp.isNotEmpty) {
-      final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
+      final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio, forzarCopia: esCopia);
       final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
       if (ok) {
         _mostrarMensaje('Ticket reimpreso');

@@ -377,18 +377,27 @@ class VentaExportService {
   // mostrarlo), pero al imprimir directo sin pasar por esa vista previa,
   // algunos drivers de impresora en Windows no manejan bien una altura
   // infinita y terminaban cortando el ticket a la mitad (palabras y cifras
-  // cortadas). Con MultiPage el contenido que no entra en una página sigue
-  // en la próxima automáticamente, así que nunca se recorta información sin
-  // importar por qué camino se mande a imprimir. El alto se calcula según lo
-  // que realmente va a imprimirse (ver _estimarAlturaTicketMm) en vez de un
-  // valor fijo enorme: con una altura fija muy por encima de lo real, la
-  // vista previa quedaba con un espacio en blanco gigante al final.
+  // cortadas).
+  //
+  // A propósito NO se usa un techo modesto que fuerce a las facturas largas
+  // a partirse en una página 2+: una factura, a diferencia de un traslado
+  // interno, es algo que se le entrega al cliente, y no se quiere que salga
+  // partida en dos pedazos de papel con corte en el medio. Por eso el alto
+  // se calcula lo más ajustado posible a lo que realmente va a imprimirse
+  // (ver _estimarAlturaTicketMm, que ahora sí considera nombres largos que
+  // se parten en varias líneas) y ese valor se manda tal cual, sin techo
+  // artificial -solo un tope de seguridad muy alto para no volver a caer en
+  // el caso "altura infinita" del párrafo de arriba-. Solo si una factura
+  // fuera excepcionalmente larga y llegara a tocar ese tope de seguridad,
+  // MultiPage la sigue en una página 2+ (con su propio "Página X de Y", ver
+  // el footer más abajo) — un caso extremo que no debería darse en el uso
+  // normal.
   pw.Page _construirPaginaTicket(VentaModel venta, NegocioModel negocio, pw.MemoryImage? logo, {required bool esCopia, double? anchoMm}) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final formatoDia = DateFormat('dd/MM/yyyy');
     const fSmall = 7.5;
     const fNormal = 8.0;
-    final alturaMm = _estimarAlturaTicketMm(venta, negocio, tieneLogo: logo != null);
+    final alturaMm = _estimarAlturaTicketMm(venta, negocio, tieneLogo: logo != null, anchoMm: anchoMm);
 
     // El total y el desglose de ISV siempre reflejan el monto real de la
     // venta; esto solo cambia cómo se ve el precio unitario y el importe de
@@ -425,6 +434,32 @@ class VentaExportService {
 
     return pw.MultiPage(
       pageFormat: PdfPageFormat(anchoPaginaMm * PdfPageFormat.mm, alturaMm * PdfPageFormat.mm, marginAll: margenMm * PdfPageFormat.mm),
+      // Mismo mecanismo que traslado_export_service.dart (Auto Frenos
+      // Oriente): "Página X de Y" solo aparece si de verdad hay más de una
+      // página (pagesCount se sabe recién en el segundo pase de MultiPage),
+      // así que el caso normal de una sola página no muestra nada de más.
+      footer: (context) {
+        if (context.pagesCount <= 1) return pw.SizedBox();
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 4),
+          child: pw.Center(
+            child: pw.Text('Página ${context.pageNumber} de ${context.pagesCount}', style: pw.TextStyle(fontSize: fSmall, fontWeight: pw.FontWeight.bold)),
+          ),
+        );
+      },
+      // En la página 2+ el encabezado completo del negocio no se repite
+      // (solo se imprime una vez, al principio); esto deja claro que la
+      // hoja es la continuación de la misma factura.
+      header: (context) {
+        if (context.pageNumber <= 1) return pw.SizedBox();
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 6),
+          child: pw.Text(
+            '${venta.tipoDocumento.toUpperCase()} ${negocio.rangoPrefijo}${venta.numeroDocumento} (continuación)',
+            style: pw.TextStyle(fontSize: fNormal, fontWeight: pw.FontWeight.bold),
+          ),
+        );
+      },
       build: (context) {
         return [
             // Ancho fijo (en vez de alto) para que se vea grande y nítido sin
@@ -551,7 +586,7 @@ class VentaExportService {
   // más: por larga que sea, la factura tiene que salir en una sola página).
   // Por eso el número base ya incluye un margen de sobra generoso: es mejor
   // que sobre un poco de papel en blanco al final a que se corte en dos.
-  double _estimarAlturaTicketMm(VentaModel venta, NegocioModel negocio, {required bool tieneLogo}) {
+  double _estimarAlturaTicketMm(VentaModel venta, NegocioModel negocio, {required bool tieneLogo, double? anchoMm}) {
     // Bloque fijo que siempre se imprime: tipo/fecha/atendido/condición,
     // cliente + id, encabezado de tabla, los 7 separadores entre secciones,
     // los 8 renglones de totales (incluye "Descuentos y rebajas"), "son:",
@@ -579,11 +614,37 @@ class VentaExportService {
     if (negocio.rangoPrefijo.isNotEmpty || negocio.rangoDesde.isNotEmpty) alto += 10.0;
     if (negocio.fechaLimiteEmision != null) alto += 6.0;
 
-    // Cada producto: nombre + renglón de cantidad/importe, con margen extra
-    // por si el nombre es largo y se parte en dos líneas.
-    alto += venta.detalle.length * 16.0;
+    // "Pago con tarjeta"/"Transferencia" son una sola línea (ya contadas en
+    // el bloque fijo), pero "Mixto" imprime un renglón por cada método
+    // usado -antes no se contaba nada acá, así que una venta con Efectivo +
+    // Tarjeta + Transferencia se quedaba corta exactamente en esas líneas-.
+    if (venta.metodoPago == 'Mixto') alto += venta.pagosMixtos.length * 6.0;
 
-    return alto;
+    // Cada producto: nombre (puede partirse en varias líneas si es largo,
+    // algo común en repuestos/ferretería) + el renglón de cantidad/importe.
+    // Antes esto sumaba un valor fijo por producto sin importar el largo del
+    // nombre, así que una factura con muchos productos de nombre largo
+    // (varias líneas cada uno) se quedaba corta y el ticket salía cortado en
+    // impresoras/drivers que no manejan bien una segunda página en el rollo
+    // continuo -ver el comentario grande más arriba-. Ahora se estima cuántas
+    // líneas ocupa cada nombre según el ancho real de la página, con un
+    // cálculo deliberadamente conservador (menos caracteres por línea de los
+    // que probablemente entran) para quedarse corto de papel en blanco antes
+    // que corto de contenido.
+    const margenMmEstimado = 9.0; // el mayor de los dos casos (ver más arriba)
+    final anchoUtilMm = (anchoMm ?? 80.0) - margenMmEstimado * 2;
+    final caracteresPorLinea = (anchoUtilMm / 1.7).floor().clamp(18, 60);
+    for (final item in venta.detalle) {
+      final lineasNombre = (item.nombreProducto.length / caracteresPorLinea).ceil().clamp(1, 8);
+      alto += lineasNombre * 3.6 + 7.0;
+    }
+
+    // Sin techo modesto acá a propósito (ver comentario grande en
+    // _construirPaginaTicket): una factura no se quiere partida en dos
+    // pedazos de papel salvo caso extremo. El único límite es de seguridad,
+    // para no repetir el problema de "altura infinita" con una factura
+    // absurdamente larga (miles de líneas).
+    return alto.clamp(0, 3000);
   }
 
   pw.Widget _separador() {

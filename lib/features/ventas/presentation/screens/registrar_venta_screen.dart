@@ -31,6 +31,7 @@ import '../../../promociones/providers/promociones_provider.dart';
 import '../../../promociones/presentation/widgets/promocion_detectada_dialog.dart';
 import '../../../promociones/presentation/widgets/promociones_vigentes_dialog.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../../core/services/impresora_usb_windows_service.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
@@ -46,6 +47,7 @@ import '../widgets/ventas_en_espera_dialog.dart';
 import '../widgets/ventas_pendientes_impresion_dialog.dart';
 import '../widgets/teclado_numerico_dialog.dart';
 import '../widgets/escanear_remoto_dialog.dart';
+import '../widgets/ticket_escpos_preview.dart';
 import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
 
@@ -1440,6 +1442,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
           generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato),
           impresora: impresora,
+          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio),
+          nombreImpresoraWindows: negocio.impresoraTermicaNombre,
+          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: false),
         ),
       );
       return;
@@ -1509,6 +1514,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // Desktop (Windows/macOS/Linux).
     if (negocio.impresoraTermicaUrl.isEmpty) {
       _mostrarMensaje('No hay impresora configurada, la venta se guardó sin imprimir');
+      return;
+    }
+    // En Windows se manda el ticket como ESC/POS crudo por USB en vez de
+    // como PDF: algunos drivers de impresora térmica tienen un tamaño de
+    // página máximo fijo (ver comentario grande en venta_export_service.dart)
+    // y recortan o reescalan cualquier factura más larga que eso sin
+    // importar qué le pidamos al PDF. Mismo mecanismo que ya usa la
+    // impresión por red/celular, que no tiene ese límite.
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
+        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        if (!ok) _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+      } catch (_) {
+        _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+      }
       return;
     }
     try {

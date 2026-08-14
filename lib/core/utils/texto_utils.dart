@@ -1,3 +1,22 @@
+// Para imprimir por ESC/POS (ver VentaTicketEscPosService y
+// TicketEscPosPreview): a diferencia de normalizarTexto (que además pone
+// todo en minúscula, pensado para comparar/buscar) esto conserva
+// mayúsculas/minúsculas tal cual -solo saca tildes, diéresis y signos de
+// apertura- porque muchas impresoras térmicas no tienen la página de
+// códigos correcta configurada para acentos y los imprimen mal (un
+// caracter random en vez de la letra, o corta la línea ahí).
+const _mapaTildesImpresion = {
+  'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n',
+  'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ü': 'U', 'Ñ': 'N',
+  '¡': '', '¿': '',
+};
+
+String quitarTildes(String texto) {
+  var resultado = texto;
+  _mapaTildesImpresion.forEach((k, v) => resultado = resultado.replaceAll(k, v));
+  return resultado;
+}
+
 String normalizarTexto(String texto) {
   final mapaAcentos = {
     'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n',

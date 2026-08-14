@@ -61,6 +61,8 @@ dependencies:
   qr_flutter: ^4.1.0
   http: ^1.2.2
   open_file: ^3.5.10
+  win32: ^5.15.0
+  ffi: ^2.2.0
 
 dev_dependencies:
   flutter_test:
