@@ -118,6 +118,13 @@ class ProductoRepository {
     required double precioVenta3,
     required bool estado,
     String imagenUrl = '',
+    // Solo se envían al editar un combo ya existente (ver
+    // ProductoFormDialog): el tipo de producto no se puede cambiar después
+    // de creado, pero la receta de componentes sí se puede seguir ajustando
+    // -agregar, quitar o cambiar cantidades- desde la misma pantalla de
+    // edición.
+    bool? esCombo,
+    List<ComponenteProductoModel>? componentes,
   }) async {
     final codigoFinal = codigo.trim().isEmpty ? _generarCodigo() : codigo.trim();
     final existe = await _col.where('codigo', isEqualTo: codigoFinal).limit(2).get();
@@ -125,7 +132,7 @@ class ProductoRepository {
     if (duplicado) {
       throw Exception('Ya existe un producto con ese código');
     }
-    await _col.doc(id).update({
+    final datos = {
       'codigo': codigoFinal,
       'codigoBarras': codigoBarras.trim(),
       'nombre': nombre.trim(),
@@ -137,7 +144,10 @@ class ProductoRepository {
       'precioVenta3': precioVenta3,
       'estado': estado,
       'imagenUrl': imagenUrl,
-    });
+    };
+    if (esCombo != null) datos['esCombo'] = esCombo;
+    if (componentes != null) datos['componentes'] = componentes.map((c) => c.toMap()).toList();
+    await _col.doc(id).update(datos);
   }
 
   Future<void> eliminar(String id) async {

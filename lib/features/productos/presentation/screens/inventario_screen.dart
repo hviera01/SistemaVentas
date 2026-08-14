@@ -101,12 +101,13 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // Doble tap/doble clic en un producto (tabla o tarjeta): una card de solo
   // lectura con toda su info, para consultar rápido -por ejemplo, un precio
   // o el código de barras- sin tener que abrir el formulario de edición.
-  void _verDetalle(ProductoModel producto, Map<String, String> mapaCategorias) {
+  void _verDetalle(ProductoModel producto, Map<String, String> mapaCategorias, Map<String, ProductoModel> mapaProductos) {
     showDialog(
       context: context,
       builder: (context) => DetalleProductoDialog(
         producto: producto,
         categoria: mapaCategorias[producto.idCategoria] ?? '-',
+        mapaProductos: mapaProductos,
       ),
     );
   }
@@ -335,9 +336,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     });
   }
 
-  List<ProductoModel> _ordenarLista(List<ProductoModel> lista) {
+  List<ProductoModel> _ordenarLista(List<ProductoModel> lista, Map<String, ProductoModel> mapaProductos) {
     if (_columnaOrden == null) return lista;
     final copia = [...lista];
+    double existencia(ProductoModel p) => p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
     copia.sort((a, b) {
       int comparacion;
       switch (_columnaOrden) {
@@ -348,7 +350,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           comparacion = a.nombre.compareTo(b.nombre);
           break;
         case 'existencia':
-          comparacion = a.stock.compareTo(b.stock);
+          comparacion = existencia(a).compareTo(existencia(b));
           break;
         case 'precioVenta':
           comparacion = a.precioVenta.compareTo(b.precioVenta);
@@ -640,9 +642,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 ),
                 child: productosAsync.when(
                   data: (productos) {
+                    final mapaProductos = {for (final p in productos) p.id: p};
                     var lista = productos;
                     if (vista == 'bajo') {
-                      lista = lista.where((p) => p.stock < 3).toList();
+                      lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
                     }
                     if (busqueda.isNotEmpty) {
                       lista = _busquedaPorCodigoBarras
@@ -662,7 +665,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     } else if (vista == 'filtrados') {
                       lista = [];
                     }
-                    lista = _ordenarLista(lista);
+                    lista = _ordenarLista(lista, mapaProductos);
                     _listaActual = lista;
 
                     if (lista.isEmpty) {
@@ -694,8 +697,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                       focusNode: _focusNode,
                       onKeyEvent: _manejarTeclado,
                       child: esMovil
-                          ? _tarjetas(lista, mapaCategorias)
-                          : _tabla(lista, mapaCategorias),
+                          ? _tarjetas(lista, mapaCategorias, mapaProductos)
+                          : _tabla(lista, mapaCategorias, mapaProductos),
                     );
                   },
                   loading: () => const Center(
@@ -734,7 +737,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _tabla(List<ProductoModel> lista, Map<String, String> mapaCategorias) {
+  Widget _tabla(List<ProductoModel> lista, Map<String, String> mapaCategorias, Map<String, ProductoModel> mapaProductos) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final ancho = constraints.maxWidth;
@@ -800,7 +803,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final producto = lista[index];
-                  final bajoStock = producto.stock < 3;
+                  final existencia = producto.esCombo ? producto.stockDisponibleCombo(mapaProductos) : producto.stock;
+                  final bajoStock = existencia < 3;
                   final seleccionada = _filaSeleccionada == producto.id;
 
                   return InkWell(
@@ -812,7 +816,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                             : producto.id,
                       );
                     },
-                    onDoubleTap: () => _verDetalle(producto, mapaCategorias),
+                    onDoubleTap: () => _verDetalle(producto, mapaCategorias, mapaProductos),
                     child: Container(
                       color: seleccionada
                           ? const Color(0xFFFBEAEA)
@@ -912,7 +916,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  producto.stock.toString(),
+                                  existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2),
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
@@ -994,6 +998,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   Widget _tarjetas(
     List<ProductoModel> lista,
     Map<String, String> mapaCategorias,
+    Map<String, ProductoModel> mapaProductos,
   ) {
     return Column(
       children: [
@@ -1005,7 +1010,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final p = lista[index];
-              final bajoStock = p.stock < 3;
+              final existencia = p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+              final bajoStock = existencia < 3;
               final seleccionada = _filaSeleccionada == p.id;
               return InkWell(
                 borderRadius: BorderRadius.circular(16),
@@ -1015,7 +1021,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     () => _filaSeleccionada = seleccionada ? null : p.id,
                   );
                 },
-                onDoubleTap: () => _verDetalle(p, mapaCategorias),
+                onDoubleTap: () => _verDetalle(p, mapaCategorias, mapaProductos),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -1036,13 +1042,28 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Text(
-                              p.nombre,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1A1A1A),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (p.esCombo)
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(6)),
+                                    child: Text(
+                                      'COMBO',
+                                      style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF6A1B9A)),
+                                    ),
+                                  ),
+                                Text(
+                                  p.nombre,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           _celdaAccionesMovil(p),
@@ -1080,7 +1101,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'Existencia: ${p.stock}',
+                              'Existencia: ${existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,

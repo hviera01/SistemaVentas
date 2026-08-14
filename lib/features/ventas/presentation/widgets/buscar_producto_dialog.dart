@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../productos/presentation/widgets/producto_form_dialog.dart';
+import '../../../productos/presentation/widgets/detalle_producto_dialog.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../promociones/data/promocion_model.dart';
 import '../../../promociones/providers/promociones_provider.dart';
@@ -286,6 +287,17 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
 
   void _verFoto(ProductoModel p) {
     showDialog(context: context, builder: (context) => ImagenZoomDialog(url: p.imagenUrl));
+  }
+
+  void _verComponentes(ProductoModel p, Map<String, String> mapaCategorias, Map<String, ProductoModel> mapaProductos) {
+    showDialog(
+      context: context,
+      builder: (context) => DetalleProductoDialog(
+        producto: p,
+        categoria: mapaCategorias[p.idCategoria] ?? '-',
+        mapaProductos: mapaProductos,
+      ),
+    );
   }
 
   Future<void> _escanear() async {
@@ -700,6 +712,15 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   ),
                 ),
               ),
+              if (p.esCombo)
+                SizedBox(
+                  width: 40,
+                  child: IconButton(
+                    tooltip: 'Ver qué incluye',
+                    icon: const Icon(Icons.list_alt_outlined, size: 18, color: Color(0xFF6A1B9A)),
+                    onPressed: () => _verComponentes(p, mapaCategorias, mapaProductos),
+                  ),
+                ),
               SizedBox(
                 width: 40,
                 child: IconButton(
@@ -786,6 +807,12 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                       tooltip: 'Ver foto',
                       icon: const Icon(Icons.photo_outlined, size: 18, color: Color(0xFFC62828)),
                       onPressed: () => _verFoto(p),
+                    ),
+                  if (p.esCombo)
+                    IconButton(
+                      tooltip: 'Ver qué incluye',
+                      icon: const Icon(Icons.list_alt_outlined, size: 18, color: Color(0xFF6A1B9A)),
+                      onPressed: () => _verComponentes(p, mapaCategorias, mapaProductos),
                     ),
                   IconButton(
                     tooltip: 'Editar producto',

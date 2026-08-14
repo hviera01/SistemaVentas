@@ -13,11 +13,16 @@ import '../../../../core/widgets/imagen_producto_network.dart';
 class DetalleProductoDialog extends StatelessWidget {
   final ProductoModel producto;
   final String categoria;
+  // Solo hace falta cuando producto.esCombo: para resolver el nombre y el
+  // stock actual de cada componente de la receta (que solo guarda
+  // id+cantidad, ver ComponenteProductoModel).
+  final Map<String, ProductoModel>? mapaProductos;
 
   const DetalleProductoDialog({
     super.key,
     required this.producto,
     required this.categoria,
+    this.mapaProductos,
   });
 
   @override
@@ -31,7 +36,7 @@ class DetalleProductoDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.all(20),
       child: Container(
         width: anchoDialog,
-        constraints: const BoxConstraints(maxHeight: 560),
+        constraints: const BoxConstraints(maxHeight: 640),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -93,14 +98,14 @@ class DetalleProductoDialog extends StatelessWidget {
                     ),
                     _fila('Categoría', categoria),
                     _fila(
-                      'Existencia',
-                      producto.stock.toStringAsFixed(
-                        producto.stock == producto.stock.roundToDouble()
-                            ? 0
-                            : 2,
-                      ),
+                      producto.esCombo ? 'Existencia (calculada)' : 'Existencia',
+                      _formatearCantidad(_existenciaMostrada),
                     ),
                     const Divider(height: 28),
+                    if (producto.esCombo) ...[
+                      _seccionComponentes(),
+                      const Divider(height: 28),
+                    ],
                     _fila(
                       'Precio venta',
                       formatearMoneda(producto.precioVenta),
@@ -128,6 +133,49 @@ class DetalleProductoDialog extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  double get _existenciaMostrada => producto.esCombo ? producto.stockDisponibleCombo(mapaProductos ?? const {}) : producto.stock;
+
+  String _formatearCantidad(double c) => c.toStringAsFixed(c == c.roundToDouble() ? 0 : 2);
+
+  Widget _seccionComponentes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Compuesto por',
+          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 8),
+        ...producto.componentes.map((c) {
+          final productoComponente = mapaProductos?[c.idProducto];
+          final nombre = productoComponente?.nombre ?? '(producto ya no existe)';
+          final stockComponente = productoComponente?.stock;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(nombre, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A))),
+                ),
+                Text(
+                  'x${_formatearCantidad(c.cantidad)}',
+                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFFC62828)),
+                ),
+                if (stockComponente != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    '(hay ${_formatearCantidad(stockComponente)})',
+                    style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 

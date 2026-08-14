@@ -70,6 +70,11 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
   bool _esCombo = false;
   final List<_ComponenteEnConstruccion> _componentesCombo = [];
   final _busquedaComponenteController = TextEditingController();
+  // Al editar un combo ya existente, su lista de componentes (guardada como
+  // solo id+cantidad) recién se puede armar en pantalla cuando el stream de
+  // productos trae los datos completos (nombre, precioCompra) de cada uno;
+  // esta bandera evita repetir esa carga en cada rebuild.
+  bool _componentesInicializados = false;
 
   double get _costoSumadoCombo {
     var total = 0.0;
@@ -106,6 +111,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       _idCategoria = p.idCategoria;
       _activo = p.estado;
       _imagenUrl = p.imagenUrl;
+      _esCombo = p.esCombo;
     } else {
       if (widget.codigoInicial != null) _codigoController.text = widget.codigoInicial!;
       if (widget.nombreInicial != null) _nombreController.text = widget.nombreInicial!;
@@ -195,10 +201,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       _error = null;
     });
     final repo = ref.read(productoRepositoryProvider);
+    final componentes = _esCombo
+        ? _componentesCombo.map((c) => ComponenteProductoModel(idProducto: c.producto.id, cantidad: double.tryParse(c.cantidadController.text.trim()) ?? 0)).toList()
+        : const <ComponenteProductoModel>[];
     if (widget.producto == null) {
-      final componentes = _componentesCombo
-          .map((c) => ComponenteProductoModel(idProducto: c.producto.id, cantidad: double.tryParse(c.cantidadController.text.trim()) ?? 0))
-          .toList();
       final creado = await ejecutarConReintento(
         context,
         () => repo
@@ -240,12 +246,14 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
               nombre: nombre,
               descripcion: _descripcionController.text,
               idCategoria: _idCategoria!,
-              precioCompra: _parseDouble(_precioCompraController.text),
+              precioCompra: _esCombo ? _costoSumadoCombo : _parseDouble(_precioCompraController.text),
               precioVenta: _parseDouble(_precioVentaController.text),
               precioVenta2: _parseDouble(_precioVenta2Controller.text),
               precioVenta3: _parseDouble(_precioVenta3Controller.text),
               estado: _activo,
               imagenUrl: _imagenUrl,
+              esCombo: _esCombo ? true : null,
+              componentes: _esCombo ? componentes : null,
             )
             .timeout(const Duration(seconds: 12));
         return true;
@@ -310,6 +318,24 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 540;
     final anchoDialog = esMovil ? tamano.width - 48 : 480.0;
+
+    // Al editar un combo ya existente, arma _componentesCombo a partir de la
+    // receta guardada (solo id+cantidad) apenas el stream de productos trae
+    // los datos completos de cada componente. Una sola vez por apertura del
+    // diálogo (ver _componentesInicializados).
+    if (!_componentesInicializados && editando && widget.producto!.esCombo) {
+      final productosDisponibles = ref.watch(productosStreamProvider).value;
+      if (productosDisponibles != null) {
+        final mapaProductos = {for (final p in productosDisponibles) p.id: p};
+        for (final c in widget.producto!.componentes) {
+          final productoComponente = mapaProductos[c.idProducto];
+          if (productoComponente != null) {
+            _componentesCombo.add(_ComponenteEnConstruccion(producto: productoComponente, cantidad: c.cantidad));
+          }
+        }
+        _componentesInicializados = true;
+      }
+    }
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -437,7 +463,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                         ),
                       ),
                     ],
-                    if (_esCombo && !editando) ...[
+                    if (_esCombo) ...[
                       const SizedBox(height: 14),
                       _armadorCombo(),
                       const SizedBox(height: 14),
