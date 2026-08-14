@@ -1,3 +1,41 @@
+/// Receta congelada de un componente de combo al momento de vender: guarda
+/// una copia de los datos del producto individual usados para descontar
+/// stock, para que anular la venta después siga sabiendo qué reponer aunque
+/// el combo se haya editado (o borrado) mientras tanto.
+class ComponenteComboSnapshot {
+  final String idProducto;
+  final String idCategoria;
+  final String nombreProducto;
+  final double cantidad;
+  final double precioCompraUsado;
+
+  ComponenteComboSnapshot({
+    required this.idProducto,
+    required this.idCategoria,
+    required this.nombreProducto,
+    required this.cantidad,
+    required this.precioCompraUsado,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'idProducto': idProducto,
+    'idCategoria': idCategoria,
+    'nombreProducto': nombreProducto,
+    'cantidad': cantidad,
+    'precioCompraUsado': precioCompraUsado,
+  };
+
+  factory ComponenteComboSnapshot.fromMap(Map<String, dynamic> data) {
+    return ComponenteComboSnapshot(
+      idProducto: data['idProducto'] ?? '',
+      idCategoria: data['idCategoria'] ?? '',
+      nombreProducto: data['nombreProducto'] ?? '',
+      cantidad: (data['cantidad'] ?? 0).toDouble(),
+      precioCompraUsado: (data['precioCompraUsado'] ?? 0).toDouble(),
+    );
+  }
+}
+
 class ItemVentaModel {
   final String idProducto;
   final String idCategoria;
@@ -8,6 +46,7 @@ class ItemVentaModel {
   final double precioCompraUsado;
   final bool reembasado;
   final double descuentoPorcentaje;
+  final List<ComponenteComboSnapshot> componentes;
 
   ItemVentaModel({
     required this.idProducto,
@@ -19,7 +58,10 @@ class ItemVentaModel {
     required this.precioCompraUsado,
     this.reembasado = false,
     this.descuentoPorcentaje = 0,
+    this.componentes = const [],
   });
+
+  bool get esCombo => componentes.isNotEmpty;
 
   factory ItemVentaModel.fromMap(Map<String, dynamic> data) {
     return ItemVentaModel(
@@ -32,6 +74,9 @@ class ItemVentaModel {
       precioCompraUsado: (data['precioCompraUsado'] ?? 0).toDouble(),
       reembasado: data['reembasado'] ?? false,
       descuentoPorcentaje: (data['descuentoPorcentaje'] ?? 0).toDouble(),
+      componentes: (data['componentes'] as List<dynamic>? ?? [])
+          .map((c) => ComponenteComboSnapshot.fromMap(Map<String, dynamic>.from(c)))
+          .toList(),
     );
   }
 
@@ -46,6 +91,7 @@ class ItemVentaModel {
       'precioCompraUsado': precioCompraUsado,
       'reembasado': reembasado,
       'descuentoPorcentaje': descuentoPorcentaje,
+      'componentes': componentes.map((c) => c.toMap()).toList(),
     };
   }
 
@@ -56,6 +102,7 @@ class ItemVentaModel {
     double? subtotal,
     double? descuentoPorcentaje,
     double? precioCompraUsado,
+    List<ComponenteComboSnapshot>? componentes,
   }) {
     return ItemVentaModel(
       idProducto: idProducto,
@@ -67,6 +114,7 @@ class ItemVentaModel {
       precioCompraUsado: precioCompraUsado ?? this.precioCompraUsado,
       reembasado: reembasado,
       descuentoPorcentaje: descuentoPorcentaje ?? this.descuentoPorcentaje,
+      componentes: componentes ?? this.componentes,
     );
   }
 }

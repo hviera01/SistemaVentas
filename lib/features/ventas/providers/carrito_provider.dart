@@ -184,6 +184,36 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     state = state.copyWith(items: [...state.items, item]);
   }
 
+  /// Agrega un producto tipo combo/kit directamente a la tabla, en una sola
+  /// línea. La receta de componentes se congela (snapshot) en el momento de
+  /// agregarlo -no se resuelve de nuevo después- para que anular la venta
+  /// más adelante siga sabiendo qué reponer aunque el combo se edite.
+  void agregarComboDirecto(ProductoModel combo, {required Map<String, ProductoModel> mapaProductos, double? precioSeleccionado}) {
+    final precioConIsv = precioSeleccionado ?? combo.precioVenta;
+    final precioSinIsv = precioConIsv / 1.15;
+    final componentesSnapshot = combo.componentes.map((c) {
+      final productoComponente = mapaProductos[c.idProducto];
+      return ComponenteComboSnapshot(
+        idProducto: c.idProducto,
+        idCategoria: productoComponente?.idCategoria ?? '',
+        nombreProducto: productoComponente?.nombre ?? '',
+        cantidad: c.cantidad,
+        precioCompraUsado: productoComponente?.precioCompra ?? 0,
+      );
+    }).toList();
+    final item = ItemVentaModel(
+      idProducto: combo.id,
+      idCategoria: combo.idCategoria,
+      nombreProducto: combo.nombre,
+      precioVenta: precioSinIsv,
+      cantidad: 1,
+      subtotal: _subtotalLinea(precioSinIsv, 1, 0),
+      precioCompraUsado: combo.precioCompra,
+      componentes: componentesSnapshot,
+    );
+    state = state.copyWith(items: [...state.items, item]);
+  }
+
   void quitarItem(int index) {
     final nuevos = [...state.items]..removeAt(index);
     state = state.copyWith(items: nuevos);
@@ -215,6 +245,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       precioCompraUsado: actual.precioCompraUsado,
       reembasado: reembasado ?? actual.reembasado,
       descuentoPorcentaje: nuevoDescuento,
+      componentes: actual.componentes,
     );
     state = state.copyWith(items: nuevos);
   }
@@ -299,6 +330,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
                 subtotal: item.subtotal,
                 precioCompraUsado: item.precioCompraUsado,
                 descuentoPorcentaje: item.descuentoPorcentaje,
+                componentes: item.componentes,
               ))
           .toList(),
       tipoDocumento: (forzarFactura && venta.tipoDocumento == 'Cotizacion') ? 'Factura' : venta.tipoDocumento,

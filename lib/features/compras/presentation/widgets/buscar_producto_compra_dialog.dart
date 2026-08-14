@@ -70,7 +70,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     }
     _productosCacheados = productos;
     _busquedaFiltroCacheada = _busquedaAplicada;
-    return productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
+    return productos.where((p) => p.estado && !p.esCombo && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
   }
 
   void _moverSeleccion(int delta) {
@@ -131,7 +131,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     });
     if (texto.isEmpty) return;
     final productos = ref.read(productosStreamProvider).value ?? [];
-    final coincidencias = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, texto)).toList();
+    final coincidencias = productos.where((p) => p.estado && !p.esCombo && coincideFuzzy(p.textoBusqueda, texto)).toList();
     if (coincidencias.length == 1) {
       _confirmarSeleccion(coincidencias.first);
     }

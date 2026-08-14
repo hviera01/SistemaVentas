@@ -173,7 +173,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   // "SUPRA SATIN ACCENT") solo si hay UN único candidato razonable: con más
   // de uno, mejor dejarlo sin emparejar que arriesgar a elegir el
   // incorrecto -el cajero lo resuelve a mano con "Buscar"-.
-  ProductoModel? _buscarProductoCoincidente(LineaFacturaEscaneada item, List<ProductoModel> productos) {
+  // Un combo nunca se compra directo (solo sus componentes, por separado),
+  // así que una línea leída de una factura nunca debería emparejar con uno.
+  ProductoModel? _buscarProductoCoincidente(LineaFacturaEscaneada item, List<ProductoModel> productosConCombos) {
+    final productos = productosConCombos.where((p) => !p.esCombo).toList();
     final codigo = item.codigo?.trim();
     if (codigo != null && codigo.isNotEmpty) {
       final porCodigo = productos.where((p) => p.codigo.trim().toLowerCase() == codigo.toLowerCase()).toList();

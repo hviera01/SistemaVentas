@@ -841,15 +841,31 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                           ),
                           _celdaTabla(
                             flex: 24,
-                            child: Text(
-                              producto.nombre,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1A1A1A),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (producto.esCombo)
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(6)),
+                                    child: Text(
+                                      'COMBO',
+                                      style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF6A1B9A)),
+                                    ),
+                                  ),
+                                Text(
+                                  producto.nombre,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (mostrarDescripcion)
@@ -1309,7 +1325,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         elevation: 8,
         position: PopupMenuPosition.under,
         onSelected: (valor) => _manejarAccion(valor, producto),
-        itemBuilder: (context) => _opcionesMenu(),
+        itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
       ),
     );
   }
@@ -1332,7 +1348,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       elevation: 8,
       position: PopupMenuPosition.under,
       onSelected: (valor) => _manejarAccion(valor, producto),
-      itemBuilder: (context) => _opcionesMenu(),
+      itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
     );
   }
 
@@ -1362,18 +1378,22 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     }
   }
 
-  List<PopupMenuEntry<String>> _opcionesMenu() {
+  List<PopupMenuEntry<String>> _opcionesMenu({bool esCombo = false}) {
     return [
       _opcionMenu(
         valor: 'editar',
         icono: Icons.edit_outlined,
         texto: 'Editar producto',
       ),
-      _opcionMenu(
-        valor: 'ajustar',
-        icono: Icons.tune,
-        texto: 'Ajustar existencia',
-      ),
+      // Un combo no tiene existencia propia real (siempre 0): un ajuste
+      // manual accidental rompería la premisa de que no aporta a la
+      // valorización de inventario, así que ni se ofrece la opción.
+      if (!esCombo)
+        _opcionMenu(
+          valor: 'ajustar',
+          icono: Icons.tune,
+          texto: 'Ajustar existencia',
+        ),
       const PopupMenuDivider(),
       _opcionMenu(
         valor: 'historial_stock',

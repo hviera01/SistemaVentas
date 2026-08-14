@@ -11,6 +11,15 @@ import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
 
+/// Un componente agregado a la receta de un combo mientras se está armando
+/// en el formulario (antes de guardar). [cantidad] vive en un controller
+/// propio para poder editarse con teclado numérico normal, línea por línea.
+class _ComponenteEnConstruccion {
+  final ProductoModel producto;
+  final TextEditingController cantidadController;
+  _ComponenteEnConstruccion({required this.producto, double cantidad = 1}) : cantidadController = TextEditingController(text: cantidad == cantidad.roundToDouble() ? cantidad.toInt().toString() : cantidad.toString());
+}
+
 class ProductoFormDialog extends ConsumerStatefulWidget {
   final ProductoModel? producto;
 
@@ -51,6 +60,24 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
   bool _mostrarNivelesExtra = false;
   bool _guardando = false;
   String? _error;
+
+  // Combo/Kit: solo se puede activar al crear (no se cambia el tipo de un
+  // producto ya existente). Reemplaza "Existencia inicial" + "Precio Compra"
+  // por un armador de receta: cada componente es un producto individual ya
+  // existente (no otro combo) con la cantidad que lleva cada unidad del
+  // combo. El costo se recalcula solo, en vivo, sumando cantidad×precioCompra
+  // de cada componente.
+  bool _esCombo = false;
+  final List<_ComponenteEnConstruccion> _componentesCombo = [];
+  final _busquedaComponenteController = TextEditingController();
+
+  double get _costoSumadoCombo {
+    var total = 0.0;
+    for (final c in _componentesCombo) {
+      total += c.producto.precioCompra * (double.tryParse(c.cantidadController.text.trim()) ?? 0);
+    }
+    return total;
+  }
 
   // Foto del producto: se sube a Cloudinary apenas se elige (no recién al
   // guardar), así el usuario ve enseguida si la subida falló en vez de
@@ -100,6 +127,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     _precioVenta2Controller.dispose();
     _precioVenta3Controller.dispose();
     _focusNombre.dispose();
+    _busquedaComponenteController.dispose();
+    for (final c in _componentesCombo) {
+      c.cantidadController.dispose();
+    }
     super.dispose();
   }
 
@@ -151,12 +182,23 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       setState(() => _error = 'Seleccioná una categoría');
       return;
     }
+    if (_esCombo && _componentesCombo.isEmpty) {
+      setState(() => _error = 'Agregá al menos un componente al combo');
+      return;
+    }
+    if (_esCombo && _componentesCombo.any((c) => (double.tryParse(c.cantidadController.text.trim()) ?? 0) <= 0)) {
+      setState(() => _error = 'Todas las cantidades de los componentes deben ser mayores a 0');
+      return;
+    }
     setState(() {
       _guardando = true;
       _error = null;
     });
     final repo = ref.read(productoRepositoryProvider);
     if (widget.producto == null) {
+      final componentes = _componentesCombo
+          .map((c) => ComponenteProductoModel(idProducto: c.producto.id, cantidad: double.tryParse(c.cantidadController.text.trim()) ?? 0))
+          .toList();
       final creado = await ejecutarConReintento(
         context,
         () => repo
@@ -166,13 +208,15 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
               nombre: nombre,
               descripcion: _descripcionController.text,
               idCategoria: _idCategoria!,
-              stock: _parseDouble(_stockController.text),
-              precioCompra: _parseDouble(_precioCompraController.text),
+              stock: _esCombo ? 0 : _parseDouble(_stockController.text),
+              precioCompra: _esCombo ? _costoSumadoCombo : _parseDouble(_precioCompraController.text),
               precioVenta: _parseDouble(_precioVentaController.text),
               precioVenta2: _parseDouble(_precioVenta2Controller.text),
               precioVenta3: _parseDouble(_precioVenta3Controller.text),
               estado: _activo,
               imagenUrl: _imagenUrl,
+              esCombo: _esCombo,
+              componentes: componentes,
             )
             .timeout(const Duration(seconds: 12)),
       );
@@ -371,29 +415,72 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       loading: () => const LinearProgressIndicator(),
                       error: (e, st) => Text('Error cargando categorías', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
                     ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _stockController,
-                            enabled: !editando,
-                            keyboardType: TextInputType.number,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion(editando ? 'Existencia (ajustar abajo)' : 'Existencia inicial'),
-                          ),
+                    if (!editando) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Es un combo/kit',
+                                style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+                              ),
+                            ),
+                            Switch(
+                              value: _esCombo,
+                              activeColor: const Color(0xFF16A34A),
+                              onChanged: (v) => setState(() => _esCombo = v),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _precioCompraController,
-                            keyboardType: TextInputType.number,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Precio Compra'),
-                          ),
+                      ),
+                    ],
+                    if (_esCombo && !editando) ...[
+                      const SizedBox(height: 14),
+                      _armadorCombo(),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10)),
+                        child: Row(
+                          children: [
+                            Text('Costo sumado', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade700)),
+                            const Spacer(),
+                            Text(
+                              'L. ${_costoSumadoCombo.toStringAsFixed(2)}',
+                              style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _stockController,
+                              enabled: !editando,
+                              keyboardType: TextInputType.number,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion(editando ? 'Existencia (ajustar abajo)' : 'Existencia inicial'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _precioCompraController,
+                              keyboardType: TextInputType.number,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Precio Compra'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     TextField(
                       controller: _precioVentaController,
@@ -509,6 +596,82 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _armadorCombo() {
+    final productos = ref.watch(productosStreamProvider).value ?? const <ProductoModel>[];
+    final idsYaAgregados = _componentesCombo.map((c) => c.producto.id).toSet();
+    final filtro = _busquedaComponenteController.text.trim().toLowerCase();
+    final resultados = filtro.isEmpty
+        ? const <ProductoModel>[]
+        : productos.where((p) => !p.esCombo && !idsYaAgregados.contains(p.id) && p.textoBusqueda.toLowerCase().contains(filtro)).take(6).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Componentes del combo', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _busquedaComponenteController,
+          style: GoogleFonts.poppins(fontSize: 14),
+          decoration: _decoracion('Buscar producto para agregar...').copyWith(prefixIcon: const Icon(Icons.search, size: 20)),
+          onChanged: (_) => setState(() {}),
+        ),
+        if (resultados.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: resultados.map((p) {
+                return ListTile(
+                  dense: true,
+                  title: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 13)),
+                  subtitle: Text('Cód. ${p.codigo} · Existencia ${p.stock.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                  trailing: const Icon(Icons.add_circle_outline, color: Color(0xFFC62828)),
+                  onTap: () {
+                    setState(() {
+                      _componentesCombo.add(_ComponenteEnConstruccion(producto: p));
+                      _busquedaComponenteController.clear();
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        if (_componentesCombo.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          ..._componentesCombo.map((c) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(c.producto.nombre, style: GoogleFonts.poppins(fontSize: 13)),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 70,
+                    child: TextField(
+                      controller: c.cantidadController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(fontSize: 13),
+                      decoration: _decoracion('Cant.'),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFC62828)),
+                    onPressed: () => setState(() => _componentesCombo.remove(c)),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 

@@ -42,6 +42,8 @@ class ProductoRepository {
     required double precioVenta3,
     required bool estado,
     String imagenUrl = '',
+    bool esCombo = false,
+    List<ComponenteProductoModel> componentes = const [],
   }) async {
     var codigoFinal = codigo.trim();
     if (codigoFinal.isEmpty) {
@@ -65,6 +67,8 @@ class ProductoRepository {
       'precioVenta3': precioVenta3,
       'estado': estado,
       'imagenUrl': imagenUrl,
+      'esCombo': esCombo,
+      'componentes': componentes.map((c) => c.toMap()).toList(),
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
     // Si el producto se crea con existencia inicial, esa cantidad también
@@ -96,6 +100,8 @@ class ProductoRepository {
       precioVenta3: precioVenta3,
       estado: estado,
       imagenUrl: imagenUrl,
+      esCombo: esCombo,
+      componentes: componentes,
     );
   }
 
@@ -148,6 +154,7 @@ class ProductoRepository {
     final productosSnap = await _col.get();
     final idPorCodigo = <String, String>{};
     for (final d in productosSnap.docs) {
+      if (d.data()['esCombo'] == true) continue;
       final codigo = (d.data()['codigo'] as String? ?? '').trim().toLowerCase();
       if (codigo.isNotEmpty) idPorCodigo[codigo] = d.id;
     }

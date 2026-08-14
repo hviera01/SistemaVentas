@@ -535,6 +535,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // hay que ofrecer reembasado por falta de existencia, o agregar directo.
   Future<void> _procesarProductoSeleccionado(ProductoConPrecio resultado) async {
     final producto = resultado.producto;
+    // Un combo/kit siempre tiene stock == 0 por diseño (no tiene existencia
+    // propia, se arma de otros productos) — sin este branch, cada venta de
+    // combo entraría al flujo de "sin existencia" y ofrecería Reembasado por
+    // error. Se agrega directo, con la receta de componentes ya resuelta.
+    if (producto.esCombo) {
+      final mapaProductos = {for (final p in ref.read(productosStreamProvider).value ?? const <ProductoModel>[]) p.id: p};
+      ref.read(carritoVentaProvider.notifier).agregarComboDirecto(producto, mapaProductos: mapaProductos, precioSeleccionado: resultado.precio);
+      return;
+    }
     final carrito = ref.read(carritoVentaProvider);
     final sinExistencia = producto.stock <= 0 && _categoriaControlaStock(producto.idCategoria);
 

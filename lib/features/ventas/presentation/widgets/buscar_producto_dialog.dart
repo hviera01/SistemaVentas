@@ -67,6 +67,10 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   // ya trae el stream.
   String? _columnaOrden;
   bool _ordenAscendente = true;
+  // Sección "Combos" separada de "Productos" (ver _selectorSeccion): un
+  // combo no tiene existencia propia real, así que se filtran y se listan
+  // aparte para no mezclarlos con el catálogo normal.
+  bool _verCombos = false;
 
   // Cachea el resultado del filtro/orden: sin esto, cada setState (por
   // ejemplo, solo resaltar una fila al hacer clic o mover la selección con
@@ -78,6 +82,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   bool? _exactaFiltroCacheada;
   String? _columnaOrdenCacheada;
   bool? _ordenAscendenteCacheado;
+  bool? _verCombosCacheado;
 
   // Una GlobalKey por fila visible (indexada por posición en _listaActual)
   // para poder pedirle a la lista que haga scroll hasta la fila resaltada al
@@ -121,12 +126,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     super.dispose();
   }
 
-  List<ProductoModel> _filtrar(List<ProductoModel> productos) {
+  List<ProductoModel> _filtrar(List<ProductoModel> productos, Map<String, ProductoModel> mapaProductos) {
     if (identical(productos, _productosCacheados) &&
         _busquedaFiltroCacheada == _busquedaAplicada &&
         _exactaFiltroCacheada == _busquedaExacta &&
         _columnaOrdenCacheada == _columnaOrden &&
-        _ordenAscendenteCacheado == _ordenAscendente) {
+        _ordenAscendenteCacheado == _ordenAscendente &&
+        _verCombosCacheado == _verCombos) {
       return _listaActual;
     }
     _productosCacheados = productos;
@@ -134,9 +140,11 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     _exactaFiltroCacheada = _busquedaExacta;
     _columnaOrdenCacheada = _columnaOrden;
     _ordenAscendenteCacheado = _ordenAscendente;
-    final lista = productos.where((p) => p.estado && _coincide(p, _busquedaAplicada)).toList();
+    _verCombosCacheado = _verCombos;
+    final lista = productos.where((p) => p.estado && p.esCombo == _verCombos && _coincide(p, _busquedaAplicada)).toList();
     if (_columnaOrden == 'existencia') {
-      lista.sort((a, b) => _ordenAscendente ? a.stock.compareTo(b.stock) : b.stock.compareTo(a.stock));
+      double existencia(ProductoModel p) => _verCombos ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+      lista.sort((a, b) => _ordenAscendente ? existencia(a).compareTo(existencia(b)) : existencia(b).compareTo(existencia(a)));
     }
     return lista;
   }
@@ -368,6 +376,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                       ),
                     ),
                   ),
+                  _selectorSeccion(),
                   _selectorNivelPrecio(),
                   // Escanear con la cámara solo tiene sentido en el celular
                   // (APK o navegador móvil): en escritorio no hay cámara
@@ -413,7 +422,8 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     onKeyEvent: _manejarTeclado,
                     child: productosAsync.when(
                     data: (productos) {
-                      if (_busquedaAplicada.isEmpty) {
+                      final mapaProductos = {for (final p in productos) p.id: p};
+                      if (_busquedaAplicada.isEmpty && !_verCombos) {
                         _listaActual = [];
                         return Center(
                           child: Column(
@@ -427,11 +437,11 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                         );
                       }
 
-                      final lista = _filtrar(productos);
+                      final lista = _filtrar(productos, mapaProductos);
                       _listaActual = lista;
                       if (lista.isEmpty) {
                         return Center(
-                          child: Text('No se encontraron productos', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          child: Text(_verCombos ? 'No hay combos que coincidan' : 'No se encontraron productos', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                         );
                       }
                       return Column(
@@ -448,7 +458,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                               separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                               itemBuilder: (context, i) {
                                 final p = lista[i];
-                                return esMovil ? _tarjetaMovil(i, p, mapaCategorias, promociones) : _filaTabla(i, p, mapaCategorias, promociones);
+                                return esMovil
+                                    ? _tarjetaMovil(i, p, mapaCategorias, promociones, mapaProductos)
+                                    : _filaTabla(i, p, mapaCategorias, promociones, mapaProductos);
                               },
                             ),
                           ),
@@ -464,6 +476,48 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _selectorSeccion() {
+    Widget opcion(String texto, bool combos) {
+      final activo = _verCombos == combos;
+      return InkWell(
+        onTap: () {
+          if (_verCombos == combos) return;
+          setState(() {
+            _verCombos = combos;
+            _filaSeleccionada = null;
+            _clavesFila.clear();
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: activo ? const Color(0xFFC62828) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            texto,
+            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72)),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          opcion('Productos', false),
+          opcion('Combos', true),
+        ],
       ),
     );
   }
@@ -584,8 +638,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones) {
-    final bajoStock = p.stock <= 0;
+  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones, Map<String, ProductoModel> mapaProductos) {
+    final existencia = p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+    final bajoStock = existencia <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
       key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
@@ -639,7 +694,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(color: bajoStock ? const Color(0xFFFCE4E4) : const Color(0xFFF0FBF4), borderRadius: BorderRadius.circular(8)),
                     child: Text(
-                      p.stock.toStringAsFixed(p.stock == p.stock.roundToDouble() ? 0 : 2),
+                      existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2),
                       style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: bajoStock ? const Color(0xFFC62828) : const Color(0xFF1E9E5A)),
                     ),
                   ),
@@ -670,8 +725,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     );
   }
 
-  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones) {
-    final bajoStock = p.stock <= 0;
+  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias, List<PromocionModel> promociones, Map<String, ProductoModel> mapaProductos) {
+    final existencia = p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+    final bajoStock = existencia <= 0;
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
       key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
@@ -715,7 +771,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(color: bajoStock ? const Color(0xFFFCE4E4) : const Color(0xFFF0FBF4), borderRadius: BorderRadius.circular(8)),
                     child: Text(
-                      'Existencia: ${p.stock.toStringAsFixed(p.stock == p.stock.roundToDouble() ? 0 : 2)}',
+                      'Existencia: ${existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2)}',
                       style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: bajoStock ? const Color(0xFFC62828) : const Color(0xFF1E9E5A)),
                     ),
                   ),

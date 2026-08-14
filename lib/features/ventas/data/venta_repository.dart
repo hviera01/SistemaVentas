@@ -32,6 +32,35 @@ class VentaRepository {
     return numero.toString().padLeft(8, '0');
   }
 
+  /// Expande cada línea de combo en un ítem "virtual" por componente de su
+  /// receta (cantidad = cantidad del componente × cantidad vendida del
+  /// combo), usando la receta congelada en el momento de la venta -no la
+  /// receta actual del combo, que pudo haber cambiado desde entonces-. Las
+  /// líneas normales pasan sin cambios. Esto es lo que permite reusar el
+  /// mismo código de descuento/reposición de stock que ya usan los productos
+  /// normales, en vez de un flujo paralelo para combos.
+  List<ItemVentaModel> _expandirComponentes(List<ItemVentaModel> items) {
+    final expandido = <ItemVentaModel>[];
+    for (final item in items) {
+      if (!item.esCombo) {
+        expandido.add(item);
+        continue;
+      }
+      for (final c in item.componentes) {
+        expandido.add(ItemVentaModel(
+          idProducto: c.idProducto,
+          idCategoria: c.idCategoria,
+          nombreProducto: c.nombreProducto,
+          precioVenta: 0,
+          cantidad: c.cantidad * item.cantidad,
+          subtotal: 0,
+          precioCompraUsado: c.precioCompraUsado,
+        ));
+      }
+    }
+    return expandido;
+  }
+
   /// Próximo número que le tocaría a la próxima Factura/Boleta (comparten
   /// el mismo contador 'venta', ver _claveContador). Para uso en Negocio,
   /// donde se puede consultar y fijar manualmente antes de empezar a
@@ -97,7 +126,7 @@ class VentaRepository {
     final claveContador = _claveContador(tipoDocumento);
     final contadorRef = _colContadores.doc(claveContador);
     final ventaRef = _colVentas.doc();
-    final itemsADescontar = items.where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)).toList();
+    final itemsADescontar = _expandirComponentes(items).where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)).toList();
 
     late String numeroDocumento;
     late Map<ItemVentaModel, double> costosFifo;
@@ -424,7 +453,8 @@ class VentaRepository {
       }
     }
 
-    final idsCategoriaRestaurar = items.map((i) => i.idCategoria).where((id) => id.isNotEmpty).toSet();
+    final itemsExpandidos = _expandirComponentes(items);
+    final idsCategoriaRestaurar = itemsExpandidos.map((i) => i.idCategoria).where((id) => id.isNotEmpty).toSet();
     final categoriasSinControlStockRestaurar = <String>{};
     if (idsCategoriaRestaurar.isNotEmpty) {
       final snapsCategorias = await Future.wait(idsCategoriaRestaurar.map((id) => _db.collection('categorias').doc(id).get()));
@@ -434,7 +464,7 @@ class VentaRepository {
         }
       }
     }
-    final itemsARestaurar = items.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
+    final itemsARestaurar = itemsExpandidos.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
 
     // Si la venta se borró del servidor pero seguía "existiendo" en el
     // caché local (por ejemplo, después de vaciar la base de datos desde
