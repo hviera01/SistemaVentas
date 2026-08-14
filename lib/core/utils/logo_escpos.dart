@@ -29,13 +29,23 @@ img.Image? decodificarLogoEscPos(String base64, {int maxDimension = 300}) {
     // se haya puesto ningún espacio de más entre los dos.
     final recortada = img.trim(decodificada);
     final necesitaReducir = recortada.width > maxDimension || recortada.height > maxDimension;
-    final imagenFinal = necesitaReducir
+    final redimensionada = necesitaReducir
         ? img.copyResize(
             recortada,
             width: recortada.width >= recortada.height ? maxDimension : null,
             height: recortada.height > recortada.width ? maxDimension : null,
           )
         : recortada;
+    // Generator.image() de esc_pos_utils_plus convierte a blanco/negro con
+    // un umbral simple (gris > 127 = blanco, si no negro), sin difuminar el
+    // error de redondeo -en un logo con degradados o bordes suavizados
+    // (cualquier logo típico, no un dibujo de un solo color plano) eso sale
+    // "rayado"/con bandas feas en el papel-. Ditherizando acá primero con
+    // Floyd-Steinberg (el mismo truco que usan las impresoras de fotos en
+    // blanco y negro) el resultado ya queda en solo negro/blanco puro
+    // *distribuido en un patrón de puntos* que se ve mucho más limpio y
+    // fotográfico impreso, en vez de manchado.
+    final imagenFinal = img.ditherImage(redimensionada, quantizer: img.BinaryQuantizer(), kernel: img.DitherKernel.floydSteinberg);
     _cache[clave] = imagenFinal;
     return imagenFinal;
   } catch (_) {

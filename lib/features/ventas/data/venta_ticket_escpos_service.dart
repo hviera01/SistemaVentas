@@ -107,11 +107,23 @@ class VentaTicketEscPosService {
     bytes += generador.hr();
 
     for (final item in venta.detalle) {
-      bytes += _texto(generador, item.nombreProducto);
+      // El nombre va en una columna de ancho 8 (con la columna 4 de la
+      // derecha vacía, la misma proporción que la fila de cantidad/importe
+      // de abajo) en vez de a todo el ancho: así, si el nombre es largo y se
+      // parte en más de una línea, esa segunda línea nunca llega hasta donde
+      // va el importe -queda esa columna siempre limpia, sin que el cliente
+      // confunda dónde termina la descripción-.
+      bytes += generador.row([
+        _columna(item.nombreProducto, width: 8),
+        _columna('', width: 4),
+      ]);
       bytes += generador.row([
         _columna('${_formatoCantidad(item.cantidad)} x ${formatearMoneda(precioMostrado(item))}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}', width: 8),
         _columna(formatearMoneda(importeMostrado(item)), width: 4, styles: const PosStyles(align: PosAlign.right)),
       ]);
+      // Más espacio antes del siguiente producto: antes quedaban todos los
+      // renglones pegados uno con otro.
+      bytes += generador.emptyLines(1);
     }
     bytes += generador.hr();
 

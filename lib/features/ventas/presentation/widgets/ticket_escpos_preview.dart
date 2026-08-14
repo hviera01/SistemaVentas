@@ -73,6 +73,24 @@ class TicketEscPosPreview extends StatelessWidget {
           child: Container(height: 1, color: Colors.black26),
         );
 
+    // El nombre del producto ocupa la misma proporción de ancho (8/12) que
+    // la columna de cantidad/precio de la fila de abajo, dejando la columna
+    // de la derecha (donde va IMPORTE) siempre limpia -si el nombre es
+    // largo y se parte en dos líneas, esa segunda línea nunca llega hasta
+    // ahí-, igual que en el ticket real.
+    Widget nombreProducto(String texto) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 1),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 8, child: Text(quitarTildes(texto), style: estiloBase)),
+            const Expanded(flex: 4, child: SizedBox()),
+          ],
+        ),
+      );
+    }
+
     // Mismo decode que el ticket real (recortado sin margen en blanco/
     // transparente, ver logo_escpos.dart), re-encodeado a PNG para
     // Image.memory: así la vista previa queda igual de "pegada" al nombre
@@ -117,12 +135,12 @@ class TicketEscPosPreview extends StatelessWidget {
           fila('CANT DESCRIPCIÓN', 'IMPORTE', negrita: true),
           separador(),
           for (final item in venta.detalle) ...[
-            linea(item.nombreProducto),
+            nombreProducto(item.nombreProducto),
             fila(
               '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(precioMostrado(item))}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}',
               formatearMoneda(importeMostrado(item)),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 8),
           ],
           separador(),
           fila('SUBTOTAL:', formatearMoneda(venta.subtotal)),
