@@ -79,6 +79,10 @@ service cloud.firestore {
       }
     }
 
+    match /comprasEnEspera/{idSesion} {
+      allow read, write: if true;
+    }
+
     match /ventas/{idVenta} {
       allow read, write: if true;
 

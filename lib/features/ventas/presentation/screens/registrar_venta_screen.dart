@@ -89,6 +89,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // las del diálogo — tenerlas montadas en los dos lados a la vez rompería
   // el foco y la edición.
   bool _tablaExpandida = false;
+
+  // Autoguardado de "venta en espera": ver _programarAutoguardado. Distinto
+  // del botón manual "Guardar en Espera" (que además limpia el carrito para
+  // liberar la pestaña) — este corre solo, sin tocar el carrito, así una
+  // venta en curso nunca vive SOLO en la memoria de esta pestaña.
+  Timer? _debounceEnEspera;
+
   // true mientras hay abierto un diálogo con su propio campo de texto libre
   // (por ahora, solo Buscar Producto) que necesita recibir cada tecla tal
   // cual, sin que el lector físico ni el refoco automático del código de
@@ -372,6 +379,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   @override
   void dispose() {
+    _debounceEnEspera?.cancel();
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
     if (!_esPlataformaMovil) {
       FocusManager.instance.removeListener(_alCambiarFocoGlobal);
@@ -1139,6 +1147,51 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     showDialog(context: context, builder: (context) => const VentasPendientesImpresionDialog());
   }
 
+  /// Se llama en cada cambio del carrito (ver ref.listen en build): reinicia
+  /// el debounce para no golpear Firestore en cada tecla, y solo guarda si
+  /// ya hay algo que perder. A diferencia de _guardarEnEspera (botón manual),
+  /// esto NO limpia el carrito -es un respaldo silencioso de fondo, la venta
+  /// sigue en curso en esta pestaña como si nada-.
+  void _programarAutoguardadoEnEspera(CarritoVentaState carrito) {
+    _debounceEnEspera?.cancel();
+    if (carrito.items.isEmpty) return;
+    _debounceEnEspera = Timer(const Duration(seconds: 2), _guardarEnEsperaAutomatico);
+  }
+
+  Future<void> _guardarEnEsperaAutomatico() async {
+    if (!mounted) return;
+    final carrito = ref.read(carritoVentaProvider);
+    if (carrito.items.isEmpty) return;
+    final repo = ref.read(ventaRepositoryProvider);
+    final sesion = VentaEnEsperaModel(
+      id: carrito.idEnEspera ?? '',
+      fecha: DateTime.now(),
+      tipoDocumento: carrito.tipoDocumento,
+      condicion: carrito.condicion,
+      metodoPago: carrito.metodoPago,
+      documentoCliente: carrito.documentoCliente,
+      nombreCliente: _nombreClienteController.text.trim(),
+      fechaVencimiento: carrito.fechaVencimiento,
+      oc: carrito.oc,
+      regExonerado: carrito.regExonerado,
+      regSag: carrito.regSag,
+      descuentoGlobal: carrito.descuentoGlobalPorcentaje,
+      items: carrito.items,
+    );
+    try {
+      if (carrito.idEnEspera != null) {
+        await repo.actualizarVentaEnEspera(carrito.idEnEspera!, sesion);
+      } else {
+        final id = await repo.guardarVentaEnEspera(sesion);
+        if (!mounted) return;
+        ref.read(carritoVentaProvider.notifier).establecerIdEnEspera(id);
+      }
+    } catch (_) {
+      // Sin internet u otro error transitorio: no se pudo autoguardar esta
+      // vez, se reintenta solo con el próximo cambio del carrito.
+    }
+  }
+
   Future<void> _verEnEspera() async {
     final sesion = await showDialog<VentaEnEsperaModel>(context: context, builder: (context) => const VentasEnEsperaDialog());
     if (sesion == null || !mounted) return;
@@ -1196,6 +1249,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (hayAlgoQuePerder) {
       final continuar = await _confirmarDialogo('Limpiar venta', '¿Seguro que querés borrar todos los productos y datos ingresados en esta venta?');
       if (!continuar) return;
+    }
+    _debounceEnEspera?.cancel();
+    if (carrito.idEnEspera != null) {
+      unawaited(ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(carrito.idEnEspera!));
     }
     _limpiarTodo();
   }
@@ -1638,6 +1695,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   Widget build(BuildContext context) {
     final carrito = ref.watch(carritoVentaProvider);
+    ref.listen<CarritoVentaState>(carritoVentaProvider, (previous, next) => _programarAutoguardadoEnEspera(next));
     // Si el diálogo de "ver la tabla más grande" está abierto, le pide que
     // se vuelva a pintar con los datos ya leídos por este `ref` (el
     // correcto para esta pestaña) cada vez que el carrito cambia — ver

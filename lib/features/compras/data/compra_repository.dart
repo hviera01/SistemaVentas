@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'compra_en_espera_model.dart';
 import 'compra_model.dart';
 import 'item_compra_model.dart';
 import '../../../core/utils/formato_moneda.dart';
@@ -9,7 +10,37 @@ class CompraRepository {
   final _colCompras = FirebaseFirestore.instance.collection('compras');
   final _colContadores = FirebaseFirestore.instance.collection('contadores');
   final _colComprasCredito = FirebaseFirestore.instance.collection('comprasCredito');
+  final _colEspera = FirebaseFirestore.instance.collection('comprasEnEspera');
   final _lotes = LoteCostoRepository();
+
+  // ---------- Compras en espera (borrador autoguardado) ----------
+  //
+  // Mismo patrón que VentaRepository.*VentaEnEspera, pero acá el guardado lo
+  // dispara solo RegistrarCompraScreen (autoguardado con debounce) en vez de
+  // un botón manual: así una compra en curso nunca queda solo en la memoria
+  // de la pestaña -si el navegador la recarga sola (p.ej. "ahorro de
+  // memoria" descartando la pestaña en segundo plano), sin internet, o se
+  // cierra la app, el borrador ya está en Firestore y se recupera desde "Ver
+  // en Espera".
+
+  Stream<List<CompraEnEsperaModel>> obtenerComprasEnEspera() {
+    return _colEspera.orderBy('fecha', descending: true).snapshots().map((snap) {
+      return snap.docs.map((d) => CompraEnEsperaModel.fromMap(d.id, d.data())).toList();
+    });
+  }
+
+  Future<String> guardarCompraEnEspera(CompraEnEsperaModel sesion) async {
+    final ref = await _colEspera.add(sesion.toMap());
+    return ref.id;
+  }
+
+  Future<void> actualizarCompraEnEspera(String id, CompraEnEsperaModel sesion) async {
+    await _colEspera.doc(id).update(sesion.toMap());
+  }
+
+  Future<void> eliminarCompraEnEspera(String id) async {
+    await _colEspera.doc(id).delete();
+  }
 
   String _formatearCorrelativo(int numero) => numero.toString().padLeft(8, '0');
 

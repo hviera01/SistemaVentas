@@ -29,8 +29,12 @@ class SideMenu extends ConsumerWidget {
   }
 
   void _abrirSubModulo(WidgetRef ref, SubModulo sub) {
-    final esVentaNueva = sub.moduleKey == 'ventas_registrar';
-    final id = esVentaNueva ? 'ventas_registrar_${DateTime.now().millisecondsSinceEpoch}' : sub.moduleKey;
+    // Ventas y Compras permiten varias pestañas simultáneas (cada una con su
+    // propio carrito aislado, ver pantalla_builder.dart): un id con
+    // timestamp evita que abrir una segunda reutilice/reenfoque la primera.
+    // El resto de módulos sigue con id fijo (una sola pestaña a la vez).
+    final esRegistroMultiple = sub.moduleKey == 'ventas_registrar' || sub.moduleKey == 'compras_registrar';
+    final id = esRegistroMultiple ? '${sub.moduleKey}_${DateTime.now().millisecondsSinceEpoch}' : sub.moduleKey;
     ref.read(tabsProvider.notifier).abrirTab(
       TabItem(
         id: id,

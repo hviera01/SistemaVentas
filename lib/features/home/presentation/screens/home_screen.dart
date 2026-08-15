@@ -21,8 +21,10 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   void _abrirSubModulo(WidgetRef ref, SubModulo sub) {
-    final esVentaNueva = sub.moduleKey == 'ventas_registrar';
-    final id = esVentaNueva ? 'ventas_registrar_${DateTime.now().millisecondsSinceEpoch}' : sub.moduleKey;
+    // Mismo criterio que SideMenu._abrirSubModulo: Ventas y Compras admiten
+    // varias pestañas simultáneas.
+    final esRegistroMultiple = sub.moduleKey == 'ventas_registrar' || sub.moduleKey == 'compras_registrar';
+    final id = esRegistroMultiple ? '${sub.moduleKey}_${DateTime.now().millisecondsSinceEpoch}' : sub.moduleKey;
     ref.read(tabsProvider.notifier).abrirTab(
       TabItem(
         id: id,

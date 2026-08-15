@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/compra_en_espera_model.dart';
 import '../data/item_compra_model.dart';
 import '../../productos/data/producto_model.dart';
 import '../../../core/utils/formato_moneda.dart';
@@ -8,6 +9,11 @@ double _subtotalLinea(double precioCompra, double cantidad, double descuentoPorc
 }
 
 class CarritoCompraState {
+  // Id del documento en 'comprasEnEspera' que respalda esta compra en curso
+  // (ver RegistrarCompraScreen: se autoguarda con debounce apenas hay
+  // productos). Null hasta el primer autoguardado o mientras no venga de
+  // "Ver en Espera".
+  final String? idEnEspera;
   final List<ItemCompraModel> items;
   final String idProveedor;
   final String documentoProveedor;
@@ -22,6 +28,7 @@ class CarritoCompraState {
   final double ajusteManual;
 
   CarritoCompraState({
+    this.idEnEspera,
     this.items = const [],
     this.idProveedor = '',
     this.documentoProveedor = '',
@@ -65,6 +72,7 @@ class CarritoCompraState {
   double get cantidadTotalProductos => items.fold<double>(0, (s, i) => s + i.cantidad);
 
   CarritoCompraState copyWith({
+    Object? idEnEspera = _sinCambio,
     List<ItemCompraModel>? items,
     String? idProveedor,
     String? documentoProveedor,
@@ -79,6 +87,7 @@ class CarritoCompraState {
     double? ajusteManual,
   }) {
     return CarritoCompraState(
+      idEnEspera: idEnEspera == _sinCambio ? this.idEnEspera : idEnEspera as String?,
       items: items ?? this.items,
       idProveedor: idProveedor ?? this.idProveedor,
       documentoProveedor: documentoProveedor ?? this.documentoProveedor,
@@ -203,6 +212,28 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
   void establecerDescuentoGlobal(double v) => state = state.copyWith(descuentoGlobalPorcentaje: v);
   void establecerIsv(double v) => state = state.copyWith(isvPorcentaje: v);
   void establecerAjusteManual(double v) => state = state.copyWith(ajusteManual: v);
+
+  /// Registra el id del documento de 'comprasEnEspera' que quedó respaldando
+  /// esta compra tras el primer autoguardado (ver RegistrarCompraScreen).
+  void establecerIdEnEspera(String id) => state = state.copyWith(idEnEspera: id);
+
+  void cargarSesion(CompraEnEsperaModel sesion) {
+    state = CarritoCompraState(
+      idEnEspera: sesion.id,
+      items: sesion.items,
+      idProveedor: sesion.idProveedor,
+      documentoProveedor: sesion.documentoProveedor,
+      razonSocial: sesion.razonSocial,
+      noFactura: sesion.noFactura,
+      condicion: sesion.condicion,
+      metodoPago: sesion.metodoPago,
+      fecha: sesion.fechaRegistro ?? DateTime.now(),
+      fechaVencimiento: sesion.fechaVencimiento,
+      descuentoGlobalPorcentaje: sesion.descuentoGlobalPorcentaje,
+      isvPorcentaje: sesion.isvPorcentaje,
+      ajusteManual: sesion.ajusteManual,
+    );
+  }
 
   void limpiar() {
     state = CarritoCompraState();

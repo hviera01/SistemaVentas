@@ -290,6 +290,13 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   void establecerPago({required double pagoCon, required double cambio}) {
     state = state.copyWith(pagoCon: pagoCon, cambio: cambio);
   }
+  /// Registra el id del documento de 'ventasEnEspera' que quedó respaldando
+  /// esta venta en curso tras el primer autoguardado (ver
+  /// RegistrarVentaScreen). Distinto de _guardarEnEspera (botón manual, que
+  /// además limpia el carrito): esto solo deja la referencia para que el
+  /// próximo autoguardado actualice el mismo documento en vez de crear otro.
+  void establecerIdEnEspera(String id) => state = state.copyWith(idEnEspera: id);
+
   void cargarSesion(VentaEnEsperaModel sesion) {
     state = CarritoVentaState(
       idEnEspera: sesion.id,
