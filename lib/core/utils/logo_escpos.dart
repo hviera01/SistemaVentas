@@ -45,7 +45,14 @@ img.Image? decodificarLogoEscPos(String base64, {int maxDimension = 300}) {
     // blanco y negro) el resultado ya queda en solo negro/blanco puro
     // *distribuido en un patrón de puntos* que se ve mucho más limpio y
     // fotográfico impreso, en vez de manchado.
-    final imagenFinal = img.ditherImage(redimensionada, quantizer: img.BinaryQuantizer(), kernel: img.DitherKernel.floydSteinberg);
+    final ditherizada = img.ditherImage(redimensionada, quantizer: img.BinaryQuantizer(), kernel: img.DitherKernel.floydSteinberg);
+    // ditherImage devuelve una imagen "indexada" (cada píxel guarda 0 o 1,
+    // no un color de verdad) — Generator.image() de esc_pos_utils_plus no
+    // sabe leer eso (invert/resize/etc. operan raro sobre una paleta) y
+    // terminaba imprimiendo el logo en blanco, sin nada. .convert() sin
+    // withPalette "aplana" la paleta a píxeles RGB reales (negro/blanco
+    // sólido), que es lo que esc_pos_utils_plus sí sabe procesar.
+    final imagenFinal = ditherizada.convert(numChannels: 3);
     _cache[clave] = imagenFinal;
     return imagenFinal;
   } catch (_) {
