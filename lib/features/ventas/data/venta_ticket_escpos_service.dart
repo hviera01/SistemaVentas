@@ -53,6 +53,71 @@ class VentaTicketEscPosService {
     return PosColumn(text: quitarTildes(texto), width: width, styles: styles);
   }
 
+  // Ancho real (en caracteres) de la columna de 8/12 donde va la
+  // descripción del producto, para papel de 80mm y fuente por defecto: ver
+  // Generator.row en esc_pos_utils_plus (paperWidth=576, 48 caracteres por
+  // línea completa, spaceBetweenRows=5 -> floor((576*8/12 - 1 - 5) / 12) = 31.
+  // Si algún día cambia el ancho de columna acá (8) o el tamaño de papel,
+  // este número hay que recalcularlo con la misma fórmula.
+  static const _anchoDescripcion = 31;
+
+  // La librería (Generator.row con multiLine) parte el texto que no entra
+  // en una línea cortando a la cantidad de caracteres exacta, sin importar
+  // si eso cae a mitad de una palabra ni dejando ningún indicio del corte
+  // -por eso una descripción larga podía salir partida en cualquier punto,
+  // a veces dejando una sola letra suelta en el renglón de abajo-. Acá se
+  // arma el wrap a mano, por palabra completa, ANTES de pasarle el texto a
+  // la librería (una línea por row, ya corta de entrada): si una palabra
+  // sola no entra en el ancho disponible, se parte con un guion al final,
+  // pero nunca dejando menos de 2 letras a cualquier lado del corte (por
+  // ejemplo "electrodo-" / "mestico" en vez de "electrodomestic-" / "o").
+  List<String> _envolverDescripcion(String texto, int maxAncho) {
+    final palabras = texto.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (palabras.isEmpty) return [''];
+
+    final lineas = <String>[];
+    var actual = '';
+
+    void cerrarLinea() {
+      if (actual.isNotEmpty) {
+        lineas.add(actual);
+        actual = '';
+      }
+    }
+
+    for (var palabra in palabras) {
+      if (actual.isEmpty && palabra.length <= maxAncho) {
+        actual = palabra;
+        continue;
+      }
+      if (palabra.length <= maxAncho) {
+        if (actual.length + 1 + palabra.length <= maxAncho) {
+          actual = '$actual $palabra';
+        } else {
+          cerrarLinea();
+          actual = palabra;
+        }
+        continue;
+      }
+
+      // La palabra sola no entra en una línea completa: se reparte en
+      // fragmentos con guion, siempre empezando en una línea nueva.
+      cerrarLinea();
+      var restante = palabra;
+      while (restante.length > maxAncho) {
+        var corte = maxAncho - 1; // -1 para dejar espacio al guion
+        // Nunca un fragmento de 1 sola letra a ningún lado del corte.
+        if (restante.length - corte < 2) corte -= (2 - (restante.length - corte));
+        corte = corte.clamp(2, maxAncho - 1);
+        lineas.add('${restante.substring(0, corte)}-');
+        restante = restante.substring(corte);
+      }
+      actual = restante;
+    }
+    cerrarLinea();
+    return lineas;
+  }
+
   List<int> _construirTicket(Generator generador, VentaModel venta, NegocioModel negocio, img.Image? logo, {required bool esCopia}) {
     final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
     final formatoDia = DateFormat('dd/MM/yyyy');
@@ -112,11 +177,16 @@ class VentaTicketEscPosService {
       // de abajo) en vez de a todo el ancho: así, si el nombre es largo y se
       // parte en más de una línea, esa segunda línea nunca llega hasta donde
       // va el importe -queda esa columna siempre limpia, sin que el cliente
-      // confunda dónde termina la descripción-.
-      bytes += generador.row([
-        _columna(item.nombreProducto, width: 8),
-        _columna('', width: 4),
-      ]);
+      // confunda dónde termina la descripción-. El wrap en sí lo hace
+      // _envolverDescripcion (por palabra completa, con guion si hace falta
+      // partir una palabra), una línea por row: así la librería nunca corta
+      // por su cuenta a mitad de palabra.
+      for (final linea in _envolverDescripcion(item.nombreProducto, _anchoDescripcion)) {
+        bytes += generador.row([
+          _columna(linea, width: 8),
+          _columna('', width: 4),
+        ]);
+      }
       bytes += generador.row([
         _columna('${_formatoCantidad(item.cantidad)} x ${formatearMoneda(precioMostrado(item))}${item.descuentoPorcentaje > 0 ? ' (-${_formatoCantidad(item.descuentoPorcentaje)}%)' : ''}', width: 8),
         _columna(formatearMoneda(importeMostrado(item)), width: 4, styles: const PosStyles(align: PosAlign.right)),
