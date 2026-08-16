@@ -6,6 +6,26 @@ import 'pago_detalle_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 import '../../productos/data/lote_costo_repository.dart';
 
+/// Los ítems de una venta se guardan en la subcolección 'detalle' con un id
+/// autogenerado (no correlativo), así que Firestore no garantiza devolverlos
+/// en el mismo orden en que se registraron -de ahí que la reimpresión podía
+/// salir con las líneas revueltas-. Cada ítem lleva un campo 'orden' (su
+/// posición al momento de guardar) y esta función reordena la lectura según
+/// ese campo. Los documentos viejos sin 'orden' (de antes de este cambio) se
+/// dejan tal como los devolvió Firestore, al final de los que sí lo tienen.
+List<QueryDocumentSnapshot<Map<String, dynamic>>> _ordenarDetalle(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  final conIndice = docs.asMap().entries.toList();
+  conIndice.sort((a, b) {
+    final ordenA = a.value.data()['orden'] as int?;
+    final ordenB = b.value.data()['orden'] as int?;
+    if (ordenA == null && ordenB == null) return a.key.compareTo(b.key);
+    if (ordenA == null) return 1;
+    if (ordenB == null) return -1;
+    return ordenA.compareTo(ordenB);
+  });
+  return conIndice.map((e) => e.value).toList();
+}
+
 class VentaRepository {
   final _db = FirebaseFirestore.instance;
   final _colVentas = FirebaseFirestore.instance.collection('ventas');
@@ -216,14 +236,17 @@ class VentaRepository {
         'pendienteImpresion': false,
       });
 
-      for (final item in items) {
+      for (final entry in items.asMap().entries) {
+        final item = entry.value;
         final itemRef = ventaRef.collection('detalle').doc();
         final costoReal = costosFifo[item];
         final itemAGuardar = costoReal != null ? item.copyWith(precioCompraUsado: costoReal) : item;
         // 'fecha' permite consultar el detalle de todas las ventas de un
         // rango con una sola query (collectionGroup) en vez de tener que
-        // leer la subcolección de cada venta una por una.
-        transaction.set(itemRef, {...itemAGuardar.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro)});
+        // leer la subcolección de cada venta una por una. 'orden' es la
+        // posición de la línea en el carrito, para que la reimpresión
+        // respete el mismo orden con el que se registró (ver _ordenarDetalle).
+        transaction.set(itemRef, {...itemAGuardar.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro), 'orden': entry.key});
       }
 
       if (condicion == 'Credito') {
@@ -360,7 +383,7 @@ class VentaRepository {
     final snap = await futureVenta;
     if (!snap.exists) return null;
     final detalleSnap = await futureDetalle;
-    final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemVentaModel.fromMap(d.data())).toList();
     return VentaModel.fromMap(id, snap.data()!, items);
   }
 
@@ -370,7 +393,7 @@ class VentaRepository {
   /// detalle antes de imprimir — ver VentaModel.copyWith y AppShell.
   Future<List<ItemVentaModel>> obtenerDetalleVenta(String id) async {
     final detalleSnap = await _colVentas.doc(id).collection('detalle').get();
-    return detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+    return _ordenarDetalle(detalleSnap.docs).map((d) => ItemVentaModel.fromMap(d.data())).toList();
   }
 
   Future<VentaModel?> obtenerVentaPorNumeroDocumento(String numeroDocumento) async {
@@ -380,7 +403,7 @@ class VentaRepository {
     if (query.docs.isEmpty) return null;
     final doc = query.docs.first;
     final detalleSnap = await doc.reference.collection('detalle').get();
-    final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemVentaModel.fromMap(d.data())).toList();
     return VentaModel.fromMap(doc.id, doc.data(), items);
   }
 
@@ -411,7 +434,7 @@ class VentaRepository {
     for (final doc in docs) {
       if (tipoDocumento != null && tipoDocumento.isNotEmpty && doc.data()['tipoDocumento'] != tipoDocumento) continue;
       final detalleSnap = await doc.reference.collection('detalle').get();
-      final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+      final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemVentaModel.fromMap(d.data())).toList();
       resultados.add(VentaModel.fromMap(doc.id, doc.data(), items));
     }
     resultados.sort((a, b) => (b.fechaRegistro ?? DateTime(0)).compareTo(a.fechaRegistro ?? DateTime(0)));
@@ -438,7 +461,7 @@ class VentaRepository {
     final numeroDocumento = data['numeroDocumento'] as String? ?? '';
 
     final detalleSnap = await _colVentas.doc(id).collection('detalle').get();
-    final items = detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemVentaModel.fromMap(d.data())).toList();
 
     var creditoExiste = false;
     if (condicion == 'Credito') {

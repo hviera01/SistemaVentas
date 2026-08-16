@@ -219,6 +219,16 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     state = state.copyWith(items: nuevos);
   }
 
+  /// Cambia la posición de una línea en la tabla (subir/bajar o arrastrar).
+  /// Ese orden es el que se guarda al registrar la venta y el que después
+  /// se respeta en el detalle y en la reimpresión.
+  void moverItem(int oldIndex, int newIndex) {
+    final nuevos = [...state.items];
+    final item = nuevos.removeAt(oldIndex);
+    nuevos.insert(newIndex, item);
+    state = state.copyWith(items: nuevos);
+  }
+
   void actualizarItem(int index, ItemVentaModel nuevo) {
     final nuevos = [...state.items];
     nuevos[index] = nuevo;

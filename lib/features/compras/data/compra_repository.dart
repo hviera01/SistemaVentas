@@ -5,6 +5,22 @@ import 'item_compra_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 import '../../productos/data/lote_costo_repository.dart';
 
+/// Ver comentario equivalente en VentaRepository: los ítems de una compra
+/// también se guardan en una subcolección 'detalle' con id autogenerado, y
+/// esta función los reordena según el campo 'orden' guardado al registrar.
+List<QueryDocumentSnapshot<Map<String, dynamic>>> _ordenarDetalle(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  final conIndice = docs.asMap().entries.toList();
+  conIndice.sort((a, b) {
+    final ordenA = a.value.data()['orden'] as int?;
+    final ordenB = b.value.data()['orden'] as int?;
+    if (ordenA == null && ordenB == null) return a.key.compareTo(b.key);
+    if (ordenA == null) return 1;
+    if (ordenB == null) return -1;
+    return ordenA.compareTo(ordenB);
+  });
+  return conIndice.map((e) => e.value).toList();
+}
+
 class CompraRepository {
   final _db = FirebaseFirestore.instance;
   final _colCompras = FirebaseFirestore.instance.collection('compras');
@@ -113,12 +129,15 @@ class CompraRepository {
         'cantidadProductos': items.fold<double>(0, (s, i) => s + i.cantidad),
       });
 
-      for (final item in items) {
+      for (final entry in items.asMap().entries) {
+        final item = entry.value;
         final itemRef = compraRef.collection('detalle').doc();
         // 'fecha' permite consultar el detalle de todas las compras de un
         // rango con una sola query (collectionGroup) en vez de tener que
-        // leer la subcolección de cada compra una por una.
-        transaction.set(itemRef, {...item.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro)});
+        // leer la subcolección de cada compra una por una. 'orden' es la
+        // posición de la línea en el carrito, para que la reimpresión
+        // respete el mismo orden con el que se registró (ver _ordenarDetalle).
+        transaction.set(itemRef, {...item.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro), 'orden': entry.key});
       }
 
       if (condicion == 'Credito') {
@@ -221,7 +240,7 @@ class CompraRepository {
     final snap = await _colCompras.doc(id).get();
     if (!snap.exists) return null;
     final detalleSnap = await _colCompras.doc(id).collection('detalle').get();
-    final items = detalleSnap.docs.map((d) => ItemCompraModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemCompraModel.fromMap(d.data())).toList();
     return CompraModel.fromMap(id, snap.data()!, items);
   }
 
@@ -251,7 +270,7 @@ class CompraRepository {
 
     if (doc == null) return null;
     final detalleSnap = await doc.reference.collection('detalle').get();
-    final items = detalleSnap.docs.map((d) => ItemCompraModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemCompraModel.fromMap(d.data())).toList();
     return CompraModel.fromMap(doc.id, doc.data(), items);
   }
 
@@ -275,7 +294,7 @@ class CompraRepository {
     final numeroDocumento = data['numeroDocumento'] as String? ?? '';
 
     final detalleSnap = await _colCompras.doc(id).collection('detalle').get();
-    final items = detalleSnap.docs.map((d) => ItemCompraModel.fromMap(d.data())).toList();
+    final items = _ordenarDetalle(detalleSnap.docs).map((d) => ItemCompraModel.fromMap(d.data())).toList();
 
     var creditoExiste = false;
     if (condicion == 'Credito') {

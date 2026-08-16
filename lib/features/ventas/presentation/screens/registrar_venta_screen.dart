@@ -960,6 +960,37 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     ref.read(carritoVentaProvider.notifier).quitarItem(index);
   }
 
+  void _moverItem(int index, int nuevoIndex) {
+    ref.read(carritoVentaProvider.notifier).moverItem(index, nuevoIndex);
+    // La cantidad de items no cambia con un reordenamiento, así que el
+    // chequeo normal de _tarjetaCarritoGrande (que solo reconstruye los
+    // controladores cuando cambia la cantidad de filas) no se dispara solo;
+    // se fuerza acá para que cada fila muestre el texto del item que le
+    // toca ahora, no el que tenía cacheado por posición.
+    _conteoItemsControladores = -1;
+  }
+
+  Widget _botonOrdenIcono(IconData icono, VoidCallback? onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+        child: Icon(icono, size: 16, color: onPressed == null ? Colors.grey.shade300 : Colors.grey.shade700),
+      ),
+    );
+  }
+
+  Widget _botonesOrden(int index, int total) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _botonOrdenIcono(Icons.keyboard_arrow_up, index == 0 ? null : () => _moverItem(index, index - 1)),
+        _botonOrdenIcono(Icons.keyboard_arrow_down, index == total - 1 ? null : () => _moverItem(index, index + 1)),
+      ],
+    );
+  }
+
   // Cuando el usuario cancela o rechaza la operación (reembasado, opción
   // inválida, etc.) hay que devolver el campo de cantidad a su valor real;
   // si no, el texto tipeado se queda en el campo y el próximo toque afuera
@@ -2405,7 +2436,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-                  _filaCarritoMovil(i, carrito.items[i], mapaProductos),
+                  _filaCarritoMovil(i, carrito.items[i], mapaProductos, carrito.items.length),
                 ],
               ],
             )
@@ -2424,7 +2455,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               child: ListView.separated(
                 itemCount: carrito.items.length,
                 separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
+                itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
               ),
             ),
         ],
@@ -2553,7 +2584,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           : ListView.separated(
                               itemCount: carrito.items.length,
                               separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                              itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos),
+                              itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
                             ),
                     ),
                     const SizedBox(height: 10),
@@ -2626,6 +2657,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final estilo = GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
     return Row(
       children: [
+        const SizedBox(width: 28),
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 4, child: Text('Descripción', style: estilo)),
         Expanded(flex: 2, child: Text('Cantidad', textAlign: TextAlign.center, style: estilo)),
@@ -2845,7 +2877,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos) {
+  Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
     final precioMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
@@ -2860,6 +2892,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(width: 28, child: _botonesOrden(index, totalItems)),
           Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
           Expanded(flex: 4, child: _campoDescripcion(index, item)),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
@@ -2875,7 +2908,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _filaCarritoMovil(int index, dynamic item, Map<String, ProductoModel> mapaProductos) {
+  Widget _filaCarritoMovil(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
     final precioMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
@@ -2894,6 +2927,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         children: [
           Row(
             children: [
+              _botonesOrden(index, totalItems),
+              const SizedBox(width: 6),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -167,6 +167,16 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
     state = state.copyWith(items: nuevos);
   }
 
+  /// Cambia la posición de una línea en la tabla (subir/bajar o arrastrar).
+  /// Ese orden es el que se guarda al registrar la compra y el que después
+  /// se respeta en el detalle y en la reimpresión.
+  void moverItem(int oldIndex, int newIndex) {
+    final nuevos = [...state.items];
+    final item = nuevos.removeAt(oldIndex);
+    nuevos.insert(newIndex, item);
+    state = state.copyWith(items: nuevos);
+  }
+
   /// Actualiza cantidad, precio de costo, descuento y/o el nuevo precio de
   /// venta de línea directamente desde la tabla, recalculando el subtotal.
   void actualizarLinea(int index, {double? cantidad, double? precioCompra, double? descuentoPorcentaje, double? precioVentaNuevo}) {
