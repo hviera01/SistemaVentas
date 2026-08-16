@@ -1,3 +1,4 @@
+import 'dart:io' show Platform, Process;
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,16 @@ import '../widgets/selector_impresora.dart';
 // LoginScreen para entrar más rápido.
 bool get _esWebMovil =>
     kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
+// El script que manda el reporte financiero por WhatsApp (ver
+// tool/reporte_whatsapp) es un proceso de Node.js aparte que solo existe en
+// esta misma PC de escritorio -no es una función en la nube-, así que el
+// botón de "enviar ahora" únicamente tiene sentido corriendo la versión de
+// escritorio Windows en esta máquina (no en web, ni en el celular, ni en
+// otra PC que no tenga instalado ese script).
+bool get _puedeEnviarReporteWhatsapp => !kIsWeb && Platform.isWindows;
+
+const _rutaReporteWhatsapp = r'C:\Proyectos\sistema_ventas\tool\reporte_whatsapp';
 
 class NegocioScreen extends ConsumerWidget {
   const NegocioScreen({super.key});
@@ -67,6 +78,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   late Map<String, bool> _permisos;
   bool _guardando = false;
   bool _guardandoClave = false;
+  bool _enviandoReporteSemanal = false;
+  bool _enviandoReporteMensual = false;
   bool _guardandoRed = false;
   bool _probandoRed = false;
   int? _proximoFacturaActual;
@@ -369,6 +382,62 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     }
   }
 
+  /// Corre a mano el mismo script de Node que usa la tarea programada (ver
+  /// tool/reporte_whatsapp/README.md), en vez de esperar al próximo sábado/
+  /// fin de mes. Solo tiene sentido en la versión de escritorio Windows de
+  /// esta misma PC -es la única que tiene Node.js instalado y la sesión de
+  /// WhatsApp ya vinculada-.
+  Future<void> _enviarReporteWhatsapp(String tipo) async {
+    setState(() {
+      if (tipo == 'semanal') {
+        _enviandoReporteSemanal = true;
+      } else {
+        _enviandoReporteMensual = true;
+      }
+    });
+    try {
+      final resultado = await Process.run(
+        'node',
+        ['index.js', tipo],
+        workingDirectory: _rutaReporteWhatsapp,
+        runInShell: true,
+      );
+      if (!mounted) return;
+      if (resultado.exitCode == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reporte $tipo enviado por WhatsApp'), showCloseIcon: true),
+        );
+      } else {
+        final salida = '${resultado.stderr}'.trim().isNotEmpty ? '${resultado.stderr}' : '${resultado.stdout}';
+        // Se corta a las últimas líneas: la traza completa de un error de
+        // Node/Baileys puede ser larguísima y no cabe (ni hace falta) en un
+        // SnackBar -el detalle completo queda igual en la consola de esa PC
+        // si hace falta revisarlo a fondo-.
+        final lineas = salida.trim().split('\n');
+        final resumen = lineas.length > 4 ? lineas.sublist(lineas.length - 4).join('\n') : salida.trim();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo enviar el reporte $tipo:\n$resumen'), showCloseIcon: true),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo ejecutar el script (¿Node.js está instalado en esta PC?): $e'), showCloseIcon: true),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          if (tipo == 'semanal') {
+            _enviandoReporteSemanal = false;
+          } else {
+            _enviandoReporteMensual = false;
+          }
+        });
+      }
+    }
+  }
+
   void _alternarPermiso(String key, bool valor) {
     setState(() => _permisos[key] = valor);
     ref.read(negocioRepositoryProvider).actualizarPermisos(_permisos);
@@ -447,6 +516,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               SliverToBoxAdapter(child: _tarjetaImpresoras(esMovil)),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaFactura()),
+              if (_puedeEnviarReporteWhatsapp) ...[
+                SliverToBoxAdapter(child: const SizedBox(height: 18)),
+                SliverToBoxAdapter(child: _tarjetaReporteWhatsapp()),
+              ],
               if (_esWebMovil) ...[
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
                 SliverToBoxAdapter(child: _tarjetaFaceId()),
@@ -795,6 +868,56 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 ),
               ],
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tarjetaReporteWhatsapp() {
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion('Reporte financiero por WhatsApp', Icons.picture_as_pdf_outlined),
+          const SizedBox(height: 6),
+          Text(
+            'Normalmente se manda solo, programado los sábados (semanal) y a fin de mes (mensual) desde esta PC. '
+            'Estos botones lo mandan al toque, sin esperar al horario programado -por ejemplo, si el envío automático falló-.',
+            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _enviandoReporteSemanal ? null : () => _enviarReporteWhatsapp('semanal'),
+                icon: _enviandoReporteSemanal
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.send_outlined, size: 18),
+                label: Text('Enviar reporte semanal ahora', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1A1A1A),
+                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _enviandoReporteMensual ? null : () => _enviarReporteWhatsapp('mensual'),
+                icon: _enviandoReporteMensual
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.send_outlined, size: 18),
+                label: Text('Enviar reporte mensual ahora', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1A1A1A),
+                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
