@@ -1,3 +1,8 @@
 name = "supercolor-factura-scanner"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
+
+[[d1_databases]]
+binding = "DB_HISTORICO"
+database_name = "supercolor-historico"
+database_id = "4b694f71-4eee-4616-8080-3a3477d82696"

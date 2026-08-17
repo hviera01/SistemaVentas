@@ -80,6 +80,21 @@ class ItemVentaModel {
     );
   }
 
+  /// Fila de `detalle_venta` del histórico (Worker `/historico/detalle` o
+  /// `/historico/detalle-rango`). No trae idCategoria ni combos — el sistema
+  /// anterior no guardaba esos datos por línea.
+  factory ItemVentaModel.fromHistoricoMap(Map<String, dynamic> data) {
+    return ItemVentaModel(
+      idProducto: '${data['id_producto']}',
+      idCategoria: '',
+      nombreProducto: (data['nombre_producto'] as String?) ?? '',
+      precioVenta: ((data['precio_venta'] as num?) ?? 0).toDouble(),
+      cantidad: ((data['cantidad'] as num?) ?? 0).toDouble(),
+      subtotal: ((data['subtotal'] as num?) ?? 0).toDouble(),
+      precioCompraUsado: ((data['precio_compra_usado'] as num?) ?? 0).toDouble(),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'idProducto': idProducto,

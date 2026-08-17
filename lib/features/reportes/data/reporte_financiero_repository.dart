@@ -3,6 +3,7 @@ import 'reporte_repository.dart';
 import 'reporte_financiero_model.dart';
 import 'reporte_venta_model.dart';
 import 'reporte_compra_model.dart';
+import 'historico_venta_service.dart';
 import '../../ventas/data/item_venta_model.dart';
 import '../../compras/data/item_compra_model.dart';
 import '../../productos/data/producto_model.dart';
@@ -36,6 +37,7 @@ class ReporteFinancieroRepository {
   final _compraCreditoRepository = CompraCreditoRepository();
   final _ventaCreditoRepository = VentaCreditoRepository();
   final _cierreCajaRepository = CierreCajaRepository();
+  final _historicoService = HistoricoVentaService();
 
   // La serie mensual y el efectivo estimado no dependen del rango que el
   // usuario elija en el reporte (son "últimos 6 meses" y "desde el último
@@ -48,8 +50,9 @@ class ReporteFinancieroRepository {
   double? _efectivoEstimadoCache;
   DateTime? _efectivoEstimadoCacheEn;
 
-  Future<List<ItemVentaModel>> _detalleVenta(String idVenta) async {
-    final snap = await _db.collection('ventas').doc(idVenta).collection('detalle').get();
+  Future<List<ItemVentaModel>> _detalleVenta(ReporteVentaModel venta) async {
+    if (venta.esHistorica) return _historicoService.obtenerDetalleDeVenta(venta.id);
+    final snap = await _db.collection('ventas').doc(venta.id).collection('detalle').get();
     return snap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList();
   }
 
@@ -61,13 +64,18 @@ class ReporteFinancieroRepository {
   /// Trae en una sola consulta (collectionGroup sobre 'detalle', filtrado por
   /// el campo 'fecha' que se guarda en cada línea) el detalle de todas las
   /// ventas y compras del rango, evitando leer la subcolección de cada
-  /// documento uno por uno.
+  /// documento uno por uno. Si el rango toca fechas del sistema anterior
+  /// (antes del 2026-07-17), se le agrega también ese detalle histórico en
+  /// una sola llamada al Worker — mismo criterio, sin N llamadas.
   Future<_DetalleRapido> _detallePorRango(DateTime inicio, DateTime finInclusive) async {
-    final snap = await _db
+    final snapFuture = _db
         .collectionGroup('detalle')
         .where('fecha', isGreaterThanOrEqualTo: Timestamp.fromDate(inicio))
         .where('fecha', isLessThanOrEqualTo: Timestamp.fromDate(finInclusive))
         .get();
+    final historicoFuture = _historicoService.obtenerDetallePorRango(inicio, finInclusive);
+
+    final snap = await snapFuture;
     final porVenta = <String, List<ItemVentaModel>>{};
     final porCompra = <String, List<ItemCompraModel>>{};
     for (final doc in snap.docs) {
@@ -80,16 +88,18 @@ class ReporteFinancieroRepository {
         porCompra.putIfAbsent(docPadre.id, () => []).add(ItemCompraModel.fromMap(doc.data()));
       }
     }
+    porVenta.addAll(await historicoFuture);
     return (ventas: porVenta, compras: porCompra);
   }
 
   /// Junta el detalle rápido con un respaldo documento-por-documento solo
   /// para los que quedaron fuera (registrados antes de que 'detalle'
-  /// empezara a guardar su propia fecha). A medida que pase el tiempo esta
-  /// lista de respaldo se vuelve vacía.
+  /// empezara a guardar su propia fecha, o ventas históricas que por algún
+  /// motivo no vinieron en el bloque de `_detallePorRango`). A medida que
+  /// pase el tiempo esta lista de respaldo se vuelve vacía.
   Future<List<List<ItemVentaModel>>> _resolverDetalleVentas(List<ReporteVentaModel> ventas, Map<String, List<ItemVentaModel>> rapido) async {
     final faltantes = ventas.where((v) => !rapido.containsKey(v.id)).toList();
-    final detalleFaltante = await Future.wait(faltantes.map((v) => _detalleVenta(v.id)));
+    final detalleFaltante = await Future.wait(faltantes.map((v) => _detalleVenta(v)));
     final porId = {for (var i = 0; i < faltantes.length; i++) faltantes[i].id: detalleFaltante[i]};
     return [for (final v in ventas) rapido[v.id] ?? porId[v.id] ?? const []];
   }

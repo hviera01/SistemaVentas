@@ -26,6 +26,12 @@ class ReporteVentaModel {
   // para repartir el ingreso entre efectivo/tarjeta/transferencia en el
   // libro financiero (EgresoRepository.obtenerLibroFinanciero).
   final List<PagoDetalle> pagosMixtos;
+  // 'firestore' (sistema actual) o 'historico' (sistema anterior, vía D1/Worker
+  // — ver HistoricoVentaService). Nunca se mezclan por numeroDocumento porque
+  // los rangos de numeración de ambos sistemas se traslapan.
+  final String origen;
+
+  bool get esHistorica => origen == 'historico';
 
   ReporteVentaModel({
     required this.id,
@@ -45,6 +51,7 @@ class ReporteVentaModel {
     this.pendienteImpresion = false,
     this.creadoEn,
     this.pagosMixtos = const [],
+    this.origen = 'firestore',
   });
 
   bool get esActiva => estado == 'Activa';
@@ -69,6 +76,31 @@ class ReporteVentaModel {
       pendienteImpresion: data['pendienteImpresion'] ?? false,
       creadoEn: (data['creadoEn'] as Timestamp?)?.toDate(),
       pagosMixtos: PagoDetalle.listaFromMaps(data['pagosMixtos'] as List<dynamic>?),
+    );
+  }
+
+  /// Fila del histórico (sistema anterior, servida por el Worker en
+  /// `/historico/ventas`). El `id` se prefija con `historico:` para que
+  /// nunca choque con un id autogenerado de Firestore ni con el
+  /// numeroDocumento (que sí se traslapa entre ambos sistemas).
+  factory ReporteVentaModel.fromHistorico(Map<String, dynamic> data) {
+    DateTime? fecha(String? iso) => iso == null ? null : DateTime.parse(iso);
+    return ReporteVentaModel(
+      id: 'historico:${data['id_venta']}',
+      fechaRegistro: fecha(data['fecha_registro'] as String?),
+      tipoDocumento: (data['tipo_documento'] as String?) ?? 'Factura',
+      numeroDocumento: (data['numero_documento'] as String?) ?? '',
+      totalAPagar: ((data['monto_total'] as num?) ?? 0).toDouble(),
+      cantidadProductos: ((data['cantidad_productos'] as num?) ?? 0).toInt(),
+      metodoPago: (data['metodo_pago'] as String?) ?? '',
+      usuarioRegistro: '',
+      documentoCliente: (data['documento_cliente'] as String?) ?? '',
+      nombreCliente: (data['nombre_cliente'] as String?) ?? '',
+      impuesto: ((data['impuesto'] as num?) ?? 0).toDouble(),
+      condicion: (data['condicion'] as String?) ?? '',
+      fechaVencimiento: fecha(data['fecha_vencimiento'] as String?),
+      estado: (data['estado'] as String?) ?? 'Activa',
+      origen: 'historico',
     );
   }
 

@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'reporte_venta_model.dart';
 import 'reporte_compra_model.dart';
+import 'historico_venta_service.dart';
 
 class ReporteRepository {
   final _db = FirebaseFirestore.instance;
+  final _historicoService = HistoricoVentaService();
 
   Future<List<ReporteVentaModel>> obtenerReporteVentas(DateTime inicio, DateTime finInclusive) async {
     // El filtro de rango tiene que ir por 'fechaRegistro' (Firestore exige
@@ -13,13 +15,26 @@ class ReporteRepository {
     // (orden real de creación, sin importar qué fecha de negocio se haya
     // elegido para cada venta) — con fechaRegistro como respaldo en ventas
     // viejas que no tienen 'creadoEn' guardado.
-    final snap = await _db
+    //
+    // En paralelo se pide el tramo histórico (sistema anterior, vía D1/Worker)
+    // por si el rango toca fechas de antes del 2026-07-17 — ver
+    // HistoricoVentaService. Nunca se dispara si el rango es todo posterior
+    // al corte, así que el día a día no paga ningún costo extra.
+    final snapFuture = _db
         .collection('ventas')
         .where('fechaRegistro', isGreaterThanOrEqualTo: Timestamp.fromDate(inicio))
         .where('fechaRegistro', isLessThanOrEqualTo: Timestamp.fromDate(finInclusive))
         .orderBy('fechaRegistro', descending: true)
         .get();
-    final lista = snap.docs.map((d) => ReporteVentaModel.fromMap(d.id, d.data())).toList();
+    final historicoFuture = _historicoService.obtenerVentas(inicio, finInclusive);
+
+    final snap = await snapFuture;
+    final historico = await historicoFuture;
+
+    final lista = [
+      ...snap.docs.map((d) => ReporteVentaModel.fromMap(d.id, d.data())),
+      ...historico,
+    ];
     lista.sort((a, b) {
       final claveA = a.creadoEn ?? a.fechaRegistro ?? DateTime(0);
       final claveB = b.creadoEn ?? b.fechaRegistro ?? DateTime(0);

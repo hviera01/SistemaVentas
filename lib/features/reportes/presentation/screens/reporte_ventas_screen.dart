@@ -11,6 +11,7 @@ import '../../../../core/utils/exportador.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../usuarios/providers/usuarios_provider.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
+import '../../data/historico_venta_service.dart';
 
 class ReporteVentasScreen extends ConsumerStatefulWidget {
   const ReporteVentasScreen({super.key});
@@ -70,9 +71,64 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     }
   }
 
-  void _verDetalle(String idVenta) {
+  void _verDetalle(ReporteVentaModel venta) {
+    if (venta.esHistorica) {
+      _verDetalleHistorico(venta);
+      return;
+    }
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleVentaScreen(ventaIdInicial: idVenta)),
+      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleVentaScreen(ventaIdInicial: venta.id)),
+    );
+  }
+
+  /// Las ventas del sistema anterior no existen como documento de Firestore
+  /// (viven en D1, ver HistoricoVentaService), así que no se puede abrir
+  /// DetalleVentaScreen para ellas — no tienen reimpresión ni anulación, es
+  /// solo consulta. Se muestra en un diálogo simple con el detalle de
+  /// productos, en vez de una pantalla completa.
+  void _verDetalleHistorico(ReporteVentaModel venta) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Venta ${venta.numeroDocumento}'),
+        content: SizedBox(
+          width: 420,
+          child: FutureBuilder(
+            future: HistoricoVentaService().obtenerDetalleDeVenta(venta.id),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
+              }
+              final items = snapshot.data!;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${venta.nombreCliente} · ${venta.condicion}', style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 4),
+                  Text('Total: ${formatearMoneda(venta.totalAPagar)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const Divider(height: 20),
+                  if (items.isEmpty)
+                    const Text('Esta venta del sistema anterior no tiene el detalle de productos guardado.')
+                  else
+                    ...items.map((i) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text('${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}')),
+                              Text(formatearMoneda(i.subtotal)),
+                            ],
+                          ),
+                        )),
+                  const SizedBox(height: 8),
+                  Text('Venta del sistema anterior — solo consulta.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar'))],
+      ),
     );
   }
 
@@ -447,7 +503,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
               children: [
                 if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
                 InkWell(
-                  onTap: () => _verDetalle(v.id),
+                  onTap: () => _verDetalle(v),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Row(
@@ -506,7 +562,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
         final v = lista[index];
         return InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _verDetalle(v.id),
+          onTap: () => _verDetalle(v),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),

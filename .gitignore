@@ -51,3 +51,6 @@ app.*.map.json
 # Archivos de ejemplo/reales subidos para probar el importador — nunca deben
 # subirse al repo (datos reales del negocio: inventario, precios, clientes).
 /excel_importar/
+
+# Cache de wrangler (Cloudflare) cuando se corre desde la raíz del repo.
+.wrangler/
