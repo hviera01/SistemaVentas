@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../ventas/data/item_venta_model.dart';
 import '../../data/venta_credito_model.dart';
 import '../../data/abono_model.dart';
 import '../../data/venta_credito_export_service.dart';
@@ -166,9 +168,64 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     }
   }
 
-  void _verDetalleVenta(VentaCreditoModel credito) {
+  /// Los créditos importados desde el Excel del sistema anterior (ver
+  /// VentaCreditoImportService) no tienen un documento en `ventas` -se
+  /// crearon directo en `ventasCredito`, con id propio-, así que
+  /// DetalleVentaScreen nunca los va a encontrar. Algunos de ellos sí
+  /// recibieron después su detalle de productos en una subcolección propia
+  /// (backfill del 2026-08-17, cruzado contra la base vieja por
+  /// cliente+monto+fecha). Se revisa esa subcolección primero; si tiene
+  /// líneas, se muestra en un diálogo simple en vez de abrir la pantalla
+  /// completa (esa venta no tiene reimpresión ni anulación posible, es solo
+  /// consulta). Si no tiene nada ahí, se sigue el camino normal.
+  Future<void> _verDetalleVenta(VentaCreditoModel credito) async {
+    final detalleSnap = await FirebaseFirestore.instance.collection('ventasCredito').doc(credito.id).collection('detalle').get();
+    if (detalleSnap.docs.isNotEmpty) {
+      if (!mounted) return;
+      _mostrarDetalleHistorico(credito, detalleSnap.docs.map((d) => ItemVentaModel.fromMap(d.data())).toList());
+      return;
+    }
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleVentaScreen(ventaIdInicial: credito.id)),
+    );
+  }
+
+  void _mostrarDetalleHistorico(VentaCreditoModel credito, List<ItemVentaModel> items) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Crédito ${credito.numeroDocumento}'),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(credito.nombreCliente, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 4),
+              Text('Total: ${formatearMoneda(credito.montoTotal)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Divider(height: 20),
+              // El sistema anterior guardaba el precio unitario sin ISV (igual
+              // que este, ver DetalleVentaScreen._precioMostrado) y sumaba el
+              // impuesto aparte a nivel de factura, así que acá se multiplica
+              // por 1.15 para mostrar el precio con ISV cargado.
+              ...items.map((i) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text('${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}')),
+                        Text(formatearMoneda(redondearMoneda(i.subtotal * 1.15))),
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 8),
+              Text('Venta del sistema anterior — solo consulta.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+            ],
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar'))],
+      ),
     );
   }
 

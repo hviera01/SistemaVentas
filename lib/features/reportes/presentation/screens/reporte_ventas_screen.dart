@@ -111,12 +111,17 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                   if (items.isEmpty)
                     const Text('Esta venta del sistema anterior no tiene el detalle de productos guardado.')
                   else
+                    // El sistema anterior guardaba el precio unitario sin ISV
+                    // (igual que este, ver DetalleVentaScreen._precioMostrado)
+                    // y sumaba el impuesto aparte a nivel de factura, así que
+                    // acá se multiplica por 1.15 para mostrar el precio con
+                    // ISV cargado, que es como se ve en el resto de la app.
                     ...items.map((i) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 3),
                           child: Row(
                             children: [
                               Expanded(child: Text('${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}')),
-                              Text(formatearMoneda(i.subtotal)),
+                              Text(formatearMoneda(redondearMoneda(i.subtotal * 1.15))),
                             ],
                           ),
                         )),
