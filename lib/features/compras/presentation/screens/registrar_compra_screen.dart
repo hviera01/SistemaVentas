@@ -444,24 +444,60 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return redondearMoneda((item.precioCompra as double) * (1 - (item.descuentoPorcentaje as double) / 100) * (1 + isv / 100));
   }
 
+  // `productos.precioVenta` siempre se guarda SIN ISV (ver
+  // DetalleVentaScreen._precioMostrado y VentaRepository.registrarVenta, que
+  // le suman el 15% aparte recién al vender). Pero acá en Registrar Compra
+  // el campo "Precio de venta" y el "Margen %" que se calculan a partir de
+  // él tienen que representar el precio FINAL -el que el cliente paga en la
+  // caja-, no la base sin impuesto: si no, alguien mete "quiero 30% de
+  // margen" pensando en el precio final y el sistema termina guardando un
+  // precio que, ya con el ISV cargado encima, vende muy por arriba (o por
+  // abajo) de lo que la persona quiso.
+  //
+  // Por eso todo lo que se ve/edita en pantalla (precio de venta, margen)
+  // usa el precio final (_precioVentaFinal), y solo al guardar en el
+  // carrito/Firestore se vuelve a la base sin ISV
+  // (_precioVentaBaseDesdeFinal). Si la compra no lleva ISV (isvPorcentaje
+  // en 0, ej. producto exonerado), no hay nada que convertir: el precio
+  // final YA es el que se guarda, tal cual.
+  double _factorIsvVenta() {
+    final isv = ref.read(carritoCompraProvider).isvPorcentaje;
+    return isv > 0 ? 1 + isv / 100 : 1;
+  }
+
+  double _precioVentaFinal(dynamic item) {
+    final precioBase = (item.precioVentaNuevo as double?) ?? 0;
+    return redondearMoneda(precioBase * _factorIsvVenta());
+  }
+
+  double _precioVentaBaseDesdeFinal(double precioFinal) {
+    return redondearMoneda(precioFinal / _factorIsvVenta());
+  }
+
+  String get _etiquetaPrecioVenta => ref.read(carritoCompraProvider).isvPorcentaje > 0 ? 'Precio de venta (c/ISV)' : 'Precio de venta';
+
   double _margenActual(dynamic item) {
     final costo = _costoFinalItem(item);
-    final precioVenta = (item.precioVentaNuevo as double?) ?? 0;
-    return costo > 0 ? ((precioVenta - costo) / costo * 100) : 0.0;
+    final precioFinal = _precioVentaFinal(item);
+    return costo > 0 ? ((precioFinal - costo) / costo * 100) : 0.0;
   }
 
   (TextEditingController, TextEditingController) _controladoresMargen(int index, dynamic item) {
     final ctrlMargen = _ctrlMargen.putIfAbsent(index, () => TextEditingController(text: _margenActual(item).toStringAsFixed(1)));
-    final ctrlPrecioVenta = _ctrlPrecioVenta.putIfAbsent(index, () => TextEditingController(text: ((item.precioVentaNuevo as double?) ?? 0).toStringAsFixed(2)));
+    final ctrlPrecioVenta = _ctrlPrecioVenta.putIfAbsent(index, () => TextEditingController(text: _precioVentaFinal(item).toStringAsFixed(2)));
     return (ctrlMargen, ctrlPrecioVenta);
   }
 
-  void _actualizarPrecioVentaCompra(int index, double nuevoPrecioVenta) {
-    if (nuevoPrecioVenta < 0) {
+  /// [nuevoPrecioVentaFinal] es el precio FINAL que se escribió en el campo
+  /// (con ISV cargado si aplica) — se convierte a la base sin impuesto antes
+  /// de guardarlo, ver comentario arriba de [_factorIsvVenta].
+  void _actualizarPrecioVentaCompra(int index, double nuevoPrecioVentaFinal) {
+    if (nuevoPrecioVentaFinal < 0) {
       _mostrarMensaje('Precio inválido');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioVenta);
+    final nuevoPrecioBase = _precioVentaBaseDesdeFinal(nuevoPrecioVentaFinal);
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioBase);
     _sincronizarMargenControlador(index);
   }
 
@@ -469,22 +505,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final carrito = ref.read(carritoCompraProvider);
     if (index >= carrito.items.length) return;
     final costo = _costoFinalItem(carrito.items[index]);
-    final nuevoPrecio = redondearMoneda(costo * (1 + nuevoMargen / 100));
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecio);
-    _ctrlPrecioVenta[index]?.text = nuevoPrecio.toStringAsFixed(2);
+    final nuevoPrecioFinal = redondearMoneda(costo * (1 + nuevoMargen / 100));
+    final nuevoPrecioBase = _precioVentaBaseDesdeFinal(nuevoPrecioFinal);
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioBase);
+    _ctrlPrecioVenta[index]?.text = nuevoPrecioFinal.toStringAsFixed(2);
   }
 
-  /// Recalcula el % de margen mostrado a partir del precio de venta y el
-  /// costo final vigentes. Se llama después de editar el precio de venta, la
-  /// cantidad, el costo unitario o el descuento de línea, para que el
+  /// Recalcula el % de margen mostrado a partir del precio de venta final y
+  /// el costo final vigentes. Se llama después de editar el precio de venta,
+  /// la cantidad, el costo unitario o el descuento de línea, para que el
   /// margen mostrado nunca quede desactualizado.
   void _sincronizarMargenControlador(int index) {
     final carrito = ref.read(carritoCompraProvider);
     if (index >= carrito.items.length) return;
     final item = carrito.items[index];
     final costo = _costoFinalItem(item);
-    final precioVenta = item.precioVentaNuevo ?? 0;
-    final margen = costo > 0 ? ((precioVenta - costo) / costo * 100) : 0.0;
+    final precioFinal = _precioVentaFinal(item);
+    final margen = costo > 0 ? ((precioFinal - costo) / costo * 100) : 0.0;
     _ctrlMargen[index]?.text = margen.toStringAsFixed(1);
   }
 
@@ -1450,7 +1487,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               children: [
                 const Spacer(flex: 6),
                 Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v)))),
-                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true))),
+                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('precioVenta_$index', _etiquetaPrecioVenta, ctrlPrecioVenta, _precioVentaFinal(item), (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true))),
                 const Spacer(flex: 4),
                 const SizedBox(width: 40),
               ],
@@ -1507,7 +1544,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             children: [
               Expanded(child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v))),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precioVenta_$index', 'Precio de venta', ctrlPrecioVenta, (item.precioVentaNuevo as double?) ?? 0, (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true)),
+              Expanded(child: _campoInlineConEtiqueta('precioVenta_$index', _etiquetaPrecioVenta, ctrlPrecioVenta, _precioVentaFinal(item), (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true)),
             ],
           ),
           const SizedBox(height: 10),
