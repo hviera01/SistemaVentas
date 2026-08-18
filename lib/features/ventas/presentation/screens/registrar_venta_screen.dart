@@ -79,6 +79,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _ocController = TextEditingController();
   final _regExoneradoController = TextEditingController();
   final _regSagController = TextEditingController();
+  final _observacionesController = TextEditingController();
   final _descuentoGlobalController = TextEditingController();
   bool _datosExpandidos = false;
   bool _precioCarritoConIsv = true;
@@ -238,6 +239,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _ocController.text = ventaOrigen.oc;
       _regExoneradoController.text = ventaOrigen.regExonerado;
       _regSagController.text = ventaOrigen.regSag;
+      _observacionesController.text = ventaOrigen.observaciones;
       _descuentoGlobalController.text = ventaOrigen.descuentoGlobal == 0 ? '' : _formatoCantidad(ventaOrigen.descuentoGlobal);
     }
 
@@ -401,6 +403,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _ocController.dispose();
     _regExoneradoController.dispose();
     _regSagController.dispose();
+    _observacionesController.dispose();
     _descuentoGlobalController.dispose();
     for (final c in _ctrlCantidad.values) {
       c.dispose();
@@ -1160,6 +1163,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       oc: carrito.oc,
       regExonerado: carrito.regExonerado,
       regSag: carrito.regSag,
+      observaciones: carrito.observaciones,
       descuentoGlobal: carrito.descuentoGlobalPorcentaje,
       items: carrito.items,
     );
@@ -1206,6 +1210,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       oc: carrito.oc,
       regExonerado: carrito.regExonerado,
       regSag: carrito.regSag,
+      observaciones: carrito.observaciones,
       descuentoGlobal: carrito.descuentoGlobalPorcentaje,
       items: carrito.items,
     );
@@ -1233,6 +1238,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _ocController.text = sesion.oc;
       _regExoneradoController.text = sesion.regExonerado;
       _regSagController.text = sesion.regSag;
+      _observacionesController.text = sesion.observaciones;
       _descuentoGlobalController.text = sesion.descuentoGlobal == 0 ? '' : _formatoCantidad(sesion.descuentoGlobal);
     });
   }
@@ -1244,6 +1250,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _ocController.clear();
     _regExoneradoController.clear();
     _regSagController.clear();
+    _observacionesController.clear();
     _descuentoGlobalController.clear();
     for (final c in _ctrlCantidad.values) {
       c.dispose();
@@ -1422,6 +1429,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             oc: carrito.oc,
             regExonerado: carrito.regExonerado,
             regSag: carrito.regSag,
+            observaciones: carrito.observaciones,
             descuentoGlobal: carrito.descuentoGlobalPorcentaje,
             items: carrito.items,
             montoPago: montoPago,
@@ -2228,6 +2236,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 style: GoogleFonts.poppins(fontSize: 13),
                                 decoration: _decoracion('No. Reg. SAG'),
                                 onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerRegSag(v),
+                              ),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextField(
+                                controller: _observacionesController,
+                                maxLines: 2,
+                                style: GoogleFonts.poppins(fontSize: 13),
+                                decoration: _decoracion('Observaciones (se imprimen en la factura)'),
+                                onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerObservaciones(v),
                               ),
                             ),
                           ],

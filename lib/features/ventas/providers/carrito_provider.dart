@@ -48,6 +48,7 @@ class CarritoVentaState {
   final String oc;
   final String regExonerado;
   final String regSag;
+  final String observaciones;
   final double pagoCon;
   final double cambio;
   final double descuentoGlobalPorcentaje;
@@ -68,6 +69,7 @@ class CarritoVentaState {
     this.oc = '',
     this.regExonerado = '',
     this.regSag = '',
+    this.observaciones = '',
     this.pagoCon = 0,
     this.cambio = 0,
     this.descuentoGlobalPorcentaje = 0,
@@ -122,6 +124,7 @@ class CarritoVentaState {
     String? oc,
     String? regExonerado,
     String? regSag,
+    String? observaciones,
     double? pagoCon,
     double? cambio,
     double? descuentoGlobalPorcentaje,
@@ -140,6 +143,7 @@ class CarritoVentaState {
       oc: oc ?? this.oc,
       regExonerado: regExonerado ?? this.regExonerado,
       regSag: regSag ?? this.regSag,
+      observaciones: observaciones ?? this.observaciones,
       pagoCon: pagoCon ?? this.pagoCon,
       cambio: cambio ?? this.cambio,
       descuentoGlobalPorcentaje: descuentoGlobalPorcentaje ?? this.descuentoGlobalPorcentaje,
@@ -297,6 +301,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   void establecerOc(String v) => state = state.copyWith(oc: v);
   void establecerRegExonerado(String v) => state = state.copyWith(regExonerado: v);
   void establecerRegSag(String v) => state = state.copyWith(regSag: v);
+  void establecerObservaciones(String v) => state = state.copyWith(observaciones: v);
   void establecerPago({required double pagoCon, required double cambio}) {
     state = state.copyWith(pagoCon: pagoCon, cambio: cambio);
   }
@@ -320,6 +325,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       oc: sesion.oc,
       regExonerado: sesion.regExonerado,
       regSag: sesion.regSag,
+      observaciones: sesion.observaciones,
       descuentoGlobalPorcentaje: sesion.descuentoGlobal,
     );
   }
@@ -359,6 +365,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       oc: venta.oc,
       regExonerado: venta.regExonerado,
       regSag: venta.regSag,
+      observaciones: venta.observaciones,
       descuentoGlobalPorcentaje: venta.descuentoGlobal,
     );
   }

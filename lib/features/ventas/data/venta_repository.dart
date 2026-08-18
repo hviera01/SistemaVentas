@@ -125,6 +125,7 @@ class VentaRepository {
     required String oc,
     required String regExonerado,
     required String regSag,
+    String observaciones = '',
     double descuentoGlobal = 0,
     required List<ItemVentaModel> items,
     required double montoPago,
@@ -232,6 +233,7 @@ class VentaRepository {
         'oc': oc,
         'regExonerado': regExonerado,
         'regSag': regSag,
+        'observaciones': observaciones,
         'descuentoGlobal': descuentoGlobal,
         'pendienteImpresion': false,
       });
@@ -328,6 +330,7 @@ class VentaRepository {
       oc: oc,
       regExonerado: regExonerado,
       regSag: regSag,
+      observaciones: observaciones,
       descuentoGlobal: descuentoGlobal,
       detalle: items.map((item) {
         final costoReal = costosFifo[item];

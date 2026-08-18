@@ -44,6 +44,10 @@ class VentaExportService {
                 pw.SizedBox(height: 14),
               ],
               _infoFormal(venta, formatoDia),
+              if (venta.observaciones.isNotEmpty) ...[
+                pw.SizedBox(height: 10),
+                _bloqueObservacionesFormal(venta),
+              ],
               pw.SizedBox(height: 16),
               _tablaItemsFormal(venta, conIsv),
               pw.SizedBox(height: 14),
@@ -169,6 +173,22 @@ class VentaExportService {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  pw.Widget _bloqueObservacionesFormal(VentaModel venta) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(color: _colorGrisClaro, borderRadius: pw.BorderRadius.circular(8)),
+      child: pw.RichText(
+        text: pw.TextSpan(
+          children: [
+            pw.TextSpan(text: 'Observaciones: ', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _colorGrisTexto)),
+            pw.TextSpan(text: venta.observaciones, style: const pw.TextStyle(fontSize: 9, color: PdfColors.black)),
+          ],
+        ),
       ),
     );
   }
@@ -491,6 +511,10 @@ class VentaExportService {
             if (venta.oc.isNotEmpty) pw.Text('No. O/C exenta: ${venta.oc}', style: const pw.TextStyle(fontSize: fNormal)),
             if (venta.regExonerado.isNotEmpty) pw.Text('No. Reg de exonerado: ${venta.regExonerado}', style: const pw.TextStyle(fontSize: fNormal)),
             if (venta.regSag.isNotEmpty) pw.Text('No. De reg de la SAG: ${venta.regSag}', style: const pw.TextStyle(fontSize: fNormal)),
+            if (venta.observaciones.isNotEmpty) ...[
+              _separador(),
+              pw.Text('Observaciones: ${venta.observaciones}', style: const pw.TextStyle(fontSize: fNormal)),
+            ],
             _separador(),
             // Fila con spaceBetween (no texto con espacios a mano) para que
             // "IMPORTE" quede alineado de verdad arriba del monto de cada
@@ -637,6 +661,14 @@ class VentaExportService {
     for (final item in venta.detalle) {
       final lineasNombre = (item.nombreProducto.length / caracteresPorLinea).ceil().clamp(1, 8);
       alto += lineasNombre * 3.6 + 7.0;
+    }
+
+    // Observaciones es texto libre: se estima igual que el nombre de
+    // producto (mismo caracteresPorLinea), más el separador extra que la
+    // envuelve (ver _construirPaginaTicket).
+    if (venta.observaciones.isNotEmpty) {
+      final lineasObservaciones = (venta.observaciones.length / caracteresPorLinea).ceil().clamp(1, 10);
+      alto += lineasObservaciones * 3.6 + 8.0;
     }
 
     // Sin techo modesto acá a propósito (ver comentario grande en

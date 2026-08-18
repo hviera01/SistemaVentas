@@ -578,6 +578,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               if (esCredito && venta.fechaVencimiento != null) _campoInfo('Vence', formatoDia.format(venta.fechaVencimiento!)),
               if (!esCotizacion && !esCredito) _campoInfo('Método de pago', venta.metodoPago),
               _campoInfo('Estado', venta.estado),
+              if (venta.observaciones.isNotEmpty) _campoInfo('Observaciones', venta.observaciones),
             ],
           ),
         ),

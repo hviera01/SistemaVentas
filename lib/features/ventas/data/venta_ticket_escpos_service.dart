@@ -163,6 +163,10 @@ class VentaTicketEscPosService {
     if (venta.oc.isNotEmpty) bytes += _texto(generador, 'No. O/C exenta: ${venta.oc}');
     if (venta.regExonerado.isNotEmpty) bytes += _texto(generador, 'No. Reg de exonerado: ${venta.regExonerado}');
     if (venta.regSag.isNotEmpty) bytes += _texto(generador, 'No. De reg de la SAG: ${venta.regSag}');
+    if (venta.observaciones.isNotEmpty) {
+      bytes += generador.hr();
+      bytes += _texto(generador, 'Observaciones: ${venta.observaciones}');
+    }
     bytes += generador.hr();
 
     bytes += generador.row([

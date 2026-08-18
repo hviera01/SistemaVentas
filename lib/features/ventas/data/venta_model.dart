@@ -24,6 +24,7 @@ class VentaModel {
   final String regExonerado;
   final String regSag;
   final double descuentoGlobal;
+  final String observaciones;
   final List<ItemVentaModel> detalle;
   // Desglose cuando metodoPago == 'Mixto' (una venta pagada con más de un
   // método a la vez, ej. mitad Efectivo/mitad Tarjeta). Vacío en cualquier
@@ -82,6 +83,7 @@ class VentaModel {
       regExonerado: regExonerado,
       regSag: regSag,
       descuentoGlobal: descuentoGlobal,
+      observaciones: observaciones,
       detalle: detalle ?? this.detalle,
       pagosMixtos: pagosMixtos,
       usuarioAnulacion: usuarioAnulacion,
@@ -115,6 +117,7 @@ class VentaModel {
     required this.regExonerado,
     required this.regSag,
     this.descuentoGlobal = 0,
+    this.observaciones = '',
     required this.detalle,
     this.pagosMixtos = const [],
     this.usuarioAnulacion = '',
@@ -148,6 +151,7 @@ class VentaModel {
       regExonerado: data['regExonerado'] ?? '',
       regSag: data['regSag'] ?? '',
       descuentoGlobal: (data['descuentoGlobal'] ?? 0).toDouble(),
+      observaciones: data['observaciones'] ?? '',
       detalle: detalle,
       pagosMixtos: PagoDetalle.listaFromMaps(data['pagosMixtos'] as List<dynamic>?),
       usuarioAnulacion: data['usuarioAnulacion'] ?? '',

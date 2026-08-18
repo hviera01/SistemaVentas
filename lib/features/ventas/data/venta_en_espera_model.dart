@@ -13,6 +13,7 @@ class VentaEnEsperaModel {
   final String oc;
   final String regExonerado;
   final String regSag;
+  final String observaciones;
   final double descuentoGlobal;
   final List<ItemVentaModel> items;
 
@@ -28,6 +29,7 @@ class VentaEnEsperaModel {
     required this.oc,
     required this.regExonerado,
     required this.regSag,
+    this.observaciones = '',
     this.descuentoGlobal = 0,
     required this.items,
   });
@@ -48,6 +50,7 @@ class VentaEnEsperaModel {
       oc: data['oc'] ?? '',
       regExonerado: data['regExonerado'] ?? '',
       regSag: data['regSag'] ?? '',
+      observaciones: data['observaciones'] ?? '',
       descuentoGlobal: (data['descuentoGlobal'] ?? 0).toDouble(),
       items: itemsRaw.map((e) => ItemVentaModel.fromMap(Map<String, dynamic>.from(e as Map))).toList(),
     );
@@ -65,6 +68,7 @@ class VentaEnEsperaModel {
       'oc': oc,
       'regExonerado': regExonerado,
       'regSag': regSag,
+      'observaciones': observaciones,
       'descuentoGlobal': descuentoGlobal,
       'items': items.map((i) => i.toMap()).toList(),
     };

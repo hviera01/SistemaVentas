@@ -131,6 +131,10 @@ class TicketEscPosPreview extends StatelessWidget {
           if (venta.oc.isNotEmpty) linea('No. O/C exenta: ${venta.oc}'),
           if (venta.regExonerado.isNotEmpty) linea('No. Reg de exonerado: ${venta.regExonerado}'),
           if (venta.regSag.isNotEmpty) linea('No. De reg de la SAG: ${venta.regSag}'),
+          if (venta.observaciones.isNotEmpty) ...[
+            separador(),
+            linea('Observaciones: ${venta.observaciones}'),
+          ],
           separador(),
           fila('CANT DESCRIPCIÓN', 'IMPORTE', negrita: true),
           separador(),
