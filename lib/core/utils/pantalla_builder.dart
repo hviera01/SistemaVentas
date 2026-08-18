@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/placeholder_screen.dart';
 import '../../features/categorias/presentation/screens/categorias_screen.dart';
 import '../../features/productos/presentation/screens/inventario_screen.dart';
+import '../../features/productos/presentation/screens/auditoria_inventario_screen.dart';
 import '../../features/usuarios/presentation/screens/usuarios_screen.dart';
 import '../../features/negocio/presentation/screens/negocio_screen.dart';
 import '../../features/colores/presentation/screens/colores_screen.dart';
@@ -75,6 +76,8 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono, String
       return const CategoriasScreen();
     case 'inventario':
       return const InventarioScreen();
+    case 'auditoria_inventario':
+      return const AuditoriaInventarioScreen();
       case 'usuarios':
       return const UsuariosScreen();
     case 'negocio':

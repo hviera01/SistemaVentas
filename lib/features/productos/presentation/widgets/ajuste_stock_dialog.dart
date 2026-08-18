@@ -17,8 +17,27 @@ enum _ModoAjuste { ingreso, salida }
 /// sin una venta real detrás que determine el orden-.
 class AjusteStockDialog extends ConsumerStatefulWidget {
   final ProductoModel producto;
+  // Los siguientes tres solo los usa Auditoría de Inventario (ver
+  // AuditoriaInventarioScreen): al detectar un descuadre entre el conteo
+  // físico y el stock del sistema, abre este mismo diálogo ya precargado
+  // (modo, cantidad y motivo) en vez de duplicar todo el flujo de
+  // ingreso/salida con lotes de costo.
+  final bool? esIngresoInicial;
+  final double? cantidadInicial;
+  final String? motivoInicial;
+  // Bloque informativo opcional que se muestra debajo de "Existencia
+  // actual" (ver AuditoriaInventarioScreen: ahí va "Conteo físico: X ·
+  // Diferencia: ±Y").
+  final Widget? notaSuperior;
 
-  const AjusteStockDialog({super.key, required this.producto});
+  const AjusteStockDialog({
+    super.key,
+    required this.producto,
+    this.esIngresoInicial,
+    this.cantidadInicial,
+    this.motivoInicial,
+    this.notaSuperior,
+  });
 
   @override
   ConsumerState<AjusteStockDialog> createState() => _AjusteStockDialogState();
@@ -33,6 +52,23 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
   bool _salidaSinLote = false;
   bool _guardando = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.esIngresoInicial != null) _modo = widget.esIngresoInicial! ? _ModoAjuste.ingreso : _ModoAjuste.salida;
+    if (widget.cantidadInicial != null && widget.cantidadInicial! > 0) {
+      _cantidadController.text = _formatoCantidad(widget.cantidadInicial!);
+    }
+    if (widget.motivoInicial != null) _motivoController.text = widget.motivoInicial!;
+    // Precarga el costo con el precioCompra vigente del producto: para un
+    // reajuste de auditoría casi siempre es ese el costo real, y así el
+    // usuario no tiene que volver a escribirlo -puede editarlo si de verdad
+    // fue distinto (por ejemplo, encontró más de un lote viejo a otro costo).
+    if (_modo == _ModoAjuste.ingreso && widget.producto.precioCompra > 0) {
+      _costoController.text = _formatoCantidad(widget.producto.precioCompra);
+    }
+  }
 
   @override
   void dispose() {
@@ -149,6 +185,10 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               Text('Ajustar Existencia', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
               const SizedBox(height: 6),
               Text('Existencia actual: ${_formatoCantidad(widget.producto.stock)}', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+              if (widget.notaSuperior != null) ...[
+                const SizedBox(height: 10),
+                widget.notaSuperior!,
+              ],
               const SizedBox(height: 18),
               _selectorModo(),
               const SizedBox(height: 18),
