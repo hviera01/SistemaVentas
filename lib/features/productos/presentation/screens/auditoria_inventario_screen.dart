@@ -7,6 +7,8 @@ import '../../../categorias/data/categoria_model.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../widgets/ajuste_stock_dialog.dart';
 import '../widgets/historial_stock_dialog.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
+import '../../../../core/utils/codigo_barras_utils.dart';
 
 /// Auditoría de Inventario: el usuario elige una categoría, va anotando el
 /// conteo físico real de cada producto (sin que eso toque Firestore para
@@ -47,16 +49,72 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     return _controladores.putIfAbsent(idProducto, () => TextEditingController());
   }
 
-  void _cambiarCategoria(String? id) {
+  // [busquedaInicial] lo usa _escanear: cuando el código escaneado
+  // pertenece a una categoría distinta a la que no había ninguna elegida
+  // todavía, cambia a esa categoría y deja el código ya cargado en el
+  // buscador, para no tener que escribirlo de nuevo.
+  void _cambiarCategoria(String? id, {String? busquedaInicial}) {
     setState(() {
       _idCategoria = id;
       for (final c in _controladores.values) {
         c.dispose();
       }
       _controladores.clear();
-      _busqueda = '';
-      _busquedaController.clear();
+      _busqueda = busquedaInicial ?? '';
+      _busquedaController.text = _busqueda;
       _soloDescuadres = false;
+    });
+  }
+
+  bool _coincideExacto(ProductoModel p, String texto) => p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
+
+  ProductoModel? _buscarPorCodigo(List<ProductoModel> productos, String texto) {
+    for (final p in productos) {
+      if (_coincideExacto(p, texto)) return p;
+    }
+    return null;
+  }
+
+  // Mismo patrón que Inventario (ver inventario_screen.dart _escanear):
+  // prueba coincidencia exacta y, si no encuentra nada, otras variantes
+  // válidas del mismo código (invertido, con/sin el "0" que agrega iPhone).
+  // A diferencia de Inventario, acá SÍ importa la categoría: si el producto
+  // escaneado es de otra categoría a la que ya se está auditando, no la
+  // cambia sola -haría perder el conteo físico que el usuario ya lleva
+  // tecleado ahí-, solo avisa. Si todavía no hay categoría elegida, no hay
+  // nada que perder, así que ahí sí selecciona la categoría del producto
+  // automáticamente.
+  Future<void> _escanear() async {
+    final codigo = await escanearCodigoBarras(context);
+    if (codigo == null || codigo.isEmpty || !mounted) return;
+    var texto = codigo.trim();
+    final productos = ref.read(productosStreamProvider).value ?? [];
+    var encontrado = _buscarPorCodigo(productos, texto);
+    if (encontrado == null) {
+      for (final variante in variantesCodigoBarras(texto)) {
+        encontrado = _buscarPorCodigo(productos, variante);
+        if (encontrado != null) {
+          texto = variante;
+          break;
+        }
+      }
+    }
+
+    if (encontrado != null && encontrado.idCategoria != _idCategoria) {
+      if (_idCategoria == null) {
+        _cambiarCategoria(encontrado.idCategoria, busquedaInicial: texto);
+        return;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${encontrado.nombre}" está en otra categoría -cambiá de categoría para auditarlo (así no se pierde el conteo que ya llevás acá).')),
+      );
+      return;
+    }
+
+    setState(() {
+      _busqueda = texto;
+      _busquedaController.text = texto;
     });
   }
 
@@ -209,16 +267,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
             error: (e, st) => Text('No se pudieron cargar las categorías', style: GoogleFonts.poppins(fontSize: 12, color: Colors.red)),
           ),
         ),
+        SizedBox(
+          width: esMovil ? constraints.maxWidth : 300,
+          child: _buscador(),
+        ),
         if (_idCategoria != null) ...[
-          SizedBox(
-            width: esMovil ? constraints.maxWidth : 260,
-            child: TextField(
-              controller: _busquedaController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: _decoracion('Buscar en la categoría', icono: Icons.search),
-              onChanged: (v) => setState(() => _busqueda = v.trim()),
-            ),
-          ),
           _chipFiltroDescuadres(),
           OutlinedButton.icon(
             onPressed: _reiniciarConteo,
@@ -233,6 +286,47 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buscador() {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _busquedaController,
+              style: GoogleFonts.poppins(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Buscar o escanear código de barras...',
+                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _busqueda = v.trim()),
+            ),
+          ),
+          if (_busqueda.isNotEmpty)
+            IconButton(
+              tooltip: 'Limpiar',
+              icon: const Icon(Icons.close, size: 18),
+              onPressed: () => setState(() {
+                _busqueda = '';
+                _busquedaController.clear();
+              }),
+            ),
+          IconButton(
+            tooltip: 'Escanear código de barras',
+            icon: const Icon(Icons.qr_code_scanner, size: 20),
+            onPressed: _escanear,
+          ),
+        ],
+      ),
     );
   }
 
@@ -265,7 +359,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
         children: [
           Icon(Icons.fact_check_outlined, size: 56, color: Colors.grey.shade300),
           const SizedBox(height: 14),
-          Text('Elegí una categoría arriba para empezar a auditar', style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500)),
+          Text(
+            'Elegí una categoría arriba para empezar a auditar\n(o escaneá un producto y se elige sola)',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
+          ),
         ],
       ),
     );
@@ -276,12 +374,24 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     // (depende del stock real de sus componentes, ver
     // ProductoModel.stockDisponibleCombo), así que un conteo físico del
     // combo en sí no tendría con qué compararse de forma confiable.
-    var lista = productos.where((p) => p.idCategoria == _idCategoria && !p.esCombo).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
+    // Los que sí tienen existencia según el sistema van primero -son los que
+    // de verdad hay que ir a contar físicamente al estante-; los que ya
+    // están en 0 quedan al final, ordenados alfabéticamente dentro de cada
+    // grupo.
+    var lista = productos.where((p) => p.idCategoria == _idCategoria && !p.esCombo).toList()
+      ..sort((a, b) {
+        final tieneStockA = a.stock > 0;
+        final tieneStockB = b.stock > 0;
+        if (tieneStockA != tieneStockB) return tieneStockA ? -1 : 1;
+        return a.nombre.compareTo(b.nombre);
+      });
     final combosExcluidos = productos.where((p) => p.idCategoria == _idCategoria && p.esCombo).length;
 
     if (_busqueda.isNotEmpty) {
       final termino = _busqueda.toLowerCase();
-      lista = lista.where((p) => p.nombre.toLowerCase().contains(termino) || p.codigo.toLowerCase().contains(termino)).toList();
+      lista = lista
+          .where((p) => p.nombre.toLowerCase().contains(termino) || p.codigo.toLowerCase().contains(termino) || p.codigoBarras.toLowerCase().contains(termino))
+          .toList();
     }
 
     final auditados = lista.where((p) => _conteoDe(p.id) != null).length;
