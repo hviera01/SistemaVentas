@@ -963,6 +963,38 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     ref.read(carritoVentaProvider.notifier).quitarItem(index);
   }
 
+  void _alternarPendienteCompra(int index) {
+    final item = ref.read(carritoVentaProvider).items[index];
+    ref.read(carritoVentaProvider.notifier).marcarPendienteCompra(index, !item.pendienteCompra);
+  }
+
+  /// "Venta anticipada": se vendió sin saber todavía qué producto exacto la
+  /// va a reponer (ej. pintura preparada, antes de comprar el insumo real).
+  /// No aplica a combos -su costo depende de sus componentes, no de una
+  /// compra directa del combo mismo-, así que ahí el botón sale deshabilitado.
+  Widget _botonPendienteCompra(int index, ItemVentaModel item) {
+    if (item.esCombo) {
+      return SizedBox(
+        width: 32,
+        child: Tooltip(
+          message: 'No aplica a combos (su existencia depende de sus componentes)',
+          child: Icon(Icons.hourglass_bottom, size: 18, color: Colors.grey.shade200),
+        ),
+      );
+    }
+    final activo = item.pendienteCompra;
+    return SizedBox(
+      width: 32,
+      child: IconButton(
+        tooltip: activo
+            ? 'Venta anticipada: se vendió sin saber todavía qué compra la va a reponer. La próxima compra de este producto la completa sola y corrige el costo. Tocá para desmarcar.'
+            : 'Marcar como venta anticipada: se vende sin tener (o sin saber exactamente cuál) producto real en existencia. La próxima compra de este producto la empareja sola y corrige el costo.',
+        icon: Icon(Icons.hourglass_bottom, size: 18, color: activo ? const Color(0xFFF59E0B) : Colors.grey.shade400),
+        onPressed: () => _alternarPendienteCompra(index),
+      ),
+    );
+  }
+
   void _moverItem(int index, int nuevoIndex) {
     ref.read(carritoVentaProvider.notifier).moverItem(index, nuevoIndex);
     // La cantidad de items no cambia con un reordenamiento, así que el
@@ -2682,6 +2714,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         Expanded(flex: 2, child: Text(_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', textAlign: TextAlign.center, style: estilo)),
         Expanded(flex: 2, child: Text('Descuento %', textAlign: TextAlign.center, style: estilo)),
         Expanded(flex: 2, child: Text(_precioCarritoConIsv ? 'Importe (c/ISV)' : 'Importe (s/ISV)', textAlign: TextAlign.right, style: estilo)),
+        const SizedBox(width: 32),
         const SizedBox(width: 40),
       ],
     );
@@ -2917,6 +2950,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
           Expanded(flex: 2, child: Text(formatearMoneda(importe), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+          _botonPendienteCompra(index, item as ItemVentaModel),
           SizedBox(
             width: 40,
             child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
@@ -2956,17 +2990,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   ],
                 ),
               ),
+              _botonPendienteCompra(index, item as ItemVentaModel),
               IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v))),
               const SizedBox(width: 8),
               Expanded(child: _campoInlineConEtiqueta('precio_$index', _precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true)),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje, (v) => _actualizarDescuentoLinea(index, v))),
             ],
           ),
           const SizedBox(height: 10),

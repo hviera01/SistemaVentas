@@ -33,6 +33,7 @@ class VentaRepository {
   final _lotes = LoteCostoRepository();
   final _colContadores = FirebaseFirestore.instance.collection('contadores');
   final _colVentasCredito = FirebaseFirestore.instance.collection('ventasCredito');
+  final _colPendientesReposicion = FirebaseFirestore.instance.collection('pendientesReposicion');
 
   String _claveContador(String tipoDocumento) {
     switch (tipoDocumento) {
@@ -249,6 +250,28 @@ class VentaRepository {
         // posición de la línea en el carrito, para que la reimpresión
         // respete el mismo orden con el que se registró (ver _ordenarDetalle).
         transaction.set(itemRef, {...itemAGuardar.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro), 'orden': entry.key});
+
+        // "Venta anticipada": deja un registro para que la próxima compra de
+        // este producto lo empareje solo (ver CompraRepository.registrarCompra
+        // y PendienteReposicionRepository). No aplica a combos -su costo
+        // depende de sus componentes, no de una compra directa del combo
+        // mismo- ni a cotizaciones, que todavía no son una venta concretada.
+        if (tipoDocumento != 'Cotizacion' && itemAGuardar.pendienteCompra && !itemAGuardar.esCombo) {
+          transaction.set(_colPendientesReposicion.doc(), {
+            'idVenta': ventaRef.id,
+            'numeroDocumentoVenta': numeroDocumento,
+            'idItemDetalle': itemRef.id,
+            'idProducto': itemAGuardar.idProducto,
+            'nombreProducto': itemAGuardar.nombreProducto,
+            'idCategoria': itemAGuardar.idCategoria,
+            'cantidadOriginal': itemAGuardar.cantidad,
+            'cantidadPendiente': itemAGuardar.cantidad,
+            'costoRegistrado': itemAGuardar.precioCompraUsado,
+            'fechaRegistro': Timestamp.fromDate(fechaRegistro),
+            'estado': 'Pendiente',
+            'usuario': usuario,
+          });
+        }
       }
 
       if (condicion == 'Credito') {
@@ -492,6 +515,12 @@ class VentaRepository {
     }
     final itemsARestaurar = itemsExpandidos.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
 
+    // Si esta venta tenía líneas "pendientes de compra" (venta anticipada)
+    // que todavía no se habían emparejado con ninguna compra, hay que
+    // cancelarlas: si no, quedarían esperando para siempre a una compra que
+    // ya no le corresponde a nada real (la venta que las originó ya no existe).
+    final pendientesSnap = await _colPendientesReposicion.where('idVenta', isEqualTo: id).where('estado', isEqualTo: 'Pendiente').get();
+
     // Si la venta se borró del servidor pero seguía "existiendo" en el
     // caché local (por ejemplo, después de vaciar la base de datos desde
     // otro dispositivo), la comprobación de arriba pasa igual porque lee del
@@ -506,6 +535,7 @@ class VentaRepository {
         numeroDocumento: numeroDocumento,
         creditoExiste: creditoExiste,
         itemsARestaurar: itemsARestaurar,
+        pendientesReposicionRefs: pendientesSnap.docs.map((d) => d.reference).toList(),
       );
     } on FirebaseException catch (e) {
       if (e.code == 'not-found' || e.code == 'invalid-argument') {
@@ -522,6 +552,7 @@ class VentaRepository {
     required String numeroDocumento,
     required bool creditoExiste,
     required List<ItemVentaModel> itemsARestaurar,
+    required List<DocumentReference<Map<String, dynamic>>> pendientesReposicionRefs,
   }) async {
     await _db.runTransaction((transaction) async {
       final stocksActuales = <String, double>{};
@@ -541,6 +572,10 @@ class VentaRepository {
 
       if (creditoExiste) {
         transaction.delete(_colVentasCredito.doc(id));
+      }
+
+      for (final ref in pendientesReposicionRefs) {
+        transaction.update(ref, {'estado': 'Cancelado', 'fechaCompletado': FieldValue.serverTimestamp()});
       }
 
       for (final item in itemsARestaurar) {

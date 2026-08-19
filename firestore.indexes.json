@@ -1,5 +1,23 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "pendientesReposicion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idProducto", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaRegistro", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pendientesReposicion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaRegistro", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": [
     {
       "collectionGroup": "abonos",

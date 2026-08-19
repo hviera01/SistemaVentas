@@ -6,10 +6,18 @@ import '../data/historial_precio_compra_model.dart';
 import '../data/historial_venta_producto_model.dart';
 import '../data/lote_costo_model.dart';
 import '../data/lote_costo_repository.dart';
+import '../data/pendiente_reposicion_model.dart';
+import '../data/pendiente_reposicion_repository.dart';
 
 final productoRepositoryProvider = Provider((ref) => ProductoRepository());
 
 final loteCostoRepositoryProvider = Provider((ref) => LoteCostoRepository());
+
+final pendienteReposicionRepositoryProvider = Provider((ref) => PendienteReposicionRepository());
+
+final pendientesReposicionStreamProvider = StreamProvider<List<PendienteReposicionModel>>((ref) {
+  return ref.watch(pendienteReposicionRepositoryProvider).obtenerPendientes();
+});
 
 final lotesProductoProvider = StreamProvider.family<List<LoteCostoModel>, String>((ref, idProducto) {
   return ref.watch(loteCostoRepositoryProvider).obtenerLotes(idProducto);

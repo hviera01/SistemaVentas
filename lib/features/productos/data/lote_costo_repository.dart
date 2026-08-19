@@ -30,6 +30,14 @@ class LoteCostoRepository {
   /// un costo propio). Es una escritura pura (documento nuevo): no necesita
   /// lectura previa, así que se puede llamar en cualquier punto de la fase
   /// de escritura de la transacción.
+  ///
+  /// [cantidadRestante] es opcional y solo hace falta cuando parte de esta
+  /// compra ya nace "comprometida" -por ejemplo, cubre una venta anticipada
+  /// que se había vendido antes sin saber todavía cuál compra la iba a
+  /// reponer (ver CompraRepository.registrarCompra)-: ahí [cantidad] sigue
+  /// siendo lo que de verdad se compró (para que el historial del lote no
+  /// mienta), pero lo disponible para futuras ventas es menos. Si no se
+  /// indica, el lote nace con toda su cantidad disponible, como siempre.
   void crearLote(
     Transaction transaction,
     String idProducto, {
@@ -38,12 +46,13 @@ class LoteCostoRepository {
     required DateTime fecha,
     required String origen,
     String? idCompra,
+    double? cantidadRestante,
   }) {
     if (cantidad <= 0) return;
     final ref = colLotes(idProducto).doc();
     transaction.set(ref, {
       'cantidadOriginal': cantidad,
-      'cantidadRestante': cantidad,
+      'cantidadRestante': cantidadRestante ?? cantidad,
       'costoUnitario': costoUnitario,
       'fecha': Timestamp.fromDate(fecha),
       'origen': origen,

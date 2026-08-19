@@ -5,6 +5,7 @@ import '../../data/producto_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../categorias/data/categoria_model.dart';
 import '../../../categorias/providers/categorias_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../widgets/ajuste_stock_dialog.dart';
 import '../widgets/historial_stock_dialog.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
@@ -35,6 +36,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   final _busquedaController = TextEditingController();
   String _busqueda = '';
   bool _soloDescuadres = false;
+  bool _ajustandoTodo = false;
 
   @override
   void dispose() {
@@ -156,6 +158,74 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
         notaSuperior: (diferencia == null || diferencia == 0) ? null : _notaDiferencia(diferencia),
       ),
     );
+  }
+
+  /// Ajusta de una sola vez todos los productos de [lista] cuyo conteo
+  /// físico no cuadra con el sistema, en vez de tener que abrir el diálogo
+  /// de ajuste uno por uno. Usa el mismo motivo que el ajuste individual
+  /// ("Reajuste por auditoría") y el precio de compra vigente como costo del
+  /// ingreso -si algún producto sube existencia y ese costo no es el
+  /// correcto para ese caso puntual, se puede corregir después a mano desde
+  /// Inventario-.
+  Future<void> _ajustarTodosLosDescuadres(List<ProductoModel> lista) async {
+    final aAjustar = [
+      for (final p in lista)
+        if (_conteoDe(p.id) != null && _conteoDe(p.id) != p.stock) (producto: p, diferencia: _conteoDe(p.id)! - p.stock),
+    ];
+    if (aAjustar.isEmpty) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Ajustar todos los descuadres', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          'Se van a ajustar ${aAjustar.length} producto${aAjustar.length == 1 ? '' : 's'} al conteo físico que anotaste, de una sola vez -motivo "Reajuste por auditoría"-. Esta acción no se puede deshacer.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Ajustar todos', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+
+    setState(() => _ajustandoTodo = true);
+    final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    final repo = ref.read(productoRepositoryProvider);
+    const motivo = 'Reajuste por auditoría (ajuste global)';
+    var exitosos = 0;
+    final fallidos = <String>[];
+    await Future.wait(aAjustar.map((par) async {
+      try {
+        if (par.diferencia > 0) {
+          await repo.registrarIngreso(id: par.producto.id, cantidad: par.diferencia, costoUnitario: par.producto.precioCompra, usuario: usuario, motivo: motivo);
+        } else {
+          // Sin lote específico: es un ajuste global sobre varios productos
+          // a la vez, no tiene sentido pararse a elegir un lote por cada uno
+          // -igual que la opción "sin lote" ya disponible en el ajuste
+          // individual (ver AjusteStockDialog)-.
+          await repo.registrarSalida(id: par.producto.id, cantidad: par.diferencia.abs(), usuario: usuario, motivo: motivo);
+        }
+        exitosos++;
+      } catch (e) {
+        fallidos.add(par.producto.nombre);
+      }
+    }));
+
+    if (!mounted) return;
+    setState(() => _ajustandoTodo = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        fallidos.isEmpty ? 'Se ajustaron $exitosos productos' : 'Se ajustaron $exitosos productos. Fallaron: ${fallidos.join(', ')}',
+      ),
+      showCloseIcon: true,
+    ));
   }
 
   Widget _notaDiferencia(double diferencia) {
@@ -421,6 +491,22 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
             if (combosExcluidos > 0) _badge('$combosExcluidos combo(s) no aplica (existencia depende de sus componentes)', const Color(0xFFF59E0B)),
           ],
         ),
+        if (descuadres > 0) ...[
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _ajustandoTodo ? null : () => _ajustarTodosLosDescuadres(lista),
+            icon: _ajustandoTodo
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828)))
+                : const Icon(Icons.playlist_add_check, size: 18),
+            label: Text('Ajustar los $descuadres descuadres de una vez', style: GoogleFonts.poppins(fontSize: 13)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFC62828),
+              side: const BorderSide(color: Color(0xFFC62828)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         Expanded(
           child: Container(

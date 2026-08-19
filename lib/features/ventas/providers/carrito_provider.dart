@@ -264,6 +264,19 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     state = state.copyWith(items: nuevos);
   }
 
+  /// Marca/desmarca una línea como "venta anticipada" (se vende sin saber
+  /// todavía qué producto exacto la va a reponer). No cambia nada del
+  /// descuento de stock ni del costo de la línea en este momento -eso ya
+  /// pasa igual que siempre-; solo queda la bandera que, al confirmar la
+  /// venta, hace que VentaRepository deje un registro en 'pendientesReposicion'
+  /// para que la próxima compra de ese producto la empareje automáticamente
+  /// (ver PendienteReposicionRepository y CompraRepository.registrarCompra).
+  void marcarPendienteCompra(int index, bool valor) {
+    final nuevos = [...state.items];
+    nuevos[index] = nuevos[index].copyWith(pendienteCompra: valor);
+    state = state.copyWith(items: nuevos);
+  }
+
   /// Cambia la descripción mostrada/impresa de una línea del carrito (no
   /// afecta el producto real).
   void actualizarDescripcion(int index, String nuevaDescripcion) {

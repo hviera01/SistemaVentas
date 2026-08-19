@@ -109,6 +109,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /pendientesReposicion/{idPendiente} {
+      allow read, write: if true;
+    }
+
     match /cajaEstado/{idDocumento} {
       allow read, write: if true;
     }

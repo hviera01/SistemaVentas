@@ -47,6 +47,14 @@ class ItemVentaModel {
   final bool reembasado;
   final double descuentoPorcentaje;
   final List<ComponenteComboSnapshot> componentes;
+  // "Venta anticipada": el cajero vendió esto sin saber todavía qué producto
+  // exacto va a reponer (por ejemplo, pintura preparada antes de comprar el
+  // insumo real). El costo que queda acá es solo un provisional (el vigente
+  // del producto al momento de vender); cuando entre la compra real que lo
+  // repone, VentaRepository/CompraRepository lo emparejan por FIFO (la venta
+  // pendiente más vieja primero, ver PendienteReposicionRepository) y
+  // corrigen este campo al costo real de esa compra.
+  final bool pendienteCompra;
 
   ItemVentaModel({
     required this.idProducto,
@@ -59,6 +67,7 @@ class ItemVentaModel {
     this.reembasado = false,
     this.descuentoPorcentaje = 0,
     this.componentes = const [],
+    this.pendienteCompra = false,
   });
 
   bool get esCombo => componentes.isNotEmpty;
@@ -77,6 +86,7 @@ class ItemVentaModel {
       componentes: (data['componentes'] as List<dynamic>? ?? [])
           .map((c) => ComponenteComboSnapshot.fromMap(Map<String, dynamic>.from(c)))
           .toList(),
+      pendienteCompra: data['pendienteCompra'] ?? false,
     );
   }
 
@@ -107,6 +117,7 @@ class ItemVentaModel {
       'reembasado': reembasado,
       'descuentoPorcentaje': descuentoPorcentaje,
       'componentes': componentes.map((c) => c.toMap()).toList(),
+      'pendienteCompra': pendienteCompra,
     };
   }
 
@@ -118,6 +129,7 @@ class ItemVentaModel {
     double? descuentoPorcentaje,
     double? precioCompraUsado,
     List<ComponenteComboSnapshot>? componentes,
+    bool? pendienteCompra,
   }) {
     return ItemVentaModel(
       idProducto: idProducto,
@@ -130,6 +142,7 @@ class ItemVentaModel {
       reembasado: reembasado,
       descuentoPorcentaje: descuentoPorcentaje ?? this.descuentoPorcentaje,
       componentes: componentes ?? this.componentes,
+      pendienteCompra: pendienteCompra ?? this.pendienteCompra,
     );
   }
 }

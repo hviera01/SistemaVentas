@@ -21,12 +21,18 @@ List<QueryDocumentSnapshot<Map<String, dynamic>>> _ordenarDetalle(List<QueryDocu
   return conIndice.map((e) => e.value).toList();
 }
 
+String _formatoCantidad(double cantidad) {
+  if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+  return cantidad.toStringAsFixed(2);
+}
+
 class CompraRepository {
   final _db = FirebaseFirestore.instance;
   final _colCompras = FirebaseFirestore.instance.collection('compras');
   final _colContadores = FirebaseFirestore.instance.collection('contadores');
   final _colComprasCredito = FirebaseFirestore.instance.collection('comprasCredito');
   final _colEspera = FirebaseFirestore.instance.collection('comprasEnEspera');
+  final _colPendientesReposicion = FirebaseFirestore.instance.collection('pendientesReposicion');
   final _lotes = LoteCostoRepository();
 
   // ---------- Compras en espera (borrador autoguardado) ----------
@@ -83,6 +89,26 @@ class CompraRepository {
     final compraRef = _colCompras.doc();
 
     late String numeroDocumento;
+
+    // "Venta anticipada": por cada producto distinto de esta compra se busca
+    // si hay ventas ya registradas que se vendieron sin saber todavía cuál
+    // compra las iba a reponer (ver VentaRepository.registrarVenta y
+    // PendienteReposicionRepository). Firestore no permite consultas con
+    // .where() dentro de una transacción del cliente, así que esto se trae
+    // ANTES de abrir la transacción -mismo trade-off ya aceptado para los
+    // lotes de costo en VentaRepository: el riesgo de que dos compras
+    // concurrentes del mismo producto repartan la misma venta pendiente es
+    // mínimo para el volumen de este negocio-.
+    final idsProductoUnicos = items.map((i) => i.idProducto).toSet().toList();
+    final pendientesPorProducto = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    await Future.wait(idsProductoUnicos.map((id) async {
+      final snap = await _colPendientesReposicion
+          .where('idProducto', isEqualTo: id)
+          .where('estado', isEqualTo: 'Pendiente')
+          .orderBy('fechaRegistro')
+          .get();
+      pendientesPorProducto[id] = snap.docs;
+    }));
 
     // Timeout corto (el default del SDK es 30s): en cajas con internet
     // lento/intermitente es mejor que se vea rápido que falló y se pueda
@@ -155,14 +181,91 @@ class CompraRepository {
         });
       }
 
+      // Estado mutable de cada venta pendiente que esta compra vaya tocando:
+      // hace falta compartido (no solo leer doc.data() cada vez) porque la
+      // misma compra puede traer más de una línea del mismo producto -por
+      // ejemplo, la misma referencia con dos descuentos distintos-, y la
+      // segunda línea tiene que ver lo que la primera ya le aplicó, no los
+      // datos "viejos" de antes de que empezara esta compra.
+      final estadoPendientes = <String, ({double cantidadPendiente, double cantidadOriginal, double costoRegistrado, String idVenta, String idItemDetalle, String numeroDocumentoVenta})>{};
+      final refsPendientes = <String, DocumentReference<Map<String, dynamic>>>{};
+      final pendientesTocados = <String>{};
+      for (final lista in pendientesPorProducto.values) {
+        for (final doc in lista) {
+          final data = doc.data();
+          estadoPendientes[doc.id] = (
+            cantidadPendiente: ((data['cantidadPendiente'] ?? 0) as num).toDouble(),
+            cantidadOriginal: ((data['cantidadOriginal'] ?? 0) as num).toDouble(),
+            costoRegistrado: ((data['costoRegistrado'] ?? 0) as num).toDouble(),
+            idVenta: data['idVenta'] as String? ?? '',
+            idItemDetalle: data['idItemDetalle'] as String? ?? '',
+            numeroDocumentoVenta: data['numeroDocumentoVenta'] as String? ?? '',
+          );
+          refsPendientes[doc.id] = doc.reference;
+        }
+      }
+      // Mismo motivo: el stock "de partida" de cada línea tiene que ser el
+      // que dejó la línea anterior de ese mismo producto en esta compra, no
+      // siempre el mismo valor leído al principio.
+      final stockAcumulado = Map<String, double>.from(stocksActuales);
+
       for (final item in items) {
         final ref = _db.collection('productos').doc(item.idProducto);
-        final stockActual = stocksActuales[item.idProducto] ?? 0;
-        final stockNuevo = stockActual + item.cantidad;
+        final stockActual = stockAcumulado[item.idProducto] ?? 0;
 
         // Costo vigente del producto: precio unitario menos el descuento de
         // línea (importe gravado), más el ISV de esta compra.
         final precioFinalConIsv = redondearMoneda(item.precioCompra * (1 - item.descuentoPorcentaje / 100) * (1 + isvPorcentaje / 100));
+
+        // Reparte esta compra contra las ventas anticipadas más viejas de
+        // este producto (si las hay) ANTES de dejar el resto como existencia
+        // disponible: esa cantidad ya estaba vendida de antemano -no debe
+        // quedar sumada al stock como si estuviera libre para vender de
+        // nuevo-, y de paso corrige el costo de esas ventas (que se había
+        // guardado provisional) al costo real de esta compra.
+        var disponibleParaPendientes = item.cantidad;
+        final numerosVentaCubiertas = <String>{};
+        for (final doc in pendientesPorProducto[item.idProducto] ?? const []) {
+          if (disponibleParaPendientes <= 0) break;
+          final estado = estadoPendientes[doc.id]!;
+          if (estado.cantidadPendiente <= 0) continue;
+          final aplicado = disponibleParaPendientes >= estado.cantidadPendiente ? estado.cantidadPendiente : disponibleParaPendientes;
+          final nuevaCantidadPendiente = redondearMoneda(estado.cantidadPendiente - aplicado);
+
+          // Costo ponderado: si esta venta pendiente ya se había completado
+          // parcialmente antes (otra compra anterior, o otra línea de esta
+          // misma, cubrió parte de la cantidad), el costo final es el
+          // promedio ponderado entre lo ya cubierto y lo que cubre esto
+          // -igual que el costeo FIFO normal de una venta (ver
+          // LoteCostoRepository.consumir)-.
+          final cantidadYaCubierta = estado.cantidadOriginal - estado.cantidadPendiente;
+          final baseCosteo = cantidadYaCubierta + aplicado;
+          final costoPonderado = baseCosteo <= 0 ? precioFinalConIsv : ((estado.costoRegistrado * cantidadYaCubierta) + (precioFinalConIsv * aplicado)) / baseCosteo;
+
+          estadoPendientes[doc.id] = (
+            cantidadPendiente: nuevaCantidadPendiente,
+            cantidadOriginal: estado.cantidadOriginal,
+            costoRegistrado: costoPonderado,
+            idVenta: estado.idVenta,
+            idItemDetalle: estado.idItemDetalle,
+            numeroDocumentoVenta: estado.numeroDocumentoVenta,
+          );
+
+          if (estado.idVenta.isNotEmpty && estado.idItemDetalle.isNotEmpty) {
+            transaction.update(
+              _db.collection('ventas').doc(estado.idVenta).collection('detalle').doc(estado.idItemDetalle),
+              {'precioCompraUsado': costoPonderado},
+            );
+          }
+          if (estado.numeroDocumentoVenta.isNotEmpty) numerosVentaCubiertas.add(estado.numeroDocumentoVenta);
+          pendientesTocados.add(doc.id);
+
+          disponibleParaPendientes -= aplicado;
+        }
+
+        final cantidadAplicadaAPendientes = redondearMoneda(item.cantidad - disponibleParaPendientes);
+        final stockNuevo = stockActual + item.cantidad - cantidadAplicadaAPendientes;
+        stockAcumulado[item.idProducto] = stockNuevo;
 
         final Map<String, dynamic> actualizacion = {'stock': stockNuevo, 'precioCompra': precioFinalConIsv};
         if (item.precioVentaNuevo != null) {
@@ -175,7 +278,9 @@ class CompraRepository {
           'stockAnterior': stockActual,
           'stockNuevo': stockNuevo,
           'usuario': usuario,
-          'motivo': 'Compra $numeroDocumento',
+          'motivo': cantidadAplicadaAPendientes > 0
+              ? 'Compra $numeroDocumento (${_formatoCantidad(cantidadAplicadaAPendientes)} ya vendida por adelantado en factura(s) ${numerosVentaCubiertas.join(', ')})'
+              : 'Compra $numeroDocumento',
           'fecha': FieldValue.serverTimestamp(),
         });
 
@@ -197,16 +302,32 @@ class CompraRepository {
         // Lote de costo propio para esta compra: es lo que permite que,
         // si el mismo producto se compró antes a otro precio, cada venta
         // futura consuma el costo real del lote que le toca (FIFO) en vez
-        // de un costo único por producto.
+        // de un costo único por producto. cantidadRestante ya sale rebajada
+        // por lo que se acaba de repartir contra ventas pendientes -esas
+        // unidades ya están vendidas, no están libres para una venta futura-.
         _lotes.crearLote(
           transaction,
           item.idProducto,
           cantidad: item.cantidad,
+          cantidadRestante: item.cantidad - cantidadAplicadaAPendientes,
           costoUnitario: precioFinalConIsv,
           fecha: fechaRegistro,
           origen: 'compra',
           idCompra: compraRef.id,
         );
+      }
+
+      // Escribe el estado final de cada pendiente que esta compra tocó, una
+      // sola vez cada una (aunque más de una línea de esta misma compra la
+      // haya tocado, ver estadoPendientes arriba).
+      for (final id in pendientesTocados) {
+        final estado = estadoPendientes[id]!;
+        transaction.update(refsPendientes[id]!, {
+          'cantidadPendiente': estado.cantidadPendiente,
+          'costoRegistrado': estado.costoRegistrado,
+          if (estado.cantidadPendiente <= 0) 'estado': 'Completado',
+          if (estado.cantidadPendiente <= 0) 'fechaCompletado': FieldValue.serverTimestamp(),
+        });
       }
     }, timeout: const Duration(seconds: 12));
 
