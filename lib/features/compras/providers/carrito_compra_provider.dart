@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/compra_en_espera_model.dart';
 import '../data/item_compra_model.dart';
 import '../../productos/data/producto_model.dart';
+import '../../productos/data/pendiente_reposicion_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 
 double _subtotalLinea(double precioCompra, double cantidad, double descuentoPorcentaje) {
@@ -164,6 +165,21 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
 
   void quitarItem(int index) {
     final nuevos = [...state.items]..removeAt(index);
+    state = state.copyWith(items: nuevos);
+  }
+
+  /// Vincula (o desvincula, con [pendiente] null) esta línea a una venta
+  /// anticipada elegida a mano (ver ItemCompraModel e InventarioScreen /
+  /// PendienteReposicionScreen): para cuando el producto que se compra acá
+  /// es distinto al que se facturó en su momento, así que el emparejamiento
+  /// automático por idProducto no lo puede detectar solo.
+  void vincularPendienteReposicion(int index, PendienteReposicionModel? pendiente) {
+    final nuevos = [...state.items];
+    nuevos[index] = nuevos[index].copyWith(
+      idPendienteReposicionVinculado: pendiente?.id,
+      numeroDocumentoVentaVinculada: pendiente?.numeroDocumentoVenta,
+      nombreProductoVentaVinculada: pendiente?.nombreProducto,
+    );
     state = state.copyWith(items: nuevos);
   }
 

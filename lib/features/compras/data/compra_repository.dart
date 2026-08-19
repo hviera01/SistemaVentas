@@ -90,16 +90,17 @@ class CompraRepository {
 
     late String numeroDocumento;
 
-    // "Venta anticipada": por cada producto distinto de esta compra se busca
-    // si hay ventas ya registradas que se vendieron sin saber todavía cuál
-    // compra las iba a reponer (ver VentaRepository.registrarVenta y
-    // PendienteReposicionRepository). Firestore no permite consultas con
-    // .where() dentro de una transacción del cliente, así que esto se trae
-    // ANTES de abrir la transacción -mismo trade-off ya aceptado para los
-    // lotes de costo en VentaRepository: el riesgo de que dos compras
-    // concurrentes del mismo producto repartan la misma venta pendiente es
-    // mínimo para el volumen de este negocio-.
-    final idsProductoUnicos = items.map((i) => i.idProducto).toSet().toList();
+    // "Venta anticipada": por cada producto distinto de esta compra (de las
+    // líneas que no se vincularon a mano a una venta específica, ver más
+    // abajo) se busca si hay ventas ya registradas del MISMO producto que se
+    // vendieron sin saber todavía cuál compra las iba a reponer (ver
+    // VentaRepository.registrarVenta y PendienteReposicionRepository).
+    // Firestore no permite consultas con .where() dentro de una transacción
+    // del cliente, así que esto se trae ANTES de abrir la transacción -mismo
+    // trade-off ya aceptado para los lotes de costo en VentaRepository: el
+    // riesgo de que dos compras concurrentes del mismo producto repartan la
+    // misma venta pendiente es mínimo para el volumen de este negocio-.
+    final idsProductoUnicos = items.where((i) => i.idPendienteReposicionVinculado == null).map((i) => i.idProducto).toSet().toList();
     final pendientesPorProducto = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     await Future.wait(idsProductoUnicos.map((id) async {
       final snap = await _colPendientesReposicion
@@ -109,6 +110,14 @@ class CompraRepository {
           .get();
       pendientesPorProducto[id] = snap.docs;
     }));
+
+    // Líneas vinculadas a mano (ver VincularPendienteDialog): cuando el
+    // producto comprado es distinto al que se facturó, el cajero elige a
+    // cuál venta pendiente corresponde en vez de depender del emparejamiento
+    // automático por idProducto de arriba. Como ya se conoce el id exacto,
+    // esto sí se puede leer DENTRO de la transacción (transaction.get por
+    // referencia directa, no una query).
+    final idsVinculadosUnicos = items.map((i) => i.idPendienteReposicionVinculado).whereType<String>().toSet().toList();
 
     // Timeout corto (el default del SDK es 30s): en cajas con internet
     // lento/intermitente es mejor que se vea rápido que falló y se pueda
@@ -129,6 +138,10 @@ class CompraRepository {
       for (var i = 0; i < items.length; i++) {
         stocksActuales[items[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
+
+      final snapsVinculados = await Future.wait(
+        idsVinculadosUnicos.map((id) => transaction.get(_colPendientesReposicion.doc(id))),
+      );
 
       transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
 
@@ -204,6 +217,26 @@ class CompraRepository {
           refsPendientes[doc.id] = doc.reference;
         }
       }
+      // Se suman también las vinculadas a mano (mismo mapa: si por alguna
+      // razón coincidieran con una ya cargada arriba, no pasa nada, es el
+      // mismo doc con los mismos datos). Si la venta vinculada ya se
+      // completó o se canceló mientras tanto, no se agrega -la línea de
+      // compra simplemente no encuentra nada que repartir y su cantidad
+      // queda como stock disponible normal, sin romper el registro-.
+      for (final snap in snapsVinculados) {
+        if (!snap.exists) continue;
+        final data = snap.data()!;
+        if (data['estado'] != 'Pendiente') continue;
+        estadoPendientes[snap.id] = (
+          cantidadPendiente: ((data['cantidadPendiente'] ?? 0) as num).toDouble(),
+          cantidadOriginal: ((data['cantidadOriginal'] ?? 0) as num).toDouble(),
+          costoRegistrado: ((data['costoRegistrado'] ?? 0) as num).toDouble(),
+          idVenta: data['idVenta'] as String? ?? '',
+          idItemDetalle: data['idItemDetalle'] as String? ?? '',
+          numeroDocumentoVenta: data['numeroDocumentoVenta'] as String? ?? '',
+        );
+        refsPendientes[snap.id] = snap.reference;
+      }
       // Mismo motivo: el stock "de partida" de cada línea tiene que ser el
       // que dejó la línea anterior de ese mismo producto en esta compra, no
       // siempre el mismo valor leído al principio.
@@ -217,18 +250,22 @@ class CompraRepository {
         // línea (importe gravado), más el ISV de esta compra.
         final precioFinalConIsv = redondearMoneda(item.precioCompra * (1 - item.descuentoPorcentaje / 100) * (1 + isvPorcentaje / 100));
 
-        // Reparte esta compra contra las ventas anticipadas más viejas de
-        // este producto (si las hay) ANTES de dejar el resto como existencia
-        // disponible: esa cantidad ya estaba vendida de antemano -no debe
-        // quedar sumada al stock como si estuviera libre para vender de
-        // nuevo-, y de paso corrige el costo de esas ventas (que se había
-        // guardado provisional) al costo real de esta compra.
+        // Reparte esta compra contra ventas anticipadas ANTES de dejar el
+        // resto como existencia disponible: esa cantidad ya estaba vendida
+        // de antemano -no debe quedar sumada al stock como si estuviera
+        // libre para vender de nuevo-, y de paso corrige el costo de esas
+        // ventas (que se había guardado provisional) al costo real de esta
+        // compra. Si el cajero vinculó esta línea a mano a una venta
+        // específica (producto distinto al facturado, ver
+        // VincularPendienteDialog) se reparte solo contra esa; si no, se
+        // reparte automático contra las más viejas del mismo producto.
         var disponibleParaPendientes = item.cantidad;
         final numerosVentaCubiertas = <String>{};
-        for (final doc in pendientesPorProducto[item.idProducto] ?? const []) {
-          if (disponibleParaPendientes <= 0) break;
-          final estado = estadoPendientes[doc.id]!;
-          if (estado.cantidadPendiente <= 0) continue;
+
+        void aplicarContra(String idPendiente) {
+          if (disponibleParaPendientes <= 0) return;
+          final estado = estadoPendientes[idPendiente];
+          if (estado == null || estado.cantidadPendiente <= 0) return;
           final aplicado = disponibleParaPendientes >= estado.cantidadPendiente ? estado.cantidadPendiente : disponibleParaPendientes;
           final nuevaCantidadPendiente = redondearMoneda(estado.cantidadPendiente - aplicado);
 
@@ -242,7 +279,7 @@ class CompraRepository {
           final baseCosteo = cantidadYaCubierta + aplicado;
           final costoPonderado = baseCosteo <= 0 ? precioFinalConIsv : ((estado.costoRegistrado * cantidadYaCubierta) + (precioFinalConIsv * aplicado)) / baseCosteo;
 
-          estadoPendientes[doc.id] = (
+          estadoPendientes[idPendiente] = (
             cantidadPendiente: nuevaCantidadPendiente,
             cantidadOriginal: estado.cantidadOriginal,
             costoRegistrado: costoPonderado,
@@ -258,9 +295,19 @@ class CompraRepository {
             );
           }
           if (estado.numeroDocumentoVenta.isNotEmpty) numerosVentaCubiertas.add(estado.numeroDocumentoVenta);
-          pendientesTocados.add(doc.id);
+          pendientesTocados.add(idPendiente);
 
           disponibleParaPendientes -= aplicado;
+        }
+
+        final idVinculado = item.idPendienteReposicionVinculado;
+        if (idVinculado != null) {
+          aplicarContra(idVinculado);
+        } else {
+          for (final doc in pendientesPorProducto[item.idProducto] ?? const []) {
+            if (disponibleParaPendientes <= 0) break;
+            aplicarContra(doc.id);
+          }
         }
 
         final cantidadAplicadaAPendientes = redondearMoneda(item.cantidad - disponibleParaPendientes);

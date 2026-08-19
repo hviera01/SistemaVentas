@@ -10,7 +10,10 @@ import '../../providers/carrito_compra_provider.dart';
 import '../../providers/compras_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../productos/data/producto_model.dart';
+import '../../../productos/data/pendiente_reposicion_model.dart';
 import '../../../productos/providers/productos_provider.dart';
+import '../../data/item_compra_model.dart';
+import '../widgets/vincular_pendiente_dialog.dart';
 import '../../../proveedores/data/proveedor_model.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../../core/providers/tabs_provider.dart';
@@ -380,6 +383,62 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   void _quitarItem(int index) {
     ref.read(carritoCompraProvider.notifier).quitarItem(index);
+  }
+
+  /// Abre el selector de "venta anticipada" (ver VincularPendienteDialog):
+  /// para cuando el producto que se está comprando en esta línea es
+  /// distinto al que se facturó -el emparejamiento automático por
+  /// idProducto (ver CompraRepository.registrarCompra) no puede detectar
+  /// eso solo, así que se elige a mano-.
+  Future<void> _abrirVincularPendiente(int index) async {
+    final item = ref.read(carritoCompraProvider).items[index];
+    final pendientes = ref.read(pendientesReposicionStreamProvider).value ?? [];
+    final resultado = await showDialog<Object?>(
+      context: context,
+      builder: (context) => VincularPendienteDialog(pendientes: pendientes, idVinculadoActual: item.idPendienteReposicionVinculado),
+    );
+    if (resultado == null) return;
+    if (identical(resultado, quitarVinculoPendiente)) {
+      ref.read(carritoCompraProvider.notifier).vincularPendienteReposicion(index, null);
+    } else if (resultado is PendienteReposicionModel) {
+      ref.read(carritoCompraProvider.notifier).vincularPendienteReposicion(index, resultado);
+    }
+  }
+
+  Widget _botonVincularPendiente(int index, ItemCompraModel item) {
+    final vinculado = item.idPendienteReposicionVinculado != null;
+    return SizedBox(
+      width: 32,
+      child: IconButton(
+        tooltip: vinculado
+            ? 'Repone la venta ${item.numeroDocumentoVentaVinculada} (${item.nombreProductoVentaVinculada}). Tocá para cambiar o quitar.'
+            : 'Vincular a una venta anticipada (si esta compra repone un producto distinto al que se facturó)',
+        icon: Icon(Icons.link, size: 18, color: vinculado ? const Color(0xFF16A34A) : Colors.grey.shade400),
+        onPressed: () => _abrirVincularPendiente(index),
+      ),
+    );
+  }
+
+  Widget _chipVinculoPendiente(ItemCompraModel item) {
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: const Color(0xFF16A34A).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.link, size: 13, color: Color(0xFF16A34A)),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Repone venta ${item.numeroDocumentoVentaVinculada}: ${item.nombreProductoVentaVinculada}',
+              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF16A34A)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _moverItem(int index, int nuevoIndex) {
@@ -1335,6 +1394,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         Expanded(flex: 2, child: Text('Descuento %', textAlign: TextAlign.center, style: estilo)),
         Expanded(flex: 2, child: Text('Descuento (L)', textAlign: TextAlign.right, style: estilo)),
         Expanded(flex: 2, child: Text('Importe', textAlign: TextAlign.right, style: estilo)),
+        const SizedBox(width: 32),
         const SizedBox(width: 40),
       ],
     );
@@ -1475,12 +1535,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
               Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
               Expanded(flex: 2, child: Text(formatearMoneda(_importeBrutoItem(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+              _botonVincularPendiente(index, item as ItemCompraModel),
               SizedBox(
                 width: 40,
                 child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
               ),
             ],
           ),
+          if (item.idPendienteReposicionVinculado != null) Padding(padding: const EdgeInsets.only(left: 34), child: _chipVinculoPendiente(item)),
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Row(
@@ -1526,17 +1588,19 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   ],
                 ),
               ),
+              _botonVincularPendiente(index, item as ItemCompraModel),
               IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
             ],
           ),
+          if (item.idPendienteReposicionVinculado != null) _chipVinculoPendiente(item),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v))),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precio_$index', 'Costo unitario', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true)),
+              Expanded(child: _campoInlineConEtiqueta('precio_$index', 'Costo unitario', ctrlPrecio, item.precioCompra, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true)),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v))),
+              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje, (v) => _actualizarDescuentoLinea(index, v))),
             ],
           ),
           const SizedBox(height: 10),
