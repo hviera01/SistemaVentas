@@ -165,14 +165,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   bool get _esWebMovil => kIsWeb && _esPlataformaMovil;
 
   /// true solo para el escritorio real (ancho de PC + mouse, sin
-  /// [_esPlataformaMovil]): ahí la tabla de productos vive en una caja de
-  /// alto fijo con su propio ListView -ver [_tarjetaCarritoGrande] y el
-  /// `SizedBox(height: altoTabla)` en build()-, cómodo con rueda de mouse.
-  /// false en cualquier dispositivo táctil, aunque el ancho alcance para
-  /// verse como tabla de escritorio (ej. una tablet en horizontal): ahí la
-  /// tabla se dibuja sin scroll propio, dentro del scroll único de toda la
-  /// pantalla, para que deslizar desde cualquier parte de la tabla mueva la
-  /// pantalla completa en vez de quedar atrapado en una franja angosta.
+  /// [_esPlataformaMovil]): ahí la tabla de productos crece con los
+  /// productos que se van agregando hasta un techo (ver [_tarjetaCarritoGrande]
+  /// y `altoMaximoTabla` en build()), y recién ahí pasa a scrollear sola con
+  /// la rueda del mouse -sin reservar ese alto de entrada con el carrito
+  /// casi vacío-. false en cualquier dispositivo táctil, aunque el ancho
+  /// alcance para verse como tabla de escritorio (ej. una tablet en
+  /// horizontal): ahí la tabla se dibuja sin scroll propio ni techo, dentro
+  /// del scroll único de toda la pantalla, para que deslizar desde
+  /// cualquier parte de la tabla mueva la pantalla completa en vez de
+  /// quedar atrapado en una franja angosta.
   bool _tablaConScrollPropio(bool esMovil) => !esMovil && !_esPlataformaMovil;
 
   // Controla el scroll de toda la pantalla en web móvil, para saber cuándo
@@ -1804,15 +1806,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 900;
-          // La tabla de productos debe dominar la pantalla, pero se le da una
-          // altura fija generosa (no Expanded) para que nunca desaparezca si
-          // el encabezado ocupa más espacio del previsto; si el contenido no
-          // cabe completo, la pantalla se vuelve desplazable en vez de
-          // recortarse en silencio. Un porcentaje más alto que antes (y un
-          // techo más generoso): con varios productos cargados, la tabla se
-          // quedaba chica y obligaba a scrollear adentro de una zona
-          // chiquita en vez de aprovechar el alto real de la ventana.
-          final altoTabla = (constraints.maxHeight * 0.72).clamp(420.0, 1400.0);
+          // Techo para la tabla de productos en escritorio real (ver
+          // _tablaConScrollPropio y _tarjetaCarritoGrande): con pocos
+          // productos la tarjeta se achica a su contenido, no reserva este
+          // alto de entrada -antes lo hacía siempre, aunque el carrito
+          // tuviera un solo producto, ocupando espacio de pantalla de más-;
+          // recién a partir de este alto la lista pasa a scrollear sola.
+          final altoMaximoTabla = (constraints.maxHeight * 0.72).clamp(420.0, 1400.0);
           final contenido = SingleChildScrollView(
             controller: _esWebMovil ? _scrollControllerMovil : null,
             padding: EdgeInsets.all(esMovil ? 14 : 22),
@@ -1823,9 +1823,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 const SizedBox(height: 14),
                 _tarjetaDatosVenta(carrito, esMovil),
                 const SizedBox(height: 14),
-                _tablaConScrollPropio(esMovil)
-                    ? SizedBox(height: altoTabla, child: _tarjetaCarritoGrande(carrito, esMovil))
-                    : _tarjetaCarritoGrande(carrito, esMovil),
+                _tarjetaCarritoGrande(carrito, esMovil, altoMaximoTabla: altoMaximoTabla),
                 const SizedBox(height: 14),
                 _tarjetaTotales(carrito, esMovil),
               ],
@@ -2322,7 +2320,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _tarjetaCarritoGrande(CarritoVentaState carrito, bool esMovil) {
+  Widget _tarjetaCarritoGrande(CarritoVentaState carrito, bool esMovil, {double? altoMaximoTabla}) {
     final productos = ref.watch(productosStreamProvider).value ?? [];
     final mapaProductos = {for (final p in productos) p.id: p};
 
@@ -2527,24 +2525,27 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             // Ver el comentario de _tablaExpandida: mientras el diálogo de
             // "ver más grande" está abierto, esta tabla no monta sus filas
             // (esas mismas filas ya están montadas allá, usando los mismos
-            // controladores). Expanded solo cuando esta tarjeta vive dentro
-            // de la caja de alto fijo de _tablaConScrollPropio (ver más
-            // abajo): si no, no hay una altura acotada de la que "expandirse".
-            _tablaConScrollPropio(esMovil)
-                ? Expanded(
-                    child: Center(
-                      child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
-                    ),
-                  )
+            // controladores).
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+              ),
+            )
           else if (_tablaConScrollPropio(esMovil))
-            Expanded(
+            // Escritorio real (mouse, sin dispositivo táctil): la tabla
+            // crece con los productos que se van agregando -no reserva un
+            // alto fijo desde el principio, para no ocupar espacio de más
+            // con el carrito casi vacío- pero no más allá de
+            // [altoMaximoTabla] (un techo generoso, pensado para no empujar
+            // los totales lejos de la vista con muchos productos cargados);
+            // pasado ese punto, `shrinkWrap` + el `ConstrainedBox` de abajo
+            // hacen que sea esta lista, y no la pantalla completa, la que
+            // se scrollea con la rueda del mouse.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: altoMaximoTabla ?? 600),
               child: ListView.separated(
+                shrinkWrap: true,
                 itemCount: carrito.items.length,
                 separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                 itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
