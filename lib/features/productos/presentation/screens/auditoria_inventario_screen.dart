@@ -10,6 +10,7 @@ import '../widgets/ajuste_stock_dialog.dart';
 import '../widgets/historial_stock_dialog.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
+import '../../../../core/utils/texto_utils.dart';
 
 /// Auditoría de Inventario: el usuario elige una categoría, va anotando el
 /// conteo físico real de cada producto (sin que eso toque Firestore para
@@ -35,6 +36,13 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   final Map<String, TextEditingController> _controladores = {};
   final _busquedaController = TextEditingController();
   String _busqueda = '';
+  // true justo después de resolver un código escaneado (ver _escanear): ahí
+  // el filtro busca coincidencia EXACTA de código/código de barras, no
+  // difusa -mismo motivo que en Inventario (ver InventarioScreen._escanear):
+  // un código de barras completo no debe fallar por casualidades del
+  // filtro de texto libre, tiene que encontrar exactamente ese producto o
+  // ninguno-. Se apaga apenas el usuario vuelve a escribir a mano.
+  bool _busquedaPorCodigoBarras = false;
   bool _soloDescuadres = false;
   bool _ajustandoTodo = false;
 
@@ -55,7 +63,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   // pertenece a una categoría distinta a la que no había ninguna elegida
   // todavía, cambia a esa categoría y deja el código ya cargado en el
   // buscador, para no tener que escribirlo de nuevo.
-  void _cambiarCategoria(String? id, {String? busquedaInicial}) {
+  void _cambiarCategoria(String? id, {String? busquedaInicial, bool busquedaPorCodigoBarras = false}) {
     setState(() {
       _idCategoria = id;
       for (final c in _controladores.values) {
@@ -64,6 +72,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       _controladores.clear();
       _busqueda = busquedaInicial ?? '';
       _busquedaController.text = _busqueda;
+      _busquedaPorCodigoBarras = busquedaPorCodigoBarras;
       _soloDescuadres = false;
     });
   }
@@ -104,7 +113,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
 
     if (encontrado != null && encontrado.idCategoria != _idCategoria) {
       if (_idCategoria == null) {
-        _cambiarCategoria(encontrado.idCategoria, busquedaInicial: texto);
+        _cambiarCategoria(encontrado.idCategoria, busquedaInicial: texto, busquedaPorCodigoBarras: true);
         return;
       }
       if (!mounted) return;
@@ -117,6 +126,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     setState(() {
       _busqueda = texto;
       _busquedaController.text = texto;
+      _busquedaPorCodigoBarras = true;
     });
   }
 
@@ -378,7 +388,10 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                 border: InputBorder.none,
                 isDense: true,
               ),
-              onChanged: (v) => setState(() => _busqueda = v.trim()),
+              onChanged: (v) => setState(() {
+                _busqueda = v.trim();
+                _busquedaPorCodigoBarras = false;
+              }),
             ),
           ),
           if (_busqueda.isNotEmpty)
@@ -388,6 +401,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
               onPressed: () => setState(() {
                 _busqueda = '';
                 _busquedaController.clear();
+                _busquedaPorCodigoBarras = false;
               }),
             ),
           IconButton(
@@ -458,10 +472,14 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     final combosExcluidos = productos.where((p) => p.idCategoria == _idCategoria && p.esCombo).length;
 
     if (_busqueda.isNotEmpty) {
-      final termino = _busqueda.toLowerCase();
-      lista = lista
-          .where((p) => p.nombre.toLowerCase().contains(termino) || p.codigo.toLowerCase().contains(termino) || p.codigoBarras.toLowerCase().contains(termino))
-          .toList();
+      // Mismo criterio que Inventario: un código escaneado exige
+      // coincidencia EXACTA (ver _escanear), texto tecleado a mano usa
+      // búsqueda difusa -sin tildes, por palabras en cualquier orden y con
+      // tolerancia a errores de tipeo- en vez del simple "contains" de
+      // antes, que fallaba con acentos o con el orden de las palabras.
+      lista = _busquedaPorCodigoBarras
+          ? lista.where((p) => _coincideExacto(p, _busqueda)).toList()
+          : lista.where((p) => coincideFuzzy(p.textoBusqueda, _busqueda)).toList();
     }
 
     final auditados = lista.where((p) => _conteoDe(p.id) != null).length;
