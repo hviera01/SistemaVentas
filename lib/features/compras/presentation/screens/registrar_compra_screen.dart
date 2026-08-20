@@ -514,37 +514,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return redondearMoneda((item.precioCompra as double) * (1 - (item.descuentoPorcentaje as double) / 100) * (1 + isv / 100));
   }
 
-  // `productos.precioVenta` siempre se guarda SIN ISV (ver
-  // DetalleVentaScreen._precioMostrado y VentaRepository.registrarVenta, que
-  // SIEMPRE le suman un 15% fijo aparte recién al vender -ese 15% de venta al
-  // público es fijo en todo el sistema, no depende de si la factura de esta
-  // compra en particular vino con o sin ISV-). Pero acá en Registrar Compra
-  // el campo "Precio de venta" y el "Margen %" que se calculan a partir de
-  // él tienen que representar el precio FINAL -el que el cliente paga en la
-  // caja-, no la base sin impuesto: si no, alguien mete "quiero 30% de
-  // margen" pensando en el precio final y el sistema termina guardando un
-  // precio que, ya con el ISV cargado encima, vende muy por arriba (o por
-  // abajo) de lo que la persona quiso.
-  //
-  // Por eso todo lo que se ve/edita en pantalla (precio de venta, margen)
-  // usa el precio final (_precioVentaFinal), y solo al guardar en el
-  // carrito/Firestore se vuelve a la base sin ISV
-  // (_precioVentaBaseDesdeFinal). Esta conversión usa el 15% fijo de venta
-  // (igual que VentaRepository), NO el ISV de esta compra (isvPorcentaje):
-  // ese es el impuesto que pagó el negocio al comprar -puede venir en 0 si
-  // el proveedor está exonerado- y es un dato totalmente aparte de con
-  // cuánto ISV se le vende después al cliente final.
-  static const _isvVentaPorcentaje = 15.0;
-  double _factorIsvVenta() => 1 + _isvVentaPorcentaje / 100;
-
-  double _precioVentaFinal(dynamic item) {
-    final precioBase = (item.precioVentaNuevo as double?) ?? 0;
-    return redondearMoneda(precioBase * _factorIsvVenta());
-  }
-
-  double _precioVentaBaseDesdeFinal(double precioFinal) {
-    return redondearMoneda(precioFinal / _factorIsvVenta());
-  }
+  // `productos.precioVenta` siempre se guarda CON ISV incluido -es el precio
+  // final que paga el cliente en caja, igual como lo muestra Inventario (ver
+  // InventarioScreen._precioMostrado: "El precio guardado en el producto
+  // siempre incluye ISV")-. item.precioVentaNuevo viaja en ese mismo formato
+  // desde que se agrega el producto (ver CarritoCompraNotifier.
+  // agregarProductoDirecto: se copia tal cual de producto.precioVenta), así
+  // que acá el campo "Precio de venta" y el "Margen %" se leen/editan
+  // directo, sin convertir nada: lo que se ve en pantalla es exactamente lo
+  // que se va a guardar en el catálogo.
+  double _precioVentaFinal(dynamic item) => redondearMoneda((item.precioVentaNuevo as double?) ?? 0);
 
   String get _etiquetaPrecioVenta => 'Precio de venta (c/ISV)';
 
@@ -560,16 +539,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return (ctrlMargen, ctrlPrecioVenta);
   }
 
-  /// [nuevoPrecioVentaFinal] es el precio FINAL que se escribió en el campo
-  /// (con ISV cargado si aplica) — se convierte a la base sin impuesto antes
-  /// de guardarlo, ver comentario arriba de [_factorIsvVenta].
+  /// [nuevoPrecioVentaFinal] es el precio final (con ISV) que se escribió en
+  /// el campo: se guarda tal cual, ver comentario arriba de [_precioVentaFinal].
   void _actualizarPrecioVentaCompra(int index, double nuevoPrecioVentaFinal) {
     if (nuevoPrecioVentaFinal < 0) {
       _mostrarMensaje('Precio inválido');
       return;
     }
-    final nuevoPrecioBase = _precioVentaBaseDesdeFinal(nuevoPrecioVentaFinal);
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioBase);
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: redondearMoneda(nuevoPrecioVentaFinal));
     _sincronizarMargenControlador(index);
   }
 
@@ -578,8 +555,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     if (index >= carrito.items.length) return;
     final costo = _costoFinalItem(carrito.items[index]);
     final nuevoPrecioFinal = redondearMoneda(costo * (1 + nuevoMargen / 100));
-    final nuevoPrecioBase = _precioVentaBaseDesdeFinal(nuevoPrecioFinal);
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioBase);
+    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioFinal);
     _ctrlPrecioVenta[index]?.text = nuevoPrecioFinal.toStringAsFixed(2);
   }
 
