@@ -6,6 +6,7 @@ import '../../../productos/providers/productos_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Selector de productos reusado por el formulario de promociones: con
 /// [maxSeleccion] = 1 se comporta como selector único (producto base /
@@ -95,7 +96,11 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                       Icon(Icons.search, size: 18, color: Colors.grey.shade400),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: TextField(
+                        child: CampoTecladoCompacto(
+                          controller: _busquedaController,
+                          numerico: false,
+                          titulo: 'Buscar producto...',
+                          child: TextField(
                           inputFormatters: [mayusculasInputFormatter],
                           autocorrect: false,
                           enableSuggestions: false,
@@ -103,6 +108,7 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                           style: GoogleFonts.poppins(fontSize: 13),
                           decoration: InputDecoration(hintText: 'Buscar producto...', border: InputBorder.none, isDense: true),
                           onChanged: (v) => setState(() => _busqueda = v.trim()),
+                        ),
                         ),
                       ),
                     ],

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../auth/data/usuario_model.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Pide documento + clave de OTRO usuario y, si son válidos, retorna su
 /// UsuarioModel. Llama directo a AuthRepository.login (no a
@@ -99,7 +100,11 @@ class _CambiarUsuarioVentaDialogState extends State<_CambiarUsuarioVentaDialog> 
               style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 18),
-            TextField(
+            CampoTecladoCompacto(
+              controller: _documentoController,
+              numerico: false,
+              titulo: 'Código de acceso',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -115,6 +120,7 @@ class _CambiarUsuarioVentaDialogState extends State<_CambiarUsuarioVentaDialog> 
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
+            ),
             ),
             const SizedBox(height: 12),
             TextField(

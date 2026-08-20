@@ -12,6 +12,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Auditoría de Inventario: el usuario elige una categoría, va anotando el
 /// conteo físico real de cada producto (sin que eso toque Firestore para
@@ -380,7 +381,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar o escanear código de barras...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -396,6 +401,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                 _busqueda = v.trim();
                 _busquedaPorCodigoBarras = false;
               }),
+            ),
             ),
           ),
           if (_busqueda.isNotEmpty)
@@ -675,7 +681,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                 flex: 2,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: TextField(
+                  child: CampoTecladoCompacto(
+                    controller: controller,
+                    numerico: true,
+                    titulo: '—',
+                    child: TextField(
                     inputFormatters: [mayusculasInputFormatter],
                     autocorrect: false,
                     enableSuggestions: false,
@@ -691,6 +701,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
                       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFC62828))),
                     ),
+                  ),
                   ),
                 ),
               ),
@@ -790,7 +801,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   ),
                   Expanded(
                     flex: 2,
-                    child: TextField(
+                    child: CampoTecladoCompacto(
+                      controller: controller,
+                      numerico: true,
+                      titulo: 'Conteo físico',
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -806,6 +821,7 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
                       ),
+                    ),
                     ),
                   ),
                 ],

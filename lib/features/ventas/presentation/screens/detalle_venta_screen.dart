@@ -27,6 +27,7 @@ import '../../../ventas_credito/data/venta_credito_export_service.dart';
 import '../../../ventas_credito/providers/ventas_credito_provider.dart';
 import '../../../ventas_credito/presentation/widgets/registrar_abono_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Pantalla de consulta de una venta ya registrada: buscá por número de
 /// documento (o abrila directo desde Reportes / Ventas a Crédito pasando
@@ -393,7 +394,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             const SizedBox(height: 14),
-            TextField(
+            CampoTecladoCompacto(
+              controller: motivoController,
+              numerico: false,
+              titulo: 'Motivo (opcional)',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -406,6 +411,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
+            ),
             ),
           ],
         ),
@@ -470,7 +476,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-                      child: TextField(
+                      child: CampoTecladoCompacto(
+                        controller: _busquedaController,
+                        numerico: false,
+                        titulo: 'Número de documento...',
+                        child: TextField(
                         inputFormatters: [mayusculasInputFormatter],
                         autocorrect: false,
                         enableSuggestions: false,
@@ -484,6 +494,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                           isDense: true,
                         ),
                         onSubmitted: (_) => _buscarPorNumero(),
+                      ),
                       ),
                     ),
                   ),

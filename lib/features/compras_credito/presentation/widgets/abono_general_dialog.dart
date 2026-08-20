@@ -7,6 +7,7 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class _ProveedorConDeuda {
   final String idProveedor;
@@ -178,7 +179,10 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                       Text('Deuda total del proveedor: ${formatearMoneda(deudaTotal)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
                     ],
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _montoController,
+                      numerico: true,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -187,6 +191,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Monto a abonar'),
                       onChanged: (_) => setState(() {}),
+                    ),
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(

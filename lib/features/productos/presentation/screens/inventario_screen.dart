@@ -24,6 +24,7 @@ import '../../../negocio/presentation/widgets/acceso_especial.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -299,7 +300,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           children: [
             Text(producto.nombre, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
             const SizedBox(height: 14),
-            TextField(
+            CampoTecladoCompacto(
+              controller: controller,
+              numerico: true,
+              titulo: 'Cantidad de etiquetas',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -314,6 +319,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
+            ),
             ),
           ],
         ),
@@ -1561,7 +1567,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar o escanear código de barras...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -1578,6 +1588,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 isDense: true,
               ),
               onSubmitted: (_) => _buscar(),
+            ),
             ),
           ),
           if (busqueda.isNotEmpty)

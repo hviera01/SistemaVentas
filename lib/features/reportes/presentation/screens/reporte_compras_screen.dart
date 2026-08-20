@@ -13,6 +13,7 @@ import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../usuarios/providers/usuarios_provider.dart';
 import '../../../compras/presentation/screens/detalle_compra_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ReporteComprasScreen extends ConsumerStatefulWidget {
   const ReporteComprasScreen({super.key});
@@ -381,7 +382,11 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar por factura, proveedor...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -394,6 +399,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                 isDense: true,
               ),
               onSubmitted: (_) => _aplicarBusqueda(),
+            ),
             ),
           ),
           IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _aplicarBusqueda),

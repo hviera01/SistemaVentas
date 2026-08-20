@@ -8,6 +8,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../widgets/promocion_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Mantenedor de "Descuentos y Promociones": alta, edición, activar/
 /// desactivar y baja. También sirve para "consultar todas las promociones
@@ -179,7 +180,11 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar por nombre o producto...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -187,6 +192,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(hintText: 'Buscar por nombre o producto...', hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
               onSubmitted: (_) => _buscar(),
+            ),
             ),
           ),
           if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),

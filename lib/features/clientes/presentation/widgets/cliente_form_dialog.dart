@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/cliente_model.dart';
 import '../../providers/clientes_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ClienteFormDialog extends ConsumerStatefulWidget {
   final ClienteModel? cliente;
@@ -167,7 +168,10 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _dniController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -176,8 +180,12 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('DNI (opcional)'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _nombreController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -185,8 +193,12 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Nombre completo'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _direccionController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -194,14 +206,19 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Dirección (opcional)'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _telefonoController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
                       controller: _telefonoController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Teléfono (opcional)'),
+                    ),
                     ),
                     const SizedBox(height: 18),
                     Container(

@@ -15,6 +15,7 @@ import '../../providers/negocio_provider.dart';
 import '../widgets/negocio_logo_picker.dart';
 import '../widgets/selector_impresora.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 // Específicamente el navegador de un celular (no la PC, no la app de
 // escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID que ya usa
@@ -171,7 +172,11 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                CampoTecladoCompacto(
+                  controller: ctrlCodigo,
+                  numerico: false,
+                  titulo: 'Código de acceso',
+                  child: TextField(
                   inputFormatters: [mayusculasInputFormatter],
                   autocorrect: false,
                   enableSuggestions: false,
@@ -184,6 +189,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     fillColor: const Color(0xFFE8EAF0),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
+                ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -520,6 +526,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               SliverToBoxAdapter(child: _tarjetaImpresoras(esMovil)),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaFactura()),
+              SliverToBoxAdapter(child: const SizedBox(height: 18)),
+              SliverToBoxAdapter(child: _tarjetaTecladoCompacto()),
               if (_puedeEnviarReporteWhatsapp) ...[
                 SliverToBoxAdapter(child: const SizedBox(height: 18)),
                 SliverToBoxAdapter(child: _tarjetaReporteWhatsapp()),
@@ -574,13 +582,17 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   Widget _campo(TextEditingController controller, String label, double ancho) {
     return SizedBox(
       width: ancho,
-      child: TextField(
+      child: CampoTecladoCompacto(
+        controller: controller,
+        numerico: false,
+        child: TextField(
         inputFormatters: [mayusculasInputFormatter],
         autocorrect: false,
         enableSuggestions: false,
         controller: controller,
         style: GoogleFonts.poppins(fontSize: 13.5),
         decoration: _decoracion(label),
+      ),
       ),
     );
   }
@@ -652,25 +664,37 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Expanded(flex: 3, child: TextField(
+              Expanded(flex: 3, child: CampoTecladoCompacto(
+                controller: _rangoPrefijoController,
+                numerico: false,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
-                controller: _rangoPrefijoController, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Prefijo'))),
+                controller: _rangoPrefijoController, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Prefijo')),
+              )),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: TextField(
+              Expanded(flex: 3, child: CampoTecladoCompacto(
+                controller: _rangoDesdeController,
+                numerico: true,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
-                controller: _rangoDesdeController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Desde'))),
+                controller: _rangoDesdeController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Desde')),
+              )),
               const SizedBox(width: 8),
               Text('AL', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: TextField(
+              Expanded(flex: 3, child: CampoTecladoCompacto(
+                controller: _rangoHastaController,
+                numerico: true,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
-                controller: _rangoHastaController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Hasta'))),
+                controller: _rangoHastaController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Hasta')),
+              )),
             ],
           ),
         ],
@@ -837,7 +861,11 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               children: [
                 Expanded(
                   flex: 3,
-                  child: TextField(
+                  child: CampoTecladoCompacto(
+                    controller: _ipRedController,
+                    numerico: false,
+                    titulo: 'IP de la impresora',
+                    child: TextField(
                     inputFormatters: [mayusculasInputFormatter],
                     autocorrect: false,
                     enableSuggestions: false,
@@ -851,10 +879,15 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
                   ),
+                  ),
                 ),
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
                 Expanded(
-                  child: TextField(
+                  child: CampoTecladoCompacto(
+                    controller: _puertoRedController,
+                    numerico: true,
+                    titulo: 'Puerto',
+                    child: TextField(
                     inputFormatters: [mayusculasInputFormatter],
                     autocorrect: false,
                     enableSuggestions: false,
@@ -867,6 +900,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                       fillColor: const Color(0xFFE8EAF0),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
+                  ),
                   ),
                 ),
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
@@ -988,7 +1022,11 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: TextField(
+                  child: CampoTecladoCompacto(
+                    controller: _ctrlProximoFactura,
+                    numerico: true,
+                    titulo: 'Próximo número de factura',
+                    child: TextField(
                     inputFormatters: [mayusculasInputFormatter],
                     autocorrect: false,
                     enableSuggestions: false,
@@ -1005,6 +1043,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
                   ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 SizedBox(
@@ -1019,6 +1058,29 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 ),
               ],
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tarjetaTecladoCompacto() {
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion('Teclado en pantalla', Icons.keyboard_alt_outlined),
+          const SizedBox(height: 6),
+          Text(
+            'Solo afecta a tablet (no a celular ni a PC/escritorio).',
+            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 14),
+          _filaSwitchFactura(
+            titulo: 'Usar teclado compacto en tablet',
+            descripcion: 'En vez de abrir el teclado nativo del sistema (que en tablet ocupa media pantalla), los campos de texto abren un teclado propio, más chico, con letras y números juntos -pensado para tocar seguido sin que la pantalla se achique tanto.',
+            valor: widget.modelo.tecladoCompactoTablet,
+            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerTecladoCompactoTablet(v),
+          ),
         ],
       ),
     );

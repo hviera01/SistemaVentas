@@ -6,6 +6,7 @@ import '../../providers/proveedores_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../widgets/proveedor_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ProveedoresScreen extends ConsumerStatefulWidget {
   const ProveedoresScreen({super.key});
@@ -218,7 +219,11 @@ class _ProveedoresScreenState extends ConsumerState<ProveedoresScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar por RTN, razón social, correo o teléfono...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -231,6 +236,7 @@ class _ProveedoresScreenState extends ConsumerState<ProveedoresScreen> {
                 isDense: true,
               ),
               onSubmitted: (_) => _buscar(),
+            ),
             ),
           ),
           if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),

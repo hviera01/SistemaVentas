@@ -14,6 +14,7 @@ import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import 'buscar_producto_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Un producto de la factura ya emparejado con el inventario, listo para
 /// agregarse al carrito de compra tal cual lo devuelve este diálogo.
@@ -482,7 +483,11 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             error: (e, st) => Text('Error cargando proveedores', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
           ),
           const SizedBox(height: 10),
-          TextField(
+          CampoTecladoCompacto(
+            controller: _ctrlNoFactura,
+            numerico: false,
+            titulo: 'No. Factura',
+            child: TextField(
             inputFormatters: [mayusculasInputFormatter],
             autocorrect: false,
             enableSuggestions: false,
@@ -495,6 +500,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               fillColor: const Color(0xFFE8EAF0),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
+          ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -728,7 +734,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: abrir,
-      child: TextField(
+      child: CampoTecladoCompacto(
+        controller: ctrl,
+        numerico: false,
+        child: TextField(
         inputFormatters: [mayusculasInputFormatter],
         autocorrect: false,
         enableSuggestions: false,
@@ -748,6 +757,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         ),
+      ),
       ),
     );
   }

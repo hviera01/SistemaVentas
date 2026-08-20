@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class CobrarResultado {
   final double pagoCon;
@@ -74,7 +75,11 @@ class _CobrarDialogState extends State<CobrarDialog> {
               ),
             ),
             const SizedBox(height: 18),
-            TextField(
+            CampoTecladoCompacto(
+              controller: _pagoController,
+              numerico: true,
+              titulo: 'Paga con',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -91,6 +96,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
                 fillColor: const Color(0xFFE8EAF0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
+            ),
             ),
             const SizedBox(height: 14),
             Container(

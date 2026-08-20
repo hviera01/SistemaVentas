@@ -10,6 +10,7 @@ import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Pedido de compra: agregás productos y la cantidad que necesitás, y se
 /// genera un PDF listo para enviarle al proveedor. No se guarda nada en
@@ -231,13 +232,17 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           ),
           SizedBox(
             width: esMovil ? double.infinity : 360,
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _observacionesController,
+              numerico: false,
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
               controller: _observacionesController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: _decoracion('Observaciones (opcional)'),
+            ),
             ),
           ),
         ],
@@ -314,7 +319,10 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       if (valor != null) _actualizarCantidad(index, valor);
     }
 
-    return TextField(
+    return CampoTecladoCompacto(
+      controller: ctrl,
+      numerico: true,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
@@ -331,6 +339,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       ),
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => confirmar(),
+    ),
     );
   }
 

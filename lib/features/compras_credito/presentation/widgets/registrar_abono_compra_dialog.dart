@@ -7,6 +7,7 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class RegistrarAbonoCompraDialog extends ConsumerStatefulWidget {
   final CompraCreditoModel compra;
@@ -169,7 +170,10 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _montoAbonadoController,
+                      numerico: true,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -180,10 +184,14 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
                       decoration: _decoracion('Monto abonado'),
                       onChanged: (_) => setState(() {}),
                     ),
+                    ),
                     const SizedBox(height: 14),
                     _filaSoloLectura('Saldo anterior', formatearMoneda(widget.compra.saldoPendiente)),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _interesController,
+                      numerico: true,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -192,6 +200,7 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Interés (opcional)'),
                       onChanged: (_) => setState(() {}),
+                    ),
                     ),
                     const SizedBox(height: 14),
                     _filaSoloLectura('Saldo pendiente', formatearMoneda(_saldoPendienteNuevo)),
@@ -208,13 +217,17 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
                     ),
                     if (_metodoPago == 'Transferencia') ...[
                       const SizedBox(height: 14),
-                      TextField(
+                      CampoTecladoCompacto(
+                        controller: _numeroReciboController,
+                        numerico: false,
+                        child: TextField(
                         inputFormatters: [mayusculasInputFormatter],
                         autocorrect: false,
                         enableSuggestions: false,
                         controller: _numeroReciboController,
                         style: GoogleFonts.poppins(fontSize: 14),
                         decoration: _decoracion('No. de recibo (opcional)'),
+                      ),
                       ),
                     ],
                     if (_error != null) ...[

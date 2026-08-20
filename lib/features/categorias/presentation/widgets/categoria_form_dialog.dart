@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/categoria_model.dart';
 import '../../providers/categorias_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class CategoriaFormDialog extends ConsumerStatefulWidget {
   final CategoriaModel? categoria;
@@ -138,7 +139,11 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
               ],
             ),
             const SizedBox(height: 24),
-            TextField(
+            CampoTecladoCompacto(
+              controller: _descripcionController,
+              numerico: false,
+              titulo: 'Descripción',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -155,6 +160,7 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
                   borderSide: BorderSide.none,
                 ),
               ),
+            ),
             ),
             const SizedBox(height: 18),
             Container(

@@ -141,6 +141,11 @@ class NegocioRepository {
     _invalidarCache();
   }
 
+  Future<void> establecerTecladoCompactoTablet(bool valor) async {
+    await _doc.set({'tecladoCompactoTablet': valor}, SetOptions(merge: true));
+    _invalidarCache();
+  }
+
   Future<void> establecerModoImpresion(String modo) async {
     await _doc.set({'modoImpresion': modo}, SetOptions(merge: true));
     _invalidarCache();

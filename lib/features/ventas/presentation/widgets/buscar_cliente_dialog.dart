@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../clientes/providers/clientes_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class BuscarClienteDialog extends ConsumerStatefulWidget {
   const BuscarClienteDialog({super.key});
@@ -59,7 +60,11 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   Icon(Icons.search, size: 20, color: Colors.grey.shade400),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: TextField(
+                    child: CampoTecladoCompacto(
+                      controller: _busquedaController,
+                      numerico: false,
+                      titulo: 'Buscar por DNI o nombre...',
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -73,6 +78,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                         isDense: true,
                       ),
                       onChanged: (v) => setState(() => _busqueda = v.trim()),
+                    ),
                     ),
                   ),
                 ],

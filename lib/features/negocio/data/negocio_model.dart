@@ -71,6 +71,13 @@ class NegocioModel {
   // sistema operativo.
   final String impresoraRedIp;
   final int impresoraRedPuerto;
+  // Si es true, en tablet (ancho de pantalla de tablet + dispositivo táctil,
+  // ver esTabletTactil en core/utils/tablet_utils.dart) los campos de texto
+  // de toda la app abren un teclado propio, chico, en vez del teclado nativo
+  // del sistema (que en tablet ocupa media pantalla) -ver CampoTecladoCompacto-.
+  // No aplica en celular (el teclado nativo angosto ya funciona bien ahí) ni
+  // en escritorio/PC.
+  final bool tecladoCompactoTablet;
 
   const NegocioModel({
     this.nombre = '',
@@ -97,6 +104,7 @@ class NegocioModel {
     this.modoImpresion = ModoImpresion.preguntar,
     this.impresoraRedIp = '',
     this.impresoraRedPuerto = 9100,
+    this.tecladoCompactoTablet = false,
   });
 
   bool get tieneClaveEspecial => claveEspecialHash.isNotEmpty;
@@ -130,6 +138,7 @@ class NegocioModel {
       modoImpresion: data['modoImpresion'] ?? ModoImpresion.preguntar,
       impresoraRedIp: data['impresoraRedIp'] ?? '',
       impresoraRedPuerto: ((data['impresoraRedPuerto'] ?? 9100) as num).toInt(),
+      tecladoCompactoTablet: data['tecladoCompactoTablet'] ?? false,
     );
   }
 
@@ -159,6 +168,7 @@ class NegocioModel {
       'modoImpresion': modoImpresion,
       'impresoraRedIp': impresoraRedIp,
       'impresoraRedPuerto': impresoraRedPuerto,
+      'tecladoCompactoTablet': tecladoCompactoTablet,
     };
   }
 
@@ -187,6 +197,7 @@ class NegocioModel {
     String? modoImpresion,
     String? impresoraRedIp,
     int? impresoraRedPuerto,
+    bool? tecladoCompactoTablet,
   }) {
     return NegocioModel(
       nombre: nombre ?? this.nombre,
@@ -213,6 +224,7 @@ class NegocioModel {
       modoImpresion: modoImpresion ?? this.modoImpresion,
       impresoraRedIp: impresoraRedIp ?? this.impresoraRedIp,
       impresoraRedPuerto: impresoraRedPuerto ?? this.impresoraRedPuerto,
+      tecladoCompactoTablet: tecladoCompactoTablet ?? this.tecladoCompactoTablet,
     );
   }
 }

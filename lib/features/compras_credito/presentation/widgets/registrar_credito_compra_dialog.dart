@@ -6,6 +6,7 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../proveedores/data/proveedor_model.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class RegistrarCreditoCompraDialog extends ConsumerStatefulWidget {
   const RegistrarCreditoCompraDialog({super.key});
@@ -159,7 +160,10 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _numeroDocumentoController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -167,16 +171,21 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('No. Documento (opcional)'),
                           ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _noFacturaController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
                             controller: _noFacturaController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('No. Factura'),
+                          ),
                           ),
                         ),
                       ],
@@ -185,7 +194,10 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _montoTotalController,
+                            numerico: true,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -194,10 +206,14 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Monto total'),
                           ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _saldoPendienteController,
+                            numerico: true,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -205,6 +221,7 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Saldo pendiente'),
+                          ),
                           ),
                         ),
                       ],

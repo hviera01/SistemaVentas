@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/pendiente_reposicion_model.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Sentinel que VincularPendienteDialog devuelve cuando el usuario toca
 /// "Quitar vínculo" (a diferencia de cancelar, que devuelve null y no
@@ -92,7 +93,11 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                     Icon(Icons.search, size: 18, color: Colors.grey.shade500),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: TextField(
+                      child: CampoTecladoCompacto(
+                        controller: _busquedaController,
+                        numerico: false,
+                        titulo: 'Buscar producto o factura...',
+                        child: TextField(
                         inputFormatters: [mayusculasInputFormatter],
                         autocorrect: false,
                         enableSuggestions: false,
@@ -100,6 +105,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                         style: GoogleFonts.poppins(fontSize: 13),
                         decoration: InputDecoration(hintText: 'Buscar producto o factura...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
                         onChanged: (v) => setState(() => _busqueda = v),
+                      ),
                       ),
                     ),
                   ],

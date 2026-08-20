@@ -7,6 +7,7 @@ import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 enum _ModoAjuste { ingreso, salida }
 
@@ -193,7 +194,10 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               const SizedBox(height: 18),
               _selectorModo(),
               const SizedBox(height: 18),
-              TextField(
+              CampoTecladoCompacto(
+                controller: _cantidadController,
+                numerico: true,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -203,9 +207,13 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion(_modo == _ModoAjuste.ingreso ? 'Cantidad que ingresa' : 'Cantidad que sale'),
               ),
+              ),
               if (_modo == _ModoAjuste.ingreso) ...[
                 const SizedBox(height: 14),
-                TextField(
+                CampoTecladoCompacto(
+                  controller: _costoController,
+                  numerico: true,
+                  child: TextField(
                   inputFormatters: [mayusculasInputFormatter],
                   autocorrect: false,
                   enableSuggestions: false,
@@ -214,6 +222,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
                   style: GoogleFonts.poppins(fontSize: 14),
                   decoration: _decoracion('Costo unitario de este ingreso', hint: 'Ej: 0 si te lo regalaron'),
                 ),
+                ),
               ] else ...[
                 const SizedBox(height: 14),
                 Text('¿De qué costo sale?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
@@ -221,7 +230,10 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
                 _selectorLote(),
               ],
               const SizedBox(height: 14),
-              TextField(
+              CampoTecladoCompacto(
+                controller: _motivoController,
+                numerico: false,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -229,6 +241,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
                 maxLines: 2,
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Motivo (opcional)'),
+              ),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 14),

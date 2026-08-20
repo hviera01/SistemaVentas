@@ -10,6 +10,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Buscador de productos para Compras: a diferencia del de Ventas no maneja
 /// niveles de precio de venta, sino el costo de compra registrado en el
@@ -200,7 +201,11 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _busquedaController,
+                              numerico: false,
+                              titulo: 'Escribí y presioná Enter para buscar...',
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -214,6 +219,7 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                                 isDense: true,
                               ),
                               onSubmitted: (_) => _buscar(),
+                            ),
                             ),
                           ),
                           IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),

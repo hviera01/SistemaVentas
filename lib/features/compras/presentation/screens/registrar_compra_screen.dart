@@ -26,6 +26,7 @@ import '../widgets/compras_en_espera_dialog.dart';
 import '../widgets/escanear_factura_dialog.dart';
 import 'detalle_compra_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 
@@ -341,13 +342,17 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // un campo visible. En el celular se escanea con la cámara (ver
   // _escanearConCamara).
   Widget _campoCodigoBarras() {
-    return TextField(
+    return CampoTecladoCompacto(
+      controller: _ctrlCodigoBarras,
+      numerico: false,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
       controller: _ctrlCodigoBarras,
       focusNode: _focusCodigoBarras,
       onSubmitted: (_) => _confirmarCodigoBarras(),
+    ),
     );
   }
 
@@ -925,7 +930,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               ),
               SizedBox(
                 width: esMovil ? double.infinity : 180,
-                child: TextField(
+                child: CampoTecladoCompacto(
+                  controller: _noFacturaController,
+                  numerico: false,
+                  child: TextField(
                   inputFormatters: [mayusculasInputFormatter],
                   autocorrect: false,
                   enableSuggestions: false,
@@ -933,6 +941,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('No. Factura'),
                   onChanged: (v) => ref.read(carritoCompraProvider.notifier).establecerNoFactura(v),
+                ),
                 ),
               ),
               SizedBox(
@@ -1041,7 +1050,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                           children: [
                             SizedBox(
                               width: esMovil ? double.infinity : 220,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _descuentoGlobalController,
+                                numerico: true,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -1055,10 +1067,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                   ref.read(carritoCompraProvider.notifier).establecerDescuentoGlobal(valor);
                                 },
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: esMovil ? double.infinity : 160,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _isvController,
+                                numerico: true,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -1072,10 +1088,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                   ref.read(carritoCompraProvider.notifier).establecerIsv(valor);
                                 },
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: esMovil ? double.infinity : 260,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _ajusteManualController,
+                                numerico: true,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -1087,6 +1107,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                   final valor = double.tryParse(v.replaceAll(',', '').trim());
                                   ref.read(carritoCompraProvider.notifier).establecerAjusteManual(valor ?? 0);
                                 },
+                              ),
                               ),
                             ),
                           ],
@@ -1470,7 +1491,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       confirmar();
     }
 
-    final campo = TextField(
+    final campo = CampoTecladoCompacto(
+      controller: controlador,
+      numerico: true,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
@@ -1491,6 +1515,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       ),
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    ),
     );
 
     if (esMovilNativo) return campo;

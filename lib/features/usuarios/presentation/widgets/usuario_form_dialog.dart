@@ -5,6 +5,7 @@ import '../../data/usuario_model.dart';
 import '../../providers/usuarios_provider.dart';
 import '../../../../core/constants/roles.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class UsuarioFormDialog extends ConsumerStatefulWidget {
   final UsuarioModel? usuario;
@@ -170,7 +171,10 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                 ],
               ),
               const SizedBox(height: 24),
-              TextField(
+              CampoTecladoCompacto(
+                controller: _documentoController,
+                numerico: false,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -179,8 +183,12 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Documento'),
               ),
+              ),
               const SizedBox(height: 14),
-              TextField(
+              CampoTecladoCompacto(
+                controller: _nombreController,
+                numerico: false,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -188,14 +196,19 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Nombre completo'),
               ),
+              ),
               const SizedBox(height: 14),
-              TextField(
+              CampoTecladoCompacto(
+                controller: _correoController,
+                numerico: false,
+                child: TextField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
                 controller: _correoController,
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Correo'),
+              ),
               ),
               const SizedBox(height: 14),
               TextField(

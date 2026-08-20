@@ -51,6 +51,7 @@ import '../widgets/ticket_escpos_preview.dart';
 import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
 
@@ -2103,7 +2104,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextField(
+                      child: CampoTecladoCompacto(
+                        controller: _nombreClienteController,
+                        numerico: false,
+                        titulo: 'Vacío = Consumidor Final',
+                        child: TextField(
                         inputFormatters: [mayusculasInputFormatter],
                         autocorrect: false,
                         enableSuggestions: false,
@@ -2113,6 +2118,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           hintText: 'Vacío = Consumidor Final',
                           hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
                         ),
+                      ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -2126,7 +2132,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ),
               SizedBox(
                 width: esMovil ? double.infinity : 180,
-                child: TextField(
+                child: CampoTecladoCompacto(
+                  controller: _documentoClienteController,
+                  numerico: false,
+                  child: TextField(
                   inputFormatters: [mayusculasInputFormatter],
                   autocorrect: false,
                   enableSuggestions: false,
@@ -2134,6 +2143,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('RTN / Documento'),
                   onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerDocumentoCliente(v),
+                ),
                 ),
               ),
               SizedBox(
@@ -2244,7 +2254,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               ),
                             SizedBox(
                               width: esMovil ? double.infinity : 260,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _descuentoGlobalController,
+                                numerico: true,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -2258,10 +2271,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                   ref.read(carritoVentaProvider.notifier).establecerDescuentoGlobal(valor);
                                 },
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _ocController,
+                                numerico: false,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -2271,10 +2288,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 decoration: _decoracion('No. O/C exenta'),
                                 onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerOc(v),
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _regExoneradoController,
+                                numerico: false,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -2284,10 +2305,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 decoration: _decoracion('No. Reg. exonerado'),
                                 onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerRegExonerado(v),
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _regSagController,
+                                numerico: false,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -2297,10 +2322,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 decoration: _decoracion('No. Reg. SAG'),
                                 onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerRegSag(v),
                               ),
+                              ),
                             ),
                             SizedBox(
                               width: double.infinity,
-                              child: TextField(
+                              child: CampoTecladoCompacto(
+                                controller: _observacionesController,
+                                numerico: false,
+                                child: TextField(
                                 inputFormatters: [mayusculasInputFormatter],
                                 autocorrect: false,
                                 enableSuggestions: false,
@@ -2309,6 +2338,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 style: GoogleFonts.poppins(fontSize: 13),
                                 decoration: _decoracion('Observaciones (se imprimen en la factura)'),
                                 onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerObservaciones(v),
+                              ),
                               ),
                             ),
                           ],
@@ -2335,13 +2365,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // _alCambiarFocoGlobal desde un postFrameCallback en initState (mismo
     // mecanismo, mismo timing, que los pedidos de foco posteriores). En
     // celular no hace falta que este campo tenga foco nunca.
-    return TextField(
+    return CampoTecladoCompacto(
+      controller: _ctrlCodigoBarras,
+      numerico: false,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
       controller: _ctrlCodigoBarras,
       focusNode: _focusCodigoBarras,
       onSubmitted: (_) => _confirmarCodigoBarras(),
+    ),
     );
   }
 
@@ -2903,7 +2937,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       confirmar();
     }
 
-    final campo = TextField(
+    final campo = CampoTecladoCompacto(
+      controller: controlador,
+      numerico: true,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
@@ -2924,6 +2961,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       ),
       onSubmitted: (_) => confirmar(),
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    ),
     );
 
     if (esMovilNativo) return campo;
@@ -2998,7 +3036,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextField(
+        CampoTecladoCompacto(
+          controller: ctrl,
+          numerico: false,
+          child: TextField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -3014,6 +3055,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
           decoration: const InputDecoration(isDense: true, border: InputBorder.none, contentPadding: EdgeInsets.zero),
           onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+        ),
         ),
         if (item.reembasado as bool) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
       ],

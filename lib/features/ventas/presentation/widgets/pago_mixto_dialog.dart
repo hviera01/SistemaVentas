@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../data/pago_detalle_model.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Diálogo para repartir el total de una venta entre varios métodos de pago
 /// (por ejemplo, parte en Efectivo y el resto en Transferencia). Devuelve la
@@ -138,7 +139,11 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 3,
-                        child: TextField(
+                        child: CampoTecladoCompacto(
+                          controller: _renglones[i].controller,
+                          numerico: true,
+                          titulo: 'Monto',
+                          child: TextField(
                           inputFormatters: [mayusculasInputFormatter],
                           autocorrect: false,
                           enableSuggestions: false,
@@ -154,6 +159,7 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
+                        ),
                         ),
                       ),
                       IconButton(

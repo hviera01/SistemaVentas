@@ -10,6 +10,7 @@ import '../../../../core/utils/exportador.dart';
 import '../widgets/color_form_dialog.dart';
 import '../widgets/importar_colores_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -283,7 +284,11 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar por código, cliente o descripción...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -296,6 +301,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                 isDense: true,
               ),
               onSubmitted: (_) => _buscar(),
+            ),
             ),
           ),
           if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),

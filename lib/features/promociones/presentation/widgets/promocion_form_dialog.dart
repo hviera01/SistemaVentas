@@ -7,6 +7,7 @@ import '../../providers/promociones_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'seleccionar_productos_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 const _opcionesMetodoPago = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
 
@@ -255,7 +256,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
+                CampoTecladoCompacto(
+                  controller: _nombreController,
+                  numerico: false,
+                  child: TextFormField(
                   inputFormatters: [mayusculasInputFormatter],
                   autocorrect: false,
                   enableSuggestions: false,
@@ -263,6 +267,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('Nombre de la promoción'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                ),
                 ),
                 const SizedBox(height: 14),
                 Text('Tipo de promoción', style: _etiqueta()),
@@ -466,7 +471,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       children: [
         Text(_tipo == TipoPromocion.porcentaje ? 'Porcentaje de descuento' : 'Precio especial (con ISV)', style: _etiqueta()),
         const SizedBox(height: 8),
-        TextFormField(
+        CampoTecladoCompacto(
+          controller: _valorController,
+          numerico: true,
+          child: TextFormField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -480,6 +488,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             if (_tipo == TipoPromocion.porcentaje && n > 100) return 'No puede ser mayor a 100%';
             return null;
           },
+        ),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -507,7 +516,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: CampoTecladoCompacto(
+                controller: _cantidadRequeridaController,
+                numerico: true,
+                child: TextFormField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -517,10 +529,14 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                 decoration: _decoracion('Cantidad llevada (N)'),
                 validator: (v) => (int.tryParse((v ?? '').trim()) ?? 0) < 2 ? 'Mínimo 2' : null,
               ),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: TextFormField(
+              child: CampoTecladoCompacto(
+                controller: _precioComboController,
+                numerico: true,
+                child: TextFormField(
                 inputFormatters: [mayusculasInputFormatter],
                 autocorrect: false,
                 enableSuggestions: false,
@@ -529,6 +545,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                 style: GoogleFonts.poppins(fontSize: 13),
                 decoration: _decoracion('Precio del combo'),
                 validator: (v) => (double.tryParse((v ?? '').trim()) ?? 0) <= 0 ? 'Requerido' : null,
+              ),
               ),
             ),
           ],
@@ -556,7 +573,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           Wrap(spacing: 6, runSpacing: 6, children: [for (final n in _nombresProductosCombo) Chip(label: Text(n, style: GoogleFonts.poppins(fontSize: 11)), visualDensity: VisualDensity.compact)]),
         ],
         const SizedBox(height: 12),
-        TextFormField(
+        CampoTecladoCompacto(
+          controller: _precioComboMultiController,
+          numerico: true,
+          child: TextFormField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -565,6 +585,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           style: GoogleFonts.poppins(fontSize: 13),
           decoration: _decoracion('Precio total del combo (con ISV)'),
           validator: (v) => (double.tryParse((v ?? '').trim()) ?? 0) <= 0 ? 'Requerido' : null,
+        ),
         ),
         const SizedBox(height: 6),
         Text('Ej. "Llevando 1 de cada producto elegido arriba, el paquete completo se paga L.250" en vez de la suma de precios normales. Se ofrece solo cuando ya están los productos completos en el carrito.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
@@ -580,7 +601,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         const SizedBox(height: 8),
         _botonProducto(_nombreProductoBase, _elegirProductoBase),
         const SizedBox(height: 8),
-        TextFormField(
+        CampoTecladoCompacto(
+          controller: _cantidadRequeridaController,
+          numerico: true,
+          child: TextFormField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -589,6 +613,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           style: GoogleFonts.poppins(fontSize: 13),
           decoration: _decoracion('Cantidad requerida'),
           validator: (v) => (int.tryParse((v ?? '').trim()) ?? 0) < 1 ? 'Mínimo 1' : null,
+        ),
         ),
         const SizedBox(height: 14),
         Text('Productos que se regalan', style: _etiqueta()),
@@ -604,7 +629,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           Wrap(spacing: 6, runSpacing: 6, children: [for (final n in _nombresProductosRegalo) Chip(label: Text(n, style: GoogleFonts.poppins(fontSize: 11)), visualDensity: VisualDensity.compact)]),
         ],
         const SizedBox(height: 8),
-        TextFormField(
+        CampoTecladoCompacto(
+          controller: _cantidadRegaloController,
+          numerico: true,
+          child: TextFormField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -613,6 +641,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           style: GoogleFonts.poppins(fontSize: 13),
           decoration: _decoracion('Cantidad de regalo (por cada producto)'),
           validator: (v) => (int.tryParse((v ?? '').trim()) ?? 0) < 1 ? 'Mínimo 1' : null,
+        ),
         ),
         const SizedBox(height: 6),
         Text('Ej. "Si lleva 2 unidades, se regala 1 de cada producto elegido" (pueden ser del mismo producto llevado o de otros).', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),

@@ -11,6 +11,7 @@ import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class CierreCajaScreen extends ConsumerStatefulWidget {
   const CierreCajaScreen({super.key});
@@ -286,7 +287,11 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
           const SizedBox(height: 14),
           Text('Total real efectivo', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           const SizedBox(height: 6),
-          TextField(
+          CampoTecladoCompacto(
+            controller: _totalRealController,
+            numerico: true,
+            titulo: '0.00',
+            child: TextField(
             inputFormatters: [mayusculasInputFormatter],
             autocorrect: false,
             enableSuggestions: false,
@@ -302,6 +307,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
+          ),
           ),
           const SizedBox(height: 14),
           Container(
@@ -322,7 +328,11 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
           const SizedBox(height: 14),
           Text('Observaciones', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           const SizedBox(height: 6),
-          TextField(
+          CampoTecladoCompacto(
+            controller: _observacionesController,
+            numerico: false,
+            titulo: 'Observaciones del cierre (opcional)',
+            child: TextField(
             inputFormatters: [mayusculasInputFormatter],
             autocorrect: false,
             enableSuggestions: false,
@@ -336,6 +346,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
+          ),
           ),
           const SizedBox(height: 18),
           SizedBox(

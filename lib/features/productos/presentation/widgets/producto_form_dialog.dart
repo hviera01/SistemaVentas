@@ -11,6 +11,7 @@ import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Un componente agregado a la receta de un combo mientras se está armando
 /// en el formulario (antes de guardar). [cantidad] vive en un controller
@@ -386,7 +387,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _codigoController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -394,10 +398,14 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Código (opcional)'),
                           ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _codigoBarrasController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -415,11 +423,15 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                               ),
                             ),
                           ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _nombreController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -428,8 +440,12 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Nombre'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _descripcionController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -437,6 +453,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       maxLines: 2,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Descripción (opcional)'),
+                    ),
                     ),
                     const SizedBox(height: 14),
                     categoriasAsync.when(
@@ -500,7 +517,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       Row(
                         children: [
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _stockController,
+                              numerico: true,
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -510,10 +530,14 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: _decoracion(editando ? 'Existencia (ajustar abajo)' : 'Existencia inicial'),
                             ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _precioCompraController,
+                              numerico: true,
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -522,12 +546,16 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: _decoracion('Precio Compra'),
                             ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _precioVentaController,
+                      numerico: true,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -535,6 +563,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       keyboardType: TextInputType.number,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Precio Venta'),
+                    ),
                     ),
                     const SizedBox(height: 8),
                     InkWell(
@@ -552,7 +581,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       Row(
                         children: [
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _precioVenta2Controller,
+                              numerico: true,
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -561,10 +593,14 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: _decoracion('Precio Venta 2'),
                             ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _precioVenta3Controller,
+                              numerico: true,
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -572,6 +608,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                               keyboardType: TextInputType.number,
                               style: GoogleFonts.poppins(fontSize: 14),
                               decoration: _decoracion('Precio Venta 3'),
+                            ),
                             ),
                           ),
                         ],
@@ -666,7 +703,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       children: [
         Text('Componentes del combo', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
         const SizedBox(height: 8),
-        TextField(
+        CampoTecladoCompacto(
+          controller: _busquedaComponenteController,
+          numerico: false,
+          child: TextField(
           inputFormatters: [mayusculasInputFormatter],
           autocorrect: false,
           enableSuggestions: false,
@@ -674,6 +714,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: _decoracion('Buscar producto para agregar...').copyWith(prefixIcon: const Icon(Icons.search, size: 20)),
           onChanged: (_) => setState(() {}),
+        ),
         ),
         if (resultados.isNotEmpty)
           Container(
@@ -710,7 +751,10 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                   const SizedBox(width: 8),
                   SizedBox(
                     width: 70,
-                    child: TextField(
+                    child: CampoTecladoCompacto(
+                      controller: c.cantidadController,
+                      numerico: true,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -720,6 +764,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 13),
                       decoration: _decoracion('Cant.'),
                       onChanged: (_) => setState(() {}),
+                    ),
                     ),
                   ),
                   IconButton(

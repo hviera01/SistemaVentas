@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/proveedor_model.dart';
 import '../../providers/proveedores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ProveedorFormDialog extends ConsumerStatefulWidget {
   final ProveedorModel? proveedor;
@@ -167,7 +168,10 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _rtnController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -176,8 +180,12 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('RTN (opcional)'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _razonSocialController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -185,8 +193,12 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Razón social'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _correoController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -194,14 +206,19 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Correo electrónico (opcional)'),
                     ),
+                    ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _telefonoController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
                       controller: _telefonoController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Teléfono (opcional)'),
+                    ),
                     ),
                     const SizedBox(height: 18),
                     Container(

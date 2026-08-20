@@ -20,6 +20,7 @@ import '../widgets/abono_general_dialog.dart';
 import '../widgets/resumen_abonos_dialog.dart';
 import '../widgets/importar_creditos_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ComprasCreditoScreen extends ConsumerStatefulWidget {
   const ComprasCreditoScreen({super.key});
@@ -372,7 +373,11 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar por documento, factura o proveedor...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -385,6 +390,7 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
                 isDense: true,
               ),
               onSubmitted: (_) => _buscar(),
+            ),
             ),
           ),
           if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/color_model.dart';
 import '../../providers/colores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class ColorFormDialog extends ConsumerStatefulWidget {
   final ColorModel? color;
@@ -197,7 +198,10 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _codigoController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -206,10 +210,14 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Código'),
                           ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _clienteController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -217,11 +225,15 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Cliente'),
                           ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _descripcionController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -230,11 +242,15 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Descripción'),
                     ),
+                    ),
                     const SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _ubicacionController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -242,16 +258,21 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Ubicación física'),
                           ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: TextField(
+                          child: CampoTecladoCompacto(
+                            controller: _paginaController,
+                            numerico: false,
+                            child: TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
                             controller: _paginaController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Página'),
+                          ),
                           ),
                         ),
                       ],
@@ -282,7 +303,10 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    TextField(
+                    CampoTecladoCompacto(
+                      controller: _observacionesController,
+                      numerico: false,
+                      child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
@@ -290,6 +314,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       maxLines: 3,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Observaciones'),
+                    ),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),

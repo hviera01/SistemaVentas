@@ -16,6 +16,7 @@ import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 /// Resultado de elegir un producto (y el nivel de precio con el que se va a
 /// vender) desde el buscador.
@@ -371,7 +372,11 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: CampoTecladoCompacto(
+                              controller: _busquedaController,
+                              numerico: false,
+                              titulo: 'Escribí y presioná Enter para buscar...',
+                              child: TextField(
                               inputFormatters: [mayusculasInputFormatter],
                               autocorrect: false,
                               enableSuggestions: false,
@@ -385,6 +390,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                                 isDense: true,
                               ),
                               onSubmitted: (_) => _buscar(),
+                            ),
                             ),
                           ),
                           IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),

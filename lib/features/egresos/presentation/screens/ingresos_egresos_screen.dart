@@ -11,6 +11,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/exportador.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 class IngresosEgresosScreen extends ConsumerStatefulWidget {
   const IngresosEgresosScreen({super.key});
@@ -469,7 +470,10 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
   }
 
   Widget _campoTexto(String etiqueta, TextEditingController controller, {TextInputType? teclado}) {
-    return TextField(
+    return CampoTecladoCompacto(
+      controller: controller,
+      numerico: false,
+      child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
       enableSuggestions: false,
@@ -484,6 +488,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
+    ),
     );
   }
 
@@ -569,7 +574,11 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
+            child: CampoTecladoCompacto(
+              controller: _busquedaController,
+              numerico: false,
+              titulo: 'Buscar...',
+              child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
               enableSuggestions: false,
@@ -577,6 +586,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(hintText: 'Buscar...', hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
               onChanged: (v) => setState(() => _busqueda = v.trim()),
+            ),
             ),
           ),
         ],
