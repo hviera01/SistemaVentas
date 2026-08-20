@@ -9,6 +9,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/exportador.dart';
 import '../widgets/color_form_dialog.dart';
 import '../widgets/importar_colores_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -283,6 +284,9 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(

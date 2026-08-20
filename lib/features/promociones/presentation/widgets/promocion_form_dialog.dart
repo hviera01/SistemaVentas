@@ -6,6 +6,7 @@ import '../../data/promocion_model.dart';
 import '../../providers/promociones_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'seleccionar_productos_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 const _opcionesMetodoPago = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
 
@@ -255,6 +256,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: _nombreController,
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('Nombre de la promoción'),
@@ -463,6 +467,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         Text(_tipo == TipoPromocion.porcentaje ? 'Porcentaje de descuento' : 'Precio especial (con ISV)', style: _etiqueta()),
         const SizedBox(height: 8),
         TextFormField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _valorController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: GoogleFonts.poppins(fontSize: 13),
@@ -501,6 +508,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           children: [
             Expanded(
               child: TextFormField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _cantidadRequeridaController,
                 keyboardType: TextInputType.number,
                 style: GoogleFonts.poppins(fontSize: 13),
@@ -511,6 +521,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             const SizedBox(width: 10),
             Expanded(
               child: TextFormField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _precioComboController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 style: GoogleFonts.poppins(fontSize: 13),
@@ -544,6 +557,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         ],
         const SizedBox(height: 12),
         TextFormField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _precioComboMultiController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: GoogleFonts.poppins(fontSize: 13),
@@ -565,6 +581,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         _botonProducto(_nombreProductoBase, _elegirProductoBase),
         const SizedBox(height: 8),
         TextFormField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _cantidadRequeridaController,
           keyboardType: TextInputType.number,
           style: GoogleFonts.poppins(fontSize: 13),
@@ -586,6 +605,9 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         ],
         const SizedBox(height: 8),
         TextFormField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _cantidadRegaloController,
           keyboardType: TextInputType.number,
           style: GoogleFonts.poppins(fontSize: 13),

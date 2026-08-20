@@ -5,6 +5,7 @@ import '../../data/proveedor_model.dart';
 import '../../providers/proveedores_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../widgets/proveedor_form_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ProveedoresScreen extends ConsumerStatefulWidget {
   const ProveedoresScreen({super.key});
@@ -218,6 +219,9 @@ class _ProveedoresScreenState extends ConsumerState<ProveedoresScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(

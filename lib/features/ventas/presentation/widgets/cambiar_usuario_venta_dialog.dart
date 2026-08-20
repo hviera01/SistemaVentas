@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../auth/data/usuario_model.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Pide documento + clave de OTRO usuario y, si son válidos, retorna su
 /// UsuarioModel. Llama directo a AuthRepository.login (no a
@@ -99,6 +100,9 @@ class _CambiarUsuarioVentaDialogState extends State<_CambiarUsuarioVentaDialog> 
             ),
             const SizedBox(height: 18),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _documentoController,
               autofocus: true,
               onSubmitted: (_) => _confirmar(),

@@ -13,6 +13,7 @@ import '../../../proveedores/data/proveedor_model.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import 'buscar_producto_compra_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Un producto de la factura ya emparejado con el inventario, listo para
 /// agregarse al carrito de compra tal cual lo devuelve este diálogo.
@@ -482,6 +483,9 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
           ),
           const SizedBox(height: 10),
           TextField(
+            inputFormatters: [mayusculasInputFormatter],
+            autocorrect: false,
+            enableSuggestions: false,
             controller: _ctrlNoFactura,
             style: GoogleFonts.poppins(fontSize: 13),
             decoration: InputDecoration(
@@ -725,6 +729,9 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
       behavior: HitTestBehavior.opaque,
       onTap: abrir,
       child: TextField(
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
         controller: ctrl,
         readOnly: true,
         showCursor: false,

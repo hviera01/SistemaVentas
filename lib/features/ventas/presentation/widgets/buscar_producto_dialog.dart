@@ -15,6 +15,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Resultado de elegir un producto (y el nivel de precio con el que se va a
 /// vender) desde el buscador.
@@ -371,6 +372,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _busquedaController,
                               focusNode: _focusBusqueda,
                               style: GoogleFonts.poppins(fontSize: 14),

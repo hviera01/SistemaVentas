@@ -9,6 +9,7 @@ import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_compra_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Pedido de compra: agregás productos y la cantidad que necesitás, y se
 /// genera un PDF listo para enviarle al proveedor. No se guarda nada en
@@ -231,6 +232,9 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           SizedBox(
             width: esMovil ? double.infinity : 360,
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _observacionesController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: _decoracion('Observaciones (opcional)'),
@@ -311,6 +315,9 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     }
 
     return TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: ctrl,
       textAlign: TextAlign.center,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

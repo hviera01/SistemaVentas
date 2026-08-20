@@ -11,6 +11,7 @@ import '../widgets/historial_stock_dialog.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/texto_utils.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Auditoría de Inventario: el usuario elige una categoría, va anotando el
 /// conteo físico real de cada producto (sin que eso toque Firestore para
@@ -380,6 +381,9 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
@@ -672,6 +676,9 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: controller,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: GoogleFonts.poppins(fontSize: 13),
@@ -784,6 +791,9 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   Expanded(
                     flex: 2,
                     child: TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: controller,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: GoogleFonts.poppins(fontSize: 13),

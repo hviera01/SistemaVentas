@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/venta_credito_model.dart';
 import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class UnirFacturasDialog extends ConsumerStatefulWidget {
   final List<VentaCreditoModel> facturas;
@@ -157,12 +158,18 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                     ),
                     const SizedBox(height: 18),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _documentoController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Documento cliente (opcional)'),
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _nombreController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Nombre cliente'),

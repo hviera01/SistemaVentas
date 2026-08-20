@@ -6,6 +6,7 @@ import '../../data/abono_model.dart';
 import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class RegistrarAbonoDialog extends ConsumerStatefulWidget {
   final VentaCreditoModel credito;
@@ -164,6 +165,9 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _montoAbonadoController,
                       autofocus: true,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -175,6 +179,9 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                     _filaSoloLectura('Saldo anterior', formatearMoneda(widget.credito.saldoPendiente)),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _interesController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -197,6 +204,9 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                     if (_metodoPago == 'Transferencia') ...[
                       const SizedBox(height: 14),
                       TextField(
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
                         controller: _numeroReciboController,
                         style: GoogleFonts.poppins(fontSize: 14),
                         decoration: _decoracion('No. de recibo (opcional)'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../data/pago_detalle_model.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Diálogo para repartir el total de una venta entre varios métodos de pago
 /// (por ejemplo, parte en Efectivo y el resto en Transferencia). Devuelve la
@@ -138,6 +139,9 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                       Expanded(
                         flex: 3,
                         child: TextField(
+                          inputFormatters: [mayusculasInputFormatter],
+                          autocorrect: false,
+                          enableSuggestions: false,
                           controller: _renglones[i].controller,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),

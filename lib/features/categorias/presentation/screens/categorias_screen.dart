@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/categoria_model.dart';
 import '../../providers/categorias_provider.dart';
 import '../widgets/categoria_form_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class CategoriasScreen extends ConsumerWidget {
   const CategoriasScreen({super.key});
@@ -190,6 +191,9 @@ class CategoriasScreen extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Buscar por descripción...',

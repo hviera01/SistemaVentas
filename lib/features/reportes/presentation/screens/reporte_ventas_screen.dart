@@ -12,6 +12,7 @@ import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../usuarios/providers/usuarios_provider.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../data/historico_venta_service.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ReporteVentasScreen extends ConsumerStatefulWidget {
   const ReporteVentasScreen({super.key});
@@ -435,6 +436,9 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(

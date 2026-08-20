@@ -5,6 +5,7 @@ import '../../data/cliente_model.dart';
 import '../../providers/clientes_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../widgets/cliente_form_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ClientesScreen extends ConsumerStatefulWidget {
   const ClientesScreen({super.key});
@@ -218,6 +219,9 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/usuario_model.dart';
 import '../../providers/usuarios_provider.dart';
 import '../widgets/usuario_form_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class UsuariosScreen extends ConsumerWidget {
   const UsuariosScreen({super.key});
@@ -283,6 +284,9 @@ class UsuariosScreen extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Buscar por nombre o documento...',

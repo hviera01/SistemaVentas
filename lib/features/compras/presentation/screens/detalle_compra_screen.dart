@@ -10,6 +10,7 @@ import '../../../../core/models/tab_item.dart';
 import '../../../../core/providers/tabs_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/pantalla_builder.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Pantalla de consulta de una compra ya registrada: buscá por número de
 /// documento o de factura (o abrila directo tocándola desde un reporte, o
@@ -147,6 +148,9 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
             ),
             const SizedBox(height: 14),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: motivoController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
@@ -221,6 +225,9 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
                   child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: _busquedaController,
                     autofocus: widget.compraIdInicial == null,
                     style: GoogleFonts.poppins(fontSize: 14),

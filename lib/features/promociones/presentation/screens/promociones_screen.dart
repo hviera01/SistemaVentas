@@ -7,6 +7,7 @@ import '../../providers/promociones_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../widgets/promocion_form_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Mantenedor de "Descuentos y Promociones": alta, edición, activar/
 /// desactivar y baja. También sirve para "consultar todas las promociones
@@ -179,6 +180,9 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(hintText: 'Buscar por nombre o producto...', hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),

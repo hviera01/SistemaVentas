@@ -9,6 +9,7 @@ import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Buscador de productos para Compras: a diferencia del de Ventas no maneja
 /// niveles de precio de venta, sino el costo de compra registrado en el
@@ -200,6 +201,9 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _busquedaController,
                               focusNode: _focusBusqueda,
                               style: GoogleFonts.poppins(fontSize: 14),

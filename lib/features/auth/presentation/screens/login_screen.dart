@@ -7,6 +7,7 @@ import '../../../../core/utils/face_id_storage.dart';
 import '../../../../core/utils/webauthn.dart';
 import '../../../../core/widgets/face_id_icon.dart';
 import '../../providers/auth_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio):
 // ahí conviene el teclado numérico porque el código de acceso y la
@@ -199,6 +200,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 34),
                           TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _codigoController,
                             keyboardType: _esWebMovil ? TextInputType.number : TextInputType.text,
                             style: GoogleFonts.poppins(fontSize: 14),

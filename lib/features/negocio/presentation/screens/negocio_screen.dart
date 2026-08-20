@@ -14,6 +14,7 @@ import '../../data/negocio_model.dart';
 import '../../providers/negocio_provider.dart';
 import '../widgets/negocio_logo_picker.dart';
 import '../widgets/selector_impresora.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 // Específicamente el navegador de un celular (no la PC, no la app de
 // escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID que ya usa
@@ -171,6 +172,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: ctrlCodigo,
                   autofocus: true,
                   style: GoogleFonts.poppins(fontSize: 14),
@@ -571,6 +575,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     return SizedBox(
       width: ancho,
       child: TextField(
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
         controller: controller,
         style: GoogleFonts.poppins(fontSize: 13.5),
         decoration: _decoracion(label),
@@ -645,13 +652,25 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Expanded(flex: 3, child: TextField(controller: _rangoPrefijoController, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Prefijo'))),
+              Expanded(flex: 3, child: TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _rangoPrefijoController, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Prefijo'))),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: TextField(controller: _rangoDesdeController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Desde'))),
+              Expanded(flex: 3, child: TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _rangoDesdeController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Desde'))),
               const SizedBox(width: 8),
               Text('AL', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: TextField(controller: _rangoHastaController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Hasta'))),
+              Expanded(flex: 3, child: TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _rangoHastaController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Hasta'))),
             ],
           ),
         ],
@@ -819,6 +838,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 Expanded(
                   flex: 3,
                   child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: _ipRedController,
                     style: GoogleFonts.poppins(fontSize: 13),
                     decoration: InputDecoration(
@@ -833,6 +855,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
                 Expanded(
                   child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: _puertoRedController,
                     keyboardType: TextInputType.number,
                     style: GoogleFonts.poppins(fontSize: 13),
@@ -964,6 +989,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               children: [
                 Expanded(
                   child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: _ctrlProximoFactura,
                     keyboardType: TextInputType.number,
                     style: GoogleFonts.poppins(fontSize: 14),

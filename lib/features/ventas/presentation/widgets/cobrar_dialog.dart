@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class CobrarResultado {
   final double pagoCon;
@@ -74,6 +75,9 @@ class _CobrarDialogState extends State<CobrarDialog> {
             ),
             const SizedBox(height: 18),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _pagoController,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),

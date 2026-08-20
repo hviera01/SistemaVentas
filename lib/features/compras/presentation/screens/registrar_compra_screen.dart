@@ -25,6 +25,7 @@ import '../widgets/buscar_producto_compra_dialog.dart';
 import '../widgets/compras_en_espera_dialog.dart';
 import '../widgets/escanear_factura_dialog.dart';
 import 'detalle_compra_screen.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 
@@ -341,6 +342,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // _escanearConCamara).
   Widget _campoCodigoBarras() {
     return TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: _ctrlCodigoBarras,
       focusNode: _focusCodigoBarras,
       onSubmitted: (_) => _confirmarCodigoBarras(),
@@ -922,6 +926,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               SizedBox(
                 width: esMovil ? double.infinity : 180,
                 child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: _noFacturaController,
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('No. Factura'),
@@ -1035,6 +1042,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 220,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 controller: _descuentoGlobalController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -1049,6 +1059,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 160,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 controller: _isvController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -1063,6 +1076,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 260,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 controller: _ajusteManualController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -1455,6 +1471,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     }
 
     final campo = TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: controlador,
       focusNode: focusNode,
       textAlign: TextAlign.center,

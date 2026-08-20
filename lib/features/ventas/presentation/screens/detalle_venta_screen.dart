@@ -26,6 +26,7 @@ import '../../../ventas_credito/data/abono_model.dart';
 import '../../../ventas_credito/data/venta_credito_export_service.dart';
 import '../../../ventas_credito/providers/ventas_credito_provider.dart';
 import '../../../ventas_credito/presentation/widgets/registrar_abono_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Pantalla de consulta de una venta ya registrada: buscá por número de
 /// documento (o abrila directo desde Reportes / Ventas a Crédito pasando
@@ -393,6 +394,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             ),
             const SizedBox(height: 14),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: motivoController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
@@ -467,6 +471,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
                       child: TextField(
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
                         controller: _busquedaController,
                         autofocus: widget.ventaIdInicial == null,
                         style: GoogleFonts.poppins(fontSize: 14),

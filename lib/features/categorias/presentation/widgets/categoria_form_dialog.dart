@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/categoria_model.dart';
 import '../../providers/categorias_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class CategoriaFormDialog extends ConsumerStatefulWidget {
   final CategoriaModel? categoria;
@@ -138,6 +139,9 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
             ),
             const SizedBox(height: 24),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _descripcionController,
               autofocus: true,
               style: GoogleFonts.poppins(fontSize: 14),

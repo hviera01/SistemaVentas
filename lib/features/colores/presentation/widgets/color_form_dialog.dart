@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/color_model.dart';
 import '../../providers/colores_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ColorFormDialog extends ConsumerStatefulWidget {
   final ColorModel? color;
@@ -197,6 +198,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       children: [
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _codigoController,
                             autofocus: true,
                             style: GoogleFonts.poppins(fontSize: 14),
@@ -206,6 +210,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _clienteController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Cliente'),
@@ -215,6 +222,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _descripcionController,
                       maxLines: 2,
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -225,6 +235,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       children: [
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _ubicacionController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Ubicación física'),
@@ -233,6 +246,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _paginaController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Página'),
@@ -267,6 +283,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _observacionesController,
                       maxLines: 3,
                       style: GoogleFonts.poppins(fontSize: 14),

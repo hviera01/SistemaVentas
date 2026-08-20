@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import '../../../proveedores/data/proveedor_model.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class RegistrarCreditoCompraDialog extends ConsumerStatefulWidget {
   const RegistrarCreditoCompraDialog({super.key});
@@ -159,6 +160,9 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                       children: [
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _numeroDocumentoController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('No. Documento (opcional)'),
@@ -167,6 +171,9 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _noFacturaController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('No. Factura'),
@@ -179,6 +186,9 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                       children: [
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _montoTotalController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             style: GoogleFonts.poppins(fontSize: 14),
@@ -188,6 +198,9 @@ class _RegistrarCreditoCompraDialogState extends ConsumerState<RegistrarCreditoC
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _saldoPendienteController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             style: GoogleFonts.poppins(fontSize: 14),

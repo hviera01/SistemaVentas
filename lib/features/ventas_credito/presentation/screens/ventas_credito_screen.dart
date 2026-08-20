@@ -23,6 +23,7 @@ import '../widgets/historial_abonos_dialog.dart';
 import '../widgets/facturas_origen_dialog.dart';
 import '../widgets/importar_creditos_venta_dialog.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class VentasCreditoScreen extends ConsumerStatefulWidget {
   const VentasCreditoScreen({super.key});
@@ -488,6 +489,9 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(

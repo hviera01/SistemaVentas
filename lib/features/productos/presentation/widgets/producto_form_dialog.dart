@@ -10,6 +10,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Un componente agregado a la receta de un combo mientras se está armando
 /// en el formulario (antes de guardar). [cantidad] vive en un controller
@@ -386,6 +387,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                       children: [
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _codigoController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Código (opcional)'),
@@ -394,6 +398,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
                             controller: _codigoBarrasController,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: _decoracion('Código de barras').copyWith(
@@ -413,6 +420,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _nombreController,
                       focusNode: _focusNombre,
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -420,6 +430,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _descripcionController,
                       maxLines: 2,
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -488,6 +501,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                         children: [
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _stockController,
                               enabled: !editando,
                               keyboardType: TextInputType.number,
@@ -498,6 +514,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _precioCompraController,
                               keyboardType: TextInputType.number,
                               style: GoogleFonts.poppins(fontSize: 14),
@@ -509,6 +528,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                     ],
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _precioVentaController,
                       keyboardType: TextInputType.number,
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -531,6 +553,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                         children: [
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _precioVenta2Controller,
                               keyboardType: TextInputType.number,
                               style: GoogleFonts.poppins(fontSize: 14),
@@ -540,6 +565,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
                               controller: _precioVenta3Controller,
                               keyboardType: TextInputType.number,
                               style: GoogleFonts.poppins(fontSize: 14),
@@ -639,6 +667,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
         Text('Componentes del combo', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
         const SizedBox(height: 8),
         TextField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _busquedaComponenteController,
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: _decoracion('Buscar producto para agregar...').copyWith(prefixIcon: const Icon(Icons.search, size: 20)),
@@ -680,6 +711,9 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                   SizedBox(
                     width: 70,
                     child: TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: c.cantidadController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,

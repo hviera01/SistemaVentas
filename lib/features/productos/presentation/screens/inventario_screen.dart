@@ -23,6 +23,7 @@ import '../../../negocio/providers/negocio_provider.dart';
 import '../../../negocio/presentation/widgets/acceso_especial.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -299,6 +300,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             Text(producto.nombre, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
             const SizedBox(height: 14),
             TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: controller,
               autofocus: true,
               keyboardType: TextInputType.number,
@@ -1558,6 +1562,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               autofocus: true,
               style: GoogleFonts.poppins(fontSize: 13),

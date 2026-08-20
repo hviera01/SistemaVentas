@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/cliente_model.dart';
 import '../../providers/clientes_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class ClienteFormDialog extends ConsumerStatefulWidget {
   final ClienteModel? cliente;
@@ -167,6 +168,9 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _dniController,
                       autofocus: true,
                       style: GoogleFonts.poppins(fontSize: 14),
@@ -174,18 +178,27 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _nombreController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Nombre completo'),
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _direccionController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Dirección (opcional)'),
                     ),
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _telefonoController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Teléfono (opcional)'),

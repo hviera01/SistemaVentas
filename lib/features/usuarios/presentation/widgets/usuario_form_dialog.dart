@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/usuario_model.dart';
 import '../../providers/usuarios_provider.dart';
 import '../../../../core/constants/roles.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class UsuarioFormDialog extends ConsumerStatefulWidget {
   final UsuarioModel? usuario;
@@ -170,6 +171,9 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
               ),
               const SizedBox(height: 24),
               TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _documentoController,
                 autofocus: true,
                 style: GoogleFonts.poppins(fontSize: 14),
@@ -177,12 +181,18 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
               ),
               const SizedBox(height: 14),
               TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _nombreController,
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Nombre completo'),
               ),
               const SizedBox(height: 14),
               TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _correoController,
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: _decoracion('Correo'),

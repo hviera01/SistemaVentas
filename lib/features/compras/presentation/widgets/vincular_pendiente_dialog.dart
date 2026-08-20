@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/pendiente_reposicion_model.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Sentinel que VincularPendienteDialog devuelve cuando el usuario toca
 /// "Quitar vínculo" (a diferencia de cancelar, que devuelve null y no
@@ -92,6 +93,9 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
                         controller: _busquedaController,
                         style: GoogleFonts.poppins(fontSize: 13),
                         decoration: InputDecoration(hintText: 'Buscar producto o factura...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),

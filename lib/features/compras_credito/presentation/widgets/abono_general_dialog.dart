@@ -6,6 +6,7 @@ import '../../data/compra_credito_repository.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class _ProveedorConDeuda {
   final String idProveedor;
@@ -178,6 +179,9 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                     ],
                     const SizedBox(height: 14),
                     TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _montoController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: GoogleFonts.poppins(fontSize: 14),

@@ -6,6 +6,7 @@ import '../../data/lote_costo_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 enum _ModoAjuste { ingreso, salida }
 
@@ -193,6 +194,9 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               _selectorModo(),
               const SizedBox(height: 18),
               TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _cantidadController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 autofocus: true,
@@ -202,6 +206,9 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               if (_modo == _ModoAjuste.ingreso) ...[
                 const SizedBox(height: 14),
                 TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: _costoController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: GoogleFonts.poppins(fontSize: 14),
@@ -215,6 +222,9 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               ],
               const SizedBox(height: 14),
               TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _motivoController,
                 maxLines: 2,
                 style: GoogleFonts.poppins(fontSize: 14),

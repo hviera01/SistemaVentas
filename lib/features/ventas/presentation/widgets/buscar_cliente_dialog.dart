@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../clientes/providers/clientes_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class BuscarClienteDialog extends ConsumerStatefulWidget {
   const BuscarClienteDialog({super.key});
@@ -59,6 +60,9 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _busquedaController,
                       autofocus: true,
                       style: GoogleFonts.poppins(fontSize: 13),

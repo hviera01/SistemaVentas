@@ -10,6 +10,7 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class CierreCajaScreen extends ConsumerStatefulWidget {
   const CierreCajaScreen({super.key});
@@ -286,6 +287,9 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
           Text('Total real efectivo', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           const SizedBox(height: 6),
           TextField(
+            inputFormatters: [mayusculasInputFormatter],
+            autocorrect: false,
+            enableSuggestions: false,
             controller: _totalRealController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
@@ -319,6 +323,9 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
           Text('Observaciones', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           const SizedBox(height: 6),
           TextField(
+            inputFormatters: [mayusculasInputFormatter],
+            autocorrect: false,
+            enableSuggestions: false,
             controller: _observacionesController,
             maxLines: 3,
             style: GoogleFonts.poppins(fontSize: 13),

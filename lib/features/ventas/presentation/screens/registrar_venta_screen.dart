@@ -50,6 +50,7 @@ import '../widgets/escanear_remoto_dialog.dart';
 import '../widgets/ticket_escpos_preview.dart';
 import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
 
@@ -2103,6 +2104,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   children: [
                     Expanded(
                       child: TextField(
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
                         controller: _nombreClienteController,
                         style: GoogleFonts.poppins(fontSize: 13),
                         decoration: _decoracion('Cliente').copyWith(
@@ -2123,6 +2127,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               SizedBox(
                 width: esMovil ? double.infinity : 180,
                 child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: _documentoClienteController,
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('RTN / Documento'),
@@ -2238,6 +2245,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 260,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 controller: _descuentoGlobalController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -2252,6 +2262,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 enabled: !carrito.esCotizacion,
                                 controller: _ocController,
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -2262,6 +2275,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 enabled: !carrito.esCotizacion,
                                 controller: _regExoneradoController,
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -2272,6 +2288,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             SizedBox(
                               width: esMovil ? double.infinity : 200,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 enabled: !carrito.esCotizacion,
                                 controller: _regSagController,
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -2282,6 +2301,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: TextField(
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 controller: _observacionesController,
                                 maxLines: 2,
                                 style: GoogleFonts.poppins(fontSize: 13),
@@ -2314,6 +2336,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // mecanismo, mismo timing, que los pedidos de foco posteriores). En
     // celular no hace falta que este campo tenga foco nunca.
     return TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: _ctrlCodigoBarras,
       focusNode: _focusCodigoBarras,
       onSubmitted: (_) => _confirmarCodigoBarras(),
@@ -2879,6 +2904,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     final campo = TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: controlador,
       focusNode: focusNode,
       textAlign: TextAlign.center,
@@ -2971,6 +2999,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         TextField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
           controller: ctrl,
           focusNode: focusNode,
           // Sin límite de líneas: un nombre largo pasa a una segunda línea

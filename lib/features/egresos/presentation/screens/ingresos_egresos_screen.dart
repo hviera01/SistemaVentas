@@ -10,6 +10,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/exportador.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 class IngresosEgresosScreen extends ConsumerStatefulWidget {
   const IngresosEgresosScreen({super.key});
@@ -469,6 +470,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
 
   Widget _campoTexto(String etiqueta, TextEditingController controller, {TextInputType? teclado}) {
     return TextField(
+      inputFormatters: [mayusculasInputFormatter],
+      autocorrect: false,
+      enableSuggestions: false,
       controller: controller,
       keyboardType: teclado,
       style: GoogleFonts.poppins(fontSize: 13),
@@ -566,6 +570,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(hintText: 'Buscar...', hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
