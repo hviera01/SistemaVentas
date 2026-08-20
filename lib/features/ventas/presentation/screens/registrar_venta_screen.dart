@@ -164,6 +164,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // móvil.
   bool get _esWebMovil => kIsWeb && _esPlataformaMovil;
 
+  /// true solo para el escritorio real (ancho de PC + mouse, sin
+  /// [_esPlataformaMovil]): ahí la tabla de productos vive en una caja de
+  /// alto fijo con su propio ListView -ver [_tarjetaCarritoGrande] y el
+  /// `SizedBox(height: altoTabla)` en build()-, cómodo con rueda de mouse.
+  /// false en cualquier dispositivo táctil, aunque el ancho alcance para
+  /// verse como tabla de escritorio (ej. una tablet en horizontal): ahí la
+  /// tabla se dibuja sin scroll propio, dentro del scroll único de toda la
+  /// pantalla, para que deslizar desde cualquier parte de la tabla mueva la
+  /// pantalla completa en vez de quedar atrapado en una franja angosta.
+  bool _tablaConScrollPropio(bool esMovil) => !esMovil && !_esPlataformaMovil;
+
   // Controla el scroll de toda la pantalla en web móvil, para saber cuándo
   // la tarjeta de totales real (al fondo) ya está a la vista y así ocultar
   // la barra flotante de totales (ver _barraFlotanteTotales/_alScrollearMovil):
@@ -1812,9 +1823,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 const SizedBox(height: 14),
                 _tarjetaDatosVenta(carrito, esMovil),
                 const SizedBox(height: 14),
-                esMovil
-                    ? _tarjetaCarritoGrande(carrito, esMovil)
-                    : SizedBox(height: altoTabla, child: _tarjetaCarritoGrande(carrito, esMovil)),
+                _tablaConScrollPropio(esMovil)
+                    ? SizedBox(height: altoTabla, child: _tarjetaCarritoGrande(carrito, esMovil))
+                    : _tarjetaCarritoGrande(carrito, esMovil),
                 const SizedBox(height: 14),
                 _tarjetaTotales(carrito, esMovil),
               ],
@@ -2421,6 +2432,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       color: Colors.grey.shade600,
                     ),
                     const Spacer(),
+                    // Escanear con la cámara de este mismo equipo: solo tiene
+                    // sentido en un dispositivo táctil (tablet/celular) que
+                    // tenga cámara -en la vista de escritorio normal no
+                    // aparecía porque acá arriba siempre entra la rama ancha
+                    // (esMovil=false), pero una tablet en horizontal también
+                    // cae en esa rama y hasta ahora se quedaba sin forma de
+                    // escanear directo, solo con "Escanear con celular"
+                    // (remoto, para cuando el celular es un equipo aparte).
+                    if (_esPlataformaMovil) ...[
+                      OutlinedButton.icon(
+                        onPressed: _escanearConCamara,
+                        icon: const Icon(Icons.qr_code_scanner, size: 18),
+                        label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
                     OutlinedButton.icon(
                       onPressed: _abrirEscaneoRemoto,
                       icon: Icon(_escaneoRemotoConectado ? Icons.wifi_tethering : Icons.qr_code_scanner, size: 18, color: _escaneoRemotoConectado ? Colors.green.shade600 : null),
@@ -2494,19 +2527,46 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             // Ver el comentario de _tablaExpandida: mientras el diálogo de
             // "ver más grande" está abierto, esta tabla no monta sus filas
             // (esas mismas filas ya están montadas allá, usando los mismos
-            // controladores).
-            Expanded(
-              child: Center(
-                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
-              ),
-            )
-          else
+            // controladores). Expanded solo cuando esta tarjeta vive dentro
+            // de la caja de alto fijo de _tablaConScrollPropio (ver más
+            // abajo): si no, no hay una altura acotada de la que "expandirse".
+            _tablaConScrollPropio(esMovil)
+                ? Expanded(
+                    child: Center(
+                      child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                    ),
+                  )
+          else if (_tablaConScrollPropio(esMovil))
             Expanded(
               child: ListView.separated(
                 itemCount: carrito.items.length,
                 separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
                 itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
               ),
+            )
+          else
+            // Tablet en horizontal: el ancho ya alcanza para verse como la
+            // tabla de escritorio (esMovil decidió que sí), pero es un
+            // dispositivo táctil -mismo motivo que el bloque esMovil de
+            // arriba: nada de ListView/Expanded con scroll propio, para que
+            // deslizar desde cualquier parte de la tabla mueva el scroll de
+            // toda la pantalla en vez de quedar atrapado adentro de una
+            // franja angosta. Solo pasa a necesitar scroll de verdad -el de
+            // la pantalla completa- si de verdad hay muchos productos
+            // cargados.
+            Column(
+              children: [
+                for (var i = 0; i < carrito.items.length; i++) ...[
+                  if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                  _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                ],
+              ],
             ),
         ],
       ),
