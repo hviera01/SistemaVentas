@@ -6,9 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 /// diferencia del teclado nativo del sistema, que en tablet ocupa media
 /// pantalla) -ver CampoTecladoCompacto, que es quien lo abre. Mismo espíritu
 /// que TecladoNumericoDialog: funciona a toques o con teclado físico
-/// (Backspace y Enter para confirmar). Como toda la app fuerza mayúsculas
-/// (ver MayusculasInputFormatter), acá no hace falta tecla de mayús/minús:
-/// todo entra siempre en mayúsculas.
+/// (Backspace y Enter para confirmar), y también se puede arrastrar a
+/// donde sea más cómodo (ver el título, con el ícono de arrastre). Como
+/// toda la app fuerza mayúsculas (ver MayusculasInputFormatter), acá no
+/// hace falta tecla de mayús/minús: todo entra siempre en mayúsculas.
 class TecladoTextoDialog extends StatefulWidget {
   final String titulo;
   final String valorInicial;
@@ -22,6 +23,13 @@ class TecladoTextoDialog extends StatefulWidget {
 class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
   late String _texto;
   final _focusNode = FocusNode();
+  // Posición libre en pantalla (se arrastra desde el título): útil en
+  // tablet para dejarlo donde no tape ni la mano ni lo que se está viendo
+  // detrás. null hasta el primer build, que la centra según el tamaño de
+  // pantalla disponible ahí.
+  Offset? _posicion;
+  static const _ancho = 460.0;
+  static const _altoEstimado = 420.0;
 
   static const _filaDigitos = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
   static const _filaQ = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
@@ -101,66 +109,96 @@ class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final tamano = MediaQuery.sizeOf(context);
+    // Se centra recién en el primer build (ahí ya se conoce el tamaño real
+    // de la pantalla); de ahí en adelante, arrastrar desde el título es lo
+    // único que la mueve.
+    _posicion ??= Offset(
+      ((tamano.width - _ancho) / 2).clamp(0, tamano.width - _ancho),
+      ((tamano.height - _altoEstimado) / 2).clamp(0, tamano.height - _altoEstimado),
+    );
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (node, event) => _manejarTeclaFisica(node, event),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          width: 460,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
-                child: Text(
-                  _texto.isEmpty ? ' ' : _texto,
-                  textAlign: TextAlign.left,
-                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(children: [for (final d in _filaDigitos) _tecla(d), _tecla('⌫', onTap: _borrar, color: const Color(0xFFFCE4E4))]),
-              Row(children: [for (final l in _filaQ) _tecla(l)]),
-              Row(children: [const Spacer(), for (final l in _filaA) _tecla(l), const Spacer()]),
-              Row(children: [for (final l in _filaZ) _tecla(l)]),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  _tecla('espacio', onTap: _espacio, flex: 4),
-                  const SizedBox(width: 4),
-                  _tecla('borrar todo', onTap: _limpiar, flex: 2, color: const Color(0xFFFCE4E4)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _confirmar,
-                  icon: const Icon(Icons.check, size: 18),
-                  label: Text('Listo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFC62828),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: SizedBox.expand(
+        child: Stack(
+          children: [
+            Positioned(
+              left: _posicion!.dx,
+              top: _posicion!.dy,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: _ancho,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (detalle) => setState(() {
+                          final nuevo = _posicion! + detalle.delta;
+                          _posicion = Offset(nuevo.dx.clamp(0, tamano.width - _ancho), nuevo.dy.clamp(0, tamano.height - 60));
+                        }),
+                        child: Row(
+                          children: [
+                            Icon(Icons.drag_indicator, size: 18, color: Colors.grey.shade400),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
+                            IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        child: Text(
+                          _texto.isEmpty ? ' ' : _texto,
+                          textAlign: TextAlign.left,
+                          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(children: [for (final d in _filaDigitos) _tecla(d), _tecla('⌫', onTap: _borrar, color: const Color(0xFFFCE4E4))]),
+                      Row(children: [for (final l in _filaQ) _tecla(l)]),
+                      Row(children: [const Spacer(), for (final l in _filaA) _tecla(l), const Spacer()]),
+                      Row(children: [for (final l in _filaZ) _tecla(l)]),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _tecla('espacio', onTap: _espacio, flex: 4),
+                          const SizedBox(width: 4),
+                          _tecla('borrar todo', onTap: _limpiar, flex: 2, color: const Color(0xFFFCE4E4)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _confirmar,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: Text('Listo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFC62828),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

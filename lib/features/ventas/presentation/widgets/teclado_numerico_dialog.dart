@@ -25,6 +25,13 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
   late String _texto;
   bool _recienAbierto = true;
   final _focusNode = FocusNode();
+  // Posición libre en pantalla (se puede arrastrar desde el título, ver
+  // _tecla del título más abajo): útil en tablet para dejarlo donde no tape
+  // ni la mano ni lo que se está viendo detrás. null hasta el primer build,
+  // que la centra según el tamaño de pantalla disponible ahí.
+  Offset? _posicion;
+  static const _ancho = 300.0;
+  static const _altoEstimado = 480.0;
 
   @override
   void initState() {
@@ -155,70 +162,100 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final tamano = MediaQuery.sizeOf(context);
+    // Se centra recién en el primer build (ahí ya se conoce el tamaño real
+    // de la pantalla); de ahí en adelante, arrastrar desde el título es lo
+    // único que la mueve.
+    _posicion ??= Offset(
+      ((tamano.width - _ancho) / 2).clamp(0, tamano.width - _ancho),
+      ((tamano.height - _altoEstimado) / 2).clamp(0, tamano.height - _altoEstimado),
+    );
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (node, event) => _manejarTeclaFisica(node, event),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
-                child: Text(_texto, textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(height: 14),
-              Row(children: [_tecla('7'), _tecla('8'), _tecla('9')]),
-              Row(children: [_tecla('4'), _tecla('5'), _tecla('6')]),
-              Row(children: [_tecla('1'), _tecla('2'), _tecla('3')]),
-              Row(children: [_tecla('.'), _tecla('0'), _tecla('⌫', onTap: _borrar)]),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _limpiar,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFB6BCC7)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text('Borrar todo', style: GoogleFonts.poppins(fontSize: 13)),
-                    ),
+      child: SizedBox.expand(
+        child: Stack(
+          children: [
+            Positioned(
+              left: _posicion!.dx,
+              top: _posicion!.dy,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: _ancho,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _confirmar,
-                      icon: const Icon(Icons.check, size: 18),
-                      label: Text('Listo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFC62828),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (detalle) => setState(() {
+                          final nuevo = _posicion! + detalle.delta;
+                          _posicion = Offset(nuevo.dx.clamp(0, tamano.width - _ancho), nuevo.dy.clamp(0, tamano.height - 60));
+                        }),
+                        child: Row(
+                          children: [
+                            Icon(Icons.drag_indicator, size: 18, color: Colors.grey.shade400),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
+                            IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        child: Text(_texto, textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w700)),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(children: [_tecla('7'), _tecla('8'), _tecla('9')]),
+                      Row(children: [_tecla('4'), _tecla('5'), _tecla('6')]),
+                      Row(children: [_tecla('1'), _tecla('2'), _tecla('3')]),
+                      Row(children: [_tecla('.'), _tecla('0'), _tecla('⌫', onTap: _borrar)]),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _limpiar,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF1A1A1A),
+                                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text('Borrar todo', style: GoogleFonts.poppins(fontSize: 13)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _confirmar,
+                              icon: const Icon(Icons.check, size: 18),
+                              label: Text('Listo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFC62828),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
