@@ -8,7 +8,6 @@ import '../../../../core/utils/webauthn.dart';
 import '../../../../core/widgets/face_id_icon.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
-import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio):
 // ahí conviene el teclado numérico porque el código de acceso y la
@@ -200,11 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 34),
-                          CampoTecladoCompacto(
-                            controller: _codigoController,
-                            numerico: false,
-                            titulo: 'Código de acceso',
-                            child: TextField(
+                          TextField(
                             inputFormatters: [mayusculasInputFormatter],
                             autocorrect: false,
                             enableSuggestions: false,
@@ -222,7 +217,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                          ),
                           ),
                           const SizedBox(height: 18),
                           TextField(

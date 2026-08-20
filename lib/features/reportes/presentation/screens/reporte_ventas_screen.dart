@@ -439,6 +439,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _aplicarBusqueda(),
               titulo: 'Buscar por documento, cliente, método de pago...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

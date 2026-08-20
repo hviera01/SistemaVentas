@@ -222,6 +222,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por DNI, nombre, dirección o teléfono...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

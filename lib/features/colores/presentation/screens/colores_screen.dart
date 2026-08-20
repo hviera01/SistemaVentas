@@ -287,6 +287,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por código, cliente o descripción...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

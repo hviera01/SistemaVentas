@@ -2368,6 +2368,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return CampoTecladoCompacto(
       controller: _ctrlCodigoBarras,
       numerico: false,
+      onSubmitted: (_) => _confirmarCodigoBarras(),
       child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,
@@ -2940,6 +2941,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final campo = CampoTecladoCompacto(
       controller: controlador,
       numerico: true,
+      onSubmitted: (_) => confirmar(),
       child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,

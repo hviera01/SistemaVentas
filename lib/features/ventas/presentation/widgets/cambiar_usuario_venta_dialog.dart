@@ -103,6 +103,7 @@ class _CambiarUsuarioVentaDialogState extends State<_CambiarUsuarioVentaDialog> 
             CampoTecladoCompacto(
               controller: _documentoController,
               numerico: false,
+              onSubmitted: (_) => _confirmar(),
               titulo: 'Código de acceso',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

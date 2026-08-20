@@ -222,6 +222,7 @@ class _ProveedoresScreenState extends ConsumerState<ProveedoresScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por RTN, razón social, correo o teléfono...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

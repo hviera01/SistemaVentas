@@ -375,6 +375,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                             child: CampoTecladoCompacto(
                               controller: _busquedaController,
                               numerico: false,
+                              onSubmitted: (_) => _buscar(),
                               titulo: 'Escribí y presioná Enter para buscar...',
                               child: TextField(
                               inputFormatters: [mayusculasInputFormatter],

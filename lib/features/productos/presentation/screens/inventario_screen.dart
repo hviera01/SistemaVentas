@@ -1570,6 +1570,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar o escanear código de barras...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

@@ -322,6 +322,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     return CampoTecladoCompacto(
       controller: ctrl,
       numerico: true,
+      onSubmitted: (_) => confirmar(),
       child: TextField(
       inputFormatters: [mayusculasInputFormatter],
       autocorrect: false,

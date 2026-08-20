@@ -479,6 +479,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                       child: CampoTecladoCompacto(
                         controller: _busquedaController,
                         numerico: false,
+                        onSubmitted: (_) => _buscarPorNumero(),
                         titulo: 'Número de documento...',
                         child: TextField(
                         inputFormatters: [mayusculasInputFormatter],

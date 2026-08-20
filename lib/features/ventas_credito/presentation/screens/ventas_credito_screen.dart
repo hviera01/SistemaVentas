@@ -492,6 +492,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por factura o cliente...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

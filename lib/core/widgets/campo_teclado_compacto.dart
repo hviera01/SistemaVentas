@@ -17,20 +17,27 @@ import 'teclado_texto_dialog.dart';
 /// [controller] es el mismo TextEditingController que ya usa [child]: al
 /// confirmar el teclado propio, se le asigna el texto nuevo directo
 /// (dispara igual el onChanged del campo, porque TextField/EditableText
-/// escuchan al controller, no solo al tipeo real).
+/// escuchan al controller, no solo al tipeo real). [onSubmitted], si el
+/// campo lo tenía, es el mismo que ya tenía [child] -confirmar el teclado
+/// propio ("Listo") hace lo mismo que apretar Enter en el teclado nativo,
+/// para no tener que además tocar "Buscar" aparte (ej. en campos de
+/// búsqueda que se ejecutan al someter).
 class CampoTecladoCompacto extends StatelessWidget {
   final TextEditingController controller;
   final Widget child;
   final bool numerico;
   final String? titulo;
+  final ValueChanged<String>? onSubmitted;
 
-  const CampoTecladoCompacto({super.key, required this.controller, required this.child, this.numerico = false, this.titulo});
+  const CampoTecladoCompacto({super.key, required this.controller, required this.child, this.numerico = false, this.titulo, this.onSubmitted});
 
   Future<void> _abrir(BuildContext context) async {
     final resultado = numerico
         ? await showDialog<String>(context: context, builder: (_) => TecladoNumericoDialog(titulo: titulo ?? 'Valor', valorInicial: controller.text))
         : await showDialog<String>(context: context, builder: (_) => TecladoTextoDialog(titulo: titulo ?? 'Escribir', valorInicial: controller.text));
-    if (resultado != null) controller.text = resultado;
+    if (resultado == null) return;
+    controller.text = resultado;
+    onSubmitted?.call(resultado);
   }
 
   @override

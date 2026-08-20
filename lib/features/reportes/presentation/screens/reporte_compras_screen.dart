@@ -385,6 +385,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _aplicarBusqueda(),
               titulo: 'Buscar por factura, proveedor...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

@@ -183,6 +183,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
             child: CampoTecladoCompacto(
               controller: _busquedaController,
               numerico: false,
+              onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por nombre o producto...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],

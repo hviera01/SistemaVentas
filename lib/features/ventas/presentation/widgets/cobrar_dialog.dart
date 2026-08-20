@@ -78,6 +78,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
             CampoTecladoCompacto(
               controller: _pagoController,
               numerico: true,
+              onSubmitted: (_) => _confirmar(),
               titulo: 'Paga con',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],
