@@ -4,8 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/compra_model.dart';
 import '../../providers/compras_provider.dart';
+import '../../providers/carrito_compra_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/models/tab_item.dart';
+import '../../../../core/providers/tabs_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/utils/pantalla_builder.dart';
 
 /// Pantalla de consulta de una compra ya registrada: buscá por número de
 /// documento o de factura (o abrila directo tocándola desde un reporte, o
@@ -104,6 +108,23 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
       _compra = null;
       _error = null;
     });
+  }
+
+  /// Abre una pestaña nueva de "Registrar Compra" con los mismos productos
+  /// de esta compra ya cargados en el carrito, lista para ajustar y
+  /// confirmar como una compra nueva (no toca ni modifica la original).
+  void _duplicarCompra(CompraModel compra) {
+    ref.read(compraParaCargarProvider.notifier).establecer(compra);
+    final id = 'compras_registrar_${DateTime.now().millisecondsSinceEpoch}';
+    ref.read(tabsProvider.notifier).abrirTab(
+          TabItem(
+            id: id,
+            titulo: 'Registrar Compra',
+            icono: Icons.add_shopping_cart_outlined,
+            contenido: construirPantalla('compras_registrar', 'Registrar Compra', Icons.add_shopping_cart_outlined, id),
+          ),
+        );
+    if (widget.esDialogo) Navigator.pop(context);
   }
 
   Future<void> _anular() async {
@@ -295,15 +316,27 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
         const SizedBox(height: 16),
         _tarjetaTotales(compra),
         const SizedBox(height: 20),
-        if (!compra.estaAnulada)
-          FilledButton.icon(
-            onPressed: _anulando ? null : _anular,
-            icon: _anulando
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.block_outlined, size: 18),
-            label: Text(_anulando ? 'Anulando...' : 'Anular Compra', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => _duplicarCompra(compra),
+              icon: const Icon(Icons.content_copy_outlined, size: 18),
+              label: Text('Duplicar compra', style: GoogleFonts.poppins(fontSize: 13)),
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            ),
+            if (!compra.estaAnulada)
+              FilledButton.icon(
+                onPressed: _anulando ? null : _anular,
+                icon: _anulando
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.block_outlined, size: 18),
+                label: Text(_anulando ? 'Anulando...' : 'Anular Compra', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
+          ],
+        ),
       ],
     );
   }

@@ -112,6 +112,17 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     // qué campo de la pantalla tenga el foco en ese momento.
     HardwareKeyboard.instance.addHandler(_manejarAtajoTeclado);
 
+    // Si esta pestaña se abrió desde "Duplicar compra" en Detalle de Compra
+    // (ver DetalleCompraScreen), acá está esperando la compra de origen para
+    // precargar el carrito.
+    final compraOrigen = ref.read(compraParaCargarProvider);
+    if (compraOrigen != null) {
+      ref.read(compraParaCargarProvider.notifier).limpiar();
+      ref.read(carritoCompraProvider.notifier).cargarDesdeCompra(compraOrigen);
+      _descuentoGlobalController.text = compraOrigen.descuentoGlobalPorcentaje == 0 ? '' : compraOrigen.descuentoGlobalPorcentaje.toStringAsFixed(1);
+      _isvController.text = compraOrigen.isvPorcentaje.toStringAsFixed(0);
+    }
+
     // En escritorio, cada vez que el foco queda en nada se lo devuelve al
     // campo de código de barras invisible: así un lector físico funciona en
     // cualquier momento sin que el usuario tenga que tocar nada primero.

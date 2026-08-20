@@ -1,9 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/compra_en_espera_model.dart';
+import '../data/compra_model.dart';
 import '../data/item_compra_model.dart';
 import '../../productos/data/producto_model.dart';
 import '../../productos/data/pendiente_reposicion_model.dart';
 import '../../../core/utils/formato_moneda.dart';
+
+/// Guarda una compra "de paso" para que la próxima pestaña de Registrar
+/// Compra que se abra la cargue en su carrito (ver "Duplicar compra" en
+/// DetalleCompraScreen). Provider global (no por pestaña, a diferencia de
+/// carritoCompraProvider) a propósito: se llena justo antes de abrir la
+/// pestaña nueva y esa pestaña lo consume (lo deja en null) apenas arranca,
+/// igual que ventaParaCargarProvider.
+class CompraParaCargarNotifier extends Notifier<CompraModel?> {
+  @override
+  CompraModel? build() => null;
+
+  void establecer(CompraModel compra) => state = compra;
+  void limpiar() => state = null;
+}
+
+final compraParaCargarProvider = NotifierProvider<CompraParaCargarNotifier, CompraModel?>(CompraParaCargarNotifier.new);
 
 double _subtotalLinea(double precioCompra, double cantidad, double descuentoPorcentaje) {
   return redondearMoneda(precioCompra * cantidad * (1 - descuentoPorcentaje / 100));
@@ -258,6 +275,40 @@ class CarritoCompraNotifier extends Notifier<CarritoCompraState> {
       descuentoGlobalPorcentaje: sesion.descuentoGlobalPorcentaje,
       isvPorcentaje: sesion.isvPorcentaje,
       ajusteManual: sesion.ajusteManual,
+    );
+  }
+
+  /// Carga en el carrito los productos y datos de una compra ya registrada
+  /// (para "Duplicar compra" desde DetalleCompraScreen): arma una compra
+  /// nueva desde cero con los mismos productos, no continúa ni modifica la
+  /// original. No se lleva el "No. Factura" (es el número de la factura
+  /// física del proveedor, una nueva compra necesita el suyo propio), el
+  /// ajuste manual (era para cuadrar centavos de esa factura puntual) ni el
+  /// vínculo a venta anticipada de cada línea (esa reposición ya quedó
+  /// resuelta con la compra original; si vuelve a faltar, se vincula de
+  /// nuevo a mano).
+  void cargarDesdeCompra(CompraModel compra) {
+    state = CarritoCompraState(
+      idProveedor: compra.idProveedor,
+      documentoProveedor: compra.documentoProveedor,
+      razonSocial: compra.razonSocial,
+      condicion: compra.condicion,
+      metodoPago: compra.condicion == 'Credito' ? '' : (compra.metodoPago.isEmpty ? 'Efectivo' : compra.metodoPago),
+      fechaVencimiento: compra.condicion == 'Credito' ? DateTime.now().add(const Duration(days: 30)) : null,
+      descuentoGlobalPorcentaje: compra.descuentoGlobalPorcentaje,
+      isvPorcentaje: compra.isvPorcentaje,
+      items: compra.detalle
+          .map((item) => ItemCompraModel(
+                idProducto: item.idProducto,
+                idCategoria: item.idCategoria,
+                nombreProducto: item.nombreProducto,
+                precioCompra: item.precioCompra,
+                cantidad: item.cantidad,
+                subtotal: _subtotalLinea(item.precioCompra, item.cantidad, item.descuentoPorcentaje),
+                descuentoPorcentaje: item.descuentoPorcentaje,
+                precioVentaNuevo: item.precioVentaNuevo,
+              ))
+          .toList(),
     );
   }
 
