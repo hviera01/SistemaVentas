@@ -505,7 +505,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   // `productos.precioVenta` siempre se guarda SIN ISV (ver
   // DetalleVentaScreen._precioMostrado y VentaRepository.registrarVenta, que
-  // le suman el 15% aparte recién al vender). Pero acá en Registrar Compra
+  // SIEMPRE le suman un 15% fijo aparte recién al vender -ese 15% de venta al
+  // público es fijo en todo el sistema, no depende de si la factura de esta
+  // compra en particular vino con o sin ISV-). Pero acá en Registrar Compra
   // el campo "Precio de venta" y el "Margen %" que se calculan a partir de
   // él tienen que representar el precio FINAL -el que el cliente paga en la
   // caja-, no la base sin impuesto: si no, alguien mete "quiero 30% de
@@ -516,13 +518,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // Por eso todo lo que se ve/edita en pantalla (precio de venta, margen)
   // usa el precio final (_precioVentaFinal), y solo al guardar en el
   // carrito/Firestore se vuelve a la base sin ISV
-  // (_precioVentaBaseDesdeFinal). Si la compra no lleva ISV (isvPorcentaje
-  // en 0, ej. producto exonerado), no hay nada que convertir: el precio
-  // final YA es el que se guarda, tal cual.
-  double _factorIsvVenta() {
-    final isv = ref.read(carritoCompraProvider).isvPorcentaje;
-    return isv > 0 ? 1 + isv / 100 : 1;
-  }
+  // (_precioVentaBaseDesdeFinal). Esta conversión usa el 15% fijo de venta
+  // (igual que VentaRepository), NO el ISV de esta compra (isvPorcentaje):
+  // ese es el impuesto que pagó el negocio al comprar -puede venir en 0 si
+  // el proveedor está exonerado- y es un dato totalmente aparte de con
+  // cuánto ISV se le vende después al cliente final.
+  static const _isvVentaPorcentaje = 15.0;
+  double _factorIsvVenta() => 1 + _isvVentaPorcentaje / 100;
 
   double _precioVentaFinal(dynamic item) {
     final precioBase = (item.precioVentaNuevo as double?) ?? 0;
@@ -533,7 +535,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return redondearMoneda(precioFinal / _factorIsvVenta());
   }
 
-  String get _etiquetaPrecioVenta => ref.read(carritoCompraProvider).isvPorcentaje > 0 ? 'Precio de venta (c/ISV)' : 'Precio de venta';
+  String get _etiquetaPrecioVenta => 'Precio de venta (c/ISV)';
 
   double _margenActual(dynamic item) {
     final costo = _costoFinalItem(item);
