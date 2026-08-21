@@ -1144,7 +1144,7 @@
   },
   {
     "codigo": "OW9-4",
-    "nombre": "Water Lily White se",
+    "nombre": "Water Lily White",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1171,7 +1171,7 @@
   },
   {
     "codigo": "OW11-4",
-    "nombre": "Transparent Tears se",
+    "nombre": "Transparent Tears",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1225,7 +1225,7 @@
   },
   {
     "codigo": "OW10-1",
-    "nombre": "Banana Milkshake se",
+    "nombre": "Banana Milkshake",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1252,7 +1252,7 @@
   },
   {
     "codigo": "OW12-1Ice",
-    "nombre": "Sculpture se",
+    "nombre": "Sculpture",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1414,7 +1414,7 @@
   },
   {
     "codigo": "OW10-3Peddler's",
-    "nombre": "Stone se",
+    "nombre": "Stone",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1450,7 +1450,7 @@
   },
   {
     "codigo": "OW12-3Fresh",
-    "nombre": "Dew se",
+    "nombre": "Dew",
     "base": "Pastel Base",
     "pagina": 2,
     "cuartoDisponible": false,
@@ -1729,7 +1729,7 @@
   },
   {
     "codigo": "OW15-2Pearl",
-    "nombre": "Essence se Paste",
+    "nombre": "Essence",
     "base": "Pastel Base",
     "pagina": 3,
     "cuartoDisponible": false,
@@ -1758,14 +1758,14 @@
         "cuartoOz": null,
         "galon": "-20.5",
         "galonOz": -0.4270833333333333,
-        "cubeta5gal": "-2Y6.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-2Y6.5",
+        "cubeta5galOz": -2.1354166666666665
       }
     ]
   },
   {
     "codigo": "N1-6",
-    "nombre": "Peruvian Leather l Base",
+    "nombre": "Peruvian Leather",
     "base": "Accent Base",
     "pagina": 3,
     "cuartoDisponible": true,
@@ -1789,13 +1789,13 @@
         "cubeta5galOz": -5.416666666666667
       },
       {
-        "colorante": "5",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-47",
+        "cuartoOz": -0.9791666666666666,
+        "galon": "-3Y44",
+        "galonOz": -3.9166666666666665,
+        "cubeta5gal": "-19Y28",
+        "cubeta5galOz": -19.583333333333332
       },
       {
         "colorante": "KX",
@@ -1837,7 +1837,7 @@
   },
   {
     "codigo": "OW15-3",
-    "nombre": "Whalebone se Paste",
+    "nombre": "Whalebone",
     "base": "Pastel Base",
     "pagina": 3,
     "cuartoDisponible": false,
@@ -1873,7 +1873,7 @@
   },
   {
     "codigo": "N2-1",
-    "nombre": "Rose Crystal l Base",
+    "nombre": "Rose Crystal",
     "base": "Pastel Base",
     "pagina": 3,
     "cuartoDisponible": true,
@@ -1965,8 +1965,8 @@
         "cuartoOz": null,
         "galon": "-1Y6.5",
         "galonOz": -1.1354166666666667,
-        "cubeta5gal": "-5Y32",
-        "cubeta5galOz": -5.666666666666667
+        "cubeta5gal": "-5Y32.5",
+        "cubeta5galOz": -5.677083333333333
       }
     ]
   },
@@ -1996,13 +1996,13 @@
         "cubeta5galOz": -4.583333333333333
       },
       {
-        "colorante": ".5",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-22.5",
+        "cuartoOz": -0.46875,
+        "galon": "-1Y42",
+        "galonOz": -1.875,
+        "cubeta5gal": "-9Y18",
+        "cubeta5galOz": -9.375
       }
     ]
   },
@@ -2406,8 +2406,8 @@
         "cuartoOz": -0.5208333333333334,
         "galon": "-2Y4",
         "galonOz": -2.0833333333333335,
-        "cubeta5gal": "-10Y2",
-        "cubeta5galOz": -10.041666666666666
+        "cubeta5gal": "-10Y20",
+        "cubeta5galOz": -10.416666666666666
       }
     ]
   },
@@ -2437,13 +2437,13 @@
         "cubeta5galOz": -5.833333333333333
       },
       {
-        "colorante": "0",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1Y8",
+        "cuartoOz": -1.1666666666666667,
+        "galon": "-4Y32",
+        "galonOz": -4.666666666666667,
+        "cubeta5gal": "-23Y16",
+        "cubeta5galOz": -23.333333333333332
       },
       {
         "colorante": "KX",
@@ -3484,7 +3484,7 @@
   },
   {
     "codigo": "N8-4",
-    "nombre": "Mindful se",
+    "nombre": "Mindful",
     "base": "Tint Base",
     "pagina": 5,
     "cuartoDisponible": true,
@@ -7779,8 +7779,8 @@
         "cuartoOz": -0.625,
         "galon": "-2Y24",
         "galonOz": -2.5,
-        "cubeta5gal": "-12Y2",
-        "cubeta5galOz": -12.041666666666666
+        "cubeta5gal": "-12Y24",
+        "cubeta5galOz": -12.5
       },
       {
         "colorante": "F",
@@ -7795,19 +7795,19 @@
   },
   {
     "codigo": "6D2-8",
-    "nombre": "Eastern Brownstone Base",
+    "nombre": "Eastern Brownstone",
     "base": "Accent Base",
     "pagina": 10,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1Y31.5",
+        "cuartoOz": -1.65625,
+        "galon": "-6Y30",
+        "galonOz": -6.625,
+        "cubeta5gal": "-33Y6",
+        "cubeta5galOz": -33.125
       },
       {
         "colorante": "F",
@@ -7878,8 +7878,8 @@
         "cuartoOz": -1.2604166666666667,
         "galon": "-5Y2",
         "galonOz": -5.041666666666667,
-        "cubeta5gal": "-25Y1",
-        "cubeta5galOz": -25.020833333333332
+        "cubeta5gal": "-25Y10",
+        "cubeta5galOz": -25.208333333333332
       },
       {
         "colorante": "F",
@@ -7887,8 +7887,8 @@
         "cuartoOz": -0.5833333333333334,
         "galon": "-2Y16",
         "galonOz": -2.3333333333333335,
-        "cubeta5gal": "-11Y3",
-        "cubeta5galOz": -11.0625
+        "cubeta5gal": "-11Y32",
+        "cubeta5galOz": -11.666666666666666
       }
     ]
   },
@@ -7900,22 +7900,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
-        "colorante": "2",
-        "cuarto": "I",
-        "cuartoOz": null,
-        "galon": "I",
-        "galonOz": null,
-        "cubeta5gal": "I",
-        "cubeta5galOz": null
+        "colorante": "I",
+        "cuarto": "-2.5",
+        "cuartoOz": -0.052083333333333336,
+        "galon": "-10",
+        "galonOz": -0.20833333333333334,
+        "cubeta5gal": "-1Y2",
+        "cubeta5galOz": -1.0416666666666667
       }
     ]
   },
@@ -7959,8 +7959,8 @@
         "cuartoOz": -2.0416666666666665,
         "galon": "-8Y8",
         "galonOz": -8.166666666666666,
-        "cubeta5gal": "-40Y4",
-        "cubeta5galOz": -40.083333333333336
+        "cubeta5gal": "-40Y40",
+        "cubeta5galOz": -40.833333333333336
       },
       {
         "colorante": "F",
@@ -7990,13 +7990,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
         "colorante": "F",
@@ -8400,8 +8400,8 @@
         "cuartoOz": -0.5104166666666666,
         "galon": "-2Y2",
         "galonOz": -2.0416666666666665,
-        "cubeta5gal": "-10Y1",
-        "cubeta5galOz": -10.020833333333334
+        "cubeta5gal": "-10Y10",
+        "cubeta5galOz": -10.208333333333334
       },
       {
         "colorante": "F",
@@ -8431,13 +8431,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1Y23",
+        "cuartoOz": -1.4791666666666667,
+        "galon": "-5Y44",
+        "galonOz": -5.916666666666667,
+        "cubeta5gal": "-29Y28",
+        "cubeta5galOz": -29.583333333333332
       },
       {
         "colorante": "C",
@@ -14572,7 +14572,7 @@
   },
   {
     "codigo": "1C1-7",
-    "nombre": "Cherry Blossom Time se",
+    "nombre": "Cherry Blossom Time",
     "base": "Accent Base",
     "pagina": 18,
     "cuartoDisponible": true,
@@ -14995,7 +14995,7 @@
   },
   {
     "codigo": "1C2-3",
-    "nombre": "Dawn's First Blush se",
+    "nombre": "Dawn's First Blush",
     "base": "Pastel Base",
     "pagina": 18,
     "cuartoDisponible": true,
@@ -15202,7 +15202,7 @@
   },
   {
     "codigo": "1C2-7",
-    "nombre": "Bougainvillea Bloom se",
+    "nombre": "Bougainvillea Bloom",
     "base": "Deep Base",
     "pagina": 18,
     "cuartoDisponible": true,
@@ -15535,7 +15535,7 @@
   },
   {
     "codigo": "1D1-7",
-    "nombre": "Bright Bougainvillea se",
+    "nombre": "Bright Bougainvillea",
     "base": "Deep Base",
     "pagina": 19,
     "cuartoDisponible": true,
@@ -15760,7 +15760,7 @@
   },
   {
     "codigo": "1D3-3",
-    "nombre": "Dogwood Blossom se",
+    "nombre": "Dogwood Blossom",
     "base": "Pastel Base",
     "pagina": 19,
     "cuartoDisponible": true,
@@ -16271,12 +16271,12 @@
       },
       {
         "colorante": "KX",
-        "cuarto": "-36.5",
-        "cuartoOz": -0.7604166666666666,
-        "galon": "-3Y38.5",
-        "galonOz": -3.8020833333333335,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "cuarto": null,
+        "cuartoOz": null,
+        "galon": "-36.5",
+        "galonOz": -0.7604166666666666,
+        "cubeta5gal": "-3Y38.5",
+        "cubeta5galOz": -3.8020833333333335
       }
     ]
   },
@@ -18001,7 +18001,7 @@
   },
   {
     "codigo": "5D2-8",
-    "nombre": "Leather Luggage Base",
+    "nombre": "Leather Luggage",
     "base": "Accent Base",
     "pagina": 22,
     "cuartoDisponible": true,
@@ -18093,8 +18093,8 @@
         "cuartoOz": -1.2916666666666667,
         "galon": "-5Y8",
         "galonOz": -5.166666666666667,
-        "cubeta5gal": "-25Y4",
-        "cubeta5galOz": -25.083333333333332
+        "cubeta5gal": "-25Y40",
+        "cubeta5galOz": -25.833333333333332
       },
       {
         "colorante": "V",
@@ -18102,8 +18102,8 @@
         "cuartoOz": -0.59375,
         "galon": "-2Y18",
         "galonOz": -2.375,
-        "cubeta5gal": "-11Y4",
-        "cubeta5galOz": -11.083333333333334
+        "cubeta5gal": "-11Y42",
+        "cubeta5galOz": -11.875
       },
       {
         "colorante": "KX",
@@ -18111,8 +18111,8 @@
         "cuartoOz": -1.0520833333333333,
         "galon": "-4Y10",
         "galonOz": -4.208333333333333,
-        "cubeta5gal": "-21Y",
-        "cubeta5galOz": -21
+        "cubeta5gal": "-21Y2",
+        "cubeta5galOz": -21.041666666666668
       }
     ]
   },
@@ -18133,13 +18133,13 @@
         "cubeta5galOz": -0.8333333333333334
       },
       {
-        "colorante": "0",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-5.5",
+        "cuartoOz": -0.11458333333333333,
+        "galon": "-22",
+        "galonOz": -0.4583333333333333,
+        "cubeta5gal": "-2Y14",
+        "cubeta5galOz": -2.2916666666666665
       }
     ]
   },
@@ -18192,8 +18192,8 @@
         "cuartoOz": -1.3854166666666667,
         "galon": "-5Y26",
         "galonOz": -5.541666666666667,
-        "cubeta5gal": "-27Y3",
-        "cubeta5galOz": -27.0625
+        "cubeta5gal": "-27Y34",
+        "cubeta5galOz": -27.708333333333332
       },
       {
         "colorante": "F",
@@ -18223,13 +18223,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
         "colorante": "F",
@@ -18514,7 +18514,7 @@
   },
   {
     "codigo": "5D2-3",
-    "nombre": "Petals on the Breeze Paste",
+    "nombre": "Petals on the Breeze",
     "base": "Pastel Base",
     "pagina": 22,
     "cuartoDisponible": true,
@@ -18550,7 +18550,7 @@
   },
   {
     "codigo": "5D3-7",
-    "nombre": "Basket of Acorns l Base",
+    "nombre": "Basket of Acorns",
     "base": "Deep Base",
     "pagina": 22,
     "cuartoDisponible": true,
@@ -20521,7 +20521,7 @@
   },
   {
     "codigo": "1E1-5",
-    "nombre": "Crab Apple Blossom se",
+    "nombre": "Crab Apple Blossom",
     "base": "Tint Base",
     "pagina": 25,
     "cuartoDisponible": true,
@@ -20773,7 +20773,7 @@
   },
   {
     "codigo": "1E3-2",
-    "nombre": "Spring Blush se",
+    "nombre": "Spring Blush",
     "base": "Pastel Base",
     "pagina": 25,
     "cuartoDisponible": true,
@@ -21034,7 +21034,7 @@
   },
   {
     "codigo": "1E2-3",
-    "nombre": "Morning Delight se",
+    "nombre": "Morning Delight",
     "base": "Pastel Base",
     "pagina": 25,
     "cuartoDisponible": true,
@@ -21070,7 +21070,7 @@
   },
   {
     "codigo": "1E3-7",
-    "nombre": "Nasturtium Blossom se",
+    "nombre": "Nasturtium Blossom",
     "base": "Deep Base",
     "pagina": 25,
     "cuartoDisponible": false,
@@ -21405,8 +21405,8 @@
         "cuartoOz": null,
         "galon": "-24.5",
         "galonOz": -0.5104166666666666,
-        "cubeta5gal": "-2Y26",
-        "cubeta5galOz": -2.5416666666666665
+        "cubeta5gal": "-2Y26.5",
+        "cubeta5galOz": -2.5520833333333335
       },
       {
         "colorante": "T",
@@ -21414,8 +21414,8 @@
         "cuartoOz": null,
         "galon": "-25.5",
         "galonOz": -0.53125,
-        "cubeta5gal": "-2Y31",
-        "cubeta5galOz": -2.6458333333333335
+        "cubeta5gal": "-2Y31.5",
+        "cubeta5galOz": -2.65625
       }
     ]
   },
@@ -21427,22 +21427,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": ".5",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-32.5",
+        "cuartoOz": -0.6770833333333334,
+        "galon": "-2Y34",
+        "galonOz": -2.7083333333333335,
+        "cubeta5gal": "-13Y26",
+        "cubeta5galOz": -13.541666666666666
       },
       {
-        "colorante": ".5",
-        "cuarto": "T",
-        "cuartoOz": null,
-        "galon": "T",
-        "galonOz": null,
-        "cubeta5gal": "T",
-        "cubeta5galOz": null
+        "colorante": "T",
+        "cuarto": "-1Y5",
+        "cuartoOz": -1.1041666666666667,
+        "galon": "-4Y20",
+        "galonOz": -4.416666666666667,
+        "cubeta5gal": "-22Y4",
+        "cubeta5galOz": -22.083333333333332
       },
       {
         "colorante": "KX",
@@ -21504,8 +21504,8 @@
         "cuartoOz": -0.19791666666666666,
         "galon": "-38",
         "galonOz": -0.7916666666666666,
-        "cubeta5gal": "-3Y",
-        "cubeta5galOz": -3
+        "cubeta5gal": "-3Y46",
+        "cubeta5galOz": -3.9583333333333335
       },
       {
         "colorante": "R",
@@ -21513,8 +21513,8 @@
         "cuartoOz": -0.5833333333333334,
         "galon": "-2Y16",
         "galonOz": -2.3333333333333335,
-        "cubeta5gal": "-11Y3",
-        "cubeta5galOz": -11.0625
+        "cubeta5gal": "-11Y32",
+        "cubeta5galOz": -11.666666666666666
       },
       {
         "colorante": "T",
@@ -21529,28 +21529,28 @@
   },
   {
     "codigo": "1F2-8",
-    "nombre": "Mountain Ash Berry Base",
+    "nombre": "Mountain Ash Berry",
     "base": "Accent Base",
     "pagina": 26,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "46",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-46.5",
+        "cuartoOz": -0.96875,
+        "galon": "-3Y42",
+        "galonOz": -3.875,
+        "cubeta5gal": "-19Y18",
+        "cubeta5galOz": -19.375
       },
       {
-        "colorante": "2",
-        "cuarto": "T",
-        "cuartoOz": null,
-        "galon": "T",
-        "galonOz": null,
-        "cubeta5gal": "T",
-        "cubeta5galOz": null
+        "colorante": "T",
+        "cuarto": "-1Y40",
+        "cuartoOz": -1.8333333333333335,
+        "galon": "-7Y16",
+        "galonOz": -7.333333333333333,
+        "cubeta5gal": "-36Y32",
+        "cubeta5galOz": -36.666666666666664
       },
       {
         "colorante": "KX",
@@ -21612,8 +21612,8 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
         "colorante": "T",
@@ -21621,8 +21621,8 @@
         "cuartoOz": -0.8854166666666666,
         "galon": "-3Y26",
         "galonOz": -3.5416666666666665,
-        "cubeta5gal": "-17Y3",
-        "cubeta5galOz": -17.0625
+        "cubeta5gal": "-17Y34",
+        "cubeta5galOz": -17.708333333333332
       },
       {
         "colorante": "KX",
@@ -21630,8 +21630,8 @@
         "cuartoOz": -1.2708333333333333,
         "galon": "-5Y4",
         "galonOz": -5.083333333333333,
-        "cubeta5gal": "-25Y",
-        "cubeta5galOz": -25
+        "cubeta5gal": "-25Y20",
+        "cubeta5galOz": -25.416666666666668
       }
     ]
   },
@@ -21643,31 +21643,31 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
-        "colorante": "4",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "20",
-        "cuarto": "T",
-        "cuartoOz": null,
-        "galon": "T",
-        "galonOz": null,
-        "cubeta5gal": "T",
-        "cubeta5galOz": null
+        "colorante": "T",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       }
     ]
   },
@@ -21709,7 +21709,7 @@
   },
   {
     "codigo": "1F1-8",
-    "nombre": "California Poppy Accen",
+    "nombre": "California Poppy",
     "base": "Accent Base",
     "pagina": 26,
     "cuartoDisponible": true,
@@ -21729,8 +21729,8 @@
         "cuartoOz": -1.5208333333333335,
         "galon": "-6Y4",
         "galonOz": -6.083333333333333,
-        "cubeta5gal": "-30Y2",
-        "cubeta5galOz": -30.041666666666668
+        "cubeta5gal": "-30Y20",
+        "cubeta5galOz": -30.416666666666668
       },
       {
         "colorante": "KX",
@@ -21738,14 +21738,14 @@
         "cuartoOz": -0.16666666666666666,
         "galon": "-32",
         "galonOz": -0.6666666666666666,
-        "cubeta5gal": "-3Y1",
-        "cubeta5galOz": -3.0208333333333335
+        "cubeta5gal": "-3Y16",
+        "cubeta5galOz": -3.3333333333333335
       }
     ]
   },
   {
     "codigo": "1F3-2",
-    "nombre": "Apricot Blush t Base",
+    "nombre": "Apricot Blush",
     "base": "Pastel Base",
     "pagina": 26,
     "cuartoDisponible": true,
@@ -21760,28 +21760,28 @@
         "cubeta5galOz": -0.625
       },
       {
-        "colorante": "0",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       },
       {
-        "colorante": "6",
-        "cuarto": "T",
-        "cuartoOz": null,
-        "galon": "T",
-        "galonOz": null,
-        "cubeta5gal": "T",
-        "cubeta5galOz": null
+        "colorante": "T",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       }
     ]
   },
   {
     "codigo": "2F1-5",
-    "nombre": "Tango Mango se",
+    "nombre": "Tango Mango",
     "base": "Tint Base",
     "pagina": 26,
     "cuartoDisponible": true,
@@ -21925,7 +21925,7 @@
   },
   {
     "codigo": "1F2-2",
-    "nombre": "Creamy Apricot Paste",
+    "nombre": "Creamy Apricot",
     "base": "Pastel Base",
     "pagina": 26,
     "cuartoDisponible": false,
@@ -21936,8 +21936,8 @@
         "cuartoOz": null,
         "galon": "-18",
         "galonOz": -0.375,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y42",
+        "cubeta5galOz": -1.875
       },
       {
         "colorante": "R",
@@ -21945,8 +21945,8 @@
         "cuartoOz": null,
         "galon": "-11.5",
         "galonOz": -0.23958333333333334,
-        "cubeta5gal": "-1Y9.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-1Y9.5",
+        "cubeta5galOz": -1.1979166666666667
       },
       {
         "colorante": "T",
@@ -21961,28 +21961,28 @@
   },
   {
     "codigo": "1F3-5",
-    "nombre": "Slice of Cantaloupe l Base",
+    "nombre": "Slice of Cantaloupe",
     "base": "Tint Base",
     "pagina": 26,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "42",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
-        "colorante": "5",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-17",
+        "cuartoOz": -0.3541666666666667,
+        "galon": "-1Y20",
+        "galonOz": -1.4166666666666667,
+        "cubeta5gal": "-7Y4",
+        "cubeta5galOz": -7.083333333333333
       },
       {
         "colorante": "T",
@@ -22339,7 +22339,7 @@
   },
   {
     "codigo": "3F2-1",
-    "nombre": "Saltwater Taffy se",
+    "nombre": "Saltwater Taffy",
     "base": "Pastel Base",
     "pagina": 27,
     "cuartoDisponible": false,
@@ -22780,7 +22780,7 @@
   },
   {
     "codigo": "3F2-7",
-    "nombre": "Handmade Pottery se",
+    "nombre": "Handmade Pottery",
     "base": "Accent Base",
     "pagina": 27,
     "cuartoDisponible": true,
@@ -26020,7 +26020,7 @@
   },
   {
     "codigo": "3G3-2",
-    "nombre": "Walk on the Beach se",
+    "nombre": "Walk on the Beach",
     "base": "Pastel Base",
     "pagina": 31,
     "cuartoDisponible": true,
@@ -26920,7 +26920,7 @@
   },
   {
     "codigo": "1G3-1",
-    "nombre": "Sunningdale se",
+    "nombre": "Sunningdale",
     "base": "Pastel Base",
     "pagina": 32,
     "cuartoDisponible": false,
@@ -27514,7 +27514,7 @@
   },
   {
     "codigo": "1H3-7",
-    "nombre": "Duck's Bill se",
+    "nombre": "Duck's Bill",
     "base": "Accent Base",
     "pagina": 33,
     "cuartoDisponible": false,
@@ -27550,7 +27550,7 @@
   },
   {
     "codigo": "1I2-1",
-    "nombre": "Villa del Sol se",
+    "nombre": "Villa del Sol",
     "base": "Pastel Base",
     "pagina": 33,
     "cuartoDisponible": false,
@@ -27640,7 +27640,7 @@
   },
   {
     "codigo": "1I2-2",
-    "nombre": "Butter Cream Craze se",
+    "nombre": "Butter Cream Craze",
     "base": "Pastel Base",
     "pagina": 33,
     "cuartoDisponible": false,
@@ -27748,7 +27748,7 @@
   },
   {
     "codigo": "1I2-3",
-    "nombre": "Creamy Buttercup se",
+    "nombre": "Creamy Buttercup",
     "base": "Pastel Base",
     "pagina": 33,
     "cuartoDisponible": true,
@@ -27856,7 +27856,7 @@
   },
   {
     "codigo": "1I2-5",
-    "nombre": "Spanish Saffron se",
+    "nombre": "Spanish Saffron",
     "base": "Tint Base",
     "pagina": 33,
     "cuartoDisponible": true,
@@ -28027,7 +28027,7 @@
   },
   {
     "codigo": "1I1-5",
-    "nombre": "Mexican Maize se",
+    "nombre": "Mexican Maize",
     "base": "Tint Base",
     "pagina": 33,
     "cuartoDisponible": true,
@@ -28234,7 +28234,7 @@
   },
   {
     "codigo": "2I1-5",
-    "nombre": "Shaft of Gold se",
+    "nombre": "Shaft of Gold",
     "base": "Tint Base",
     "pagina": 34,
     "cuartoDisponible": true,
@@ -28711,7 +28711,7 @@
   },
   {
     "codigo": "2I3-5",
-    "nombre": "Good Morning Sunshine se",
+    "nombre": "Good Morning Sunshine",
     "base": "Tint Base",
     "pagina": 34,
     "cuartoDisponible": true,
@@ -28783,7 +28783,7 @@
   },
   {
     "codigo": "2I2-3",
-    "nombre": "Fresh Honey se",
+    "nombre": "Fresh Honey",
     "base": "Pastel Base",
     "pagina": 34,
     "cuartoDisponible": false,
@@ -28819,7 +28819,7 @@
   },
   {
     "codigo": "2I3-7",
-    "nombre": "Golden Splendor se",
+    "nombre": "Golden Splendor",
     "base": "Accent Base",
     "pagina": 34,
     "cuartoDisponible": true,
@@ -32806,7 +32806,7 @@
   },
   {
     "codigo": "2J2-3",
-    "nombre": "Shower of Sunlight se",
+    "nombre": "Shower of Sunlight",
     "base": "Pastel Base",
     "pagina": 39,
     "cuartoDisponible": false,
@@ -33031,7 +33031,7 @@
   },
   {
     "codigo": "2J2-7",
-    "nombre": "Memoir Gold se",
+    "nombre": "Memoir Gold",
     "base": "Accent Base",
     "pagina": 39,
     "cuartoDisponible": true,
@@ -33436,7 +33436,7 @@
   },
   {
     "codigo": "1J3-1",
-    "nombre": "Daisy White se",
+    "nombre": "Daisy White",
     "base": "Pastel Base",
     "pagina": 40,
     "cuartoDisponible": true,
@@ -33951,8 +33951,8 @@
         "cuartoOz": null,
         "galon": "-7Y4.5",
         "galonOz": -7.09375,
-        "cubeta5gal": "AXX-35Y22.5",
-        "cubeta5galOz": null
+        "cubeta5gal": "-35Y22.5",
+        "cubeta5galOz": -35.46875
       },
       {
         "colorante": "D",
@@ -34014,8 +34014,8 @@
         "cuartoOz": null,
         "galon": "-4Y7.5",
         "galonOz": -4.15625,
-        "cubeta5gal": "AXX-20Y37.5",
-        "cubeta5galOz": null
+        "cubeta5gal": "-20Y37.5",
+        "cubeta5galOz": -20.78125
       },
       {
         "colorante": "D",
@@ -34036,13 +34036,13 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "AXX-11Y45.5",
+        "colorante": "AXX",
         "cuarto": null,
         "cuartoOz": null,
-        "galon": "AXX-59Y35.5",
-        "galonOz": null,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "galon": "-11Y45.5",
+        "galonOz": -11.947916666666666,
+        "cubeta5gal": "-59Y35.5",
+        "cubeta5galOz": -59.739583333333336
       },
       {
         "colorante": "D",
@@ -34180,13 +34180,13 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "AXX-11Y17.5",
+        "colorante": "AXX",
         "cuarto": null,
         "cuartoOz": null,
-        "galon": "AXX-56Y39.5",
-        "galonOz": null,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "galon": "-11Y17.5",
+        "galonOz": -11.364583333333334,
+        "cubeta5gal": "-56Y39.5",
+        "cubeta5galOz": -56.822916666666664
       },
       {
         "colorante": "D",
@@ -34273,7 +34273,7 @@
   },
   {
     "codigo": "1K3-1",
-    "nombre": "Shade of Shamrock se",
+    "nombre": "Shade of Shamrock",
     "base": "Pastel Base",
     "pagina": 41,
     "cuartoDisponible": true,
@@ -34309,7 +34309,7 @@
   },
   {
     "codigo": "1L1-3",
-    "nombre": "Lemon Basil se",
+    "nombre": "Lemon Basil",
     "base": "Pastel Base",
     "pagina": 41,
     "cuartoDisponible": false,
@@ -34410,8 +34410,8 @@
         "cuartoOz": null,
         "galon": "-4Y25.5",
         "galonOz": -4.53125,
-        "cubeta5gal": "AXX-22Y31.5",
-        "cubeta5galOz": null
+        "cubeta5gal": "-22Y31.5",
+        "cubeta5galOz": -22.65625
       },
       {
         "colorante": "D",
@@ -34633,7 +34633,7 @@
   },
   {
     "codigo": "1L3-3",
-    "nombre": "Wings of Spring se",
+    "nombre": "Wings of Spring",
     "base": "Pastel Base",
     "pagina": 42,
     "cuartoDisponible": false,
@@ -34831,7 +34831,7 @@
   },
   {
     "codigo": "1L3-7",
-    "nombre": "Luscious Lime se",
+    "nombre": "Luscious Lime",
     "base": "Accent Base",
     "pagina": 42,
     "cuartoDisponible": true,
@@ -34914,8 +34914,8 @@
         "cuartoOz": null,
         "galon": "-4Y14.5",
         "galonOz": -4.302083333333333,
-        "cubeta5gal": "AXX-21Y24.5",
-        "cubeta5galOz": null
+        "cubeta5gal": "-21Y24.5",
+        "cubeta5galOz": -21.510416666666668
       },
       {
         "colorante": "D",
@@ -35038,7 +35038,7 @@
   },
   {
     "codigo": "3K1-1",
-    "nombre": "Glimpse of Spring se",
+    "nombre": "Glimpse of Spring",
     "base": "Pastel Base",
     "pagina": 42,
     "cuartoDisponible": false,
@@ -35254,7 +35254,7 @@
   },
   {
     "codigo": "3K1-3",
-    "nombre": "Meadow Mist se",
+    "nombre": "Meadow Mist",
     "base": "Pastel Base",
     "pagina": 42,
     "cuartoDisponible": false,
@@ -35362,7 +35362,7 @@
   },
   {
     "codigo": "3K1-5",
-    "nombre": "Olive Oil se",
+    "nombre": "Olive Oil",
     "base": "Tint Base",
     "pagina": 42,
     "cuartoDisponible": true,
@@ -35733,8 +35733,8 @@
         "cuartoOz": -0.5416666666666666,
         "galon": "-2Y8",
         "galonOz": -2.1666666666666665,
-        "cubeta5gal": "-10Y4",
-        "cubeta5galOz": -10.083333333333334
+        "cubeta5gal": "-10Y40",
+        "cubeta5galOz": -10.833333333333334
       },
       {
         "colorante": "KX",
@@ -35773,8 +35773,8 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "0",
-        "cuarto": "Formula",
+        "colorante": "L",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-7.5",
         "galonOz": -0.15625,
@@ -35841,8 +35841,8 @@
         "cuartoOz": -2.5208333333333335,
         "galon": "-10Y4",
         "galonOz": -10.083333333333334,
-        "cubeta5gal": "-50Y2",
-        "cubeta5galOz": -50.041666666666664
+        "cubeta5gal": "-50Y20",
+        "cubeta5galOz": -50.416666666666664
       },
       {
         "colorante": "D",
@@ -35872,8 +35872,8 @@
         "cubeta5galOz": -2.0833333333333335
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-5.5",
         "galonOz": -0.11458333333333333,
@@ -35938,7 +35938,7 @@
   },
   {
     "codigo": "4K2-1",
-    "nombre": "Spinney Mountain Paste",
+    "nombre": "Spinney Mountain",
     "base": "Pastel Base",
     "pagina": 43,
     "cuartoDisponible": false,
@@ -35974,7 +35974,7 @@
   },
   {
     "codigo": "4K3-3",
-    "nombre": "Garden Inspiration l Base",
+    "nombre": "Garden Inspiration",
     "base": "Pastel Base",
     "pagina": 43,
     "cuartoDisponible": false,
@@ -36016,13 +36016,13 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "AXX-10Y38.5",
+        "colorante": "AXX",
         "cuarto": null,
         "cuartoOz": null,
-        "galon": "AXX-54Y0.5",
-        "galonOz": null,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "galon": "-10Y38.5",
+        "galonOz": -10.802083333333334,
+        "cubeta5gal": "-54Y0.5",
+        "cubeta5galOz": -54.010416666666664
       },
       {
         "colorante": "D",
@@ -36044,12 +36044,12 @@
       },
       {
         "colorante": "KX",
-        "cuarto": "-23",
-        "cuartoOz": -0.4791666666666667,
-        "galon": "-2Y19",
-        "galonOz": -2.3958333333333335,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "cuarto": null,
+        "cuartoOz": null,
+        "galon": "-23",
+        "galonOz": -0.4791666666666667,
+        "cubeta5gal": "-2Y19",
+        "cubeta5galOz": -2.3958333333333335
       }
     ]
   },
@@ -36154,7 +36154,7 @@
   },
   {
     "codigo": "4K2-3",
-    "nombre": "Sausalito Spring Paste",
+    "nombre": "Sausalito Spring",
     "base": "Pastel Base",
     "pagina": 43,
     "cuartoDisponible": true,
@@ -36190,7 +36190,7 @@
   },
   {
     "codigo": "4K3-7",
-    "nombre": "Grasshopper Green l Base",
+    "nombre": "Grasshopper Green",
     "base": "Accent Base",
     "pagina": 43,
     "cuartoDisponible": true,
@@ -36291,8 +36291,8 @@
         "cuartoOz": -0.8125,
         "galon": "-3Y12",
         "galonOz": -3.25,
-        "cubeta5gal": "-16Y1",
-        "cubeta5galOz": -16.020833333333332
+        "cubeta5gal": "-16Y12",
+        "cubeta5galOz": -16.25
       },
       {
         "colorante": "D",
@@ -36322,13 +36322,13 @@
         "cubeta5galOz": -3.9583333333333335
       },
       {
-        "colorante": "2",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-2Y6.5",
+        "cuartoOz": -2.1354166666666665,
+        "galon": "-8Y26",
+        "galonOz": -8.541666666666666,
+        "cubeta5gal": "-42Y34",
+        "cubeta5galOz": -42.708333333333336
       },
       {
         "colorante": "D",
@@ -36642,8 +36642,8 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
         "colorante": "D",
@@ -36660,8 +36660,8 @@
         "cuartoOz": -1.4166666666666667,
         "galon": "-5Y32",
         "galonOz": -5.666666666666667,
-        "cubeta5gal": "-28Y",
-        "cubeta5galOz": -28
+        "cubeta5gal": "-28Y16",
+        "cubeta5galOz": -28.333333333333332
       }
     ]
   },
@@ -36682,8 +36682,8 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "Quart",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1",
         "galonOz": -0.020833333333333332,
@@ -36723,8 +36723,8 @@
         "cuartoOz": -0.59375,
         "galon": "-2Y18",
         "galonOz": -2.375,
-        "cubeta5gal": "-11Y4",
-        "cubeta5galOz": -11.083333333333334
+        "cubeta5gal": "-11Y42",
+        "cubeta5galOz": -11.875
       },
       {
         "colorante": "D",
@@ -36750,17 +36750,17 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
-        "colorante": "2",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-1Y12.5",
+        "cuartoOz": -1.2604166666666667,
+        "galon": "-5Y2",
+        "galonOz": -5.041666666666667,
+        "cubeta5gal": "-25Y10",
+        "cubeta5galOz": -25.208333333333332
       },
       {
         "colorante": "I",
@@ -36777,8 +36777,8 @@
         "cuartoOz": -0.5833333333333334,
         "galon": "-2Y16",
         "galonOz": -2.3333333333333335,
-        "cubeta5gal": "-11Y",
-        "cubeta5galOz": -11
+        "cubeta5gal": "-11Y32",
+        "cubeta5galOz": -11.666666666666666
       }
     ]
   },
@@ -36790,22 +36790,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "0",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       },
       {
         "colorante": "L",
@@ -36840,8 +36840,8 @@
         "cuartoOz": -0.7708333333333334,
         "galon": "-3Y4",
         "galonOz": -3.0833333333333335,
-        "cubeta5gal": "-15Y2",
-        "cubeta5galOz": -15.041666666666666
+        "cubeta5gal": "-15Y20",
+        "cubeta5galOz": -15.416666666666666
       },
       {
         "colorante": "D",
@@ -36858,8 +36858,8 @@
         "cuartoOz": -1.6979166666666665,
         "galon": "-6Y38",
         "galonOz": -6.791666666666667,
-        "cubeta5gal": "-33Y",
-        "cubeta5galOz": -33
+        "cubeta5gal": "-33Y46",
+        "cubeta5galOz": -33.958333333333336
       }
     ]
   },
@@ -36880,8 +36880,8 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-4",
         "galonOz": -0.08333333333333333,
@@ -36948,8 +36948,8 @@
         "cuartoOz": -1.7291666666666665,
         "galon": "-6Y44",
         "galonOz": -6.916666666666667,
-        "cubeta5gal": "-34Y2",
-        "cubeta5galOz": -34.041666666666664
+        "cubeta5gal": "-34Y28",
+        "cubeta5galOz": -34.583333333333336
       },
       {
         "colorante": "D",
@@ -36957,8 +36957,8 @@
         "cuartoOz": -1.03125,
         "galon": "-4Y6",
         "galonOz": -4.125,
-        "cubeta5gal": "-20Y3",
-        "cubeta5galOz": -20.0625
+        "cubeta5gal": "-20Y30",
+        "cubeta5galOz": -20.625
       },
       {
         "colorante": "I",
@@ -36979,22 +36979,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-3",
+        "cuartoOz": -0.0625,
+        "galon": "-12",
+        "galonOz": -0.25,
+        "cubeta5gal": "-1Y12",
+        "cubeta5galOz": -1.25
       },
       {
-        "colorante": "0",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-3",
+        "cuartoOz": -0.0625,
+        "galon": "-12",
+        "galonOz": -0.25,
+        "cubeta5gal": "-1Y12",
+        "cubeta5galOz": -1.25
       },
       {
         "colorante": "L",
@@ -37162,7 +37162,7 @@
   },
   {
     "codigo": "4L2-2",
-    "nombre": "Splendor of Spring Paste",
+    "nombre": "Splendor of Spring",
     "base": "Pastel Base",
     "pagina": 44,
     "cuartoDisponible": true,
@@ -37198,7 +37198,7 @@
   },
   {
     "codigo": "4L3-5",
-    "nombre": "Fuzzy Fiddleheads l Base",
+    "nombre": "Fuzzy Fiddleheads",
     "base": "Tint Base",
     "pagina": 44,
     "cuartoDisponible": true,
@@ -37234,7 +37234,7 @@
   },
   {
     "codigo": "5N1-8",
-    "nombre": "Fields of Green Base",
+    "nombre": "Fields of Green",
     "base": "Accent Base",
     "pagina": 44,
     "cuartoDisponible": true,
@@ -37443,8 +37443,8 @@
         "cuartoOz": -0.53125,
         "galon": "-2Y6",
         "galonOz": -2.125,
-        "cubeta5gal": "-10Y3",
-        "cubeta5galOz": -10.0625
+        "cubeta5gal": "-10Y30",
+        "cubeta5galOz": -10.625
       },
       {
         "colorante": "E",
@@ -37474,13 +37474,13 @@
         "cubeta5galOz": -12.291666666666666
       },
       {
-        "colorante": "0",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-38",
+        "cuartoOz": -0.7916666666666666,
+        "galon": "-3Y8",
+        "galonOz": -3.1666666666666665,
+        "cubeta5gal": "-15Y40",
+        "cubeta5galOz": -15.833333333333334
       },
       {
         "colorante": "D",
@@ -37551,8 +37551,8 @@
         "cuartoOz": -0.6770833333333334,
         "galon": "-2Y34",
         "galonOz": -2.7083333333333335,
-        "cubeta5gal": "-13Y2",
-        "cubeta5galOz": -13.041666666666666
+        "cubeta5gal": "-13Y26",
+        "cubeta5galOz": -13.541666666666666
       },
       {
         "colorante": "D",
@@ -37560,8 +37560,8 @@
         "cuartoOz": -1.2395833333333333,
         "galon": "-4Y46",
         "galonOz": -4.958333333333333,
-        "cubeta5gal": "-24Y3",
-        "cubeta5galOz": -24.0625
+        "cubeta5gal": "-24Y38",
+        "cubeta5galOz": -24.791666666666668
       },
       {
         "colorante": "E",
@@ -37582,22 +37582,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "6",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "8",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
         "colorante": "D",
@@ -37632,8 +37632,8 @@
         "cuartoOz": -0.625,
         "galon": "-2Y24",
         "galonOz": -2.5,
-        "cubeta5gal": "-12Y2",
-        "cubeta5galOz": -12.041666666666666
+        "cubeta5gal": "-12Y24",
+        "cubeta5galOz": -12.5
       },
       {
         "colorante": "I",
@@ -37659,17 +37659,17 @@
         "cuartoOz": -1.625,
         "galon": "-6Y24",
         "galonOz": -6.5,
-        "cubeta5gal": "-32Y2",
-        "cubeta5galOz": -32.041666666666664
+        "cubeta5gal": "-32Y24",
+        "cubeta5galOz": -32.5
       },
       {
-        "colorante": "4",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1Y",
+        "cuartoOz": -1,
+        "galon": "-4Y",
+        "galonOz": -4,
+        "cubeta5gal": "-20Y",
+        "cubeta5galOz": -20
       },
       {
         "colorante": "I",
@@ -37699,13 +37699,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
         "colorante": "C",
@@ -37740,8 +37740,8 @@
         "cuartoOz": -0.71875,
         "galon": "-2Y42",
         "galonOz": -2.875,
-        "cubeta5gal": "-14Y1",
-        "cubeta5galOz": -14.020833333333334
+        "cubeta5gal": "-14Y18",
+        "cubeta5galOz": -14.375
       },
       {
         "colorante": "C",
@@ -37771,13 +37771,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
         "colorante": "D",
@@ -37866,8 +37866,8 @@
         "cuartoOz": -2.125,
         "galon": "-8Y24",
         "galonOz": -8.5,
-        "cubeta5gal": "-42Y2",
-        "cubeta5galOz": -42.041666666666664
+        "cubeta5gal": "-42Y24",
+        "cubeta5galOz": -42.5
       },
       {
         "colorante": "KX",
@@ -37875,8 +37875,8 @@
         "cuartoOz": -0.17708333333333334,
         "galon": "-34",
         "galonOz": -0.7083333333333334,
-        "cubeta5gal": "-3Y2",
-        "cubeta5galOz": -3.0416666666666665
+        "cubeta5gal": "-3Y26",
+        "cubeta5galOz": -3.5416666666666665
       }
     ]
   },
@@ -37906,13 +37906,13 @@
         "cubeta5galOz": -1.25
       },
       {
-        "colorante": "4",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-7.5",
+        "cuartoOz": -0.15625,
+        "galon": "-30",
+        "galonOz": -0.625,
+        "cubeta5gal": "-3Y6",
+        "cubeta5galOz": -3.125
       }
     ]
   },
@@ -37992,8 +37992,8 @@
         "cuartoOz": -0.08333333333333333,
         "galon": "-16",
         "galonOz": -0.3333333333333333,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       },
       {
         "colorante": "D",
@@ -38023,13 +38023,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "32",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-32",
+        "cuartoOz": -0.6666666666666666,
+        "galon": "-2Y32",
+        "galonOz": -2.6666666666666665,
+        "cubeta5gal": "-13Y16",
+        "cubeta5galOz": -13.333333333333334
       },
       {
         "colorante": "C",
@@ -38197,7 +38197,7 @@
   },
   {
     "codigo": "3M1-3",
-    "nombre": "Fairy Garden Green se Paste",
+    "nombre": "Fairy Garden Green",
     "base": "Pastel Base",
     "pagina": 46,
     "cuartoDisponible": true,
@@ -38233,7 +38233,7 @@
   },
   {
     "codigo": "3M2-7",
-    "nombre": "The Garden Tour l Base",
+    "nombre": "The Garden Tour",
     "base": "Deep Base",
     "pagina": 46,
     "cuartoDisponible": true,
@@ -38316,8 +38316,8 @@
         "cuartoOz": -0.6875,
         "galon": "-2Y36",
         "galonOz": -2.75,
-        "cubeta5gal": "-13Y3",
-        "cubeta5galOz": -13.0625
+        "cubeta5gal": "-13Y36",
+        "cubeta5galOz": -13.75
       }
     ]
   },
@@ -38338,13 +38338,13 @@
         "cubeta5galOz": -1.6666666666666665
       },
       {
-        "colorante": "6",
-        "cuarto": "C",
-        "cuartoOz": null,
-        "galon": "C",
-        "galonOz": null,
-        "cubeta5gal": "C",
-        "cubeta5galOz": null
+        "colorante": "C",
+        "cuarto": "-25.5",
+        "cuartoOz": -0.53125,
+        "galon": "-2Y6",
+        "galonOz": -2.125,
+        "cubeta5gal": "-10Y30",
+        "cubeta5galOz": -10.625
       },
       {
         "colorante": "D",
@@ -38404,7 +38404,7 @@
   },
   {
     "codigo": "3M1-7",
-    "nombre": "Camellia Leaf se",
+    "nombre": "Camellia Leaf",
     "base": "Deep Base",
     "pagina": 46,
     "cuartoDisponible": true,
@@ -38424,8 +38424,8 @@
         "cuartoOz": -0.71875,
         "galon": "-2Y42",
         "galonOz": -2.875,
-        "cubeta5gal": "-14Y1",
-        "cubeta5galOz": -14.020833333333334
+        "cubeta5gal": "-14Y18",
+        "cubeta5galOz": -14.375
       },
       {
         "colorante": "D",
@@ -38433,14 +38433,14 @@
         "cuartoOz": -1.4375,
         "galon": "-5Y36",
         "galonOz": -5.75,
-        "cubeta5gal": "-28Y3",
-        "cubeta5galOz": -28.0625
+        "cubeta5gal": "-28Y36",
+        "cubeta5galOz": -28.75
       }
     ]
   },
   {
     "codigo": "3M3-1",
-    "nombre": "Spring Inspiration Base",
+    "nombre": "Spring Inspiration",
     "base": "Pastel Base",
     "pagina": 46,
     "cuartoDisponible": false,
@@ -38455,8 +38455,8 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "8",
-        "cuarto": "Quart",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-6",
         "galonOz": -0.125,
@@ -38464,8 +38464,8 @@
         "cubeta5galOz": -0.625
       },
       {
-        "colorante": "6",
-        "cuarto": "Formula",
+        "colorante": "L",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-9",
         "galonOz": -0.1875,
@@ -38512,7 +38512,7 @@
   },
   {
     "codigo": "3M1-8",
-    "nombre": "Girl Scout Green Accen",
+    "nombre": "Girl Scout Green",
     "base": "Accent Base",
     "pagina": 46,
     "cuartoDisponible": true,
@@ -38523,8 +38523,8 @@
         "cuartoOz": -1.0833333333333333,
         "galon": "-4Y16",
         "galonOz": -4.333333333333333,
-        "cubeta5gal": "-21",
-        "cubeta5galOz": -0.4375
+        "cubeta5gal": "-21Y32",
+        "cubeta5galOz": -21.666666666666668
       },
       {
         "colorante": "D",
@@ -38550,21 +38550,21 @@
         "cuartoOz": -0.5416666666666666,
         "galon": "-2Y8",
         "galonOz": -2.1666666666666665,
-        "cubeta5gal": "-10Y",
-        "cubeta5galOz": -10
+        "cubeta5gal": "-10Y40",
+        "cubeta5galOz": -10.833333333333334
       }
     ]
   },
   {
     "codigo": "3M3-2",
-    "nombre": "Irish Countryside t Base",
+    "nombre": "Irish Countryside",
     "base": "Pastel Base",
     "pagina": 46,
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "Y32",
-        "cuarto": "No",
+        "colorante": "C",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-3",
         "galonOz": -0.0625,
@@ -38746,7 +38746,7 @@
   },
   {
     "codigo": "3M2-2",
-    "nombre": "Jardinera se Paste",
+    "nombre": "Jardinera",
     "base": "Pastel Base",
     "pagina": 46,
     "cuartoDisponible": false,
@@ -38773,7 +38773,7 @@
   },
   {
     "codigo": "3M3-5",
-    "nombre": "Kentucky Blue Grass l Base",
+    "nombre": "Kentucky Blue Grass",
     "base": "Tint Base",
     "pagina": 46,
     "cuartoDisponible": true,
@@ -39045,8 +39045,8 @@
         "cuartoOz": null,
         "galon": "-13",
         "galonOz": -0.2708333333333333,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y17",
+        "cubeta5galOz": -1.3541666666666667
       },
       {
         "colorante": "D",
@@ -39076,13 +39076,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "17",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-7",
+        "cuartoOz": -0.14583333333333334,
+        "galon": "-28",
+        "galonOz": -0.5833333333333334,
+        "cubeta5gal": "-2Y44",
+        "cubeta5galOz": -2.9166666666666665
       },
       {
         "colorante": "C",
@@ -39151,7 +39151,7 @@
   },
   {
     "codigo": "3L1-2",
-    "nombre": "Green Twig Paste",
+    "nombre": "Green Twig",
     "base": "Pastel Base",
     "pagina": 47,
     "cuartoDisponible": false,
@@ -39162,8 +39162,8 @@
         "cuartoOz": null,
         "galon": "-18.5",
         "galonOz": -0.3854166666666667,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y44.5",
+        "cubeta5galOz": -1.9270833333333335
       },
       {
         "colorante": "C",
@@ -39187,19 +39187,19 @@
   },
   {
     "codigo": "3L2-5",
-    "nombre": "Shimmering Celedon l Base",
+    "nombre": "Shimmering Celedon",
     "base": "Tint Base",
     "pagina": 47,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "44.5",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-14",
+        "cuartoOz": -0.2916666666666667,
+        "galon": "-1Y8",
+        "galonOz": -1.1666666666666667,
+        "cubeta5gal": "-5Y40",
+        "cubeta5galOz": -5.833333333333333
       },
       {
         "colorante": "C",
@@ -39223,7 +39223,7 @@
   },
   {
     "codigo": "3L3-8",
-    "nombre": "Lucky Clover se",
+    "nombre": "Lucky Clover",
     "base": "Accent Base",
     "pagina": 47,
     "cuartoDisponible": true,
@@ -39268,7 +39268,7 @@
   },
   {
     "codigo": "3L1-3",
-    "nombre": "Springsation Paste",
+    "nombre": "Springsation",
     "base": "Pastel Base",
     "pagina": 47,
     "cuartoDisponible": false,
@@ -39279,8 +39279,8 @@
         "cuartoOz": null,
         "galon": "-33.5",
         "galonOz": -0.6979166666666666,
-        "cubeta5gal": "-3Y",
-        "cubeta5galOz": -3
+        "cubeta5gal": "-3Y23.5",
+        "cubeta5galOz": -3.4895833333333335
       },
       {
         "colorante": "C",
@@ -39304,19 +39304,19 @@
   },
   {
     "codigo": "3L2-7",
-    "nombre": "Leapin' Lizzard l Base",
+    "nombre": "Leapin' Lizzard",
     "base": "Deep Base",
     "pagina": 47,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "23.5",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-38",
+        "cuartoOz": -0.7916666666666666,
+        "galon": "-3Y8",
+        "galonOz": -3.1666666666666665,
+        "cubeta5gal": "-15Y40",
+        "cubeta5galOz": -15.833333333333334
       },
       {
         "colorante": "C",
@@ -39387,8 +39387,8 @@
         "cuartoOz": -0.5625,
         "galon": "-2Y12",
         "galonOz": -2.25,
-        "cubeta5gal": "-11",
-        "cubeta5galOz": -0.22916666666666666
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       },
       {
         "colorante": "C",
@@ -39418,13 +39418,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "Y12",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-1Y4",
+        "cuartoOz": -1.0833333333333333,
+        "galon": "-4Y16",
+        "galonOz": -4.333333333333333,
+        "cubeta5gal": "-21Y32",
+        "cubeta5galOz": -21.666666666666668
       },
       {
         "colorante": "C",
@@ -39504,8 +39504,8 @@
         "cuartoOz": -0.9479166666666666,
         "galon": "-3Y38",
         "galonOz": -3.7916666666666665,
-        "cubeta5gal": "-18",
-        "cubeta5galOz": -0.375
+        "cubeta5gal": "-18Y46",
+        "cubeta5galOz": -18.958333333333332
       },
       {
         "colorante": "C",
@@ -39531,8 +39531,8 @@
         "cuartoOz": -1.3958333333333333,
         "galon": "-5Y28",
         "galonOz": -5.583333333333333,
-        "cubeta5gal": "-27Y",
-        "cubeta5galOz": -27
+        "cubeta5gal": "-27Y44",
+        "cubeta5galOz": -27.916666666666668
       }
     ]
   },
@@ -39544,13 +39544,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "Y46",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       },
       {
         "colorante": "D",
@@ -39601,7 +39601,7 @@
   },
   {
     "codigo": "3L1-8",
-    "nombre": "Peas in a Pod Accen",
+    "nombre": "Peas in a Pod",
     "base": "Accent Base",
     "pagina": 47,
     "cuartoDisponible": true,
@@ -39612,8 +39612,8 @@
         "cuartoOz": -1.7083333333333335,
         "galon": "-6Y40",
         "galonOz": -6.833333333333333,
-        "cubeta5gal": "-34",
-        "cubeta5galOz": -0.7083333333333334
+        "cubeta5gal": "-34Y8",
+        "cubeta5galOz": -34.166666666666664
       },
       {
         "colorante": "C",
@@ -39621,8 +39621,8 @@
         "cuartoOz": -0.53125,
         "galon": "-2Y6",
         "galonOz": -2.125,
-        "cubeta5gal": "-10Y3",
-        "cubeta5galOz": -10.0625
+        "cubeta5gal": "-10Y30",
+        "cubeta5galOz": -10.625
       },
       {
         "colorante": "D",
@@ -39639,21 +39639,21 @@
         "cuartoOz": -0.3125,
         "galon": "-1Y12",
         "galonOz": -1.25,
-        "cubeta5gal": "-6Y1",
-        "cubeta5galOz": -6.020833333333333
+        "cubeta5gal": "-6Y12",
+        "cubeta5galOz": -6.25
       }
     ]
   },
   {
     "codigo": "3L3-2",
-    "nombre": "Greenblushed Oasis t Base",
+    "nombre": "Greenblushed Oasis",
     "base": "Pastel Base",
     "pagina": 47,
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "Y8",
-        "cuarto": "No",
+        "colorante": "AXX",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-10.5",
         "galonOz": -0.21875,
@@ -39661,8 +39661,8 @@
         "cubeta5galOz": -1.09375
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "C",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-6",
         "galonOz": -0.125,
@@ -39718,7 +39718,7 @@
   },
   {
     "codigo": "3L2-1",
-    "nombre": "Tinge of Green Paste",
+    "nombre": "Tinge of Green",
     "base": "Pastel Base",
     "pagina": 47,
     "cuartoDisponible": false,
@@ -39754,7 +39754,7 @@
   },
   {
     "codigo": "3L3-3",
-    "nombre": "Peace Garden l Base",
+    "nombre": "Peace Garden",
     "base": "Pastel Base",
     "pagina": 47,
     "cuartoDisponible": false,
@@ -39837,8 +39837,8 @@
         "cuartoOz": -0.08333333333333333,
         "galon": "-16",
         "galonOz": -0.3333333333333333,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       },
       {
         "colorante": "C",
@@ -39868,13 +39868,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "32",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-5.5",
+        "cuartoOz": -0.11458333333333333,
+        "galon": "-22",
+        "galonOz": -0.4583333333333333,
+        "cubeta5gal": "-2Y14",
+        "cubeta5galOz": -2.2916666666666665
       },
       {
         "colorante": "C",
@@ -39954,8 +39954,8 @@
         "cuartoOz": null,
         "galon": "-5.5",
         "galonOz": -0.11458333333333333,
-        "cubeta5gal": "-27",
-        "cubeta5galOz": -0.5625
+        "cubeta5gal": "-27.5",
+        "cubeta5galOz": -0.5729166666666666
       },
       {
         "colorante": "D",
@@ -39976,13 +39976,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": ".5",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
         "colorante": "AXX",
@@ -39990,8 +39990,8 @@
         "cuartoOz": -0.16666666666666666,
         "galon": "-32",
         "galonOz": -0.6666666666666666,
-        "cubeta5gal": "-3Y",
-        "cubeta5galOz": -3
+        "cubeta5gal": "-3Y16",
+        "cubeta5galOz": -3.3333333333333335
       },
       {
         "colorante": "D",
@@ -40021,13 +40021,13 @@
         "cubeta5galOz": -37.708333333333336
       },
       {
-        "colorante": "16",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-10.5",
+        "cuartoOz": -0.21875,
+        "galon": "-42",
+        "galonOz": -0.875,
+        "cubeta5gal": "-4Y18",
+        "cubeta5galOz": -4.375
       },
       {
         "colorante": "I",
@@ -40053,8 +40053,8 @@
         "cuartoOz": null,
         "galon": "-18",
         "galonOz": -0.375,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y42",
+        "cubeta5galOz": -1.875
       },
       {
         "colorante": "D",
@@ -40084,13 +40084,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "42",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-23.5",
+        "cuartoOz": -0.4895833333333333,
+        "galon": "-1Y46",
+        "galonOz": -1.9583333333333335,
+        "cubeta5gal": "-9Y38",
+        "cubeta5galOz": -9.791666666666666
       },
       {
         "colorante": "D",
@@ -40098,8 +40098,8 @@
         "cuartoOz": -0.5416666666666666,
         "galon": "-2Y8",
         "galonOz": -2.1666666666666665,
-        "cubeta5gal": "-10Y4",
-        "cubeta5galOz": -10.083333333333334
+        "cubeta5gal": "-10Y40",
+        "cubeta5galOz": -10.833333333333334
       },
       {
         "colorante": "L",
@@ -40120,22 +40120,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "38",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-2Y18",
+        "cuartoOz": -2.375,
+        "galon": "-9Y24",
+        "galonOz": -9.5,
+        "cubeta5gal": "-47Y24",
+        "cubeta5galOz": -47.5
       },
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-12.5",
+        "cuartoOz": -0.2604166666666667,
+        "galon": "-1Y2",
+        "galonOz": -1.0416666666666667,
+        "cubeta5gal": "-5Y10",
+        "cubeta5galOz": -5.208333333333333
       },
       {
         "colorante": "I",
@@ -40170,8 +40170,8 @@
         "cuartoOz": -0.17708333333333334,
         "galon": "-34",
         "galonOz": -0.7083333333333334,
-        "cubeta5gal": "-3Y",
-        "cubeta5galOz": -3
+        "cubeta5gal": "-3Y26",
+        "cubeta5galOz": -3.5416666666666665
       },
       {
         "colorante": "D",
@@ -40192,13 +40192,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "26",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-43.5",
+        "cuartoOz": -0.90625,
+        "galon": "-3Y30",
+        "galonOz": -3.625,
+        "cubeta5gal": "-18Y6",
+        "cubeta5galOz": -18.125
       },
       {
         "colorante": "C",
@@ -40228,13 +40228,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "Y6",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-2.5",
+        "cuartoOz": -0.052083333333333336,
+        "galon": "-10",
+        "galonOz": -0.20833333333333334,
+        "cubeta5gal": "-1Y2",
+        "cubeta5galOz": -1.0416666666666667
       },
       {
         "colorante": "E",
@@ -40269,8 +40269,8 @@
         "cuartoOz": -0.23958333333333334,
         "galon": "-46",
         "galonOz": -0.9583333333333334,
-        "cubeta5gal": "-4Y",
-        "cubeta5galOz": -4
+        "cubeta5gal": "-4Y38",
+        "cubeta5galOz": -4.791666666666667
       },
       {
         "colorante": "C",
@@ -40300,13 +40300,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "38",
-        "cuarto": "AXX",
-        "cuartoOz": null,
-        "galon": "AXX",
-        "galonOz": null,
-        "cubeta5gal": "AXX",
-        "cubeta5galOz": null
+        "colorante": "AXX",
+        "cuarto": "-42",
+        "cuartoOz": -0.875,
+        "galon": "-3Y24",
+        "galonOz": -3.5,
+        "cubeta5gal": "-17Y24",
+        "cubeta5galOz": -17.5
       },
       {
         "colorante": "D",
@@ -40314,8 +40314,8 @@
         "cuartoOz": -1.3958333333333333,
         "galon": "-5Y28",
         "galonOz": -5.583333333333333,
-        "cubeta5gal": "-27Y4",
-        "cubeta5galOz": -27.083333333333332
+        "cubeta5gal": "-27Y44",
+        "cubeta5galOz": -27.916666666666668
       },
       {
         "colorante": "I",
@@ -40332,8 +40332,8 @@
         "cuartoOz": -0.6979166666666666,
         "galon": "-2Y38",
         "galonOz": -2.7916666666666665,
-        "cubeta5gal": "-13Y",
-        "cubeta5galOz": -13
+        "cubeta5gal": "-13Y46",
+        "cubeta5galOz": -13.958333333333334
       }
     ]
   },
@@ -40345,8 +40345,8 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "Y24",
-        "cuarto": "No",
+        "colorante": "B",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1",
         "galonOz": -0.020833333333333332,
@@ -40354,8 +40354,8 @@
         "cubeta5galOz": -0.10416666666666667
       },
       {
-        "colorante": "4",
-        "cuarto": "Quart",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-18",
         "galonOz": -0.375,
@@ -40386,8 +40386,8 @@
         "cuartoOz": -1.3125,
         "galon": "-5Y12",
         "galonOz": -5.25,
-        "cubeta5gal": "-26",
-        "cubeta5galOz": -0.5416666666666666
+        "cubeta5gal": "-26Y12",
+        "cubeta5galOz": -26.25
       },
       {
         "colorante": "D",
@@ -40417,13 +40417,13 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "Y12",
-        "cuarto": "No",
+        "colorante": "AXX",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-0.5",
         "galonOz": -0.010416666666666666,
-        "cubeta5gal": "-2.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-2.5",
+        "cubeta5galOz": -0.052083333333333336
       },
       {
         "colorante": "D",
@@ -40444,13 +40444,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "5",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-9",
+        "cuartoOz": -0.1875,
+        "galon": "-36",
+        "galonOz": -0.75,
+        "cubeta5gal": "-3Y36",
+        "cubeta5galOz": -3.75
       },
       {
         "colorante": "E",
@@ -40474,7 +40474,7 @@
   },
   {
     "codigo": "2M2-8",
-    "nombre": "Green Grass Accen",
+    "nombre": "Green Grass",
     "base": "Accent Base",
     "pagina": 48,
     "cuartoDisponible": true,
@@ -40485,8 +40485,8 @@
         "cuartoOz": -1.1979166666666667,
         "galon": "-4Y38",
         "galonOz": -4.791666666666667,
-        "cubeta5gal": "-23",
-        "cubeta5galOz": -0.4791666666666667
+        "cubeta5gal": "-23Y46",
+        "cubeta5galOz": -23.958333333333332
       },
       {
         "colorante": "C",
@@ -40519,19 +40519,19 @@
   },
   {
     "codigo": "2O1-2",
-    "nombre": "Fresh Air t Base Paste",
+    "nombre": "Fresh Air",
     "base": "Pastel Base",
     "pagina": 48,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "Y46",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
         "colorante": "D",
@@ -40546,7 +40546,7 @@
   },
   {
     "codigo": "2O2-5",
-    "nombre": "Turquoise Tear Drops l Base",
+    "nombre": "Turquoise Tear Drops",
     "base": "Tint Base",
     "pagina": 48,
     "cuartoDisponible": true,
@@ -40699,7 +40699,7 @@
   },
   {
     "codigo": "2M3-2",
-    "nombre": "Spring Ahead Paste",
+    "nombre": "Spring Ahead",
     "base": "Pastel Base",
     "pagina": 48,
     "cuartoDisponible": false,
@@ -40710,8 +40710,8 @@
         "cuartoOz": null,
         "galon": "-13.5",
         "galonOz": -0.28125,
-        "cubeta5gal": "-1Y",
-        "cubeta5galOz": -1
+        "cubeta5gal": "-1Y19.5",
+        "cubeta5galOz": -1.40625
       },
       {
         "colorante": "D",
@@ -40726,19 +40726,19 @@
   },
   {
     "codigo": "2O1-5",
-    "nombre": "Opulent Ocean l Base",
+    "nombre": "Opulent Ocean",
     "base": "Tint Base",
     "pagina": 48,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "19.5",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-38",
+        "cuartoOz": -0.7916666666666666,
+        "galon": "-3Y8",
+        "galonOz": -3.1666666666666665,
+        "cubeta5gal": "-15Y40",
+        "cubeta5galOz": -15.833333333333334
       },
       {
         "colorante": "E",
@@ -40762,19 +40762,19 @@
   },
   {
     "codigo": "2O2-8",
-    "nombre": "Green Mountain Falls Base",
+    "nombre": "Green Mountain Falls",
     "base": "Accent Base",
     "pagina": 48,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-1Y36",
+        "cuartoOz": -1.75,
+        "galon": "-7Y",
+        "galonOz": -7,
+        "cubeta5gal": "-35Y",
+        "cubeta5galOz": -35
       },
       {
         "colorante": "E",
@@ -40890,8 +40890,8 @@
         "cuartoOz": null,
         "galon": "-13.5",
         "galonOz": -0.28125,
-        "cubeta5gal": "-1Y19",
-        "cubeta5galOz": -1.3958333333333333
+        "cubeta5gal": "-1Y19.5",
+        "cubeta5galOz": -1.40625
       },
       {
         "colorante": "E",
@@ -40921,13 +40921,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": ".5",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-20",
+        "cuartoOz": -0.4166666666666667,
+        "galon": "-1Y32",
+        "galonOz": -1.6666666666666665,
+        "cubeta5gal": "-8Y16",
+        "cubeta5galOz": -8.333333333333334
       },
       {
         "colorante": "E",
@@ -40935,8 +40935,8 @@
         "cuartoOz": -0.5625,
         "galon": "-2Y12",
         "galonOz": -2.25,
-        "cubeta5gal": "-11Y1",
-        "cubeta5galOz": -11.020833333333334
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       }
     ]
   },
@@ -40957,13 +40957,13 @@
         "cubeta5galOz": -14.375
       },
       {
-        "colorante": "2",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1Y18.5",
+        "cuartoOz": -1.3854166666666667,
+        "galon": "-5Y26",
+        "galonOz": -5.541666666666667,
+        "cubeta5gal": "-27Y34",
+        "cubeta5galOz": -27.708333333333332
       },
       {
         "colorante": "KX",
@@ -41025,8 +41025,8 @@
         "cuartoOz": -0.8854166666666666,
         "galon": "-3Y26",
         "galonOz": -3.5416666666666665,
-        "cubeta5gal": "-17Y3",
-        "cubeta5galOz": -17.0625
+        "cubeta5gal": "-17Y34",
+        "cubeta5galOz": -17.708333333333332
       },
       {
         "colorante": "E",
@@ -41034,8 +41034,8 @@
         "cuartoOz": -1.1979166666666667,
         "galon": "-4Y38",
         "galonOz": -4.791666666666667,
-        "cubeta5gal": "-23Y4",
-        "cubeta5galOz": -23.083333333333332
+        "cubeta5gal": "-23Y46",
+        "cubeta5galOz": -23.958333333333332
       }
     ]
   },
@@ -41047,8 +41047,8 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "No",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-3.5",
         "galonOz": -0.07291666666666667,
@@ -41056,8 +41056,8 @@
         "cubeta5galOz": -0.3645833333333333
       },
       {
-        "colorante": "6",
-        "cuarto": "Quart",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-9.5",
         "galonOz": -0.19791666666666666,
@@ -41142,8 +41142,8 @@
         "cuartoOz": -0.875,
         "galon": "-3Y24",
         "galonOz": -3.5,
-        "cubeta5gal": "-17Y",
-        "cubeta5galOz": -17
+        "cubeta5gal": "-17Y24",
+        "cubeta5galOz": -17.5
       }
     ]
   },
@@ -41173,13 +41173,13 @@
         "cubeta5galOz": -2.0833333333333335
       },
       {
-        "colorante": "24",
-        "cuarto": "l",
-        "cuartoOz": null,
-        "galon": "l",
-        "galonOz": null,
-        "cubeta5gal": "l",
-        "cubeta5galOz": null
+        "colorante": "l",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       }
     ]
   },
@@ -41196,8 +41196,8 @@
         "cuartoOz": -1.1458333333333333,
         "galon": "-4Y28",
         "galonOz": -4.583333333333333,
-        "cubeta5gal": "-22Y4",
-        "cubeta5galOz": -22.083333333333332
+        "cubeta5gal": "-22Y44",
+        "cubeta5galOz": -22.916666666666668
       },
       {
         "colorante": "E",
@@ -41205,8 +41205,8 @@
         "cuartoOz": -0.9375,
         "galon": "-3Y36",
         "galonOz": -3.75,
-        "cubeta5gal": "-18Y3",
-        "cubeta5galOz": -18.0625
+        "cubeta5gal": "-18Y36",
+        "cubeta5galOz": -18.75
       },
       {
         "colorante": "I",
@@ -41221,14 +41221,14 @@
   },
   {
     "codigo": "1P2-1",
-    "nombre": "Whispering Breeze Base Paste",
+    "nombre": "Whispering Breeze",
     "base": "Pastel Base",
     "pagina": 49,
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "No",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-3",
         "galonOz": -0.0625,
@@ -41236,8 +41236,8 @@
         "cubeta5galOz": -0.3125
       },
       {
-        "colorante": "6",
-        "cuarto": "Quart",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-7",
         "galonOz": -0.14583333333333334,
@@ -41248,7 +41248,7 @@
   },
   {
     "codigo": "1P3-3",
-    "nombre": "Baby Shower Blue l Base",
+    "nombre": "Baby Shower Blue",
     "base": "Pastel Base",
     "pagina": 49,
     "cuartoDisponible": true,
@@ -41284,7 +41284,7 @@
   },
   {
     "codigo": "2O3-8",
-    "nombre": "Nature's Glory Accen",
+    "nombre": "Nature's Glory",
     "base": "Accent Base",
     "pagina": 49,
     "cuartoDisponible": true,
@@ -41295,8 +41295,8 @@
         "cuartoOz": -1.3333333333333333,
         "galon": "-5Y16",
         "galonOz": -5.333333333333333,
-        "cubeta5gal": "-26Y3",
-        "cubeta5galOz": -26.0625
+        "cubeta5gal": "-26Y32",
+        "cubeta5galOz": -26.666666666666668
       },
       {
         "colorante": "E",
@@ -41304,8 +41304,8 @@
         "cuartoOz": -1.2916666666666667,
         "galon": "-5Y8",
         "galonOz": -5.166666666666667,
-        "cubeta5gal": "-25Y4",
-        "cubeta5galOz": -25.083333333333332
+        "cubeta5gal": "-25Y40",
+        "cubeta5galOz": -25.833333333333332
       },
       {
         "colorante": "I",
@@ -41322,41 +41322,41 @@
         "cuartoOz": -0.34375,
         "galon": "-1Y18",
         "galonOz": -1.375,
-        "cubeta5gal": "-6Y4",
-        "cubeta5galOz": -6.083333333333333
+        "cubeta5gal": "-6Y42",
+        "cubeta5galOz": -6.875
       }
     ]
   },
   {
     "codigo": "1P2-2",
-    "nombre": "On the Waterfront t Base Paste",
+    "nombre": "On the Waterfront",
     "base": "Pastel Base",
     "pagina": 49,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-3",
+        "cuartoOz": -0.0625,
+        "galon": "-12",
+        "galonOz": -0.25,
+        "cubeta5gal": "-1Y12",
+        "cubeta5galOz": -1.25
       },
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       }
     ]
   },
   {
     "codigo": "1P3-5",
-    "nombre": "Blue Streak l Base",
+    "nombre": "Blue Streak",
     "base": "Tint Base",
     "pagina": 49,
     "cuartoDisponible": true,
@@ -41511,8 +41511,8 @@
         "cuartoOz": -0.6770833333333334,
         "galon": "-2Y34",
         "galonOz": -2.7083333333333335,
-        "cubeta5gal": "-13Y2",
-        "cubeta5galOz": -13.041666666666666
+        "cubeta5gal": "-13Y26",
+        "cubeta5galOz": -13.541666666666666
       }
     ]
   },
@@ -41533,13 +41533,13 @@
         "cubeta5galOz": -9.166666666666666
       },
       {
-        "colorante": "6",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1Y31.5",
+        "cuartoOz": -1.65625,
+        "galon": "-6Y30",
+        "galonOz": -6.625,
+        "cubeta5gal": "-33Y6",
+        "cubeta5galOz": -33.125
       },
       {
         "colorante": "KX",
@@ -41554,7 +41554,7 @@
   },
   {
     "codigo": "3O1-1",
-    "nombre": "Splash Pastel B",
+    "nombre": "Splash",
     "base": "Pastel Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41590,7 +41590,7 @@
   },
   {
     "codigo": "3O2-3",
-    "nombre": "Look Up ase Paste",
+    "nombre": "Look Up",
     "base": "Pastel Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41626,7 +41626,7 @@
   },
   {
     "codigo": "3O3-7",
-    "nombre": "High Country Twilight l Base",
+    "nombre": "High Country Twilight",
     "base": "Accent Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41727,8 +41727,8 @@
         "cuartoOz": -0.5625,
         "galon": "-2Y12",
         "galonOz": -2.25,
-        "cubeta5gal": "-11Y1",
-        "cubeta5galOz": -11.020833333333334
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       },
       {
         "colorante": "L",
@@ -41758,13 +41758,13 @@
         "cubeta5galOz": -4.166666666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-37",
+        "cuartoOz": -0.7708333333333334,
+        "galon": "-3Y4",
+        "galonOz": -3.0833333333333335,
+        "cubeta5gal": "-15Y20",
+        "cubeta5galOz": -15.416666666666666
       },
       {
         "colorante": "E",
@@ -41835,8 +41835,8 @@
         "cuartoOz": -0.875,
         "galon": "-3Y24",
         "galonOz": -3.5,
-        "cubeta5gal": "-17Y2",
-        "cubeta5galOz": -17.041666666666668
+        "cubeta5gal": "-17Y24",
+        "cubeta5galOz": -17.5
       },
       {
         "colorante": "E",
@@ -41844,8 +41844,8 @@
         "cuartoOz": -1.1354166666666667,
         "galon": "-4Y26",
         "galonOz": -4.541666666666667,
-        "cubeta5gal": "-22Y3",
-        "cubeta5galOz": -22.0625
+        "cubeta5gal": "-22Y34",
+        "cubeta5galOz": -22.708333333333332
       },
       {
         "colorante": "I",
@@ -41866,22 +41866,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "4",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-3.5",
+        "cuartoOz": -0.07291666666666667,
+        "galon": "-14",
+        "galonOz": -0.2916666666666667,
+        "cubeta5gal": "-1Y22",
+        "cubeta5galOz": -1.4583333333333333
       },
       {
         "colorante": "L",
@@ -41896,7 +41896,7 @@
   },
   {
     "codigo": "3O1-5",
-    "nombre": "Treasures of the Sea Tin",
+    "nombre": "Treasures of the Sea",
     "base": "Tint Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41932,7 +41932,7 @@
   },
   {
     "codigo": "3O2-8",
-    "nombre": "Pondside t Base Accen",
+    "nombre": "Pondside",
     "base": "Accent Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41952,8 +41952,8 @@
         "cuartoOz": -1.2604166666666667,
         "galon": "-5Y2",
         "galonOz": -5.041666666666667,
-        "cubeta5gal": "-25Y1",
-        "cubeta5galOz": -25.020833333333332
+        "cubeta5gal": "-25Y10",
+        "cubeta5galOz": -25.208333333333332
       },
       {
         "colorante": "E",
@@ -41961,8 +41961,8 @@
         "cuartoOz": -1.2604166666666667,
         "galon": "-5Y2",
         "galonOz": -5.041666666666667,
-        "cubeta5gal": "-25Y1",
-        "cubeta5galOz": -25.020833333333332
+        "cubeta5gal": "-25Y10",
+        "cubeta5galOz": -25.208333333333332
       },
       {
         "colorante": "KX",
@@ -41977,7 +41977,7 @@
   },
   {
     "codigo": "3P1-2",
-    "nombre": "Baby Boy t Base",
+    "nombre": "Baby Boy",
     "base": "Pastel Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -41992,22 +41992,22 @@
         "cubeta5galOz": -0.8333333333333334
       },
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-5",
+        "cuartoOz": -0.10416666666666667,
+        "galon": "-20",
+        "galonOz": -0.4166666666666667,
+        "cubeta5gal": "-2Y4",
+        "cubeta5galOz": -2.0833333333333335
       },
       {
-        "colorante": "0",
-        "cuarto": "I",
-        "cuartoOz": null,
-        "galon": "I",
-        "galonOz": null,
-        "cubeta5gal": "I",
-        "cubeta5galOz": null
+        "colorante": "I",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       }
     ]
   },
@@ -42238,7 +42238,7 @@
   },
   {
     "codigo": "3O2-1",
-    "nombre": "Follow the Tradewinds Pastel B",
+    "nombre": "Follow the Tradewinds",
     "base": "Pastel Base",
     "pagina": 50,
     "cuartoDisponible": false,
@@ -42274,7 +42274,7 @@
   },
   {
     "codigo": "3O3-3",
-    "nombre": "Whirlpool ase Paste",
+    "nombre": "Whirlpool",
     "base": "Pastel Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -42310,7 +42310,7 @@
   },
   {
     "codigo": "3P1-7",
-    "nombre": "Country Bay l Base",
+    "nombre": "Country Bay",
     "base": "Deep Base",
     "pagina": 50,
     "cuartoDisponible": true,
@@ -42402,8 +42402,8 @@
         "cuartoOz": -0.7395833333333334,
         "galon": "-2Y46",
         "galonOz": -2.9583333333333335,
-        "cubeta5gal": "-14Y3",
-        "cubeta5galOz": -14.0625
+        "cubeta5gal": "-14Y38",
+        "cubeta5galOz": -14.791666666666666
       },
       {
         "colorante": "I",
@@ -42433,13 +42433,13 @@
         "cubeta5galOz": -2.9166666666666665
       },
       {
-        "colorante": "8",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-27",
+        "cuartoOz": -0.5625,
+        "galon": "-2Y12",
+        "galonOz": -2.25,
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       },
       {
         "colorante": "E",
@@ -42753,8 +42753,8 @@
         "cuartoOz": -1.4791666666666667,
         "galon": "-5Y44",
         "galonOz": -5.916666666666667,
-        "cubeta5gal": "-29Y2",
-        "cubeta5galOz": -29.041666666666668
+        "cubeta5gal": "-29Y28",
+        "cubeta5galOz": -29.583333333333332
       }
     ]
   },
@@ -42784,8 +42784,8 @@
         "cubeta5galOz": -0.8333333333333334
       },
       {
-        "colorante": "8",
-        "cuarto": "Formula",
+        "colorante": "I",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-2.5",
         "galonOz": -0.052083333333333336,
@@ -42816,8 +42816,8 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
         "colorante": "L",
@@ -42847,13 +42847,13 @@
         "cubeta5galOz": -3.9583333333333335
       },
       {
-        "colorante": "2",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-11",
+        "cuartoOz": -0.22916666666666666,
+        "galon": "-44",
+        "galonOz": -0.9166666666666666,
+        "cubeta5gal": "-4Y28",
+        "cubeta5galOz": -4.583333333333333
       },
       {
         "colorante": "E",
@@ -42861,8 +42861,8 @@
         "cuartoOz": -1.8854166666666665,
         "galon": "-7Y26",
         "galonOz": -7.541666666666667,
-        "cubeta5gal": "-37Y3",
-        "cubeta5galOz": -37.0625
+        "cubeta5gal": "-37Y34",
+        "cubeta5galOz": -37.708333333333336
       },
       {
         "colorante": "KX",
@@ -42870,8 +42870,8 @@
         "cuartoOz": -0.6770833333333334,
         "galon": "-2Y34",
         "galonOz": -2.7083333333333335,
-        "cubeta5gal": "-13Y",
-        "cubeta5galOz": -13
+        "cubeta5gal": "-13Y26",
+        "cubeta5galOz": -13.541666666666666
       }
     ]
   },
@@ -42901,13 +42901,13 @@
         "cubeta5galOz": -2.2916666666666665
       },
       {
-        "colorante": "4",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       }
     ]
   },
@@ -42942,8 +42942,8 @@
         "cuartoOz": -1.5104166666666665,
         "galon": "-6Y2",
         "galonOz": -6.041666666666667,
-        "cubeta5gal": "-30Y1",
-        "cubeta5galOz": -30.020833333333332
+        "cubeta5gal": "-30Y10",
+        "cubeta5galOz": -30.208333333333332
       }
     ]
   },
@@ -42973,8 +42973,8 @@
         "cubeta5galOz": -0.625
       },
       {
-        "colorante": "0",
-        "cuarto": "Formula",
+        "colorante": "I",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-2.5",
         "galonOz": -0.052083333333333336,
@@ -43050,8 +43050,8 @@
         "cuartoOz": -1.9479166666666665,
         "galon": "-7Y38",
         "galonOz": -7.791666666666667,
-        "cubeta5gal": "-38Y4",
-        "cubeta5galOz": -38.083333333333336
+        "cubeta5gal": "-38Y46",
+        "cubeta5galOz": -38.958333333333336
       },
       {
         "colorante": "KX",
@@ -43090,13 +43090,13 @@
         "cubeta5galOz": -1.6666666666666665
       },
       {
-        "colorante": "6",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-6",
+        "cuartoOz": -0.125,
+        "galon": "-24",
+        "galonOz": -0.5,
+        "cubeta5gal": "-2Y24",
+        "cubeta5galOz": -2.5
       }
     ]
   },
@@ -43246,7 +43246,7 @@
   },
   {
     "codigo": "3P3-2",
-    "nombre": "Tranquil Times Paste",
+    "nombre": "Tranquil Times",
     "base": "Pastel Base",
     "pagina": 51,
     "cuartoDisponible": true,
@@ -43282,7 +43282,7 @@
   },
   {
     "codigo": "5P1-5",
-    "nombre": "Lake Woebegone l Base",
+    "nombre": "Lake Woebegone",
     "base": "Tint Base",
     "pagina": 51,
     "cuartoDisponible": true,
@@ -43318,7 +43318,7 @@
   },
   {
     "codigo": "5P2-8",
-    "nombre": "Evening in Venice Base",
+    "nombre": "Evening in Venice",
     "base": "Accent Base",
     "pagina": 51,
     "cuartoDisponible": true,
@@ -43363,7 +43363,7 @@
   },
   {
     "codigo": "5P3-1",
-    "nombre": "Precious Dew Drop Paste",
+    "nombre": "Precious Dew Drop",
     "base": "Pastel Base",
     "pagina": 52,
     "cuartoDisponible": false,
@@ -43399,7 +43399,7 @@
   },
   {
     "codigo": "5Q1-3",
-    "nombre": "Bonbon Blue l Base",
+    "nombre": "Bonbon Blue",
     "base": "Pastel Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43435,7 +43435,7 @@
   },
   {
     "codigo": "5Q2-7",
-    "nombre": "Smooth Indigo Base",
+    "nombre": "Smooth Indigo",
     "base": "Deep Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43471,7 +43471,7 @@
   },
   {
     "codigo": "5P3-2",
-    "nombre": "Terrace Bay Paste",
+    "nombre": "Terrace Bay",
     "base": "Pastel Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43498,7 +43498,7 @@
   },
   {
     "codigo": "5Q1-5",
-    "nombre": "Your Dreamy Mood l Base Tin",
+    "nombre": "Your Dreamy Mood",
     "base": "Tint Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43534,7 +43534,7 @@
   },
   {
     "codigo": "5Q2-8",
-    "nombre": "After Midnight t Base",
+    "nombre": "After Midnight",
     "base": "Accent Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43732,7 +43732,7 @@
   },
   {
     "codigo": "5Q1-8",
-    "nombre": "Deep Dark Shadows Base",
+    "nombre": "Deep Dark Shadows",
     "base": "Accent Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -43777,7 +43777,7 @@
   },
   {
     "codigo": "5Q3-2",
-    "nombre": "Drop Anchor Base",
+    "nombre": "Drop Anchor",
     "base": "Pastel Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -44155,7 +44155,7 @@
   },
   {
     "codigo": "5Q1-2",
-    "nombre": "Calypso Coast Paste",
+    "nombre": "Calypso Coast",
     "base": "Pastel Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -44182,7 +44182,7 @@
   },
   {
     "codigo": "5Q2-5",
-    "nombre": "Bird's Egg Blue l Base Tin",
+    "nombre": "Bird's Egg Blue",
     "base": "Tint Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -44209,7 +44209,7 @@
   },
   {
     "codigo": "5Q3-8",
-    "nombre": "Good Night Moon t Base",
+    "nombre": "Good Night Moon",
     "base": "Accent Base",
     "pagina": 52,
     "cuartoDisponible": true,
@@ -44254,7 +44254,7 @@
   },
   {
     "codigo": "4Q1-1",
-    "nombre": "Billowing Clouds Paste",
+    "nombre": "Billowing Clouds",
     "base": "Pastel Base",
     "pagina": 53,
     "cuartoDisponible": false,
@@ -44281,7 +44281,7 @@
   },
   {
     "codigo": "4Q2-3",
-    "nombre": "Borrowed from the Boys l Base Paste",
+    "nombre": "Borrowed from the Boys",
     "base": "Pastel Base",
     "pagina": 53,
     "cuartoDisponible": true,
@@ -44317,7 +44317,7 @@
   },
   {
     "codigo": "4Q3-7",
-    "nombre": "River Nore l Base",
+    "nombre": "River Nore",
     "base": "Deep Base",
     "pagina": 53,
     "cuartoDisponible": true,
@@ -44353,7 +44353,7 @@
   },
   {
     "codigo": "4Q1-2",
-    "nombre": "Dream a Little Dream Paste",
+    "nombre": "Dream a Little Dream",
     "base": "Pastel Base",
     "pagina": 53,
     "cuartoDisponible": true,
@@ -44389,7 +44389,7 @@
   },
   {
     "codigo": "4Q2-5",
-    "nombre": "Virginia Bluebelle l Base",
+    "nombre": "Virginia Bluebelle",
     "base": "Tint Base",
     "pagina": 53,
     "cuartoDisponible": true,
@@ -44400,8 +44400,8 @@
         "cuartoOz": -0.7395833333333334,
         "galon": "-2Y46",
         "galonOz": -2.9583333333333335,
-        "cubeta5gal": "-14Y3",
-        "cubeta5galOz": -14.0625
+        "cubeta5gal": "-14Y38",
+        "cubeta5galOz": -14.791666666666666
       },
       {
         "colorante": "L",
@@ -44425,19 +44425,19 @@
   },
   {
     "codigo": "4Q3-8",
-    "nombre": "Blue Blazer Base",
+    "nombre": "Blue Blazer",
     "base": "Accent Base",
     "pagina": 53,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-12.5",
+        "cuartoOz": -0.2604166666666667,
+        "galon": "-1Y2",
+        "galonOz": -1.0416666666666667,
+        "cubeta5gal": "-5Y10",
+        "cubeta5galOz": -5.208333333333333
       },
       {
         "colorante": "E",
@@ -44517,8 +44517,8 @@
         "cuartoOz": -1.4270833333333333,
         "galon": "-5Y34",
         "galonOz": -5.708333333333333,
-        "cubeta5gal": "-28Y2",
-        "cubeta5galOz": -28.041666666666668
+        "cubeta5gal": "-28Y26",
+        "cubeta5galOz": -28.541666666666668
       },
       {
         "colorante": "I",
@@ -44548,8 +44548,8 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "6",
-        "cuarto": "No",
+        "colorante": "B",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-0.5",
         "galonOz": -0.010416666666666666,
@@ -44589,8 +44589,8 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
         "colorante": "F",
@@ -44620,13 +44620,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-13",
+        "cuartoOz": -0.2708333333333333,
+        "galon": "-1Y4",
+        "galonOz": -1.0833333333333333,
+        "cubeta5gal": "-5Y20",
+        "cubeta5galOz": -5.416666666666667
       },
       {
         "colorante": "D",
@@ -44643,8 +44643,8 @@
         "cuartoOz": -2.28125,
         "galon": "-9Y6",
         "galonOz": -9.125,
-        "cubeta5gal": "-45Y3",
-        "cubeta5galOz": -45.0625
+        "cubeta5gal": "-45Y30",
+        "cubeta5galOz": -45.625
       },
       {
         "colorante": "KX",
@@ -44652,8 +44652,8 @@
         "cuartoOz": -0.3854166666666667,
         "galon": "-1Y26",
         "galonOz": -1.5416666666666665,
-        "cubeta5gal": "-7Y3",
-        "cubeta5galOz": -7.0625
+        "cubeta5gal": "-7Y34",
+        "cubeta5galOz": -7.708333333333333
       }
     ]
   },
@@ -44683,13 +44683,13 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-5.5",
+        "cuartoOz": -0.11458333333333333,
+        "galon": "-22",
+        "galonOz": -0.4583333333333333,
+        "cubeta5gal": "-2Y14",
+        "cubeta5galOz": -2.2916666666666665
       }
     ]
   },
@@ -44715,8 +44715,8 @@
         "cuartoOz": -1.3333333333333333,
         "galon": "-5Y16",
         "galonOz": -5.333333333333333,
-        "cubeta5gal": "-26Y3",
-        "cubeta5galOz": -26.0625
+        "cubeta5gal": "-26Y32",
+        "cubeta5galOz": -26.666666666666668
       },
       {
         "colorante": "V",
@@ -44731,7 +44731,7 @@
   },
   {
     "codigo": "4Q3-1",
-    "nombre": "Moondust Base Paste",
+    "nombre": "Moondust",
     "base": "Pastel Base",
     "pagina": 53,
     "cuartoDisponible": false,
@@ -44746,8 +44746,8 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "2",
-        "cuarto": "Quart",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-3",
         "galonOz": -0.0625,
@@ -44767,7 +44767,7 @@
   },
   {
     "codigo": "3Q1-3",
-    "nombre": "Beautiful Daydream l Base",
+    "nombre": "Beautiful Daydream",
     "base": "Pastel Base",
     "pagina": 53,
     "cuartoDisponible": true,
@@ -44823,8 +44823,8 @@
         "cuartoOz": -1.9375,
         "galon": "-7Y36",
         "galonOz": -7.75,
-        "cubeta5gal": "-38Y3",
-        "cubeta5galOz": -38.0625
+        "cubeta5gal": "-38Y36",
+        "cubeta5galOz": -38.75
       },
       {
         "colorante": "V",
@@ -44841,8 +44841,8 @@
         "cuartoOz": -0.5833333333333334,
         "galon": "-2Y16",
         "galonOz": -2.3333333333333335,
-        "cubeta5gal": "-11Y",
-        "cubeta5galOz": -11
+        "cubeta5gal": "-11Y32",
+        "cubeta5galOz": -11.666666666666666
       }
     ]
   },
@@ -44863,13 +44863,13 @@
         "cubeta5galOz": -2.0833333333333335
       },
       {
-        "colorante": "6",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
         "colorante": "R",
@@ -45075,8 +45075,8 @@
         "cuartoOz": -0.7395833333333334,
         "galon": "-2Y46",
         "galonOz": -2.9583333333333335,
-        "cubeta5gal": "-14Y3",
-        "cubeta5galOz": -14.0625
+        "cubeta5gal": "-14Y38",
+        "cubeta5galOz": -14.791666666666666
       },
       {
         "colorante": "L",
@@ -45106,13 +45106,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       },
       {
         "colorante": "D",
@@ -45145,7 +45145,7 @@
   },
   {
     "codigo": "3Q2-1",
-    "nombre": "Lake of Swans Paste",
+    "nombre": "Lake of Swans",
     "base": "Pastel Base",
     "pagina": 54,
     "cuartoDisponible": false,
@@ -45181,7 +45181,7 @@
   },
   {
     "codigo": "3Q3-3",
-    "nombre": "Sapphire Mist l Base Paste",
+    "nombre": "Sapphire Mist",
     "base": "Pastel Base",
     "pagina": 54,
     "cuartoDisponible": true,
@@ -45217,7 +45217,7 @@
   },
   {
     "codigo": "1R1-7",
-    "nombre": "Grandma's Blue Gown l Base",
+    "nombre": "Grandma's Blue Gown",
     "base": "Deep Base",
     "pagina": 54,
     "cuartoDisponible": true,
@@ -45408,8 +45408,8 @@
         "cuartoOz": -1.53125,
         "galon": "-6Y6",
         "galonOz": -6.125,
-        "cubeta5gal": "-30Y3",
-        "cubeta5galOz": -30.0625
+        "cubeta5gal": "-30Y30",
+        "cubeta5galOz": -30.625
       },
       {
         "colorante": "V",
@@ -45439,8 +45439,8 @@
         "cubeta5galOz": -0.46875
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "R",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1",
         "galonOz": -0.020833333333333332,
@@ -45534,8 +45534,8 @@
         "cuartoOz": -0.4479166666666667,
         "galon": "-1Y38",
         "galonOz": -1.7916666666666665,
-        "cubeta5gal": "-8Y4",
-        "cubeta5galOz": -8.083333333333334
+        "cubeta5gal": "-8Y46",
+        "cubeta5galOz": -8.958333333333334
       }
     ]
   },
@@ -45892,7 +45892,7 @@
   },
   {
     "codigo": "3Q3-2",
-    "nombre": "Cloud-wisped Sky Paste",
+    "nombre": "Cloud-wisped Sky",
     "base": "Pastel Base",
     "pagina": 54,
     "cuartoDisponible": true,
@@ -45928,7 +45928,7 @@
   },
   {
     "codigo": "1R1-5",
-    "nombre": "South Beach l Base",
+    "nombre": "South Beach",
     "base": "Tint Base",
     "pagina": 54,
     "cuartoDisponible": true,
@@ -45939,8 +45939,8 @@
         "cuartoOz": -0.7916666666666666,
         "galon": "-3Y8",
         "galonOz": -3.1666666666666665,
-        "cubeta5gal": "-15Y4",
-        "cubeta5galOz": -15.083333333333334
+        "cubeta5gal": "-15Y40",
+        "cubeta5galOz": -15.833333333333334
       },
       {
         "colorante": "V",
@@ -45955,19 +45955,19 @@
   },
   {
     "codigo": "1R2-8",
-    "nombre": "Be Imperial Base",
+    "nombre": "Be Imperial",
     "base": "Accent Base",
     "pagina": 54,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1Y41",
+        "cuartoOz": -1.8541666666666665,
+        "galon": "-7Y20",
+        "galonOz": -7.416666666666667,
+        "cubeta5gal": "-37Y4",
+        "cubeta5galOz": -37.083333333333336
       },
       {
         "colorante": "V",
@@ -46002,8 +46002,8 @@
         "cuartoOz": null,
         "galon": "-10.5",
         "galonOz": -0.21875,
-        "cubeta5gal": "-1Y4.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-1Y4.5",
+        "cubeta5galOz": -1.09375
       },
       {
         "colorante": "F",
@@ -46033,13 +46033,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "5",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       },
       {
         "colorante": "E",
@@ -46137,8 +46137,8 @@
         "cuartoOz": -0.8645833333333334,
         "galon": "-3Y22",
         "galonOz": -3.4583333333333335,
-        "cubeta5gal": "-17Y1",
-        "cubeta5galOz": -17.020833333333332
+        "cubeta5gal": "-17Y14",
+        "cubeta5galOz": -17.291666666666668
       }
     ]
   },
@@ -46159,13 +46159,13 @@
         "cubeta5galOz": -42.5
       },
       {
-        "colorante": "4",
-        "cuarto": "KX",
-        "cuartoOz": null,
-        "galon": "KX",
-        "galonOz": null,
-        "cubeta5gal": "KX",
-        "cubeta5galOz": null
+        "colorante": "KX",
+        "cuarto": "-41.5",
+        "cuartoOz": -0.8645833333333334,
+        "galon": "-3Y22",
+        "galonOz": -3.4583333333333335,
+        "cubeta5gal": "-17Y14",
+        "cubeta5galOz": -17.291666666666668
       }
     ]
   },
@@ -46227,8 +46227,8 @@
         "cuartoOz": -1.78125,
         "galon": "-7Y6",
         "galonOz": -7.125,
-        "cubeta5gal": "-35Y3",
-        "cubeta5galOz": -35.0625
+        "cubeta5gal": "-35Y30",
+        "cubeta5galOz": -35.625
       }
     ]
   },
@@ -46249,8 +46249,8 @@
         "cubeta5galOz": -0.15625
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "D",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1.5",
         "galonOz": -0.03125,
@@ -46281,8 +46281,8 @@
         "cuartoOz": -0.6145833333333334,
         "galon": "-2Y22",
         "galonOz": -2.4583333333333335,
-        "cubeta5gal": "-12Y1",
-        "cubeta5galOz": -12.020833333333334
+        "cubeta5gal": "-12Y14",
+        "cubeta5galOz": -12.291666666666666
       },
       {
         "colorante": "V",
@@ -46303,13 +46303,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-9.5",
+        "cuartoOz": -0.19791666666666666,
+        "galon": "-38",
+        "galonOz": -0.7916666666666666,
+        "cubeta5gal": "-3Y46",
+        "cubeta5galOz": -3.9583333333333335
       },
       {
         "colorante": "E",
@@ -46326,8 +46326,8 @@
         "cuartoOz": -0.7916666666666666,
         "galon": "-3Y8",
         "galonOz": -3.1666666666666665,
-        "cubeta5gal": "-15Y",
-        "cubeta5galOz": -15
+        "cubeta5gal": "-15Y40",
+        "cubeta5galOz": -15.833333333333334
       }
     ]
   },
@@ -46357,13 +46357,13 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "40",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       }
     ]
   },
@@ -46380,8 +46380,8 @@
         "cuartoOz": -1.34375,
         "galon": "-5Y18",
         "galonOz": -5.375,
-        "cubeta5gal": "-26Y4",
-        "cubeta5galOz": -26.083333333333332
+        "cubeta5gal": "-26Y42",
+        "cubeta5galOz": -26.875
       },
       {
         "colorante": "V",
@@ -46389,8 +46389,8 @@
         "cuartoOz": -0.7708333333333334,
         "galon": "-3Y4",
         "galonOz": -3.0833333333333335,
-        "cubeta5gal": "-15Y2",
-        "cubeta5galOz": -15.041666666666666
+        "cubeta5gal": "-15Y20",
+        "cubeta5galOz": -15.416666666666666
       }
     ]
   },
@@ -46402,17 +46402,17 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "No",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-10.5",
         "galonOz": -0.21875,
-        "cubeta5gal": "-1Y4.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-1Y4.5",
+        "cubeta5galOz": -1.09375
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "R",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1.5",
         "galonOz": -0.03125,
@@ -46429,8 +46429,8 @@
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "5",
-        "cuarto": "No",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-45.5",
         "galonOz": -0.9479166666666666,
@@ -46461,8 +46461,8 @@
         "cuartoOz": -1.4895833333333333,
         "galon": "-5Y46",
         "galonOz": -5.958333333333333,
-        "cubeta5gal": "-29Y3",
-        "cubeta5galOz": -29.0625
+        "cubeta5gal": "-29Y38",
+        "cubeta5galOz": -29.791666666666668
       },
       {
         "colorante": "V",
@@ -46470,8 +46470,8 @@
         "cuartoOz": -0.6979166666666666,
         "galon": "-2Y38",
         "galonOz": -2.7916666666666665,
-        "cubeta5gal": "-13Y4",
-        "cubeta5galOz": -13.083333333333334
+        "cubeta5gal": "-13Y46",
+        "cubeta5galOz": -13.958333333333334
       },
       {
         "colorante": "KX",
@@ -46479,8 +46479,8 @@
         "cuartoOz": -0.8125,
         "galon": "-3Y12",
         "galonOz": -3.25,
-        "cubeta5gal": "-16Y",
-        "cubeta5galOz": -16
+        "cubeta5gal": "-16Y12",
+        "cubeta5galOz": -16.25
       }
     ]
   },
@@ -46492,22 +46492,22 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "D",
-        "cuartoOz": null,
-        "galon": "D",
-        "galonOz": null,
-        "cubeta5gal": "D",
-        "cubeta5galOz": null
+        "colorante": "D",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "6",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-6",
+        "cuartoOz": -0.125,
+        "galon": "-24",
+        "galonOz": -0.5,
+        "cubeta5gal": "-2Y24",
+        "cubeta5galOz": -2.5
       }
     ]
   },
@@ -46641,8 +46641,8 @@
         "cuartoOz": null,
         "galon": "-22.5",
         "galonOz": -0.46875,
-        "cubeta5gal": "-2Y16",
-        "cubeta5galOz": -2.3333333333333335
+        "cubeta5gal": "-2Y16.5",
+        "cubeta5galOz": -2.34375
       }
     ]
   },
@@ -46659,17 +46659,17 @@
         "cuartoOz": -1.0208333333333333,
         "galon": "-4Y4",
         "galonOz": -4.083333333333333,
-        "cubeta5gal": "-20Y2",
-        "cubeta5galOz": -20.041666666666668
+        "cubeta5gal": "-20Y20",
+        "cubeta5galOz": -20.416666666666668
       },
       {
-        "colorante": ".5",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       }
     ]
   },
@@ -46681,13 +46681,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-2Y17",
+        "cuartoOz": -2.3541666666666665,
+        "galon": "-9Y20",
+        "galonOz": -9.416666666666666,
+        "cubeta5gal": "-47Y4",
+        "cubeta5galOz": -47.083333333333336
       },
       {
         "colorante": "V",
@@ -46947,8 +46947,8 @@
         "cuartoOz": -0.7395833333333334,
         "galon": "-2Y46",
         "galonOz": -2.9583333333333335,
-        "cubeta5gal": "-14Y3",
-        "cubeta5galOz": -14.0625
+        "cubeta5gal": "-14Y38",
+        "cubeta5galOz": -14.791666666666666
       },
       {
         "colorante": "V",
@@ -46956,8 +46956,8 @@
         "cuartoOz": -0.7708333333333334,
         "galon": "-3Y4",
         "galonOz": -3.0833333333333335,
-        "cubeta5gal": "-15Y2",
-        "cubeta5galOz": -15.041666666666666
+        "cubeta5gal": "-15Y20",
+        "cubeta5galOz": -15.416666666666666
       },
       {
         "colorante": "KX",
@@ -46965,8 +46965,8 @@
         "cuartoOz": -1.4791666666666667,
         "galon": "-5Y44",
         "galonOz": -5.916666666666667,
-        "cubeta5gal": "-29Y",
-        "cubeta5galOz": -29
+        "cubeta5gal": "-29Y28",
+        "cubeta5galOz": -29.583333333333332
       }
     ]
   },
@@ -46978,31 +46978,31 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "0",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "28",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       }
     ]
   },
@@ -47064,8 +47064,8 @@
         "cuartoOz": -1.09375,
         "galon": "-4Y18",
         "galonOz": -4.375,
-        "cubeta5gal": "-21Y4",
-        "cubeta5galOz": -21.083333333333332
+        "cubeta5gal": "-21Y42",
+        "cubeta5galOz": -21.875
       },
       {
         "colorante": "KX",
@@ -47073,8 +47073,8 @@
         "cuartoOz": -0.6875,
         "galon": "-2Y36",
         "galonOz": -2.75,
-        "cubeta5gal": "-13Y",
-        "cubeta5galOz": -13
+        "cubeta5gal": "-13Y36",
+        "cubeta5galOz": -13.75
       }
     ]
   },
@@ -47095,8 +47095,8 @@
         "cubeta5galOz": -0.9895833333333334
       },
       {
-        "colorante": "2",
-        "cuarto": "Quart",
+        "colorante": "L",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-2.5",
         "galonOz": -0.052083333333333336,
@@ -47104,8 +47104,8 @@
         "cubeta5galOz": -0.2604166666666667
       },
       {
-        "colorante": "36",
-        "cuarto": "Formula",
+        "colorante": "V",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-10.5",
         "galonOz": -0.21875,
@@ -47136,8 +47136,8 @@
         "cuartoOz": -0.9791666666666666,
         "galon": "-3Y44",
         "galonOz": -3.9166666666666665,
-        "cubeta5gal": "-19Y2",
-        "cubeta5galOz": -19.041666666666668
+        "cubeta5gal": "-19Y28",
+        "cubeta5galOz": -19.583333333333332
       }
     ]
   },
@@ -47158,8 +47158,8 @@
         "cubeta5galOz": -0.5729166666666666
       },
       {
-        "colorante": "8",
-        "cuarto": "Quart",
+        "colorante": "L",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-2.5",
         "galonOz": -0.052083333333333336,
@@ -47215,7 +47215,7 @@
   },
   {
     "codigo": "1S1-8",
-    "nombre": "Imperial Palace Accen",
+    "nombre": "Imperial Palace",
     "base": "Accent Base",
     "pagina": 56,
     "cuartoDisponible": true,
@@ -47226,8 +47226,8 @@
         "cuartoOz": -1.2604166666666667,
         "galon": "-5Y2",
         "galonOz": -5.041666666666667,
-        "cubeta5gal": "-25Y1",
-        "cubeta5galOz": -25.020833333333332
+        "cubeta5gal": "-25Y10",
+        "cubeta5galOz": -25.208333333333332
       },
       {
         "colorante": "V",
@@ -47235,8 +47235,8 @@
         "cuartoOz": -1.0208333333333333,
         "galon": "-4Y4",
         "galonOz": -4.083333333333333,
-        "cubeta5gal": "-20Y2",
-        "cubeta5galOz": -20.041666666666668
+        "cubeta5gal": "-20Y20",
+        "cubeta5galOz": -20.416666666666668
       },
       {
         "colorante": "KX",
@@ -47244,21 +47244,21 @@
         "cuartoOz": -0.7083333333333334,
         "galon": "-2Y40",
         "galonOz": -2.8333333333333335,
-        "cubeta5gal": "-14Y",
-        "cubeta5galOz": -14
+        "cubeta5gal": "-14Y8",
+        "cubeta5galOz": -14.166666666666666
       }
     ]
   },
   {
     "codigo": "1S3-2",
-    "nombre": "Hawaiian Heather t Base Paste",
+    "nombre": "Hawaiian Heather",
     "base": "Pastel Base",
     "pagina": 56,
-    "cuartoDisponible": true,
+    "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "No",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-9.5",
         "galonOz": -0.19791666666666666,
@@ -47266,28 +47266,19 @@
         "cubeta5galOz": -0.9895833333333334
       },
       {
-        "colorante": "0",
-        "cuarto": "Quart",
+        "colorante": "V",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-11.5",
         "galonOz": -0.23958333333333334,
-        "cubeta5gal": "-1Y9.",
-        "cubeta5galOz": null
-      },
-      {
-        "colorante": "8",
-        "cuarto": "Formula",
-        "cuartoOz": null,
-        "galon": null,
-        "galonOz": null,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
+        "cubeta5gal": "-1Y9.5",
+        "cubeta5galOz": -1.1979166666666667
       }
     ]
   },
   {
     "codigo": "2S1-5",
-    "nombre": "Heather Glen l Base",
+    "nombre": "Heather Glen",
     "base": "Tint Base",
     "pagina": 56,
     "cuartoDisponible": true,
@@ -47302,13 +47293,13 @@
         "cubeta5galOz": -8.125
       },
       {
-        "colorante": "5",
-        "cuarto": "I",
-        "cuartoOz": null,
-        "galon": "I",
-        "galonOz": null,
-        "cubeta5gal": "I",
-        "cubeta5galOz": null
+        "colorante": "I",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
         "colorante": "V",
@@ -47638,7 +47629,7 @@
   },
   {
     "codigo": "2S2-2",
-    "nombre": "Very Violet Paste",
+    "nombre": "Very Violet",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -47674,7 +47665,7 @@
   },
   {
     "codigo": "2S3-5",
-    "nombre": "Lavender Link l Base",
+    "nombre": "Lavender Link",
     "base": "Tint Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -47710,7 +47701,7 @@
   },
   {
     "codigo": "3R1-8",
-    "nombre": "North Atlantic Blue Base",
+    "nombre": "North Atlantic Blue",
     "base": "Accent Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -47899,7 +47890,7 @@
   },
   {
     "codigo": "2S3-8",
-    "nombre": "Grape Expectations Base",
+    "nombre": "Grape Expectations",
     "base": "Accent Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -47944,7 +47935,7 @@
   },
   {
     "codigo": "3R2-2",
-    "nombre": "Gentle Waterfall se",
+    "nombre": "Gentle Waterfall",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -47991,8 +47982,8 @@
         "cuartoOz": -0.7291666666666666,
         "galon": "-2Y44",
         "galonOz": -2.9166666666666665,
-        "cubeta5gal": "-14Y2",
-        "cubeta5galOz": -14.041666666666666
+        "cubeta5gal": "-14Y28",
+        "cubeta5galOz": -14.583333333333334
       },
       {
         "colorante": "I",
@@ -48009,21 +48000,21 @@
         "cuartoOz": -1.0625,
         "galon": "-4Y12",
         "galonOz": -4.25,
-        "cubeta5gal": "-21Y1",
-        "cubeta5galOz": -21.020833333333332
+        "cubeta5gal": "-21Y12",
+        "cubeta5galOz": -21.25
       }
     ]
   },
   {
     "codigo": "3R1-1",
-    "nombre": "Frosted Windowpane Base Paste",
+    "nombre": "Frosted Windowpane",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": false,
     "colorantes": [
       {
-        "colorante": "8",
-        "cuarto": "No",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-8.5",
         "galonOz": -0.17708333333333334,
@@ -48040,8 +48031,8 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "Formula",
+        "colorante": "V",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-4.5",
         "galonOz": -0.09375,
@@ -48052,7 +48043,7 @@
   },
   {
     "codigo": "3R2-3",
-    "nombre": "Breezy Blue l Base",
+    "nombre": "Breezy Blue",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -48117,8 +48108,8 @@
         "cuartoOz": -1.1875,
         "galon": "-4Y36",
         "galonOz": -4.75,
-        "cubeta5gal": "-23Y3",
-        "cubeta5galOz": -23.0625
+        "cubeta5gal": "-23Y36",
+        "cubeta5galOz": -23.75
       },
       {
         "colorante": "KX",
@@ -48126,8 +48117,8 @@
         "cuartoOz": -0.90625,
         "galon": "-3Y30",
         "galonOz": -3.625,
-        "cubeta5gal": "-18Y",
-        "cubeta5galOz": -18
+        "cubeta5gal": "-18Y6",
+        "cubeta5galOz": -18.125
       }
     ]
   },
@@ -48157,13 +48148,13 @@
         "cubeta5galOz": -2.0833333333333335
       },
       {
-        "colorante": "6",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       }
     ]
   },
@@ -48205,7 +48196,7 @@
   },
   {
     "codigo": "2S3-1",
-    "nombre": "Happy Heather Paste",
+    "nombre": "Happy Heather",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": false,
@@ -48241,7 +48232,7 @@
   },
   {
     "codigo": "3R1-3",
-    "nombre": "Morning Sky l Base Paste",
+    "nombre": "Morning Sky",
     "base": "Pastel Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -48277,7 +48268,7 @@
   },
   {
     "codigo": "3R2-7",
-    "nombre": "Once in a Blue Moon l Base",
+    "nombre": "Once in a Blue Moon",
     "base": "Deep Base",
     "pagina": 57,
     "cuartoDisponible": true,
@@ -48711,8 +48702,8 @@
         "cuartoOz": -1.1875,
         "galon": "-4Y36",
         "galonOz": -4.75,
-        "cubeta5gal": "-23Y3",
-        "cubeta5galOz": -23.0625
+        "cubeta5gal": "-23Y36",
+        "cubeta5galOz": -23.75
       },
       {
         "colorante": "V",
@@ -48742,8 +48733,8 @@
         "cubeta5galOz": -0.78125
       },
       {
-        "colorante": "6",
-        "cuarto": "Quart",
+        "colorante": "F",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-1",
         "galonOz": -0.020833333333333332,
@@ -48783,8 +48774,8 @@
         "cuartoOz": -0.5625,
         "galon": "-2Y12",
         "galonOz": -2.25,
-        "cubeta5gal": "-11Y1",
-        "cubeta5galOz": -11.020833333333334
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       },
       {
         "colorante": "V",
@@ -48814,13 +48805,13 @@
         "cubeta5galOz": -7.083333333333333
       },
       {
-        "colorante": "2",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1Y30",
+        "cuartoOz": -1.625,
+        "galon": "-6Y24",
+        "galonOz": -6.5,
+        "cubeta5gal": "-32Y24",
+        "cubeta5galOz": -32.5
       },
       {
         "colorante": "V",
@@ -48837,8 +48828,8 @@
         "cuartoOz": -0.6770833333333334,
         "galon": "-2Y34",
         "galonOz": -2.7083333333333335,
-        "cubeta5gal": "-13Y",
-        "cubeta5galOz": -13
+        "cubeta5gal": "-13Y26",
+        "cubeta5galOz": -13.541666666666666
       }
     ]
   },
@@ -48859,13 +48850,13 @@
         "cubeta5galOz": -1.4583333333333333
       },
       {
-        "colorante": "4",
-        "cuarto": "I",
-        "cuartoOz": null,
-        "galon": "I",
-        "galonOz": null,
-        "cubeta5gal": "I",
-        "cubeta5galOz": null
+        "colorante": "I",
+        "cuarto": "-0.5",
+        "cuartoOz": -0.010416666666666666,
+        "galon": "-2",
+        "galonOz": -0.041666666666666664,
+        "cubeta5gal": "-10",
+        "cubeta5galOz": -0.20833333333333334
       },
       {
         "colorante": "V",
@@ -48918,8 +48909,8 @@
         "cuartoOz": -1.59375,
         "galon": "-6Y18",
         "galonOz": -6.375,
-        "cubeta5gal": "-31Y",
-        "cubeta5galOz": -31
+        "cubeta5gal": "-31Y42",
+        "cubeta5galOz": -31.875
       }
     ]
   },
@@ -48997,7 +48988,7 @@
   },
   {
     "codigo": "3R3-8",
-    "nombre": "Pandora's Purple Accen",
+    "nombre": "Pandora's Purple",
     "base": "Accent Base",
     "pagina": 58,
     "cuartoDisponible": true,
@@ -49017,8 +49008,8 @@
         "cuartoOz": -1.2916666666666667,
         "galon": "-5Y8",
         "galonOz": -5.166666666666667,
-        "cubeta5gal": "-25Y4",
-        "cubeta5galOz": -25.083333333333332
+        "cubeta5gal": "-25Y40",
+        "cubeta5galOz": -25.833333333333332
       },
       {
         "colorante": "V",
@@ -49026,8 +49017,8 @@
         "cuartoOz": -1.0208333333333333,
         "galon": "-4Y4",
         "galonOz": -4.083333333333333,
-        "cubeta5gal": "-20Y2",
-        "cubeta5galOz": -20.041666666666668
+        "cubeta5gal": "-20Y20",
+        "cubeta5galOz": -20.416666666666668
       },
       {
         "colorante": "KX",
@@ -49035,14 +49026,14 @@
         "cuartoOz": -0.5833333333333334,
         "galon": "-2Y16",
         "galonOz": -2.3333333333333335,
-        "cubeta5gal": "-11Y",
-        "cubeta5galOz": -11
+        "cubeta5gal": "-11Y32",
+        "cubeta5galOz": -11.666666666666666
       }
     ]
   },
   {
     "codigo": "4R2-2",
-    "nombre": "Beautiful Promise t Base Paste",
+    "nombre": "Beautiful Promise",
     "base": "Pastel Base",
     "pagina": 58,
     "cuartoDisponible": true,
@@ -49057,28 +49048,28 @@
         "cubeta5galOz": -1.4583333333333333
       },
       {
-        "colorante": "0",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "0",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       }
     ]
   },
   {
     "codigo": "4R3-5",
-    "nombre": "Color of Dreams l Base",
+    "nombre": "Color of Dreams",
     "base": "Tint Base",
     "pagina": 58,
     "cuartoDisponible": true,
@@ -49278,8 +49269,8 @@
         "cuartoOz": -0.5625,
         "galon": "-2Y12",
         "galonOz": -2.25,
-        "cubeta5gal": "-11Y1",
-        "cubeta5galOz": -11.020833333333334
+        "cubeta5gal": "-11Y12",
+        "cubeta5galOz": -11.25
       },
       {
         "colorante": "V",
@@ -49309,13 +49300,13 @@
         "cubeta5galOz": -32.083333333333336
       },
       {
-        "colorante": "2",
-        "cuarto": "I",
-        "cuartoOz": null,
-        "galon": "I",
-        "galonOz": null,
-        "cubeta5gal": "I",
-        "cubeta5galOz": null
+        "colorante": "I",
+        "cuarto": "-7.5",
+        "cuartoOz": -0.15625,
+        "galon": "-30",
+        "galonOz": -0.625,
+        "cubeta5gal": "-3Y6",
+        "cubeta5galOz": -3.125
       },
       {
         "colorante": "V",
@@ -49339,7 +49330,7 @@
   },
   {
     "codigo": "5S1-1",
-    "nombre": "Romantic Light Paste",
+    "nombre": "Romantic Light",
     "base": "Pastel Base",
     "pagina": 59,
     "cuartoDisponible": false,
@@ -49375,7 +49366,7 @@
   },
   {
     "codigo": "5S2-3",
-    "nombre": "Wishful Wisteria l Base Paste",
+    "nombre": "Wishful Wisteria",
     "base": "Pastel Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -49411,7 +49402,7 @@
   },
   {
     "codigo": "5S3-7",
-    "nombre": "Lavender Legend l Base",
+    "nombre": "Lavender Legend",
     "base": "Accent Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -49456,7 +49447,7 @@
   },
   {
     "codigo": "5S1-2",
-    "nombre": "Phantom Lake Paste",
+    "nombre": "Phantom Lake",
     "base": "Pastel Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -49492,7 +49483,7 @@
   },
   {
     "codigo": "5S2-5",
-    "nombre": "Lingering Lavender l Base",
+    "nombre": "Lingering Lavender",
     "base": "Tint Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -49528,7 +49519,7 @@
   },
   {
     "codigo": "5S3-8",
-    "nombre": "Riperia Grape Base",
+    "nombre": "Riperia Grape",
     "base": "Accent Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -49755,8 +49746,8 @@
         "cuartoOz": -0.5104166666666666,
         "galon": "-2Y2",
         "galonOz": -2.0416666666666665,
-        "cubeta5gal": "-10Y1",
-        "cubeta5galOz": -10.020833333333334
+        "cubeta5gal": "-10Y10",
+        "cubeta5galOz": -10.208333333333334
       }
     ]
   },
@@ -49818,8 +49809,8 @@
         "cuartoOz": -0.8125,
         "galon": "-3Y12",
         "galonOz": -3.25,
-        "cubeta5gal": "-16Y1",
-        "cubeta5galOz": -16.020833333333332
+        "cubeta5gal": "-16Y12",
+        "cubeta5galOz": -16.25
       },
       {
         "colorante": "V",
@@ -49836,8 +49827,8 @@
         "cuartoOz": -1.3125,
         "galon": "-5Y12",
         "galonOz": -5.25,
-        "cubeta5gal": "-26Y",
-        "cubeta5galOz": -26
+        "cubeta5gal": "-26Y12",
+        "cubeta5galOz": -26.25
       }
     ]
   },
@@ -49858,8 +49849,8 @@
         "cubeta5galOz": -0.2604166666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "Quart",
+        "colorante": "E",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-2",
         "galonOz": -0.041666666666666664,
@@ -49926,8 +49917,8 @@
         "cuartoOz": -0.5104166666666666,
         "galon": "-2Y2",
         "galonOz": -2.0416666666666665,
-        "cubeta5gal": "-10Y1",
-        "cubeta5galOz": -10.020833333333334
+        "cubeta5gal": "-10Y10",
+        "cubeta5galOz": -10.208333333333334
       },
       {
         "colorante": "E",
@@ -49935,8 +49926,8 @@
         "cuartoOz": -1.4479166666666667,
         "galon": "-5Y38",
         "galonOz": -5.791666666666667,
-        "cubeta5gal": "-28Y4",
-        "cubeta5galOz": -28.083333333333332
+        "cubeta5gal": "-28Y46",
+        "cubeta5galOz": -28.958333333333332
       },
       {
         "colorante": "V",
@@ -49944,8 +49935,8 @@
         "cuartoOz": -0.6145833333333334,
         "galon": "-2Y22",
         "galonOz": -2.4583333333333335,
-        "cubeta5gal": "-12Y1",
-        "cubeta5galOz": -12.020833333333334
+        "cubeta5gal": "-12Y14",
+        "cubeta5galOz": -12.291666666666666
       },
       {
         "colorante": "KX",
@@ -49953,8 +49944,8 @@
         "cuartoOz": -0.4166666666666667,
         "galon": "-1Y32",
         "galonOz": -1.6666666666666665,
-        "cubeta5gal": "-8Y1",
-        "cubeta5galOz": -8.020833333333334
+        "cubeta5gal": "-8Y16",
+        "cubeta5galOz": -8.333333333333334
       }
     ]
   },
@@ -49966,31 +49957,31 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "0",
-        "cuarto": "B",
-        "cuartoOz": null,
-        "galon": "B",
-        "galonOz": null,
-        "cubeta5gal": "B",
-        "cubeta5galOz": null
+        "colorante": "B",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       },
       {
-        "colorante": "6",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
-        "colorante": "4",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       }
     ]
   },
@@ -50032,7 +50023,7 @@
   },
   {
     "codigo": "5S2-1",
-    "nombre": "English Channel Paste",
+    "nombre": "English Channel",
     "base": "Pastel Base",
     "pagina": 59,
     "cuartoDisponible": false,
@@ -50068,7 +50059,7 @@
   },
   {
     "codigo": "5S3-3",
-    "nombre": "Languishing Lilac l Base Paste",
+    "nombre": "Languishing Lilac",
     "base": "Pastel Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -50104,7 +50095,7 @@
   },
   {
     "codigo": "5T1-7",
-    "nombre": "Iris Bud l Base",
+    "nombre": "Iris Bud",
     "base": "Deep Base",
     "pagina": 59,
     "cuartoDisponible": true,
@@ -50257,7 +50248,7 @@
   },
   {
     "codigo": "5T2-1",
-    "nombre": "Royal Touch Paste",
+    "nombre": "Royal Touch",
     "base": "Pastel Base",
     "pagina": 60,
     "cuartoDisponible": false,
@@ -50293,7 +50284,7 @@
   },
   {
     "codigo": "5T3-3",
-    "nombre": "Superstition l Base Paste",
+    "nombre": "Superstition",
     "base": "Pastel Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50329,7 +50320,7 @@
   },
   {
     "codigo": "4S1-7",
-    "nombre": "Languishing Lavender l Base",
+    "nombre": "Languishing Lavender",
     "base": "Deep Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50365,7 +50356,7 @@
   },
   {
     "codigo": "5T2-2",
-    "nombre": "Sheer Poetry Paste",
+    "nombre": "Sheer Poetry",
     "base": "Pastel Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50401,7 +50392,7 @@
   },
   {
     "codigo": "5T3-5",
-    "nombre": "Lined with Lavender l Base",
+    "nombre": "Lined with Lavender",
     "base": "Tint Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50437,7 +50428,7 @@
   },
   {
     "codigo": "4S1-8",
-    "nombre": "Queen's Quest Base",
+    "nombre": "Queen's Quest",
     "base": "Accent Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50626,7 +50617,7 @@
   },
   {
     "codigo": "5T3-8",
-    "nombre": "Irresistible Iris Base",
+    "nombre": "Irresistible Iris",
     "base": "Accent Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50671,7 +50662,7 @@
   },
   {
     "codigo": "4S2-2",
-    "nombre": "Glimpse of Lavender Base",
+    "nombre": "Glimpse of Lavender",
     "base": "Pastel Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50718,8 +50709,8 @@
         "cuartoOz": -0.6666666666666666,
         "galon": "-2Y32",
         "galonOz": -2.6666666666666665,
-        "cubeta5gal": "-13Y1",
-        "cubeta5galOz": -13.020833333333334
+        "cubeta5gal": "-13Y16",
+        "cubeta5galOz": -13.333333333333334
       },
       {
         "colorante": "I",
@@ -50736,8 +50727,8 @@
         "cuartoOz": -0.8333333333333334,
         "galon": "-3Y16",
         "galonOz": -3.3333333333333335,
-        "cubeta5gal": "-16Y3",
-        "cubeta5galOz": -16.0625
+        "cubeta5gal": "-16Y32",
+        "cubeta5galOz": -16.666666666666668
       },
       {
         "colorante": "KX",
@@ -50745,8 +50736,8 @@
         "cuartoOz": -1.3645833333333333,
         "galon": "-5Y22",
         "galonOz": -5.458333333333333,
-        "cubeta5gal": "-27Y",
-        "cubeta5galOz": -27
+        "cubeta5gal": "-27Y14",
+        "cubeta5galOz": -27.291666666666668
       }
     ]
   },
@@ -50758,13 +50749,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "6",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
         "colorante": "L",
@@ -50776,13 +50767,13 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "R",
-        "cuartoOz": null,
-        "galon": "R",
-        "galonOz": null,
-        "cubeta5gal": "R",
-        "cubeta5galOz": null
+        "colorante": "R",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       }
     ]
   },
@@ -50824,7 +50815,7 @@
   },
   {
     "codigo": "5T2-8",
-    "nombre": "Persian Purple Accen",
+    "nombre": "Persian Purple",
     "base": "Accent Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -50835,8 +50826,8 @@
         "cuartoOz": -1.1770833333333333,
         "galon": "-4Y34",
         "galonOz": -4.708333333333333,
-        "cubeta5gal": "-23Y2",
-        "cubeta5galOz": -23.041666666666668
+        "cubeta5gal": "-23Y26",
+        "cubeta5galOz": -23.541666666666668
       },
       {
         "colorante": "I",
@@ -50853,8 +50844,8 @@
         "cuartoOz": -1.34375,
         "galon": "-5Y18",
         "galonOz": -5.375,
-        "cubeta5gal": "-26Y4",
-        "cubeta5galOz": -26.083333333333332
+        "cubeta5gal": "-26Y42",
+        "cubeta5galOz": -26.875
       },
       {
         "colorante": "KX",
@@ -50862,26 +50853,26 @@
         "cuartoOz": -0.3333333333333333,
         "galon": "-1Y16",
         "galonOz": -1.3333333333333333,
-        "cubeta5gal": "-6Y3",
-        "cubeta5galOz": -6.0625
+        "cubeta5gal": "-6Y32",
+        "cubeta5galOz": -6.666666666666667
       }
     ]
   },
   {
     "codigo": "4S1-2",
-    "nombre": "Periwinkle Promise t Base Paste",
+    "nombre": "Periwinkle Promise",
     "base": "Pastel Base",
     "pagina": 60,
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "6",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-3",
+        "cuartoOz": -0.0625,
+        "galon": "-12",
+        "galonOz": -0.25,
+        "cubeta5gal": "-1Y12",
+        "cubeta5galOz": -1.25
       },
       {
         "colorante": "L",
@@ -50893,19 +50884,19 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "2",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-2",
+        "cuartoOz": -0.041666666666666664,
+        "galon": "-8",
+        "galonOz": -0.16666666666666666,
+        "cubeta5gal": "-40",
+        "cubeta5galOz": -0.8333333333333334
       }
     ]
   },
   {
     "codigo": "4S2-5",
-    "nombre": "Lavender Splash l Base",
+    "nombre": "Lavender Splash",
     "base": "Tint Base",
     "pagina": 60,
     "cuartoDisponible": true,
@@ -51283,7 +51274,7 @@
   },
   {
     "codigo": "4S3-2",
-    "nombre": "Peony Place Paste",
+    "nombre": "Peony Place",
     "base": "Pastel Base",
     "pagina": 61,
     "cuartoDisponible": true,
@@ -51319,7 +51310,7 @@
   },
   {
     "codigo": "3T1-5",
-    "nombre": "French Violet l Base",
+    "nombre": "French Violet",
     "base": "Tint Base",
     "pagina": 61,
     "cuartoDisponible": true,
@@ -51355,7 +51346,7 @@
   },
   {
     "codigo": "3T2-8",
-    "nombre": "Passionate Purple Base",
+    "nombre": "Passionate Purple",
     "base": "Accent Base",
     "pagina": 61,
     "cuartoDisponible": true,
@@ -51465,8 +51456,8 @@
         "cuartoOz": -1.09375,
         "galon": "-4Y18",
         "galonOz": -4.375,
-        "cubeta5gal": "-21Y4",
-        "cubeta5galOz": -21.083333333333332
+        "cubeta5gal": "-21Y42",
+        "cubeta5galOz": -21.875
       }
     ]
   },
@@ -51496,8 +51487,8 @@
         "cubeta5galOz": -0.5729166666666666
       },
       {
-        "colorante": "2",
-        "cuarto": "Formula",
+        "colorante": "V",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-5.5",
         "galonOz": -0.11458333333333333,
@@ -51573,8 +51564,8 @@
         "cuartoOz": -1.71875,
         "galon": "-6Y42",
         "galonOz": -6.875,
-        "cubeta5gal": "-34Y1",
-        "cubeta5galOz": -34.020833333333336
+        "cubeta5gal": "-34Y18",
+        "cubeta5galOz": -34.375
       },
       {
         "colorante": "KX",
@@ -51582,8 +51573,8 @@
         "cuartoOz": -0.3645833333333333,
         "galon": "-1Y22",
         "galonOz": -1.4583333333333333,
-        "cubeta5gal": "-7Y1",
-        "cubeta5galOz": -7.020833333333333
+        "cubeta5gal": "-7Y14",
+        "cubeta5galOz": -7.291666666666667
       }
     ]
   },
@@ -51613,13 +51604,13 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "8",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-4",
+        "cuartoOz": -0.08333333333333333,
+        "galon": "-16",
+        "galonOz": -0.3333333333333333,
+        "cubeta5gal": "-1Y32",
+        "cubeta5galOz": -1.6666666666666665
       }
     ]
   },
@@ -51645,8 +51636,8 @@
         "cuartoOz": -0.6875,
         "galon": "-2Y36",
         "galonOz": -2.75,
-        "cubeta5gal": "-13Y3",
-        "cubeta5galOz": -13.0625
+        "cubeta5gal": "-13Y36",
+        "cubeta5galOz": -13.75
       },
       {
         "colorante": "V",
@@ -51654,8 +51645,8 @@
         "cuartoOz": -0.9166666666666666,
         "galon": "-3Y32",
         "galonOz": -3.6666666666666665,
-        "cubeta5gal": "-18Y1",
-        "cubeta5galOz": -18.020833333333332
+        "cubeta5gal": "-18Y16",
+        "cubeta5galOz": -18.333333333333332
       }
     ]
   },
@@ -51676,22 +51667,22 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "6",
-        "cuarto": "L",
-        "cuartoOz": null,
-        "galon": "L",
-        "galonOz": null,
-        "cubeta5gal": "L",
-        "cubeta5galOz": null
+        "colorante": "L",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
-        "colorante": "6",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       }
     ]
   },
@@ -51744,8 +51735,8 @@
         "cuartoOz": -1.3958333333333333,
         "galon": "-5Y28",
         "galonOz": -5.583333333333333,
-        "cubeta5gal": "-27Y4",
-        "cubeta5galOz": -27.083333333333332
+        "cubeta5gal": "-27Y44",
+        "cubeta5galOz": -27.916666666666668
       },
       {
         "colorante": "I",
@@ -51771,8 +51762,8 @@
         "cuartoOz": -0.28125,
         "galon": "-1Y6",
         "galonOz": -1.125,
-        "cubeta5gal": "-5Y3",
-        "cubeta5galOz": -5.0625
+        "cubeta5gal": "-5Y30",
+        "cubeta5galOz": -5.625
       }
     ]
   },
@@ -51784,13 +51775,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "4",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1.5",
+        "cuartoOz": -0.03125,
+        "galon": "-6",
+        "galonOz": -0.125,
+        "cubeta5gal": "-30",
+        "cubeta5galOz": -0.625
       },
       {
         "colorante": "I",
@@ -52023,8 +52014,8 @@
         "cuartoOz": -0.6354166666666666,
         "galon": "-2Y26",
         "galonOz": -2.5416666666666665,
-        "cubeta5gal": "-12Y3",
-        "cubeta5galOz": -12.0625
+        "cubeta5gal": "-12Y34",
+        "cubeta5galOz": -12.708333333333334
       }
     ]
   },
@@ -52054,13 +52045,13 @@
         "cubeta5galOz": -2.9166666666666665
       },
       {
-        "colorante": "4",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1Y34.5",
+        "cuartoOz": -1.71875,
+        "galon": "-6Y42",
+        "galonOz": -6.875,
+        "cubeta5gal": "-34Y18",
+        "cubeta5galOz": -34.375
       },
       {
         "colorante": "KX",
@@ -52257,8 +52248,8 @@
         "cuartoOz": -0.6145833333333334,
         "galon": "-2Y22",
         "galonOz": -2.4583333333333335,
-        "cubeta5gal": "-12Y1",
-        "cubeta5galOz": -12.020833333333334
+        "cubeta5gal": "-12Y14",
+        "cubeta5galOz": -12.291666666666666
       }
     ]
   },
@@ -52288,13 +52279,13 @@
         "cubeta5galOz": -0.20833333333333334
       },
       {
-        "colorante": "4",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-1Y45",
+        "cuartoOz": -1.9375,
+        "galon": "-7Y36",
+        "galonOz": -7.75,
+        "cubeta5gal": "-38Y36",
+        "cubeta5galOz": -38.75
       },
       {
         "colorante": "KX",
@@ -52374,8 +52365,8 @@
         "cuartoOz": -1.09375,
         "galon": "-4Y18",
         "galonOz": -4.375,
-        "cubeta5gal": "-21Y4",
-        "cubeta5galOz": -21.083333333333332
+        "cubeta5gal": "-21Y42",
+        "cubeta5galOz": -21.875
       },
       {
         "colorante": "KX",
@@ -52383,8 +52374,8 @@
         "cuartoOz": -1.4895833333333333,
         "galon": "-5Y46",
         "galonOz": -5.958333333333333,
-        "cubeta5gal": "-29Y",
-        "cubeta5galOz": -29
+        "cubeta5gal": "-29Y38",
+        "cubeta5galOz": -29.791666666666668
       }
     ]
   },
@@ -52412,15 +52403,6 @@
         "galonOz": -0.21875,
         "cubeta5gal": "-1Y4.5",
         "cubeta5galOz": -1.09375
-      },
-      {
-        "colorante": "2",
-        "cuarto": "Formula",
-        "cuartoOz": null,
-        "galon": null,
-        "galonOz": null,
-        "cubeta5gal": null,
-        "cubeta5galOz": null
       }
     ]
   },
@@ -52473,8 +52455,8 @@
         "cuartoOz": -0.59375,
         "galon": "-2Y18",
         "galonOz": -2.375,
-        "cubeta5gal": "-11Y4",
-        "cubeta5galOz": -11.083333333333334
+        "cubeta5gal": "-11Y42",
+        "cubeta5galOz": -11.875
       },
       {
         "colorante": "F",
@@ -52491,8 +52473,8 @@
         "cuartoOz": -1.5104166666666665,
         "galon": "-6Y2",
         "galonOz": -6.041666666666667,
-        "cubeta5gal": "-30Y1",
-        "cubeta5galOz": -30.020833333333332
+        "cubeta5gal": "-30Y10",
+        "cubeta5galOz": -30.208333333333332
       },
       {
         "colorante": "KX",
@@ -52500,8 +52482,8 @@
         "cuartoOz": -0.8645833333333334,
         "galon": "-3Y22",
         "galonOz": -3.4583333333333335,
-        "cubeta5gal": "-17Y",
-        "cubeta5galOz": -17
+        "cubeta5gal": "-17Y14",
+        "cubeta5galOz": -17.291666666666668
       }
     ]
   },
@@ -52513,13 +52495,13 @@
     "cuartoDisponible": true,
     "colorantes": [
       {
-        "colorante": "2",
-        "cuarto": "E",
-        "cuartoOz": null,
-        "galon": "E",
-        "galonOz": null,
-        "cubeta5gal": "E",
-        "cubeta5galOz": null
+        "colorante": "E",
+        "cuarto": "-1",
+        "cuartoOz": -0.020833333333333332,
+        "galon": "-4",
+        "galonOz": -0.08333333333333333,
+        "cubeta5gal": "-20",
+        "cubeta5galOz": -0.4166666666666667
       },
       {
         "colorante": "L",
@@ -52531,13 +52513,13 @@
         "cubeta5galOz": -0.4166666666666667
       },
       {
-        "colorante": "0",
-        "cuarto": "V",
-        "cuartoOz": null,
-        "galon": "V",
-        "galonOz": null,
-        "cubeta5gal": "V",
-        "cubeta5galOz": null
+        "colorante": "V",
+        "cuarto": "-6",
+        "cuartoOz": -0.125,
+        "galon": "-24",
+        "galonOz": -0.5,
+        "cubeta5gal": "-2Y24",
+        "cubeta5galOz": -2.5
       }
     ]
   },
@@ -52786,7 +52768,7 @@
   },
   {
     "codigo": "2T3-3",
-    "nombre": "Amur Lilac Base Paste",
+    "nombre": "Amur Lilac",
     "base": "Pastel Base",
     "pagina": 62,
     "cuartoDisponible": true,
@@ -52822,7 +52804,7 @@
   },
   {
     "codigo": "1A1-7",
-    "nombre": "Plumeria l Base",
+    "nombre": "Plumeria",
     "base": "Accent Base",
     "pagina": 62,
     "cuartoDisponible": true,
@@ -52923,8 +52905,8 @@
         "cuartoOz": -0.6979166666666666,
         "galon": "-2Y38",
         "galonOz": -2.7916666666666665,
-        "cubeta5gal": "-13Y4",
-        "cubeta5galOz": -13.083333333333334
+        "cubeta5gal": "-13Y46",
+        "cubeta5galOz": -13.958333333333334
       }
     ]
   },
@@ -52954,13 +52936,13 @@
         "cubeta5galOz": -41.458333333333336
       },
       {
-        "colorante": "6",
-        "cuarto": "KX",
-        "cuartoOz": null,
-        "galon": "KX",
-        "galonOz": null,
-        "cubeta5gal": "KX",
-        "cubeta5galOz": null
+        "colorante": "KX",
+        "cuarto": "-31",
+        "cuartoOz": -0.6458333333333334,
+        "galon": "-2Y28",
+        "galonOz": -2.5833333333333335,
+        "cubeta5gal": "-12Y44",
+        "cubeta5galOz": -12.916666666666666
       }
     ]
   },
@@ -52986,8 +52968,8 @@
         "cuartoOz": null,
         "galon": "-11.5",
         "galonOz": -0.23958333333333334,
-        "cubeta5gal": "-1Y9.",
-        "cubeta5galOz": null
+        "cubeta5gal": "-1Y9.5",
+        "cubeta5galOz": -1.1979166666666667
       }
     ]
   },
@@ -53008,8 +52990,8 @@
         "cubeta5galOz": -0.3645833333333333
       },
       {
-        "colorante": "5",
-        "cuarto": "Quart",
+        "colorante": "L",
+        "cuarto": null,
         "cuartoOz": null,
         "galon": "-0.5",
         "galonOz": -0.010416666666666666,
@@ -53191,7 +53173,7 @@
   },
   {
     "codigo": "1A3-8",
-    "nombre": "Pleased as Punch Base",
+    "nombre": "Pleased as Punch",
     "base": "Accent Base",
     "pagina": 63,
     "cuartoDisponible": true,

@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../colores/data/color_model.dart';
 import '../../../colores/providers/colores_provider.dart';
-import '../../../clientes/data/cliente_model.dart';
-import '../../../clientes/providers/clientes_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import 'buscar_formula_screen.dart';
 
@@ -12,11 +10,12 @@ import 'buscar_formula_screen.dart';
 /// directo en la pantalla de inicio del celular/tablet (ver el link con
 /// "?formulas=1" en main.dart, que hace justo eso: se salta el AuthGate
 /// entero). Lo principal es buscar fórmulas del libro Color Codex; también
-/// deja buscar en Registro de Colores y Clientes desde acá mismo, sin tener
-/// que abrir el sistema completo. Se conecta a Firestore igual que el
-/// sistema (las reglas de Firestore ya son abiertas para toda la app, no
-/// hay una capa de seguridad nueva que romper acá) pero no pasa por el
-/// AuthGate ni pide código/clave.
+/// deja buscar en Registro de Colores desde acá mismo, sin tener que abrir
+/// el sistema completo. A propósito NO incluye Clientes -no hace falta para
+/// esto y expondría datos de clientes sin login-. Se conecta a Firestore
+/// igual que el sistema (las reglas de Firestore ya son abiertas para toda
+/// la app, no hay una capa de seguridad nueva que romper acá) pero no pasa
+/// por el AuthGate ni pide código/clave.
 class FormulasKioskScreen extends StatefulWidget {
   const FormulasKioskScreen({super.key});
 
@@ -30,7 +29,7 @@ class _FormulasKioskScreenState extends State<FormulasKioskScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -72,7 +71,6 @@ class _FormulasKioskScreenState extends State<FormulasKioskScreen> with SingleTi
                     tabs: const [
                       Tab(text: 'Fórmulas'),
                       Tab(text: 'Colores'),
-                      Tab(text: 'Clientes'),
                     ],
                   ),
                 ],
@@ -84,7 +82,6 @@ class _FormulasKioskScreenState extends State<FormulasKioskScreen> with SingleTi
                 children: const [
                   BuscarFormulaScreen(esDialogo: false),
                   _BuscarColoresKiosk(),
-                  _BuscarClientesKiosk(),
                 ],
               ),
             ),
@@ -115,28 +112,31 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
   @override
   Widget build(BuildContext context) {
     final coloresAsync = ref.watch(coloresStreamProvider);
-    return Padding(
+    // Un solo scroll de la pantalla completa (buscador + resultados juntos):
+    // nada de buscador fijo arriba con solo la lista scrolleando abajo.
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _campoBusqueda(_ctrl, 'Código, cliente, descripción o ubicación...', (v) => setState(() => _busqueda = v.trim())),
           const SizedBox(height: 12),
-          Expanded(
-            child: coloresAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-              error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
-              data: (colores) {
-                if (_busqueda.isEmpty) return _estadoVacio('Escribí para buscar en Registro de Colores');
-                final resultados = colores.where((c) => coincideFuzzy(c.textoBusqueda, _busqueda)).toList();
-                if (resultados.isEmpty) return _estadoVacio('Sin resultados para "$_busqueda"');
-                return ListView.separated(
-                  itemCount: resultados.length,
-                  separatorBuilder: (context, i) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => _tarjetaColor(resultados[i]),
-                );
-              },
-            ),
+          coloresAsync.when(
+            loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+            error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+            data: (colores) {
+              if (_busqueda.isEmpty) return _estadoVacio('Escribí para buscar en Registro de Colores');
+              final resultados = colores.where((c) => coincideFuzzy(c.textoBusqueda, _busqueda)).toList();
+              if (resultados.isEmpty) return _estadoVacio('Sin resultados para "$_busqueda"');
+              return Column(
+                children: [
+                  for (final c in resultados) ...[
+                    _tarjetaColor(c),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -156,72 +156,6 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
           if (c.cliente.isNotEmpty) Text('Cliente: ${c.cliente}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           if (c.ubicacionFisica.isNotEmpty) Text('Ubicación: ${c.ubicacionFisica}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
           if (c.pagina.isNotEmpty) Text('Página: ${c.pagina}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-        ],
-      ),
-    );
-  }
-}
-
-class _BuscarClientesKiosk extends ConsumerStatefulWidget {
-  const _BuscarClientesKiosk();
-
-  @override
-  ConsumerState<_BuscarClientesKiosk> createState() => _BuscarClientesKioskState();
-}
-
-class _BuscarClientesKioskState extends ConsumerState<_BuscarClientesKiosk> {
-  final _ctrl = TextEditingController();
-  String _busqueda = '';
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesStreamProvider);
-    return Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _campoBusqueda(_ctrl, 'Nombre, DNI o teléfono...', (v) => setState(() => _busqueda = v.trim())),
-          const SizedBox(height: 12),
-          Expanded(
-            child: clientesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-              error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
-              data: (clientes) {
-                if (_busqueda.isEmpty) return _estadoVacio('Escribí para buscar en Clientes');
-                final resultados = clientes.where((c) => coincideFuzzy(c.textoBusqueda, _busqueda)).toList();
-                if (resultados.isEmpty) return _estadoVacio('Sin resultados para "$_busqueda"');
-                return ListView.separated(
-                  itemCount: resultados.length,
-                  separatorBuilder: (context, i) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => _tarjetaCliente(resultados[i]),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tarjetaCliente(ClienteModel c) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
-          if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-          if (c.telefono.isNotEmpty) Text('Tel: ${c.telefono}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-          if (c.direccion.isNotEmpty) Text(c.direccion, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
         ],
       ),
     );

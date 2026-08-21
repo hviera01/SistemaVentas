@@ -11,6 +11,11 @@ import '../../../../core/utils/texto_utils.dart';
 /// Colores (botón "Buscar Fórmula") o desde la app de consulta rápida sin
 /// login (ver FormulasKioskScreen) -por eso no depende de nada de sesión ni
 /// de Firestore, todo sale del asset local (ver formulas_colortrend_provider).
+///
+/// Todo va en un solo SingleChildScrollView de la pantalla completa -nada
+/// de buscador fijo arriba con solo el resultado scrolleando abajo-, para
+/// que deslizar desde cualquier parte mueva la pantalla entera y se
+/// aproveche el espacio real disponible.
 class BuscarFormulaScreen extends ConsumerStatefulWidget {
   final bool esDialogo;
   const BuscarFormulaScreen({super.key, this.esDialogo = true});
@@ -37,7 +42,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
     final contenido = LayoutBuilder(
       builder: (context, constraints) {
         final esMovil = constraints.maxWidth < 760;
-        return Padding(
+        return SingleChildScrollView(
           padding: EdgeInsets.all(esMovil ? 14 : 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,13 +104,14 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: formulasAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                  error: (e, st) => Center(child: Text('No se pudo cargar el libro de fórmulas: $e', style: GoogleFonts.poppins(color: Colors.red))),
-                  data: (formulas) {
-                    if (_busqueda.isEmpty) {
-                      return Center(
+              formulasAsync.when(
+                loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+                error: (e, st) => Center(child: Text('No se pudo cargar el libro de fórmulas: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                data: (formulas) {
+                  if (_busqueda.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -114,48 +120,49 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                             Text('Escribí un código, nombre o base para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                           ],
                         ),
+                      ),
+                    );
+                  }
+                  final resultados = formulas.where((f) => coincideFuzzy(f.textoBusqueda, _busqueda)).toList()
+                    ..sort((a, b) => a.codigo.compareTo(b.codigo));
+
+                  if (resultados.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: Colors.grey.shade500))),
+                    );
+                  }
+
+                  if (esMovil) {
+                    if (_seleccionada != null) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => setState(() => _seleccionada = null),
+                            icon: const Icon(Icons.arrow_back, size: 16),
+                            label: Text('Ver lista (${resultados.length})', style: GoogleFonts.poppins(fontSize: 12.5)),
+                          ),
+                          FormulaDetalleCard(formula: _seleccionada!),
+                        ],
                       );
                     }
-                    final resultados = formulas.where((f) => coincideFuzzy(f.textoBusqueda, _busqueda)).toList()
-                      ..sort((a, b) => a.codigo.compareTo(b.codigo));
+                    return _listaResultados(resultados);
+                  }
 
-                    if (resultados.isEmpty) {
-                      return Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: Colors.grey.shade500)));
-                    }
-
-                    if (esMovil) {
-                      if (_seleccionada != null) {
-                        return SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () => setState(() => _seleccionada = null),
-                                icon: const Icon(Icons.arrow_back, size: 16),
-                                label: Text('Ver lista (${resultados.length})', style: GoogleFonts.poppins(fontSize: 12.5)),
-                              ),
-                              FormulaDetalleCard(formula: _seleccionada!),
-                            ],
-                          ),
-                        );
-                      }
-                      return _listaResultados(resultados, esMovil);
-                    }
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(width: 320, child: _listaResultados(resultados, esMovil)),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _seleccionada == null
-                              ? Center(child: Text('Elegí un color de la lista', style: GoogleFonts.poppins(color: Colors.grey.shade400)))
-                              : SingleChildScrollView(child: FormulaDetalleCard(formula: _seleccionada!)),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 320, child: _listaResultados(resultados)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _seleccionada == null
+                            ? Padding(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('Elegí un color de la lista', style: GoogleFonts.poppins(color: Colors.grey.shade400))))
+                            : FormulaDetalleCard(formula: _seleccionada!),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -169,23 +176,24 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
     return Container(color: const Color(0xFFF2F3F7), child: contenido);
   }
 
-  Widget _listaResultados(List<FormulaColortrendModel> resultados, bool esMovil) {
+  // Column simple, sin ListView propio: vive dentro del scroll único de la
+  // pantalla completa (ver el comentario grande arriba de la clase).
+  Widget _listaResultados(List<FormulaColortrendModel> resultados) {
     return Container(
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        itemCount: resultados.length,
-        separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-        itemBuilder: (context, i) {
-          final f = resultados[i];
-          return ListTile(
-            dense: true,
-            title: Text('${f.codigo}  ·  ${f.nombre}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-            subtitle: Text('${f.base} · pág. ${f.pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () => setState(() => _seleccionada = f),
-          );
-        },
+      child: Column(
+        children: [
+          for (var i = 0; i < resultados.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+            ListTile(
+              dense: true,
+              title: Text('${resultados[i].codigo}  ·  ${resultados[i].nombre}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+              subtitle: Text('${resultados[i].base} · pág. ${resultados[i].pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => setState(() => _seleccionada = resultados[i]),
+            ),
+          ],
+        ],
       ),
     );
   }
