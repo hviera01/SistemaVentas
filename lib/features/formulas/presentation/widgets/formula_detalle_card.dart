@@ -12,32 +12,36 @@ import '../../data/formula_colortrend_model.dart';
 /// Tocar una unidad la muestra grande, centrada en pantalla (pedido
 /// explícito: "si toco la card de Galón se pone en grande en el centro").
 ///
-/// Las cantidades se muestran en la notación de la dispensadora física
-/// -entero + 48avos-, calculada a partir del valor ya convertido y
-/// verificado (ver FormulaColortrendModel: cruzado matemáticamente contra
-/// las relaciones Cuarto×4=Galón y Galón×5=Cubeta de cientos de fórmulas
-/// del propio libro). Formato "enteroY48avos" (ej. "1Y46") cuando el
-/// entero es 1 o más; "0.48avosY" (ej. "0.10Y") cuando el entero es 0 -
-/// pedido explícito, para que un valor chico no arranque con un "0Y" que
-/// se confunde de un vistazo-. Cuando el libro no trae fórmula de Cuarto
-/// (dice literal "No Quart Formula"), se muestra un estimado -Galón ÷ 4-
-/// marcado bien claro como estimado, no como dato real del libro.
+/// Las cantidades se muestran TAL CUAL las imprime el libro físico (texto
+/// crudo del PDF, ej. "6", "0.5" o "1Y42" -pedido explícito: no
+/// recalcularlas, para no arriesgar un error de conversión en un dato tan
+/// delicado-. La única cantidad que SÍ se calcula es el estimado de Cuarto
+/// cuando el libro no trae esa presentación (dice literal "No Quart
+/// Formula"): se aproxima como Galón ÷ 4 y se formatea igual que el libro
+/// -"enteroY48avos" (ej. "1Y46") si el entero es 1 o más, el número de
+/// 48avos tal cual (ej. "6", "4.5") si el entero es 0-, marcado bien claro
+/// como estimado, no como dato real del libro.
 class FormulaDetalleCard extends StatelessWidget {
   final FormulaColortrendModel formula;
 
   const FormulaDetalleCard({super.key, required this.formula});
 
-  static String formatoY(double? oz) {
+  static String _numeroSinCerosDeMas(double n) {
+    return n == n.roundToDouble() ? n.toInt().toString() : n.toString();
+  }
+
+  static String formatoEstimado(double? oz) {
     if (oz == null) return '—';
-    final abs = oz.abs();
-    var entero = abs.floor();
-    var avos = ((abs - entero) * 48).round();
+    var entero = oz.abs().floor();
+    // Precisión de medio 48avo -misma que usa el libro en sus propios
+    // valores impresos, ej. "4.5" o "1Y20.5"-.
+    var avos = (((oz.abs() - entero) * 48) * 2).round() / 2;
     if (avos >= 48) {
       entero += 1;
       avos -= 48;
     }
-    if (entero == 0) return '0.${avos.toString().padLeft(2, '0')}Y';
-    return '${entero}Y$avos';
+    if (entero == 0) return _numeroSinCerosDeMas(avos);
+    return '${entero}Y${_numeroSinCerosDeMas(avos)}';
   }
 
   void _abrirUnidadGrande(BuildContext context, String etiqueta, List<(String tinte, String valor, bool esEstimado)> filas) {
@@ -157,9 +161,9 @@ class FormulaDetalleCard extends StatelessWidget {
             builder: (context, constraints) {
               final tresEnFila = constraints.maxWidth >= 620;
               final tarjetas = [
-                _tarjetaUnidad(context, 'CUARTO', (c) => f.cuartoDisponible ? formatoY(c.cuartoOz) : null, estimado: !f.cuartoDisponible, estimadoValor: (c) => c.galonOz != null ? '≈ ${formatoY(c.galonOz! / 4)}' : '—'),
-                _tarjetaUnidad(context, 'GALÓN', (c) => formatoY(c.galonOz)),
-                _tarjetaUnidad(context, 'CUBETA 5 GAL.', (c) => formatoY(c.cubeta5galOz)),
+                _tarjetaUnidad(context, 'CUARTO', (c) => f.cuartoDisponible ? c.cuarto : null, estimado: !f.cuartoDisponible, estimadoValor: (c) => c.galonOz != null ? '≈ ${formatoEstimado(c.galonOz! / 4)}' : '—'),
+                _tarjetaUnidad(context, 'GALÓN', (c) => c.galon),
+                _tarjetaUnidad(context, 'CUBETA 5 GAL.', (c) => c.cubeta5gal),
               ];
               if (tresEnFila) {
                 return IntrinsicHeight(
