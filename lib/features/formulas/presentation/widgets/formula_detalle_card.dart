@@ -9,35 +9,25 @@ import '../../data/formula_colortrend_model.dart';
 /// un Galón", sin ir saltando de tarjeta en tarjeta por cada tinte). En
 /// escritorio ancho las 3 unidades van una al lado de la otra, sin scroll;
 /// en pantalla angosta (o si no entran las 3 de lado a lado) se apilan.
-/// Tocar una unidad la agranda un poco -sin ocultar las otras dos, solo les
-/// da menos espacio- para leerla más cómodo.
+/// Tocar una unidad la muestra grande, centrada en pantalla (pedido
+/// explícito: "si toco la card de Galón se pone en grande en el centro").
 ///
-/// Las cantidades se muestran en la MISMA notación del libro y de la
-/// dispensadora física -entero + 48avos ("1Y47"), no en onzas decimales-,
-/// calculada a partir del valor ya convertido y verificado (ver
-/// FormulaColortrendModel: cruzado matemáticamente contra las relaciones
-/// Cuarto×4=Galón y Galón×5=Cubeta de cientos de fórmulas del propio libro).
-/// Cuando el libro no trae fórmula de Cuarto (dice literal "No Quart
-/// Formula"), se muestra un estimado -Galón ÷ 4- marcado bien claro como
-/// estimado, no como dato real del libro.
-class FormulaDetalleCard extends StatefulWidget {
+/// Las cantidades se muestran en la notación de la dispensadora física
+/// -entero + 48avos-, calculada a partir del valor ya convertido y
+/// verificado (ver FormulaColortrendModel: cruzado matemáticamente contra
+/// las relaciones Cuarto×4=Galón y Galón×5=Cubeta de cientos de fórmulas
+/// del propio libro). Formato "enteroY48avos" (ej. "1Y46") cuando el
+/// entero es 1 o más; "0.48avosY" (ej. "0.10Y") cuando el entero es 0 -
+/// pedido explícito, para que un valor chico no arranque con un "0Y" que
+/// se confunde de un vistazo-. Cuando el libro no trae fórmula de Cuarto
+/// (dice literal "No Quart Formula"), se muestra un estimado -Galón ÷ 4-
+/// marcado bien claro como estimado, no como dato real del libro.
+class FormulaDetalleCard extends StatelessWidget {
   final FormulaColortrendModel formula;
 
   const FormulaDetalleCard({super.key, required this.formula});
 
-  @override
-  State<FormulaDetalleCard> createState() => _FormulaDetalleCardState();
-}
-
-enum _Unidad { cuarto, galon, cubeta }
-
-class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
-  _Unidad? _expandida;
-
-  /// Entero + 48avos, tal cual se lee en la dispensadora física (0 a 47 por
-  /// cada "Y") -pedido explícito: "entero.48avosY", no "enteroY48avos", ej.
-  /// 1.979166 oz -> "1.47Y" (1 entero, 47 de 48avos).
-  String _formatoY(double? oz) {
+  static String formatoY(double? oz) {
     if (oz == null) return '—';
     final abs = oz.abs();
     var entero = abs.floor();
@@ -46,12 +36,72 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
       entero += 1;
       avos -= 48;
     }
-    return '$entero.${avos.toString().padLeft(2, '0')}Y';
+    if (entero == 0) return '0.${avos.toString().padLeft(2, '0')}Y';
+    return '${entero}Y$avos';
+  }
+
+  void _abrirUnidadGrande(BuildContext context, String etiqueta, List<(String tinte, String valor, bool esEstimado)> filas) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 620),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(formula.codigo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(formula.nombre, style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis)),
+                      IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(etiqueta, style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF0F1B3D))),
+                  const SizedBox(height: 18),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          for (final (tinte, valor, esEstimado) in filas)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Row(
+                                children: [
+                                  Text(tinte, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w800)),
+                                  const Spacer(),
+                                  Text(
+                                    valor,
+                                    style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w800, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFFC62828)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final f = widget.formula;
+    final f = formula;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -107,9 +157,9 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
             builder: (context, constraints) {
               final tresEnFila = constraints.maxWidth >= 620;
               final tarjetas = [
-                _tarjetaUnidad(_Unidad.cuarto, 'CUARTO', (c) => f.cuartoDisponible ? _formatoY(c.cuartoOz) : null, estimado: !f.cuartoDisponible, estimadoValor: (c) => c.galonOz != null ? '≈ ${_formatoY(c.galonOz! / 4)}' : '—'),
-                _tarjetaUnidad(_Unidad.galon, 'GALÓN', (c) => _formatoY(c.galonOz)),
-                _tarjetaUnidad(_Unidad.cubeta, 'CUBETA 5 GAL.', (c) => _formatoY(c.cubeta5galOz)),
+                _tarjetaUnidad(context, 'CUARTO', (c) => f.cuartoDisponible ? formatoY(c.cuartoOz) : null, estimado: !f.cuartoDisponible, estimadoValor: (c) => c.galonOz != null ? '≈ ${formatoY(c.galonOz! / 4)}' : '—'),
+                _tarjetaUnidad(context, 'GALÓN', (c) => formatoY(c.galonOz)),
+                _tarjetaUnidad(context, 'CUBETA 5 GAL.', (c) => formatoY(c.cubeta5galOz)),
               ];
               if (tresEnFila) {
                 return IntrinsicHeight(
@@ -118,7 +168,7 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
                     children: [
                       for (var i = 0; i < tarjetas.length; i++) ...[
                         if (i > 0) const SizedBox(width: 10),
-                        Expanded(flex: _flexPara(_Unidad.values[i]), child: tarjetas[i]),
+                        Expanded(child: tarjetas[i]),
                       ],
                     ],
                   ),
@@ -139,31 +189,28 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
     );
   }
 
-  int _flexPara(_Unidad u) {
-    if (_expandida == null) return 1;
-    return _expandida == u ? 2 : 1;
-  }
-
   Widget _tarjetaUnidad(
-    _Unidad unidad,
+    BuildContext context,
     String etiqueta,
     String? Function(ColoranteFormula) valorDe, {
     bool estimado = false,
     String Function(ColoranteFormula)? estimadoValor,
   }) {
-    final expandida = _expandida == unidad;
+    final filas = [
+      for (final c in formula.colorantes)
+        (
+          c.colorante,
+          (estimado && valorDe(c) == null) ? (estimadoValor?.call(c) ?? '—') : (valorDe(c) ?? '—'),
+          estimado && valorDe(c) == null,
+        ),
+    ];
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => setState(() => _expandida = expandida ? null : unidad),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+      onTap: () => _abrirUnidadGrande(context, etiqueta, filas),
+      child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: expandida ? const Color(0xFFFCE9E9) : const Color(0xFFF8F9FB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: expandida ? const Color(0xFFC62828) : const Color(0xFFE0E2E8), width: expandida ? 1.4 : 1),
-        ),
+        decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE0E2E8))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -173,33 +220,26 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
                 Expanded(
                   child: Text(etiqueta, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF0F1B3D), letterSpacing: 0.3)),
                 ),
-                Icon(expandida ? Icons.unfold_less : Icons.unfold_more, size: 15, color: Colors.grey.shade400),
+                Icon(Icons.open_in_full, size: 14, color: Colors.grey.shade400),
               ],
             ),
             const SizedBox(height: 8),
-            for (final c in widget.formula.colorantes) ...[
+            for (final (tinte, valor, esEstimado) in filas)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   children: [
-                    SizedBox(width: expandida ? 50 : 40, child: Text(c.colorante, style: GoogleFonts.poppins(fontSize: expandida ? 14 : 12.5, fontWeight: FontWeight.w700))),
+                    SizedBox(width: 40, child: Text(tinte, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700))),
                     Expanded(
-                      child: (estimado && valorDe(c) == null)
-                          ? Text(
-                              estimadoValor?.call(c) ?? '—',
-                              textAlign: TextAlign.right,
-                              style: GoogleFonts.poppins(fontSize: expandida ? 14 : 12.5, fontWeight: FontWeight.w700, color: const Color(0xFFB45309)),
-                            )
-                          : Text(
-                              valorDe(c) ?? '—',
-                              textAlign: TextAlign.right,
-                              style: GoogleFonts.poppins(fontSize: expandida ? 14 : 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
-                            ),
+                      child: Text(
+                        valor,
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFF1A1A1A)),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
           ],
         ),
       ),
