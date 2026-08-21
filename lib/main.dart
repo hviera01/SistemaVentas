@@ -12,6 +12,7 @@ import 'core/widgets/splash_screen.dart';
 import 'core/widgets/imagen_producto_network.dart';
 import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 import 'features/formulas/presentation/screens/formulas_kiosk_screen.dart';
+import 'core/utils/kiosk_identidad.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,9 +63,13 @@ class SistemaVentasApp extends StatelessWidget {
     // login (ver FormulasKioskScreen), pensada como acceso directo aparte
     // en la pantalla de inicio del celular/tablet, no el sistema completo.
     final esKioskFormulas = Uri.base.queryParameters['formulas'] != null;
+    // Para que "Agregar a pantalla de inicio" instale esto como su propia
+    // app ("Fórmulas") en vez de mezclarse con el ícono de "Sistema
+    // Ventas" -ver kiosk_identidad_web.dart-.
+    if (esKioskFormulas) aplicarIdentidadKiosk();
 
     return MaterialApp(
-      title: 'Sistema Ventas',
+      title: esKioskFormulas ? 'Fórmulas · Super Color' : 'Sistema Ventas',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF0F1B3D),
