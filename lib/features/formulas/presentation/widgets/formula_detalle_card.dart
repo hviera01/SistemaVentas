@@ -82,7 +82,7 @@ class FormulaDetalleCard extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Text(tinte, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w800)),
-                                  const Spacer(),
+                                  const SizedBox(width: 14),
                                   Text(
                                     valor,
                                     style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w800, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFFC62828)),
@@ -233,11 +233,11 @@ class FormulaDetalleCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   children: [
-                    SizedBox(width: 40, child: Text(tinte, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700))),
-                    Expanded(
+                    Text(tinte, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    const SizedBox(width: 6),
+                    Flexible(
                       child: Text(
                         valor,
-                        textAlign: TextAlign.right,
                         style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFF1A1A1A)),
                       ),
                     ),
