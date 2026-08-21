@@ -25,6 +25,20 @@ jobs:
           channel: stable
       - run: flutter pub get
       - run: flutter build web --release --base-href /SistemaVentas/
+      # App "Fórmulas" -compilación de Flutter totalmente aparte (ver
+      # lib/main_formulas.dart), no una página que redirige a la principal:
+      # así el navegador nunca sale de /formulas/ y "Agregar a pantalla de
+      # inicio" instala esto como su propia app, con su propio ícono/nombre,
+      # en vez de mezclarse con "Sistema Ventas".
+      - run: flutter build web --release --target lib/main_formulas.dart --base-href /SistemaVentas/formulas/ -o build/web_formulas
+      - name: Identidad propia para la app de Fórmulas
+        run: |
+          cp .github/deploy/formulas_manifest.json build/web_formulas/manifest.json
+          sed -i 's#<title>SUPERCOLOR - Sistema de Ventas</title>#<title>Fórmulas · Super Color</title>#' build/web_formulas/index.html
+          sed -i 's#content="SUPERCOLOR"#content="Fórmulas"#' build/web_formulas/index.html
+          sed -i 's#content="Sistema de ventas, compras e inventario de SUPERCOLOR."#content="Buscador rápido de fórmulas Colortrend y Registro de Colores de Super Color."#' build/web_formulas/index.html
+          mkdir -p build/web/formulas
+          cp -r build/web_formulas/* build/web/formulas/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
