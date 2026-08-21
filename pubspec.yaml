@@ -96,6 +96,7 @@ flutter:
     - assets/images/logo.jpg
     - assets/images/logo_redondo.png
     - assets/images/fondo.jpg
+    - assets/data/formulas_colortrend.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -11,6 +11,7 @@ import 'core/widgets/app_shell.dart';
 import 'core/widgets/splash_screen.dart';
 import 'core/widgets/imagen_producto_network.dart';
 import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
+import 'features/formulas/presentation/screens/formulas_kiosk_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,10 @@ class SistemaVentasApp extends StatelessWidget {
     // completo y se va directo a la cámara: cualquier celular tiene que
     // poder ayudar a escanear sin necesitar una cuenta en el sistema.
     final codigoEscaneo = Uri.base.queryParameters['escanear'];
+    // Mismo mecanismo para "?formulas=1": la app de consulta rápida sin
+    // login (ver FormulasKioskScreen), pensada como acceso directo aparte
+    // en la pantalla de inicio del celular/tablet, no el sistema completo.
+    final esKioskFormulas = Uri.base.queryParameters['formulas'] != null;
 
     return MaterialApp(
       title: 'Sistema Ventas',
@@ -74,7 +79,9 @@ class SistemaVentasApp extends StatelessWidget {
       ],
       home: codigoEscaneo != null && codigoEscaneo.isNotEmpty
           ? EscaneoRemotoScreen(codigo: codigoEscaneo)
-          : const SplashScreen(siguiente: AuthGate()),
+          : esKioskFormulas
+              ? const FormulasKioskScreen()
+              : const SplashScreen(siguiente: AuthGate()),
     );
   }
 }
