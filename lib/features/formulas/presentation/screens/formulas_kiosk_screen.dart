@@ -109,6 +109,8 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
     super.dispose();
   }
 
+  void _buscar() => setState(() => _busqueda = _ctrl.text.trim());
+
   @override
   Widget build(BuildContext context) {
     final coloresAsync = ref.watch(coloresStreamProvider);
@@ -119,7 +121,7 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _campoBusqueda(_ctrl, 'Código, cliente, descripción o ubicación...', (v) => setState(() => _busqueda = v.trim())),
+          _campoBusqueda(_ctrl, 'Código, cliente, descripción o ubicación...', _buscar),
           const SizedBox(height: 12),
           coloresAsync.when(
             loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
@@ -162,25 +164,44 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
   }
 }
 
-Widget _campoBusqueda(TextEditingController ctrl, String hint, void Function(String) onChanged) {
-  return Container(
-    height: 48,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-    child: Row(
-      children: [
-        Icon(Icons.search, size: 20, color: Colors.grey.shade400),
-        const SizedBox(width: 10),
-        Expanded(
-          child: TextField(
-            controller: ctrl,
-            style: GoogleFonts.poppins(fontSize: 14),
-            decoration: InputDecoration(hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
-            onChanged: onChanged,
+// La búsqueda solo corre con Enter o el botón "Buscar" -no en cada tecla-,
+// mismo criterio que BuscarFormulaScreen.
+Widget _campoBusqueda(TextEditingController ctrl, String hint, VoidCallback onBuscar) {
+  return Row(
+    children: [
+      Expanded(
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+          child: Row(
+            children: [
+              Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: ctrl,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
+                  onSubmitted: (_) => onBuscar(),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
+      ),
+      const SizedBox(width: 10),
+      SizedBox(
+        height: 48,
+        child: FilledButton.icon(
+          onPressed: onBuscar,
+          icon: const Icon(Icons.search, size: 18),
+          label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+        ),
+      ),
+    ],
   );
 }
 

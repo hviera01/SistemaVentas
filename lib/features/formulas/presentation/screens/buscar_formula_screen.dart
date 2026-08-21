@@ -12,10 +12,13 @@ import '../../../../core/utils/texto_utils.dart';
 /// login (ver FormulasKioskScreen) -por eso no depende de nada de sesión ni
 /// de Firestore, todo sale del asset local (ver formulas_colortrend_provider).
 ///
-/// Todo va en un solo SingleChildScrollView de la pantalla completa -nada
-/// de buscador fijo arriba con solo el resultado scrolleando abajo-, para
-/// que deslizar desde cualquier parte mueva la pantalla entera y se
-/// aproveche el espacio real disponible.
+/// La búsqueda solo se ejecuta con Enter o el botón "Buscar" -no en cada
+/// tecla-, y tocar un resultado lo muestra en una ficha grande centrada en
+/// pantalla (showDialog) en vez de reemplazar la lista: así, si después se
+/// cambia de pestaña (ver FormulasKioskScreen), la búsqueda hecha acá sigue
+/// intacta -nunca se pierde ni se reemplaza por nada-, y todo va en un solo
+/// SingleChildScrollView de la pantalla completa (nada de buscador fijo
+/// arriba con solo la lista scrolleando abajo).
 class BuscarFormulaScreen extends ConsumerStatefulWidget {
   final bool esDialogo;
   const BuscarFormulaScreen({super.key, this.esDialogo = true});
@@ -27,12 +30,44 @@ class BuscarFormulaScreen extends ConsumerStatefulWidget {
 class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
   final _busquedaController = TextEditingController();
   String _busqueda = '';
-  FormulaColortrendModel? _seleccionada;
 
   @override
   void dispose() {
     _busquedaController.dispose();
     super.dispose();
+  }
+
+  void _buscar() => setState(() => _busqueda = _busquedaController.text.trim());
+
+  void _abrirFicha(FormulaColortrendModel f) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760, maxHeight: 640),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.only(top: 8),
+                child: FormulaDetalleCard(formula: f),
+              ),
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  elevation: 3,
+                  child: IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -41,7 +76,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
 
     final contenido = LayoutBuilder(
       builder: (context, constraints) {
-        final esMovil = constraints.maxWidth < 760;
+        final esMovil = constraints.maxWidth < 620;
         return SingleChildScrollView(
           padding: EdgeInsets.all(esMovil ? 14 : 24),
           child: Column(
@@ -59,49 +94,60 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                 Text('Buscar Fórmula', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
               const SizedBox(height: 6),
               Text(
-                'Libro Color Codex Formulas (Colortrend) — buscá por código, nombre o base.',
+                'Libro Color Codex Formulas (Colortrend) — buscá por código, nombre o base y apretá Enter o Buscar.',
                 style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 14),
-              Container(
-                height: 50,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, size: 20, color: Colors.grey.shade400),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _busquedaController,
-                        autofocus: !esMovil,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        textInputAction: TextInputAction.search,
-                        decoration: InputDecoration(
-                          hintText: 'Código, nombre o base del color...',
-                          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                        onChanged: (v) => setState(() {
-                          _busqueda = v.trim();
-                          _seleccionada = null;
-                        }),
-                        onSubmitted: (_) => setState(() {}),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+                      child: Row(
+                        children: [
+                          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _busquedaController,
+                              autofocus: !esMovil,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              textInputAction: TextInputAction.search,
+                              decoration: InputDecoration(
+                                hintText: 'Código, nombre o base del color...',
+                                hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onSubmitted: (_) => _buscar(),
+                            ),
+                          ),
+                          if (_busquedaController.text.isNotEmpty)
+                            IconButton(
+                              tooltip: 'Limpiar',
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => setState(() {
+                                _busqueda = '';
+                                _busquedaController.clear();
+                              }),
+                            ),
+                        ],
                       ),
                     ),
-                    if (_busqueda.isNotEmpty)
-                      IconButton(
-                        tooltip: 'Limpiar',
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => setState(() {
-                          _busqueda = '';
-                          _busquedaController.clear();
-                          _seleccionada = null;
-                        }),
-                      ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: _buscar,
+                      icon: const Icon(Icons.search, size: 18),
+                      label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               formulasAsync.when(
@@ -117,7 +163,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                           children: [
                             Icon(Icons.menu_book_outlined, size: 56, color: Colors.grey.shade300),
                             const SizedBox(height: 12),
-                            Text('Escribí un código, nombre o base para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                            Text('Escribí un código, nombre o base y apretá Enter o Buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                           ],
                         ),
                       ),
@@ -133,34 +179,22 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                     );
                   }
 
-                  if (esMovil) {
-                    if (_seleccionada != null) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () => setState(() => _seleccionada = null),
-                            icon: const Icon(Icons.arrow_back, size: 16),
-                            label: Text('Ver lista (${resultados.length})', style: GoogleFonts.poppins(fontSize: 12.5)),
+                  return Container(
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < resultados.length; i++) ...[
+                          if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                          ListTile(
+                            dense: true,
+                            title: Text('${resultados[i].codigo}  ·  ${resultados[i].nombre}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                            subtitle: Text('${resultados[i].base} · pág. ${resultados[i].pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                            trailing: const Icon(Icons.open_in_full, size: 16),
+                            onTap: () => _abrirFicha(resultados[i]),
                           ),
-                          FormulaDetalleCard(formula: _seleccionada!),
                         ],
-                      );
-                    }
-                    return _listaResultados(resultados);
-                  }
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 320, child: _listaResultados(resultados)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _seleccionada == null
-                            ? Padding(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('Elegí un color de la lista', style: GoogleFonts.poppins(color: Colors.grey.shade400))))
-                            : FormulaDetalleCard(formula: _seleccionada!),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
@@ -174,27 +208,5 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
       return Scaffold(backgroundColor: const Color(0xFFF2F3F7), body: SafeArea(child: contenido));
     }
     return Container(color: const Color(0xFFF2F3F7), child: contenido);
-  }
-
-  // Column simple, sin ListView propio: vive dentro del scroll único de la
-  // pantalla completa (ver el comentario grande arriba de la clase).
-  Widget _listaResultados(List<FormulaColortrendModel> resultados) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
-      child: Column(
-        children: [
-          for (var i = 0; i < resultados.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-            ListTile(
-              dense: true,
-              title: Text('${resultados[i].codigo}  ·  ${resultados[i].nombre}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: Text('${resultados[i].base} · pág. ${resultados[i].pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
-              trailing: const Icon(Icons.chevron_right, size: 18),
-              onTap: () => setState(() => _seleccionada = resultados[i]),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 }

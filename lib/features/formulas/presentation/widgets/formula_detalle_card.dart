@@ -34,8 +34,9 @@ enum _Unidad { cuarto, galon, cubeta }
 class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
   _Unidad? _expandida;
 
-  /// Entero + 48avos, tal cual se lee en el libro y en la dispensadora
-  /// (0 a 47 por cada "Y"): ej. 1.979166 oz -> "1Y47".
+  /// Entero + 48avos, tal cual se lee en la dispensadora física (0 a 47 por
+  /// cada "Y") -pedido explícito: "entero.48avosY", no "enteroY48avos", ej.
+  /// 1.979166 oz -> "1.47Y" (1 entero, 47 de 48avos).
   String _formatoY(double? oz) {
     if (oz == null) return '—';
     final abs = oz.abs();
@@ -45,7 +46,7 @@ class _FormulaDetalleCardState extends State<FormulaDetalleCard> {
       entero += 1;
       avos -= 48;
     }
-    return '${entero}Y$avos';
+    return '$entero.${avos.toString().padLeft(2, '0')}Y';
   }
 
   @override
