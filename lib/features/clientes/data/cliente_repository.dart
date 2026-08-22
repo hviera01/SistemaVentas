@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'cliente_model.dart';
+import '../../../core/utils/texto_utils.dart';
 
 class ClienteRepository {
   final _col = FirebaseFirestore.instance.collection('clientes');
@@ -16,7 +17,13 @@ class ClienteRepository {
     return ClienteModel.fromMap(snap.id, snap.data()!);
   }
 
-  Future<void> crear({
+  // Devuelve el ClienteModel recién creado (con su id real ya asignado por
+  // Firestore) -lo necesita, por ejemplo, "Crear cliente nuevo" desde
+  // BuscarClienteDialog (ver item 5 del pedido del dueño): tiene que poder
+  // vincular ese cliente a la venta en curso apenas se guarda, con el mismo
+  // Navigator.pop(context, cliente) que usa elegir uno ya existente, sin
+  // depender de que el stream de clientesStreamProvider ya lo haya traído.
+  Future<ClienteModel> crear({
     required String dni,
     required String nombreCompleto,
     required String direccion,
@@ -32,9 +39,16 @@ class ClienteRepository {
     }
     // Doc nuevo: no hay fechaUltimaCompra previa que pisar, así que acá sí
     // alcanza con toMap() completo (idReferidor sí es editable desde el
-    // formulario, a diferencia de fechaUltimaCompra).
-    final datos = ClienteModel(id: '', dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor).toMap();
-    await _col.add({...datos, 'fechaRegistro': FieldValue.serverTimestamp()});
+    // formulario, a diferencia de fechaUltimaCompra). 'nombreNormalizado'
+    // (mayúsculas/tildes/espacios de más colapsados) NO es parte de
+    // ClienteModel.toMap() -es un campo puramente interno para que
+    // VentaRepository._resolverIdCliente pueda encontrar este cliente por
+    // nombre sin depender de una igualdad EXACTA de string (ver item 8 del
+    // pedido del dueño: un cliente ya registrado con otra capitalización no
+    // calzaba y la venta terminaba "sin cliente" en el reporte).
+    final cliente = ClienteModel(id: '', dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor);
+    final doc = await _col.add({...cliente.toMap(), 'nombreNormalizado': normalizarNombreCliente(nombreCompleto), 'fechaRegistro': FieldValue.serverTimestamp()});
+    return ClienteModel(id: doc.id, dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor);
   }
 
   Future<void> actualizar({
@@ -65,6 +79,7 @@ class ClienteRepository {
     await _col.doc(id).update({
       'dni': dni,
       'nombreCompleto': nombreCompleto,
+      'nombreNormalizado': normalizarNombreCliente(nombreCompleto),
       'direccion': direccion,
       'telefono': telefono,
       'estado': estado,

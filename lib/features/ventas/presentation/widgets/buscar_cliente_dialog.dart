@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../clientes/data/cliente_model.dart';
 import '../../../clientes/providers/clientes_provider.dart';
+import '../../../clientes/presentation/widgets/cliente_form_dialog.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
@@ -15,12 +17,51 @@ class BuscarClienteDialog extends ConsumerStatefulWidget {
 
 class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
   final _busquedaController = TextEditingController();
-  String _busqueda = '';
+  final _focusBusqueda = FocusNode();
+  // A diferencia de la versión anterior (filtraba en vivo mostrando TODA la
+  // lista con la caja vacía), esto ahora funciona igual que Buscar Producto
+  // -pedido explícito del dueño: con una lista de clientes que va a seguir
+  // creciendo, mostrar todo de entrada no sirve-. La búsqueda solo corre al
+  // presionar Enter o tocar el botón, no en cada tecla; con la caja vacía
+  // no se muestra ningún cliente todavía.
+  String? _busquedaAplicada;
+
+  @override
+  void initState() {
+    super.initState();
+    // Sin `autofocus` por el mismo motivo que en BuscarProductoDialog: en
+    // Windows compite con la animación de apertura del diálogo y se pierde
+    // la primera tecla.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusBusqueda.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
     _busquedaController.dispose();
+    _focusBusqueda.dispose();
     super.dispose();
+  }
+
+  void _buscar() {
+    setState(() => _busquedaAplicada = _busquedaController.text.trim());
+  }
+
+  /// "Crear cliente nuevo" -pedido explícito del dueño (item 5): cuando
+  /// buscar/tipear no encuentra a nadie, en vez de depender solo de la
+  /// creación silenciosa al confirmar la venta (ver
+  /// VentaRepository._resolverIdCliente), el cajero puede crearlo acá mismo,
+  /// con el nombre ya tipeado precargado, y queda vinculado a la venta al
+  /// instante -mismo contrato que elegir uno ya existente:
+  /// Navigator.pop(context, cliente).
+  Future<void> _crearClienteNuevo() async {
+    final nuevo = await showDialog<ClienteModel>(
+      context: context,
+      builder: (context) => ClienteFormDialog(nombreInicial: _busquedaController.text),
+    );
+    if (nuevo == null || !mounted) return;
+    Navigator.pop(context, nuevo);
   }
 
   @override
@@ -49,51 +90,96 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
               ],
             ),
             const SizedBox(height: 4),
-            Text('Elegí un cliente registrado o cerrá esto y escribí los datos a mano.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+            Text('Escribí y presioná Enter para buscar por DNI o nombre.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
             const SizedBox(height: 12),
-            Container(
-              height: 46,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
-              child: Row(
-                children: [
-                  Icon(Icons.search, size: 20, color: Colors.grey.shade400),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: CampoTecladoCompacto(
-                      controller: _busquedaController,
-                      numerico: false,
-                      titulo: 'Buscar por DNI o nombre...',
-                      child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _busquedaController,
-                      autofocus: true,
-                      style: GoogleFonts.poppins(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por DNI o nombre...',
-                        hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
-                        border: InputBorder.none,
-                        isDense: true,
-                      ),
-                      onChanged: (v) => setState(() => _busqueda = v.trim()),
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: CampoTecladoCompacto(
+                            controller: _busquedaController,
+                            numerico: false,
+                            onSubmitted: (_) => _buscar(),
+                            titulo: 'Buscar por DNI o nombre...',
+                            child: TextField(
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _busquedaController,
+                              focusNode: _focusBusqueda,
+                              style: GoogleFonts.poppins(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: 'Buscar por DNI o nombre...',
+                                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onSubmitted: (_) => _buscar(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Buscar',
+                  onPressed: _buscar,
+                  icon: const Icon(Icons.arrow_forward),
+                  style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             Expanded(
               child: clientesAsync.when(
                 data: (clientes) {
-                  var lista = clientes.where((c) => c.estado).toList();
-                  if (_busqueda.isNotEmpty) {
-                    lista = lista.where((c) => coincideFuzzy(c.textoBusqueda, _busqueda)).toList();
+                  final aplicada = _busquedaAplicada;
+                  if (aplicada == null) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search, size: 48, color: Colors.grey.shade300),
+                          const SizedBox(height: 12),
+                          Text('Escribí algo y presioná Enter para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                        ],
+                      ),
+                    );
                   }
+                  final lista = aplicada.isEmpty
+                      ? const <ClienteModel>[]
+                      : clientes.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, aplicada)).toList();
                   if (lista.isEmpty) {
-                    return Center(child: Text('No se encontraron clientes', style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('No se encontraron clientes', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          const SizedBox(height: 14),
+                          OutlinedButton.icon(
+                            onPressed: _crearClienteNuevo,
+                            icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                            label: Text('Crear cliente nuevo', style: GoogleFonts.poppins(fontSize: 13)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFC62828),
+                              side: const BorderSide(color: Color(0xFFC62828)),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   }
                   return ListView.separated(
                     itemCount: lista.length,

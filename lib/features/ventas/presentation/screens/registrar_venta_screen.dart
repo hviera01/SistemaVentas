@@ -252,13 +252,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     if (_esWebMovil) _scrollControllerMovil.addListener(_alScrollearMovil);
 
-    // Oculta el mini listado de sugerencias de cliente en cuanto el campo
-    // "Cliente" deja de tener foco (tocar afuera, tocar una sugerencia,
-    // pasar a otro campo), para que no quede flotando sobre el resto de la
-    // pantalla.
-    _focusNombreCliente.addListener(() {
-      if (!_focusNombreCliente.hasFocus) _ocultarSugerenciasCliente();
-    });
+    // NOTA: antes había acá un listener que ocultaba el mini listado de
+    // sugerencias apenas el campo "Cliente" perdía el foco. Se sacó porque
+    // era la causa de un bug real (confirmado por el dueño): tocar una
+    // sugerencia le saca el foco al campo ANTES de que corra el onTap del
+    // InkWell (el foco cambia en el pointer-down, el onTap recién en el
+    // pointer-up) -ese listener corría primero, ocultaba el overlay
+    // (removiéndolo del árbol) y el toque quedaba sin destinatario, sin
+    // hacer nada. Ahora ocultar el listado depende de TapRegion (ver
+    // _clienteLayerLink/_sugerenciasClienteOverlay/'sugerencias-cliente'):
+    // un toque afuera del campo Y del listado lo cierra, uno adentro de
+    // cualquiera de los dos (incluida la sugerencia que se está tocando) no
+    // cuenta como "afuera" y no lo cierra antes de tiempo.
 
     // En escritorio, cada vez que el foco queda en nada (el usuario tocó
     // afuera de un campo, o cerró un diálogo) se lo devuelve al campo de
@@ -546,18 +551,39 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return;
     }
     final todos = ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
-    final coincidencias = todos.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, consulta)).take(5).toList();
-    if (coincidencias.isEmpty) {
+    final consultaNorm = normalizarTexto(consulta);
+    final coincidencias = todos.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, consulta)).toList()
+      ..sort((a, b) => _rangoCoincidenciaCliente(a, consultaNorm).compareTo(_rangoCoincidenciaCliente(b, consultaNorm)));
+    final top = coincidencias.take(5).toList();
+    if (top.isEmpty) {
       _ocultarSugerenciasCliente();
       return;
     }
     if (_overlaySugerenciasCliente == null) {
-      _overlaySugerenciasCliente = OverlayEntry(builder: (context) => _sugerenciasClienteOverlay(coincidencias));
+      _overlaySugerenciasCliente = OverlayEntry(builder: (context) => _sugerenciasClienteOverlay(top));
       Overlay.of(context).insert(_overlaySugerenciasCliente!);
     } else {
-      _sugerenciasClienteActuales = coincidencias;
+      _sugerenciasClienteActuales = top;
       _overlaySugerenciasCliente!.markNeedsBuild();
     }
+  }
+
+  /// Ranking de qué tan "exacta" es la coincidencia de un cliente con lo
+  /// tipeado, para las sugerencias en vivo del campo "Cliente" -pedido
+  /// explícito del dueño: que la predicción sea precisa, no cualquier match
+  /// suelto de coincideFuzzy (que solo dice sí/no, sin orden)-. Menor =
+  /// mejor. No toca coincideFuzzy (se sigue usando tal cual para decidir SI
+  /// aparece, compartido con BuscarClienteDialog); esto solo decide el ORDEN
+  /// entre los que ya calzaron, priorizando que el nombre -o alguna palabra
+  /// del nombre- empiece exactamente con lo tipeado por sobre que la
+  /// coincidencia esté enterrada en medio del nombre, la dirección o el
+  /// teléfono.
+  int _rangoCoincidenciaCliente(ClienteModel c, String consultaNorm) {
+    final nombreNorm = normalizarTexto(c.nombreCompleto);
+    if (nombreNorm.startsWith(consultaNorm)) return 0;
+    if (nombreNorm.split(RegExp(r'\s+')).any((p) => p.startsWith(consultaNorm))) return 1;
+    if (nombreNorm.contains(consultaNorm)) return 2;
+    return 3;
   }
 
   List<ClienteModel> _sugerenciasClienteActuales = const [];
@@ -570,32 +596,41 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         link: _clienteLayerLink,
         showWhenUnlinked: false,
         offset: const Offset(0, 58),
-        child: Material(
-          elevation: 6,
-          borderRadius: BorderRadius.circular(12),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 220),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              shrinkWrap: true,
-              itemCount: _sugerenciasClienteActuales.length,
-              separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade200),
-              itemBuilder: (context, i) {
-                final c = _sugerenciasClienteActuales[i];
-                return InkWell(
-                  onTap: () => _seleccionarClienteSugerido(c),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                        if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
-                      ],
+        // Mismo groupId que el TapRegion que envuelve el campo "Cliente"
+        // (ver más abajo, en el build de la fila de datos): así un toque
+        // sobre una sugerencia cuenta como "adentro" del mismo grupo y NO
+        // dispara el onTapOutside que cierra el listado -es lo que arregla
+        // el bug real de "tocar una sugerencia no hace nada" (ver el
+        // comentario en initState).
+        child: TapRegion(
+          groupId: 'sugerencias-cliente',
+          child: Material(
+            elevation: 6,
+            borderRadius: BorderRadius.circular(12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                shrinkWrap: true,
+                itemCount: _sugerenciasClienteActuales.length,
+                separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade200),
+                itemBuilder: (context, i) {
+                  final c = _sugerenciasClienteActuales[i];
+                  return InkWell(
+                    onTap: () => _seleccionarClienteSugerido(c),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -617,6 +652,62 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _ocultarSugerenciasCliente() {
     _overlaySugerenciasCliente?.remove();
     _overlaySugerenciasCliente = null;
+  }
+
+  /// Píldora que reemplaza al TextField de "Cliente" cuando ya hay uno
+  /// vinculado a esta venta (carrito.idCliente != null) -pedido explícito
+  /// del dueño-: sin cursor visible ni edición inline, para que se lea de
+  /// un vistazo como "cliente YA elegido" y no como un campo de texto
+  /// suelto en el que se podría seguir tipeando. Mismo lenguaje visual que
+  /// el resto de chips/píldoras de esta pantalla (ver _chipUsuarioVenta).
+  Widget _chipClienteVinculado() {
+    final nombre = _nombreClienteController.text.trim();
+    return Tooltip(
+      message: 'Quitar cliente y volver a escribir',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _desvincularClienteDelCampo,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F8EE),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF16A34A).withOpacity(0.45)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  nombre.isEmpty ? 'Cliente' : nombre,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF14532D)),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.close, size: 16, color: const Color(0xFF14532D).withOpacity(0.7)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Quita el vínculo real (carrito.idCliente) sin borrar lo que ya estaba
+  /// escrito: el cajero vuelve a ver el campo de texto normal, con el mismo
+  /// nombre listo para corregirlo, borrarlo, o volver a buscar/tipear otro.
+  void _desvincularClienteDelCampo() {
+    _ocultarSugerenciasCliente();
+    setState(() => _clienteVinculado = null);
+    ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(_nombreClienteController.text);
+    // Después del frame en que el chip se reemplaza por el TextField real
+    // (recién ahí existe el FocusNode que puede pedir foco): así el cajero
+    // puede seguir tipeando directo, sin tener que tocar el campo de nuevo.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNombreCliente.requestFocus();
+    });
   }
 
   /// Cliente vinculado a esta venta (carrito.idCliente), para el botón
@@ -727,6 +818,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final categorias = ref.read(categoriasStreamProvider).value ?? [];
     final coincidencias = categorias.where((c) => c.id == idCategoria).toList();
     return coincidencias.isEmpty ? true : coincidencias.first.controlaStock;
+  }
+
+  /// true si la categoría del producto es de las que se tiñen con fórmula de
+  /// color (Látex, Aceite, Piscina, Pintura Preparada, Selladores/
+  /// Impermeabilizantes) -pedido explícito del dueño: el botón/columna de
+  /// "Código Color" no debe aparecer para categorías que no son pintura
+  /// (Accesorios, Solventes, Masilla, Tintes, etc, donde no aplica un código
+  /// de tinte). Se detecta por el nombre real de la categoría (ver
+  /// CategoriaModel.descripcion, cargado de Firestore) en vez de una lista
+  /// fija de ids, para no romperse si algún día se edita/reordena la
+  /// colección de categorías. idCategoria vacío (líneas de regalo de
+  /// promoción, ítems del histórico viejo) no cuenta como pintura.
+  bool _esCategoriaPintura(String idCategoria) {
+    if (idCategoria.isEmpty) return false;
+    final categorias = ref.read(categoriasStreamProvider).value ?? const [];
+    final coincidencias = categorias.where((c) => c.id == idCategoria);
+    if (coincidencias.isEmpty) return false;
+    final descripcion = coincidencias.first.descripcion.toUpperCase();
+    return descripcion.startsWith('PINTURA') || descripcion.contains('IMPERMEABILIZANTE') || descripcion.contains('SELLADOR');
   }
 
   /// Calcula, para un tipo de reembasado y una cantidad a vender, cuánto hay
@@ -2360,41 +2470,75 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ),
               ),
               SizedBox(
-                width: esMovil ? double.infinity : 220,
+                // Antes 220: "RONALD CAMAS" (nombre real, largo normal)
+                // quedaba cortado en "RONALD C" -pedido explícito del
+                // dueño-. 340 le da lugar de sobra al nombre incluso con los
+                // dos IconButton (buscar + completar datos) compartiendo la
+                // fila; el Wrap que contiene toda esta fila igual manda esta
+                // caja a una línea nueva sola si no entra, así que ensanchar
+                // acá no rompe pantallas angostas.
+                width: esMovil ? double.infinity : 340,
                 child: Row(
                   children: [
                     Expanded(
-                      child: CompositedTransformTarget(
-                        link: _clienteLayerLink,
-                        child: CampoTecladoCompacto(
-                        controller: _nombreClienteController,
-                        numerico: false,
-                        titulo: 'Vacío = Consumidor Final',
-                        child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _nombreClienteController,
-                        focusNode: _focusNombreCliente,
-                        style: GoogleFonts.poppins(fontSize: 13),
-                        decoration: _decoracion('Cliente').copyWith(
-                          hintText: 'Vacío = Consumidor Final',
-                          hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
-                        ),
-                        // Si el cajero tipea acá directo (no usó el
-                        // buscador), el vínculo real a un cliente elegido
-                        // antes ya no es confiable -ver
-                        // establecerNombreClienteManual-. Además se
-                        // refrescan las sugerencias de clientes ya
-                        // registrados que coincidan con lo tipeado.
-                        onChanged: (v) {
-                          ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(v);
-                          if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
-                          _actualizarSugerenciasCliente(v);
-                        },
-                      ),
-                      ),
-                      ),
+                      // Con un cliente ya vinculado (carrito.idCliente !=
+                      // null) esto se ve como una píldora rellena, NO como
+                      // un TextField editable -pedido explícito del dueño:
+                      // antes, aunque ya hubiera un cliente elegido, seguía
+                      // pareciendo un campo de texto suelto en el que el
+                      // cajero podía seguir tipeando por error, sin ningún
+                      // indicio visual de que ya estaba "resuelto"-. Tocar
+                      // la píldora desvincula y vuelve al campo de texto
+                      // normal (ver _chipClienteVinculado/
+                      // _desvincularClienteCampo).
+                      child: carrito.idCliente != null
+                          ? _chipClienteVinculado()
+                          : CompositedTransformTarget(
+                              link: _clienteLayerLink,
+                              // Mismo groupId que el TapRegion del listado de
+                              // sugerencias (ver _sugerenciasClienteOverlay):
+                              // un toque en cualquiera de los dos cuenta como
+                              // "adentro" del mismo grupo, así tocar una
+                              // sugerencia no dispara este onTapOutside antes
+                              // de que corra su propio onTap -esto es lo que
+                              // arregla el bug real de "tocar una sugerencia
+                              // no hace nada" (ver el comentario en
+                              // initState).
+                              child: TapRegion(
+                                groupId: 'sugerencias-cliente',
+                                onTapOutside: (_) => _ocultarSugerenciasCliente(),
+                                child: CampoTecladoCompacto(
+                                  controller: _nombreClienteController,
+                                  numerico: false,
+                                  titulo: 'Vacío = Consumidor Final',
+                                  child: TextField(
+                                    inputFormatters: [mayusculasInputFormatter],
+                                    autocorrect: false,
+                                    enableSuggestions: false,
+                                    controller: _nombreClienteController,
+                                    focusNode: _focusNombreCliente,
+                                    style: GoogleFonts.poppins(fontSize: 13),
+                                    decoration: _decoracion('Cliente').copyWith(
+                                      hintText: 'Vacío = Consumidor Final',
+                                      hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
+                                    ),
+                                    // Si el cajero tipea acá directo (no usó
+                                    // el buscador), el vínculo real a un
+                                    // cliente elegido antes ya no es
+                                    // confiable -ver
+                                    // establecerNombreClienteManual-. Además
+                                    // se refrescan las sugerencias de
+                                    // clientes ya registrados que coincidan
+                                    // con lo tipeado.
+                                    onChanged: (v) {
+                                      ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(v);
+                                      if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
+                                      _actualizarSugerenciasCliente(v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
@@ -3426,7 +3570,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           SizedBox(width: 28, child: _botonesOrden(index, totalItems)),
           Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
           Expanded(flex: 4, child: _campoDescripcion(index, item)),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Align(alignment: Alignment.centerLeft, child: _botonCodigoColor(index, item)))),
+          Expanded(
+            flex: 2,
+            child: _esCategoriaPintura(item.idCategoria as String)
+                ? Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Align(alignment: Alignment.centerLeft, child: _botonCodigoColor(index, item)))
+                : const SizedBox.shrink(),
+          ),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
@@ -3468,8 +3617,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   children: [
                     _campoDescripcion(index, item),
                     Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
-                    const SizedBox(height: 6),
-                    _botonCodigoColor(index, item),
+                    if (_esCategoriaPintura(item.idCategoria as String)) ...[
+                      const SizedBox(height: 6),
+                      _botonCodigoColor(index, item),
+                    ],
                   ],
                 ),
               ),

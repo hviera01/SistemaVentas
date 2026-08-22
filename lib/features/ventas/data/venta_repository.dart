@@ -4,6 +4,7 @@ import 'venta_en_espera_model.dart';
 import 'item_venta_model.dart';
 import 'pago_detalle_model.dart';
 import '../../../core/utils/formato_moneda.dart';
+import '../../../core/utils/texto_utils.dart';
 import '../../productos/data/lote_costo_repository.dart';
 
 /// Los ítems de una venta se guardan en la subcolección 'detalle' con un id
@@ -44,15 +45,24 @@ class VentaRepository {
   /// nombre queda "suelta" sin cliente vinculado (ver plan de CRM,
   /// Fase 1 punto 2).
   ///
-  /// Comparación por igualdad EXACTA sobre el nombre tal como se escribió
-  /// (ya viene en mayúsculas: el campo de texto fuerza mayúsculas con
-  /// mayusculasInputFormatter). Firestore no permite consultas sin distinguir
-  /// mayúsculas/espacios de forma nativa -hacerlo hubiera significado traer
-  /// toda la colección 'clientes' a memoria en cada venta, y esto tiene que
-  /// sentirse instantáneo-, así que esta es una simplificación aceptada:
-  /// variaciones menores de tipeo (espacios extra en medio, tildes,
-  /// abreviaturas distintas) no emparejan con un cliente ya existente y
-  /// terminan creando uno nuevo en vez de reusarlo.
+  /// Comparación por igualdad sobre 'nombreNormalizado' (mayúsculas/tildes/
+  /// espacios de más colapsados, ver texto_utils.normalizarNombreCliente),
+  /// NO sobre 'nombreCompleto' tal cual está guardado -antes sí comparaba
+  /// contra ese campo con igualdad EXACTA: como el nombre tipeado acá
+  /// siempre llega en mayúsculas (mayusculasInputFormatter), un cliente ya
+  /// registrado con otra capitalización -por ejemplo, cargado antes de que
+  /// existiera ese formateo, o corregido a mano en Firestore- no calzaba
+  /// nunca, y la venta terminaba creando un cliente DUPLICADO en vez de
+  /// vincular al que ya existía (bug real, confirmado por el dueño: una
+  /// venta de un cliente que YA tenía registrado seguía apareciendo como
+  /// "sin cliente" en el reporte financiero). ClienteRepository.crear/
+  /// actualizar mantienen 'nombreNormalizado' al día en cada alta/edición
+  /// desde la UI; los clientes ya existentes en Firestore antes de que ese
+  /// campo existiera se respaldan aparte (ver el script de backfill que
+  /// corrió el coordinador sobre la colección 'clientes' en producción).
+  /// Sigue sin traer toda la colección 'clientes' a memoria en cada venta
+  /// (ver el comentario original): es una consulta indexada de un solo
+  /// campo, tan barata como la anterior.
   Future<String?> _resolverIdCliente({
     required String? idClienteExistente,
     required String nombreCliente,
@@ -62,13 +72,15 @@ class VentaRepository {
     final nombre = nombreCliente.trim();
     if (nombre.isEmpty || nombre.toUpperCase() == 'CONSUMIDOR FINAL') return null;
 
-    final existente = await _colClientes.where('nombreCompleto', isEqualTo: nombre).limit(1).get();
+    final nombreNormalizado = normalizarNombreCliente(nombre);
+    final existente = await _colClientes.where('nombreNormalizado', isEqualTo: nombreNormalizado).limit(1).get();
     if (existente.docs.isNotEmpty) return existente.docs.first.id;
 
     final documento = documentoCliente.trim();
     final nuevo = await _colClientes.add({
       'dni': (documento.isEmpty || documento == 'N/A') ? '' : documento,
       'nombreCompleto': nombre,
+      'nombreNormalizado': nombreNormalizado,
       'direccion': '',
       'telefono': '',
       'estado': true,

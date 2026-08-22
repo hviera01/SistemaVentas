@@ -45,6 +45,25 @@ int distanciaLevenshtein(String a, String b) {
   return matriz[a.length][b.length];
 }
 
+/// Normaliza un nombre de cliente para compararlo por igualdad tolerando
+/// diferencias de mayúsculas/minúsculas, tildes y espacios de más -pedido
+/// explícito del dueño: VentaRepository._resolverIdCliente comparaba el
+/// nombre tal cual se tipeó (ya en mayúsculas, por mayusculasInputFormatter)
+/// contra ClienteModel.nombreCompleto tal cual está guardado en Firestore.
+/// Un cliente cargado antes de que existiera ese formateo -o parcheado a
+/// mano en Firestore con otra capitalización, como pasó con un cliente real
+/// de este negocio- no calzaba con el mismo nombre tipeado después: la venta
+/// terminaba creando un cliente DUPLICADO (o, en casos límite, sin vincular
+/// ninguno) en vez de reusar el ya existente, y esa venta aparecía como "sin
+/// cliente" en el reporte financiero aunque el cliente ya estuviera
+/// registrado. No reusa normalizarTexto tal cual porque esa además se usa
+/// para búsqueda fuzzy por palabra y no colapsa espacios de más en medio del
+/// texto -acá sí hace falta, para que "Ronald  Camas" (dos espacios) también
+/// calce con "Ronald Camas".
+String normalizarNombreCliente(String texto) {
+  return normalizarTexto(texto).replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
 bool coincideFuzzy(String textoCompleto, String consulta) {
   final textoNorm = normalizarTexto(textoCompleto);
   final consultaNorm = normalizarTexto(consulta);

@@ -86,6 +86,18 @@ List<ModuloMenu> obtenerModulos() {
       color: const Color(0xFF8B5CF6),
       subModulos: [
         SubModulo(titulo: 'Proveedores', icono: Icons.local_shipping_outlined, moduleKey: 'proveedores'),
+      ],
+    ),
+    // Módulo propio (no un submódulo de "Proveedores") a propósito: con solo
+    // 1 subModulo, SideMenu lo muestra como un ListTile directo -igual que
+    // "Proveedores"-, sin necesitar tocar para desplegarlo. Metido junto con
+    // Proveedores como su segundo subModulo quedaba escondido dentro de un
+    // ExpansionTile titulado "Proveedores" (el dueño no lo encontraba).
+    ModuloMenu(
+      titulo: 'Referidores',
+      icono: Icons.handshake_outlined,
+      color: const Color(0xFF14B8A6),
+      subModulos: [
         SubModulo(titulo: 'Referidores', icono: Icons.handshake_outlined, moduleKey: 'referidores'),
       ],
     ),
