@@ -31,7 +31,14 @@ class ClienteHistorialRepository {
     // Todo lo que no depende de nada más se dispara junto.
     final ventasPorIdFuture = _colVentas.where('idCliente', isEqualTo: cliente.id).get();
     final ventasPorNombreFuture = nombre.isEmpty ? null : _colVentas.where('nombreCliente', isEqualTo: nombre).get();
-    final creditosFuture = dni.isEmpty || dni == 'N/A' ? null : _colVentasCredito.where('documentoCliente', isEqualTo: dni).get();
+    // Créditos: por idCliente (confiable, el mismo vínculo real que ventas) +
+    // respaldo por DNI para créditos viejos que hayan quedado sin idCliente.
+    // Antes esto SOLO buscaba por DNI -si el cliente no tenía DNI cargado
+    // (frecuente, es un campo opcional), la pantalla de Detalle de Cliente
+    // mostraba "no tiene historial de crédito" aunque sí tuviera, como pasó
+    // con un cliente real al probarlo-.
+    final creditosPorIdFuture = _colVentasCredito.where('idCliente', isEqualTo: cliente.id).get();
+    final creditosPorDniFuture = dni.isEmpty || dni == 'N/A' ? null : _colVentasCredito.where('documentoCliente', isEqualTo: dni).get();
     // Historial de códigos de color (y, con los mismos datos, "qué compra
     // más"): un solo collectionGroup por idCliente -ver comentario en
     // VentaRepository.registrarVenta sobre por qué 'idCliente' se guarda en
@@ -49,7 +56,8 @@ class ClienteHistorialRepository {
 
     final ventasPorIdSnap = await ventasPorIdFuture;
     final ventasPorNombreSnap = await ventasPorNombreFuture;
-    final creditosSnap = await creditosFuture;
+    final creditosPorIdSnap = await creditosPorIdFuture;
+    final creditosPorDniSnap = await creditosPorDniFuture;
     final detalleSnap = await detalleFuture;
     final referidor = await referidorFuture;
 
@@ -74,9 +82,16 @@ class ClienteHistorialRepository {
     final ventasValidas = ventasMap.values.where((v) => v.estado == 'Activa' && v.tipoDocumento != 'Cotizacion').toList()
       ..sort((a, b) => (b.fechaRegistro ?? DateTime(2000)).compareTo(a.fechaRegistro ?? DateTime(2000)));
 
-    final creditos = (creditosSnap?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[])
-        .map((d) => VentaCreditoModel.fromMap(d.id, d.data()))
-        .toList()
+    final creditosMap = <String, VentaCreditoModel>{};
+    for (final d in creditosPorIdSnap.docs) {
+      creditosMap[d.id] = VentaCreditoModel.fromMap(d.id, d.data());
+    }
+    if (creditosPorDniSnap != null) {
+      for (final d in creditosPorDniSnap.docs) {
+        creditosMap.putIfAbsent(d.id, () => VentaCreditoModel.fromMap(d.id, d.data()));
+      }
+    }
+    final creditos = creditosMap.values.toList()
       ..sort((a, b) => (b.fechaRegistro ?? DateTime(2000)).compareTo(a.fechaRegistro ?? DateTime(2000)));
 
     // ---- Resumen de compras ----
