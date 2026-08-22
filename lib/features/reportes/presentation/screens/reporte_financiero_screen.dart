@@ -126,14 +126,50 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
         children: [
           Container(
             color: Colors.white,
-            child: TabBar(
-              isScrollable: true,
-              labelColor: const Color(0xFFC62828),
-              unselectedLabelColor: Colors.grey.shade600,
-              indicatorColor: const Color(0xFFC62828),
-              labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
-              tabs: [for (final t in _tabs) Tab(icon: Icon(t.$2, size: 18), text: t.$1)],
+            child: Builder(
+              builder: (context) {
+                // Con tantas pestañas (llegó "Clientes" al final) no entran
+                // todas de una en pantallas normales: isScrollable ya
+                // permite arrastrar/hacer scroll horizontal, pero eso no se
+                // nota a simple vista con mouse -acá se agregan flechitas
+                // que mueven la selección una pestaña a la vez y de paso la
+                // traen a la vista (TabBar ya hace scroll automático hasta
+                // la pestaña seleccionada).
+                final controlador = DefaultTabController.of(context);
+                return Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Pestaña anterior',
+                      icon: const Icon(Icons.chevron_left, size: 20),
+                      color: Colors.grey.shade500,
+                      onPressed: () {
+                        final i = controlador.index;
+                        if (i > 0) controlador.animateTo(i - 1);
+                      },
+                    ),
+                    Expanded(
+                      child: TabBar(
+                        isScrollable: true,
+                        labelColor: const Color(0xFFC62828),
+                        unselectedLabelColor: Colors.grey.shade600,
+                        indicatorColor: const Color(0xFFC62828),
+                        labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                        unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
+                        tabs: [for (final t in _tabs) Tab(icon: Icon(t.$2, size: 18), text: t.$1)],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Siguiente pestaña',
+                      icon: const Icon(Icons.chevron_right, size: 20),
+                      color: Colors.grey.shade500,
+                      onPressed: () {
+                        final i = controlador.index;
+                        if (i < _tabs.length - 1) controlador.animateTo(i + 1);
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           Expanded(

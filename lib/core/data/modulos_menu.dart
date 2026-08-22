@@ -88,19 +88,11 @@ List<ModuloMenu> obtenerModulos() {
         SubModulo(titulo: 'Proveedores', icono: Icons.local_shipping_outlined, moduleKey: 'proveedores'),
       ],
     ),
-    // Módulo propio (no un submódulo de "Proveedores") a propósito: con solo
-    // 1 subModulo, SideMenu lo muestra como un ListTile directo -igual que
-    // "Proveedores"-, sin necesitar tocar para desplegarlo. Metido junto con
-    // Proveedores como su segundo subModulo quedaba escondido dentro de un
-    // ExpansionTile titulado "Proveedores" (el dueño no lo encontraba).
-    ModuloMenu(
-      titulo: 'Referidores',
-      icono: Icons.handshake_outlined,
-      color: const Color(0xFF14B8A6),
-      subModulos: [
-        SubModulo(titulo: 'Referidores', icono: Icons.handshake_outlined, moduleKey: 'referidores'),
-      ],
-    ),
+    // El módulo aparte "Referidores" que existió acá se eliminó: el dueño
+    // pidió explícitamente que un referidor sea solo un cliente marcado con
+    // ClienteModel.esReferidor, manejado desde ClientesScreen (que ahora
+    // tiene una vista "Referidores" propia), no una sección de menú
+    // separada.
     ModuloMenu(
       titulo: 'Créditos',
       icono: Icons.credit_card_outlined,

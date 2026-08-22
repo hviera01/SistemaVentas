@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'cliente_model.dart';
 import 'cliente_historial_model.dart';
+import 'cliente_repository.dart';
 import '../../ventas/data/venta_model.dart';
 import '../../ventas/data/item_venta_model.dart';
 import '../../ventas_credito/data/venta_credito_model.dart';
 import '../../ventas_credito/data/venta_credito_repository.dart';
-import '../../referidores/data/referidor_repository.dart';
 
 /// Cuántas ventas recientes se muestran en Detalle de Cliente (no todo el
 /// historial: es una lista para escanear de un vistazo, no un reporte).
@@ -21,7 +21,7 @@ class ClienteHistorialRepository {
   final _colVentas = FirebaseFirestore.instance.collection('ventas');
   final _colVentasCredito = FirebaseFirestore.instance.collection('ventasCredito');
   final _ventaCreditoRepository = VentaCreditoRepository();
-  final _referidorRepository = ReferidorRepository();
+  final _clienteRepository = ClienteRepository();
 
   Future<ClienteHistorialData> obtener(ClienteModel cliente) async {
     final nombre = cliente.nombreCompleto.trim();
@@ -39,9 +39,13 @@ class ClienteHistorialRepository {
     // DESPUÉS de que existiera el vínculo real; no hay forma de saber qué
     // colores se usaron en ventas viejas emparejadas solo por nombre.
     final detalleFuture = _db.collectionGroup('detalle').where('idCliente', isEqualTo: cliente.id).get();
-    // Quién lo refirió (Fase 2): una sola lectura puntual, no un stream -acá
-    // solo hace falta el nombre/teléfono en el momento de abrir la pantalla-.
-    final referidorFuture = (idReferidor == null || idReferidor.isEmpty) ? null : _referidorRepository.obtenerPorId(idReferidor);
+    // Quién lo refirió: una sola lectura puntual, no un stream -acá solo
+    // hace falta el nombre/teléfono en el momento de abrir la pantalla-. Un
+    // referidor es ahora un ClienteModel más (con esReferidor == true, ver
+    // fusión del módulo 'referidores' dentro de clientes), así que se
+    // resuelve con ClienteRepository.obtenerPorId igual que cualquier otro
+    // cliente.
+    final referidorFuture = (idReferidor == null || idReferidor.isEmpty) ? null : _clienteRepository.obtenerPorId(idReferidor);
 
     final ventasPorIdSnap = await ventasPorIdFuture;
     final ventasPorNombreSnap = await ventasPorNombreFuture;
@@ -169,7 +173,14 @@ class ClienteHistorialRepository {
     }
 
     return ClienteHistorialData(
-      creditosAbiertos: creditos.where((c) => !c.liquidada).toList(),
+      // Historial COMPLETO de créditos (pagados y no pagados) -antes se
+      // filtraba acá mismo con `.where((c) => !c.liquidada)`, lo que hacía
+      // desaparecer de Detalle de Cliente cualquier crédito ya liquidado
+      // (bug reportado por el dueño probando con un cliente real que tenía
+      // crédito pagado y no le aparecía nada). Los flags derivados
+      // (hayCreditoVencido, etc.) ahora se calculan sobre esta lista
+      // completa dentro de ClienteHistorialData.
+      creditos: creditos,
       abonosATiempo: abonosATiempo,
       abonosAtrasados: abonosAtrasados,
       totalComprado: totalComprado,

@@ -6,6 +6,7 @@ import '../../data/cliente_model.dart';
 import '../../data/cliente_historial_model.dart';
 import '../../providers/clientes_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../ventas_credito/data/venta_credito_model.dart';
 
 /// Historial completo de un cliente en una sola pantalla: seguimiento de
 /// crédito, resumen de compras, compras recientes, qué compra más, historial
@@ -160,7 +161,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
   // ---------- Seguimiento de crédito ----------
 
   Widget _seccionCredito(ClienteHistorialData datos) {
-    final sinHistorialCredito = datos.creditosAbiertos.isEmpty && datos.abonosATiempo == null;
+    final sinHistorialCredito = datos.creditos.isEmpty && datos.abonosATiempo == null;
     return _tarjeta(
       titulo: 'Seguimiento de crédito',
       icono: Icons.credit_score_outlined,
@@ -189,10 +190,14 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-                if (datos.creditosAbiertos.isNotEmpty) ...[
-                  Text('Créditos abiertos', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                // Historial COMPLETO de créditos, pagados y no pagados -antes
+                // solo se mostraban los abiertos y un crédito ya liquidado
+                // desaparecía por completo de esta pantalla (bug reportado
+                // por el dueño con un cliente real, Ronald Camas).
+                if (datos.creditos.isNotEmpty) ...[
+                  Text('Historial de créditos', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
                   const SizedBox(height: 8),
-                  for (final credito in datos.creditosAbiertos)
+                  for (final credito in datos.creditos)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Container(
@@ -208,13 +213,23 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Factura ${credito.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                                  Text('Vence: ${_fmtFecha(credito.fechaVencimiento)}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                                  Text(
+                                    '${_fmtFecha(credito.fechaRegistro)} · Vence: ${_fmtFecha(credito.fechaVencimiento)}',
+                                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                                  ),
                                 ],
                               ),
                             ),
-                            Text(
-                              formatearMoneda(credito.saldoPendiente),
-                              style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800, color: credito.vencida ? Colors.orange.shade800 : const Color(0xFF1A1A1A)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                _chipEstadoCredito(credito),
+                                const SizedBox(height: 4),
+                                Text(
+                                  credito.liquidada ? formatearMoneda(credito.montoTotal) : formatearMoneda(credito.saldoPendiente),
+                                  style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800, color: credito.vencida ? Colors.orange.shade800 : const Color(0xFF1A1A1A)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -243,6 +258,28 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: color.shade50, borderRadius: BorderRadius.circular(8)),
       child: Text(texto, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: color.shade800)),
+    );
+  }
+
+  // Vigente / Vencida / Liquidada -mismo idioma que el resto del sistema
+  // (ver VentasCreditoScreen) para no inventar un vocabulario nuevo acá.
+  Widget _chipEstadoCredito(VentaCreditoModel credito) {
+    final String texto;
+    final MaterialColor color;
+    if (credito.liquidada) {
+      texto = 'Liquidada';
+      color = Colors.green;
+    } else if (credito.vencida) {
+      texto = 'Vencida';
+      color = Colors.orange;
+    } else {
+      texto = 'Vigente';
+      color = Colors.blue;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.shade50, borderRadius: BorderRadius.circular(6)),
+      child: Text(texto, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: color.shade800)),
     );
   }
 
@@ -384,7 +421,10 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
     );
   }
 
-  // ---------- Quién lo refirió (Fase 2) ----------
+  // ---------- Quién lo refirió ----------
+  // Un referidor es ahora un ClienteModel más con esReferidor == true (ver
+  // fusión del módulo aparte 'referidores' dentro de clientes), así que
+  // referidor.estado acá es el mismo campo "Activo/Inactivo" de siempre.
 
   Widget _seccionReferidor(ClienteHistorialData datos) {
     final referidor = datos.referidor;

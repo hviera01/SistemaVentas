@@ -64,6 +64,22 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => DetalleClienteScreen(cliente: cliente)));
   }
 
+  /// Cantidad de clientes que trajo cada referidor: se calcula al vuelo
+  /// filtrando la lista de clientes ya cargada por idReferidor -mismo
+  /// enfoque que tenía el antiguo módulo aparte 'referidores' (ver
+  /// ReferidoresScreen._conteoPorReferidor, ahora eliminado), sin contador
+  /// denormalizado que haya que mantener aparte: a este volumen de datos no
+  /// hace falta.
+  Map<String, int> _conteoPorReferidor(List<ClienteModel> clientes) {
+    final conteo = <String, int>{};
+    for (final c in clientes) {
+      final idReferidor = c.idReferidor;
+      if (idReferidor == null || idReferidor.isEmpty) continue;
+      conteo[idReferidor] = (conteo[idReferidor] ?? 0) + 1;
+    }
+    return conteo;
+  }
+
   void _manejarAccion(String valor, ClienteModel cliente) {
     switch (valor) {
       case 'detalle':
@@ -158,7 +174,19 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                 ),
                 child: clientesAsync.when(
                       data: (clientes) {
+                        final conteoPorReferidor = _conteoPorReferidor(clientes);
                         var lista = clientes;
+                        // Vista "Referidores": filtra primero a solo los
+                        // clientes marcados como esReferidor -reemplaza al
+                        // antiguo módulo aparte 'referidores', ahora
+                        // eliminado, con este mismo listado filtrado sobre
+                        // la data de Clientes-. A diferencia de "Clientes
+                        // filtrados", esta vista SÍ se muestra completa sin
+                        // necesidad de buscar primero: la lista de
+                        // referidores suele ser chica.
+                        if (vista == 'referidores') {
+                          lista = lista.where((c) => c.esReferidor).toList();
+                        }
                         if (busqueda.isNotEmpty) {
                           lista = lista.where((c) => coincideFuzzy(c.textoBusqueda, busqueda)).toList();
                         } else if (vista == 'filtrados') {
@@ -182,7 +210,10 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                           );
                         }
 
-                        return esMovil ? _tarjetas(lista) : _tabla(lista);
+                        final mostrarConteoReferidos = vista == 'referidores';
+                        return esMovil
+                            ? _tarjetas(lista, mostrarConteoReferidos ? conteoPorReferidor : null)
+                            : _tabla(lista, mostrarConteoReferidos ? conteoPorReferidor : null);
                       },
                       loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
@@ -208,6 +239,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           items: const [
             DropdownMenuItem(value: 'filtrados', child: Text('Clientes filtrados')),
             DropdownMenuItem(value: 'todos', child: Text('Mostrar todos')),
+            DropdownMenuItem(value: 'referidores', child: Text('Referidores')),
           ],
           onChanged: (v) {
             if (v == null) return;
@@ -256,7 +288,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
   }
 
-  Widget _tabla(List<ClienteModel> lista) {
+  Widget _tabla(List<ClienteModel> lista, Map<String, int>? conteoPorReferidor) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final mostrarDireccion = constraints.maxWidth >= 950;
@@ -275,6 +307,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                     _celdaHeader('NOMBRE COMPLETO', 3),
                     if (mostrarDireccion) _celdaHeader('DIRECCIÓN', 3),
                     _celdaHeader('TELÉFONO', 2),
+                    if (conteoPorReferidor != null) _celdaHeader('CLIENTES REFERIDOS', 2),
                     _celdaHeader('ESTADO', 1),
                     const SizedBox(width: 56),
                   ],
@@ -294,9 +327,28 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                     child: Row(
                       children: [
                         _celda(2, cliente.dni.isEmpty ? '-' : cliente.dni, peso: FontWeight.w600),
-                        _celda(3, cliente.nombreCompleto.isEmpty ? '-' : cliente.nombreCompleto),
+                        Expanded(
+                          flex: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Row(
+                              children: [
+                                if (cliente.esReferidor) ...[_insigniaReferidor(), const SizedBox(width: 6)],
+                                Expanded(
+                                  child: Text(
+                                    cliente.nombreCompleto.isEmpty ? '-' : cliente.nombreCompleto,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         if (mostrarDireccion) _celda(3, cliente.direccion.isEmpty ? '-' : cliente.direccion, gris: true),
                         _celda(2, cliente.telefono.isEmpty ? '-' : cliente.telefono, gris: true),
+                        if (conteoPorReferidor != null) _celda(2, '${conteoPorReferidor[cliente.id] ?? 0}', peso: FontWeight.w700),
                         Expanded(flex: 1, child: _chipEstado(cliente.estado)),
                         SizedBox(width: 56, child: _celdaAcciones(cliente)),
                       ],
@@ -308,6 +360,20 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           },
         );
       },
+    );
+  }
+
+  /// Insignia chica junto al nombre para reconocer de un vistazo, en la
+  /// vista normal de Clientes, a quiénes son también referidores -pedido
+  /// del dueño al fusionar el módulo aparte 'referidores' dentro de acá-.
+  Widget _insigniaReferidor() {
+    return Tooltip(
+      message: 'Es referidor',
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(color: const Color(0xFF14B8A6).withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+        child: const Icon(Icons.handshake_outlined, size: 13, color: Color(0xFF14B8A6)),
+      ),
     );
   }
 
@@ -357,7 +423,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
   }
 
-  Widget _tarjetas(List<ClienteModel> lista) {
+  Widget _tarjetas(List<ClienteModel> lista, Map<String, int>? conteoPorReferidor) {
     return ListView.separated(
       padding: const EdgeInsets.all(14),
       itemCount: lista.length,
@@ -381,6 +447,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (cliente.esReferidor) ...[_insigniaReferidor(), const SizedBox(width: 8)],
                     Expanded(
                       child: Text(
                         cliente.nombreCompleto.isEmpty ? 'Sin nombre' : cliente.nombreCompleto,
@@ -398,6 +465,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                     if (cliente.dni.isNotEmpty) _chipInfo('DNI', cliente.dni),
                     if (cliente.direccion.isNotEmpty) _chipInfo('Dirección', cliente.direccion),
                     if (cliente.telefono.isNotEmpty) _chipInfo('Teléfono', cliente.telefono),
+                    if (conteoPorReferidor != null) _chipInfo('Clientes referidos', '${conteoPorReferidor[cliente.id] ?? 0}'),
                     _chipEstado(cliente.estado),
                   ],
                 ),

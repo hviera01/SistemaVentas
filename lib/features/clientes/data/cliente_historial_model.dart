@@ -1,5 +1,5 @@
 import '../../ventas_credito/data/venta_credito_model.dart';
-import '../../referidores/data/referidor_model.dart';
+import 'cliente_model.dart';
 
 /// Una venta resumida para la lista de "compras recientes" de Detalle de
 /// Cliente: no trae el detalle (líneas) completo, solo lo que se muestra en
@@ -58,7 +58,14 @@ class ProductoTopCliente {
 /// ReporteFinancieroData/reporte_financiero_repository.dart.
 class ClienteHistorialData {
   // ---- Seguimiento de crédito ----
-  final List<VentaCreditoModel> creditosAbiertos;
+  // TODOS los créditos del cliente, pagados o no -antes se filtraba acá
+  // mismo a solo los abiertos (creditosAbiertos) y el historial de créditos
+  // ya liquidados desaparecía por completo de Detalle de Cliente, lo cual
+  // el dueño reportó como un bug al probar con un cliente real (Ronald
+  // Camas) que tiene crédito ya pagado y no aparecía. Los flags derivados
+  // (hayCreditoVencido, saldoPendienteTotal) se calculan de esta lista
+  // completa, no de un subconjunto pre-filtrado.
+  final List<VentaCreditoModel> creditos;
   // Puntualidad histórica de pago (créditos liquidados o no, con al menos un
   // abono registrado): cuántos abonos cayeron antes/en la fecha de
   // vencimiento de su crédito vs. cuántos cayeron después. null cuando este
@@ -86,14 +93,18 @@ class ClienteHistorialData {
   // vínculo real. Dispara la nota de "puede no ser 100% exacto" en pantalla.
   final bool hayVentasEmparejadasPorNombre;
 
-  // ---- Quién lo refirió (Fase 2) ----
+  // ---- Quién lo refirió ----
   // null cuando el cliente no tiene idReferidor, o cuando lo tiene pero ese
-  // referidor ya no existe (se borró el registro) -no debería pasar en uso
-  // normal, pero una lectura fallida no debe romper toda la pantalla-.
-  final ReferidorModel? referidor;
+  // cliente-referidor ya no existe (se borró el registro) -no debería pasar
+  // en uso normal, pero una lectura fallida no debe romper toda la
+  // pantalla-. Antes apuntaba a un ReferidorModel del módulo aparte
+  // 'referidores'; ese módulo se fusionó dentro de clientes (un referidor
+  // ahora es solo un ClienteModel con esReferidor == true), así que este
+  // campo es un ClienteModel como cualquier otro.
+  final ClienteModel? referidor;
 
   ClienteHistorialData({
-    required this.creditosAbiertos,
+    required this.creditos,
     required this.abonosATiempo,
     required this.abonosAtrasados,
     required this.totalComprado,
@@ -109,9 +120,9 @@ class ClienteHistorialData {
     required this.referidor,
   });
 
-  bool get hayCreditoVencido => creditosAbiertos.any((c) => c.vencida);
+  bool get hayCreditoVencido => creditos.any((c) => c.vencida);
 
-  double get saldoVencidoTotal => creditosAbiertos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
+  double get saldoVencidoTotal => creditos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
 
-  double get saldoPendienteTotal => creditosAbiertos.fold<double>(0, (s, c) => s + c.saldoPendiente);
+  double get saldoPendienteTotal => creditos.where((c) => !c.liquidada).fold<double>(0, (s, c) => s + c.saldoPendiente);
 }

@@ -12,10 +12,17 @@ class ClienteModel {
   // detectar clientes inactivos sin tener que recorrer todas sus ventas cada
   // vez (Fase 3 del CRM).
   final DateTime? fechaUltimaCompra;
-  // Quién trajo a este cliente (pintor/contratista referidor). Sin UI
-  // todavía -se agrega el campo ahora para no tener que tocar este modelo
-  // dos veces- ver módulo 'referidores' (Fase 2).
+  // Quién trajo a este cliente (pintor/contratista referidor) -apunta al id
+  // de OTRO ClienteModel con esReferidor == true, ver comentario en ese
+  // campo más abajo-.
   final String? idReferidor;
+  // true cuando este registro de cliente es, además (o en vez de), un
+  // referidor: alguien (típicamente un pintor/contratista) que trae otros
+  // clientes. A propósito NO es un módulo/colección aparte -el dueño pidió
+  // explícitamente que un referidor sea simplemente un cliente marcado así,
+  // manejado desde la misma pantalla de Clientes, y no una sección
+  // separada (ver antiguo módulo 'referidores', eliminado)-.
+  final bool esReferidor;
 
   ClienteModel({
     required this.id,
@@ -26,6 +33,7 @@ class ClienteModel {
     required this.estado,
     this.fechaUltimaCompra,
     this.idReferidor,
+    this.esReferidor = false,
   });
 
   factory ClienteModel.fromMap(String id, Map<String, dynamic> data) {
@@ -38,15 +46,15 @@ class ClienteModel {
       estado: data['estado'] ?? true,
       fechaUltimaCompra: (data['fechaUltimaCompra'] as Timestamp?)?.toDate(),
       idReferidor: data['idReferidor'] as String?,
+      esReferidor: data['esReferidor'] ?? false,
     );
   }
 
   /// Serialización completa del modelo. OJO: `ClienteRepository.actualizar`
   /// (el editar desde el formulario de Clientes) NO usa esto tal cual para
-  /// no pisar `fechaUltimaCompra`/`idReferidor` con null cada vez que alguien
-  /// solo corrige el teléfono -esos dos campos los escriben otros flujos
-  /// (registrar venta, futuro selector de referidor)-. Sí se usa completo en
-  /// `crear`, donde no hay nada previo que perder.
+  /// no pisar `fechaUltimaCompra` con null cada vez que alguien solo corrige
+  /// el teléfono -ese campo lo escribe otro flujo (registrar venta)-. Sí se
+  /// usa completo en `crear`, donde no hay nada previo que perder.
   Map<String, dynamic> toMap() {
     return {
       'dni': dni,
@@ -56,6 +64,7 @@ class ClienteModel {
       'estado': estado,
       'fechaUltimaCompra': fechaUltimaCompra != null ? Timestamp.fromDate(fechaUltimaCompra!) : null,
       'idReferidor': idReferidor,
+      'esReferidor': esReferidor,
     };
   }
 

@@ -30,6 +30,7 @@ class ClienteRepository {
     required String telefono,
     required bool estado,
     String? idReferidor,
+    bool esReferidor = false,
   }) async {
     if (dni.isNotEmpty) {
       final existe = await _col.where('dni', isEqualTo: dni).limit(1).get();
@@ -38,17 +39,18 @@ class ClienteRepository {
       }
     }
     // Doc nuevo: no hay fechaUltimaCompra previa que pisar, así que acá sí
-    // alcanza con toMap() completo (idReferidor sí es editable desde el
-    // formulario, a diferencia de fechaUltimaCompra). 'nombreNormalizado'
-    // (mayúsculas/tildes/espacios de más colapsados) NO es parte de
-    // ClienteModel.toMap() -es un campo puramente interno para que
-    // VentaRepository._resolverIdCliente pueda encontrar este cliente por
-    // nombre sin depender de una igualdad EXACTA de string (ver item 8 del
-    // pedido del dueño: un cliente ya registrado con otra capitalización no
-    // calzaba y la venta terminaba "sin cliente" en el reporte).
-    final cliente = ClienteModel(id: '', dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor);
+    // alcanza con toMap() completo (idReferidor/esReferidor sí son
+    // editables desde el formulario, a diferencia de fechaUltimaCompra).
+    // 'nombreNormalizado' (mayúsculas/tildes/espacios de más colapsados) NO
+    // es parte de ClienteModel.toMap() -es un campo puramente interno para
+    // que VentaRepository._resolverIdCliente pueda encontrar este cliente
+    // por nombre sin depender de una igualdad EXACTA de string (ver item 8
+    // del pedido del dueño: un cliente ya registrado con otra
+    // capitalización no calzaba y la venta terminaba "sin cliente" en el
+    // reporte).
+    final cliente = ClienteModel(id: '', dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor, esReferidor: esReferidor);
     final doc = await _col.add({...cliente.toMap(), 'nombreNormalizado': normalizarNombreCliente(nombreCompleto), 'fechaRegistro': FieldValue.serverTimestamp()});
-    return ClienteModel(id: doc.id, dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor);
+    return ClienteModel(id: doc.id, dni: dni, nombreCompleto: nombreCompleto, direccion: direccion, telefono: telefono, estado: estado, idReferidor: idReferidor, esReferidor: esReferidor);
   }
 
   Future<void> actualizar({
@@ -59,6 +61,7 @@ class ClienteRepository {
     required String telefono,
     required bool estado,
     String? idReferidor,
+    bool esReferidor = false,
   }) async {
     if (dni.isNotEmpty) {
       final existe = await _col.where('dni', isEqualTo: dni).limit(2).get();
@@ -72,10 +75,11 @@ class ClienteRepository {
     // datos" desde la venta), que no conoce ni edita fechaUltimaCompra -si
     // se mandara el toMap() completo con ese campo en null, se borraría la
     // fecha de última compra que registró la venta cada vez que alguien
-    // solo corrige el teléfono-. idReferidor sí es editable desde el
-    // formulario (selector "¿Quién lo refirió?"), así que sí se incluye acá
-    // explícitamente -incluyendo cuando viene null, que es "Ninguno" y debe
-    // poder limpiar un referidor ya asignado-.
+    // solo corrige el teléfono-. idReferidor/esReferidor sí son editables
+    // desde el formulario (selector "¿Quién lo refirió?" y el toggle "Es
+    // referidor"), así que sí se incluyen acá explícitamente -incluyendo
+    // idReferidor cuando viene null, que es "Ninguno" y debe poder limpiar
+    // un referidor ya asignado-.
     await _col.doc(id).update({
       'dni': dni,
       'nombreCompleto': nombreCompleto,
@@ -84,6 +88,7 @@ class ClienteRepository {
       'telefono': telefono,
       'estado': estado,
       'idReferidor': idReferidor,
+      'esReferidor': esReferidor,
     });
   }
 

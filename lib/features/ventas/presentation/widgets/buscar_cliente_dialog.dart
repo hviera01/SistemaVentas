@@ -48,9 +48,11 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
     setState(() => _busquedaAplicada = _busquedaController.text.trim());
   }
 
-  /// "Crear cliente nuevo" -pedido explícito del dueño (item 5): cuando
-  /// buscar/tipear no encuentra a nadie, en vez de depender solo de la
-  /// creación silenciosa al confirmar la venta (ver
+  /// "Crear cliente nuevo" -pedido explícito del dueño (item 5, y ajustado
+  /// en una vuelta posterior porque el dueño no la encontraba escondida
+  /// detrás de una búsqueda fallida): visible siempre, apenas se abre el
+  /// diálogo, no solo cuando la búsqueda no encuentra a nadie. En vez de
+  /// depender solo de la creación silenciosa al confirmar la venta (ver
   /// VentaRepository._resolverIdCliente), el cajero puede crearlo acá mismo,
   /// con el nombre ya tipeado precargado, y queda vinculado a la venta al
   /// instante -mismo contrato que elegir uno ya existente:
@@ -139,6 +141,21 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _crearClienteNuevo,
+                icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                label: Text('Crear cliente nuevo', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFC62828),
+                  side: const BorderSide(color: Color(0xFFC62828)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
             const SizedBox(height: 14),
             Expanded(
               child: clientesAsync.when(
@@ -160,25 +177,11 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                       ? const <ClienteModel>[]
                       : clientes.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, aplicada)).toList();
                   if (lista.isEmpty) {
+                    // El botón "Crear cliente nuevo" ya vive siempre visible
+                    // arriba del buscador (ver Align más arriba); acá ya no
+                    // hace falta repetirlo.
                     return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('No se encontraron clientes', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                          const SizedBox(height: 14),
-                          OutlinedButton.icon(
-                            onPressed: _crearClienteNuevo,
-                            icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-                            label: Text('Crear cliente nuevo', style: GoogleFonts.poppins(fontSize: 13)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFC62828),
-                              side: const BorderSide(color: Color(0xFFC62828)),
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: Text('No se encontraron clientes', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                     );
                   }
                   return ListView.separated(
