@@ -54,3 +54,6 @@ app.*.map.json
 
 # Cache de wrangler (Cloudflare) cuando se corre desde la raíz del repo.
 .wrangler/
+
+# Configuración local de Claude Code (permisos propios de esta máquina).
+.claude/

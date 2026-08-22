@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../clientes/data/cliente_model.dart';
+import '../../../ventas/presentation/widgets/buscar_cliente_dialog.dart';
+import '../../../../core/utils/formato_moneda.dart';
 
 class RegistrarCreditoDialog extends ConsumerStatefulWidget {
   const RegistrarCreditoDialog({super.key});
@@ -22,6 +25,15 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
   DateTime _fechaVencimiento = DateTime.now().add(const Duration(days: 30));
   bool _guardando = false;
   String? _error;
+  // Cliente elegido con BuscarClienteDialog (opcional): si se elige, este
+  // crédito manual queda vinculado de verdad al registro de 'clientes' -ver
+  // CRM de clientes-, no solo con el nombre/RTN tipeados a mano. Se limpia
+  // si el cajero edita el nombre/RTN después de elegirlo (ver
+  // _limpiarClienteSiEdit).
+  ClienteModel? _clienteSeleccionado;
+  // Saldo vencido (si hay) del cliente elegido: aviso NO bloqueante, igual
+  // que en RegistrarVentaScreen -no impide seguir registrando el crédito-.
+  double? _saldoVencidoCliente;
 
   @override
   void dispose() {
@@ -34,6 +46,41 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
   }
 
   double _parseDouble(String texto) => double.tryParse(texto.replaceAll(',', '').trim()) ?? 0;
+
+  Future<void> _buscarCliente() async {
+    final cliente = await showDialog<ClienteModel>(context: context, builder: (context) => const BuscarClienteDialog());
+    if (cliente == null) return;
+    setState(() {
+      _clienteController.text = cliente.nombreCompleto;
+      _rtnController.text = cliente.dni;
+      _clienteSeleccionado = cliente;
+    });
+    await _verificarCreditoVencido(cliente.id);
+  }
+
+  /// Aviso NO bloqueante -ver el mismo mecanismo en RegistrarVentaScreen-:
+  /// solo informa, no impide seguir registrando el crédito manual.
+  Future<void> _verificarCreditoVencido(String idCliente) async {
+    try {
+      final creditos = await ref.read(ventaCreditoRepositoryProvider).obtenerCreditosDeCliente(idCliente: idCliente);
+      final totalVencido = creditos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
+      if (!mounted) return;
+      setState(() => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null);
+    } catch (_) {
+      // Best-effort: sin internet u otro error transitorio, no se muestra el
+      // aviso esta vez.
+    }
+  }
+
+  /// El cajero editó a mano el nombre/RTN después de haber elegido un
+  /// cliente con el buscador: ese vínculo ya no es confiable.
+  void _limpiarClienteSiEdit() {
+    if (_clienteSeleccionado == null) return;
+    setState(() {
+      _clienteSeleccionado = null;
+      _saldoVencidoCliente = null;
+    });
+  }
 
   Future<void> _seleccionarFecha() async {
     final fecha = await showDatePicker(
@@ -68,6 +115,7 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
       await ref.read(ventaCreditoRepositoryProvider).crearCreditoManual(
             documentoCliente: _rtnController.text.trim(),
             nombreCliente: cliente,
+            idCliente: _clienteSeleccionado?.id,
             numeroDocumento: _numeroDocumentoController.text.trim(),
             montoTotal: montoTotal,
             saldoPendiente: saldoPendiente,
@@ -151,17 +199,32 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                     ),
                     ),
                     const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _clienteController,
-                      numerico: false,
-                      child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _clienteController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Cliente'),
-                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CampoTecladoCompacto(
+                            controller: _clienteController,
+                            numerico: false,
+                            child: TextField(
+                            inputFormatters: [mayusculasInputFormatter],
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            controller: _clienteController,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: _decoracion('Cliente'),
+                            onChanged: (_) => _limpiarClienteSiEdit(),
+                          ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Buscar cliente registrado',
+                          onPressed: _buscarCliente,
+                          icon: const Icon(Icons.search),
+                          style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
@@ -174,8 +237,29 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                       controller: _rtnController,
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('RTN / Documento (opcional)'),
+                      onChanged: (_) => _limpiarClienteSiEdit(),
                     ),
                     ),
+                    if (_saldoVencidoCliente != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 20, color: Colors.orange.shade800),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Este cliente tiene un crédito vencido de ${formatearMoneda(_saldoVencidoCliente!)} — revisá antes de continuar.',
+                                style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.orange.shade900),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Row(
                       children: [

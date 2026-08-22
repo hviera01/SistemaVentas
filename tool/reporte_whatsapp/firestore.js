@@ -85,4 +85,14 @@ async function consultarPorRangoFecha({ coleccion, campoFecha, inicio, fin, coll
   });
 }
 
-module.exports = { runQuery, consultarPorRangoFecha, filtroRangoFecha, timestampValue };
+// Trae TODOS los documentos de una colección, sin filtro de fecha -para
+// 'clientes' en el Resumen de Clientes del reporte (reporte.js), que
+// necesita el registro completo de cada cliente (fechaUltimaCompra, estado),
+// no solo lo que cayó dentro del rango de fechas del reporte-. Un
+// `structuredQuery` sin `where` en la API de Firestore devuelve la colección
+// completa, así que alcanza con omitirlo.
+async function consultarColeccionCompleta(coleccion) {
+  return runQuery({ from: [{ collectionId: coleccion, allDescendants: false }] });
+}
+
+module.exports = { runQuery, consultarPorRangoFecha, consultarColeccionCompleta, filtroRangoFecha, timestampValue };

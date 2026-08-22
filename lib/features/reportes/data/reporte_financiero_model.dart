@@ -175,6 +175,33 @@ class ClienteTop {
   final int cantidadCompras;
 
   ClienteTop({required this.cliente, required this.totalComprado, required this.cantidadCompras});
+
+  double get ticketPromedio => cantidadCompras <= 0 ? 0 : totalComprado / cantidadCompras;
+}
+
+/// Ventas cuyo nombre de cliente se tipeó a mano pero no quedó vinculado a un
+/// registro real (sin idCliente) — agrupadas por nombre normalizado, para
+/// detectar compradores frecuentes que todavía no están registrados. Debería
+/// ir bajando con el tiempo, ya que el auto-registro (CRM Fase 1, punto 2)
+/// vincula las ventas nuevas solas.
+class VentaSinCliente {
+  final String nombre;
+  final int cantidadVentas;
+  final double totalComprado;
+
+  VentaSinCliente({required this.nombre, required this.cantidadVentas, required this.totalComprado});
+}
+
+/// Un cliente activo que lleva más de 90 días sin comprar (o que nunca ha
+/// comprado). [ultimaCompra]/[diasSinComprar] vienen null juntos cuando el
+/// cliente nunca registró una compra -no hay "hace cuántos días" que calcular
+/// en ese caso, pero igual cuenta como inactivo para efectos de seguimiento-.
+class ClienteInactivo {
+  final String nombreCompleto;
+  final DateTime? ultimaCompra;
+  final int? diasSinComprar;
+
+  ClienteInactivo({required this.nombreCompleto, required this.ultimaCompra, required this.diasSinComprar});
 }
 
 /// Sección "Inteligencia de Negocios": analítica pensada para decisiones
@@ -189,6 +216,10 @@ class InteligenciaNegocioData {
   final List<ClienteTop> clientesTop;
   final double ticketPromedio;
   final double valorStockMuerto;
+  // Ventas a nombres no registrados (Fase 3 del CRM de clientes).
+  final List<VentaSinCliente> ventasNoRegistradas;
+  // Clientes activos con más de 90 días sin comprar (o que nunca compraron).
+  final List<ClienteInactivo> clientesInactivos;
 
   InteligenciaNegocioData({
     required this.pronosticoVentas,
@@ -197,6 +228,8 @@ class InteligenciaNegocioData {
     required this.clientesTop,
     required this.ticketPromedio,
     required this.valorStockMuerto,
+    required this.ventasNoRegistradas,
+    required this.clientesInactivos,
   });
 }
 

@@ -55,6 +55,11 @@ class ItemVentaModel {
   // pendiente más vieja primero, ver PendienteReposicionRepository) y
   // corrigen este campo al costo real de esa compra.
   final bool pendienteCompra;
+  // Código(s) de color de pintura usado(s) en esta línea (una línea puede
+  // llevar más de uno, ej. una mezcla con dos tintes -ver CodigosColorDialog,
+  // que es la única forma de editar esto desde la venta-). Lista vacía por
+  // defecto (no todas las líneas son pintura teñida).
+  final List<String> codigosColor;
 
   ItemVentaModel({
     required this.idProducto,
@@ -68,6 +73,7 @@ class ItemVentaModel {
     this.descuentoPorcentaje = 0,
     this.componentes = const [],
     this.pendienteCompra = false,
+    this.codigosColor = const [],
   });
 
   bool get esCombo => componentes.isNotEmpty;
@@ -87,6 +93,7 @@ class ItemVentaModel {
           .map((c) => ComponenteComboSnapshot.fromMap(Map<String, dynamic>.from(c)))
           .toList(),
       pendienteCompra: data['pendienteCompra'] ?? false,
+      codigosColor: (data['codigosColor'] as List<dynamic>? ?? []).map((c) => c.toString()).toList(),
     );
   }
 
@@ -118,6 +125,7 @@ class ItemVentaModel {
       'descuentoPorcentaje': descuentoPorcentaje,
       'componentes': componentes.map((c) => c.toMap()).toList(),
       'pendienteCompra': pendienteCompra,
+      'codigosColor': codigosColor,
     };
   }
 
@@ -130,6 +138,7 @@ class ItemVentaModel {
     double? precioCompraUsado,
     List<ComponenteComboSnapshot>? componentes,
     bool? pendienteCompra,
+    List<String>? codigosColor,
   }) {
     return ItemVentaModel(
       idProducto: idProducto,
@@ -143,6 +152,7 @@ class ItemVentaModel {
       descuentoPorcentaje: descuentoPorcentaje ?? this.descuentoPorcentaje,
       componentes: componentes ?? this.componentes,
       pendienteCompra: pendienteCompra ?? this.pendienteCompra,
+      codigosColor: codigosColor ?? this.codigosColor,
     );
   }
 }

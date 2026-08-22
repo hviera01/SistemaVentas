@@ -12,6 +12,11 @@ class ReporteVentaModel {
   final String usuarioRegistro;
   final String documentoCliente;
   final String nombreCliente;
+  // Vínculo real al registro de 'clientes' (ver CRM de clientes, Fase 1).
+  // null en ventas de antes de ese vínculo, o hechas sin cliente elegido -ver
+  // ReporteFinancieroRepository._agruparClientesTop, que lo usa para agrupar
+  // con más precisión que solo el texto de nombreCliente-.
+  final String? idCliente;
   final double impuesto;
   final String condicion;
   final DateTime? fechaVencimiento;
@@ -44,6 +49,7 @@ class ReporteVentaModel {
     required this.usuarioRegistro,
     required this.documentoCliente,
     required this.nombreCliente,
+    this.idCliente,
     required this.impuesto,
     required this.condicion,
     required this.fechaVencimiento,
@@ -69,6 +75,7 @@ class ReporteVentaModel {
       usuarioRegistro: data['usuarioRegistro'] ?? '',
       documentoCliente: data['documentoCliente'] ?? '',
       nombreCliente: data['nombreCliente'] ?? '',
+      idCliente: data['idCliente'] as String?,
       impuesto: (data['impuesto'] ?? 0).toDouble(),
       condicion: data['condicion'] ?? '',
       fechaVencimiento: (data['fechaVencimiento'] as Timestamp?)?.toDate(),

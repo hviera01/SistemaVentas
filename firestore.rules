@@ -55,6 +55,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /referidores/{idReferidor} {
+      allow read, write: if true;
+    }
+
     match /ventasCredito/{idCredito} {
       allow read, write: if true;
 
@@ -151,6 +155,42 @@ service cloud.firestore {
 
     match /{path=**}/detalle/{idItem} {
       allow read, write: if true;
+    }
+
+    // --- Sitio público Súper Color (supercolor_web) + panel admin (supercolor_admin) ---
+    // A diferencia del resto de esta app, el panel admin SÍ usa Firebase
+    // Authentication real, restringido a un único correo (el dueño). Lectura
+    // pública sin login (el sitio de marketing no tiene "iniciar sesión"),
+    // escritura solo desde una sesión autenticada con ese correo exacto.
+    function esDuenioSitio() {
+      return request.auth != null
+        && request.auth.token.email == 'henryviera2003@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    match /configuracionSitio/{idDocumento} {
+      allow read: if true;
+      allow write: if esDuenioSitio();
+    }
+
+    match /sucursales/{idSucursal} {
+      allow read: if true;
+      allow write: if esDuenioSitio();
+    }
+
+    match /productosDestacados/{idProducto} {
+      allow read: if true;
+      allow write: if esDuenioSitio();
+    }
+
+    match /servicios/{idServicio} {
+      allow read: if true;
+      allow write: if esDuenioSitio();
+    }
+
+    match /promocionesSitio/{idPromocion} {
+      allow read: if true;
+      allow write: if esDuenioSitio();
     }
   }
 }

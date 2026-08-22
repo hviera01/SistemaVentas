@@ -9,6 +9,12 @@ class VentaEnEsperaModel {
   final String metodoPago;
   final String documentoCliente;
   final String nombreCliente;
+  // Vínculo real al registro de 'clientes' (ver CRM de clientes, Fase 1):
+  // se guarda para que "guardar en espera" y recuperarla después no pierda
+  // el cliente elegido/auto-registrado, sin tener que re-resolverlo por
+  // nombre al confirmar -ver VentaRepository._resolverIdCliente, que solo
+  // entra a jugar cuando esto viene null-.
+  final String? idCliente;
   final DateTime? fechaVencimiento;
   final String oc;
   final String regExonerado;
@@ -25,6 +31,7 @@ class VentaEnEsperaModel {
     required this.metodoPago,
     required this.documentoCliente,
     required this.nombreCliente,
+    this.idCliente,
     required this.fechaVencimiento,
     required this.oc,
     required this.regExonerado,
@@ -46,6 +53,7 @@ class VentaEnEsperaModel {
       metodoPago: data['metodoPago'] ?? 'Efectivo',
       documentoCliente: data['documentoCliente'] ?? '',
       nombreCliente: data['nombreCliente'] ?? '',
+      idCliente: data['idCliente'] as String?,
       fechaVencimiento: (data['fechaVencimiento'] as Timestamp?)?.toDate(),
       oc: data['oc'] ?? '',
       regExonerado: data['regExonerado'] ?? '',
@@ -64,6 +72,7 @@ class VentaEnEsperaModel {
       'metodoPago': metodoPago,
       'documentoCliente': documentoCliente,
       'nombreCliente': nombreCliente,
+      'idCliente': idCliente,
       'fechaVencimiento': fechaVencimiento != null ? Timestamp.fromDate(fechaVencimiento!) : null,
       'oc': oc,
       'regExonerado': regExonerado,

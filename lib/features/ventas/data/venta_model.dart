@@ -8,6 +8,11 @@ class VentaModel {
   final String numeroDocumento;
   final String documentoCliente;
   final String nombreCliente;
+  // Vínculo real al registro de 'clientes' (a diferencia de
+  // documentoCliente/nombreCliente, que son solo texto suelto histórico).
+  // null en ventas viejas (de antes de este campo) o cuando el cajero dejó
+  // el nombre vacío (Consumidor Final) — ver VentaRepository.registrarVenta.
+  final String? idCliente;
   final String metodoPago;
   final double montoPago;
   final double montoCambio;
@@ -67,6 +72,7 @@ class VentaModel {
       numeroDocumento: numeroDocumento,
       documentoCliente: documentoCliente,
       nombreCliente: nombreCliente,
+      idCliente: idCliente,
       metodoPago: metodoPago,
       montoPago: montoPago,
       montoCambio: montoCambio,
@@ -101,6 +107,7 @@ class VentaModel {
     required this.numeroDocumento,
     required this.documentoCliente,
     required this.nombreCliente,
+    this.idCliente,
     required this.metodoPago,
     required this.montoPago,
     required this.montoCambio,
@@ -135,6 +142,7 @@ class VentaModel {
       numeroDocumento: data['numeroDocumento'] ?? '',
       documentoCliente: data['documentoCliente'] ?? '',
       nombreCliente: data['nombreCliente'] ?? '',
+      idCliente: data['idCliente'] as String?,
       metodoPago: data['metodoPago'] ?? '',
       montoPago: (data['montoPago'] ?? 0).toDouble(),
       montoCambio: (data['montoCambio'] ?? 0).toDouble(),

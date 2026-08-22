@@ -15,6 +15,7 @@ import '../../ventas_credito/data/venta_credito_repository.dart';
 import '../../ventas_credito/data/abono_model.dart';
 import '../../caja/data/cierre_caja_repository.dart';
 import '../../compras_credito/data/compra_credito_model.dart';
+import '../../clientes/data/cliente_model.dart';
 
 /// Cuánto del efectivo estimado se sugiere reservar como colchón de
 /// seguridad antes de recomendar pagos a proveedores.
@@ -25,6 +26,12 @@ const _colchonSeguridadPorcentaje = 0.20;
 const _porcentajeVentasParaProveedores = 0.35;
 
 const _topN = 10;
+
+/// Días sin comprar a partir de los cuales un cliente activo se considera
+/// inactivo (CRM Fase 3). El script de Node que manda el reporte por
+/// WhatsApp (tool/reporte_whatsapp/reporte.js) mirra este mismo número a
+/// mano -mantenerlos sincronizados si este valor cambia-.
+const _diasUmbralClienteInactivo = 90;
 
 /// Detalle de ventas/compras agrupado por id de documento padre, resuelto
 /// desde una sola query de collectionGroup (ver [ReporteFinancieroRepository._detallePorRango]).
@@ -215,6 +222,11 @@ class ReporteFinancieroRepository {
     final efectivoEstimadoFuture = _efectivoEstimado();
     final hace3Meses = DateTime(DateTime.now().year, DateTime.now().month - 2, 1);
     final egresosUltimos3MesesFuture = _egresoRepository.obtenerEgresosPorRango(hace3Meses, DateTime.now());
+    // Solo clientes activos: un cliente inactivo (estado=false, ya dado de
+    // baja) no tiene sentido incluirlo en "clientes inactivos" -eso es para
+    // clientes vigentes que se dejaron de aparecer, no para los ya dados de
+    // baja a propósito-. Filtro simple de un solo campo, sin índice extra.
+    final clientesActivosFuture = _db.collection('clientes').where('estado', isEqualTo: true).get();
 
     final ventasHeaders = await ventasHeadersFuture;
     final comprasHeaders = await comprasHeadersFuture;
@@ -228,6 +240,7 @@ class ReporteFinancieroRepository {
     final serieMensual = await serieMensualFuture;
     final efectivoEstimado = await efectivoEstimadoFuture;
     final egresosUltimos3Meses = await egresosUltimos3MesesFuture;
+    final clientesActivosSnap = await clientesActivosFuture;
 
     final ventasValidas = ventasHeaders.where((v) => v.esActiva && !v.esCotizacion).toList();
     final comprasValidas = comprasHeaders.where((c) => c.esActiva).toList();
@@ -321,6 +334,8 @@ class ReporteFinancieroRepository {
       clientesTop: _agruparClientesTop(ventasValidas),
       ticketPromedio: ventasValidas.isEmpty ? 0 : ventasPeriodo / ventasValidas.length,
       valorStockMuerto: productosSinVenta.fold<double>(0, (s, p) => s + p.valorInventario),
+      ventasNoRegistradas: _agruparVentasSinCliente(ventasValidas),
+      clientesInactivos: _calcularClientesInactivos(clientesActivosSnap.docs.map((d) => ClienteModel.fromMap(d.id, d.data())).toList()),
     );
 
     return ReporteFinancieroData(
@@ -454,20 +469,88 @@ class ReporteFinancieroRepository {
     return sugerencias.take(_topN).toList();
   }
 
+  /// Agrupa por [ReporteVentaModel.idCliente] (vínculo real, CRM Fase 1)
+  /// cuando la venta lo trae; si no -ventas de antes de ese vínculo, o hechas
+  /// sin cliente elegido-, cae al agrupamiento anterior por el texto de
+  /// nombreCliente (normalizado a mayúsculas/sin espacios de sobra, para no
+  /// separar "Juan Perez" de "juan perez " en dos filas distintas). El
+  /// nombre que se muestra es el de la primera venta de cada grupo -no hace
+  /// falta releer el registro de Clientes solo para esto-.
   List<ClienteTop> _agruparClientesTop(List<ReporteVentaModel> ventas) {
-    final totalPorCliente = <String, double>{};
-    final conteoPorCliente = <String, int>{};
+    final totalPorClave = <String, double>{};
+    final conteoPorClave = <String, int>{};
+    final nombrePorClave = <String, String>{};
     for (final v in ventas) {
-      final cliente = v.nombreCliente.isEmpty ? 'CONSUMIDOR FINAL' : v.nombreCliente;
-      totalPorCliente[cliente] = (totalPorCliente[cliente] ?? 0) + v.totalAPagar;
-      conteoPorCliente[cliente] = (conteoPorCliente[cliente] ?? 0) + 1;
+      final nombre = v.nombreCliente.isEmpty ? 'CONSUMIDOR FINAL' : v.nombreCliente;
+      if (nombre.toUpperCase() == 'CONSUMIDOR FINAL') continue;
+      final idCliente = v.idCliente;
+      final clave = (idCliente != null && idCliente.isNotEmpty) ? 'id:$idCliente' : 'nombre:${nombre.trim().toUpperCase()}';
+      totalPorClave[clave] = (totalPorClave[clave] ?? 0) + v.totalAPagar;
+      conteoPorClave[clave] = (conteoPorClave[clave] ?? 0) + 1;
+      nombrePorClave.putIfAbsent(clave, () => nombre);
     }
-    final lista = totalPorCliente.keys
-        .where((c) => c != 'CONSUMIDOR FINAL')
-        .map((c) => ClienteTop(cliente: c, totalComprado: totalPorCliente[c] ?? 0, cantidadCompras: conteoPorCliente[c] ?? 0))
+    final lista = totalPorClave.keys
+        .map((clave) => ClienteTop(cliente: nombrePorClave[clave] ?? '', totalComprado: totalPorClave[clave] ?? 0, cantidadCompras: conteoPorClave[clave] ?? 0))
         .toList()
       ..sort((a, b) => b.totalComprado.compareTo(a.totalComprado));
     return lista.take(_topN).toList();
+  }
+
+  /// Ventas con un nombre tipeado que no quedó vinculado a un cliente real
+  /// (sin idCliente) — agrupadas por nombre normalizado, ordenadas por
+  /// frecuencia (no por monto): el objetivo es detectar compradores
+  /// frecuentes sin registrar, no a quién más le vendieron una sola vez.
+  List<VentaSinCliente> _agruparVentasSinCliente(List<ReporteVentaModel> ventas) {
+    final totalPorClave = <String, double>{};
+    final conteoPorClave = <String, int>{};
+    final nombrePorClave = <String, String>{};
+    for (final v in ventas) {
+      final idCliente = v.idCliente;
+      if (idCliente != null && idCliente.isNotEmpty) continue;
+      final nombre = v.nombreCliente.trim();
+      if (nombre.isEmpty || nombre.toUpperCase() == 'CONSUMIDOR FINAL') continue;
+      final clave = nombre.toUpperCase();
+      totalPorClave[clave] = (totalPorClave[clave] ?? 0) + v.totalAPagar;
+      conteoPorClave[clave] = (conteoPorClave[clave] ?? 0) + 1;
+      nombrePorClave.putIfAbsent(clave, () => nombre);
+    }
+    final lista = totalPorClave.keys
+        .map((clave) => VentaSinCliente(nombre: nombrePorClave[clave] ?? clave, cantidadVentas: conteoPorClave[clave] ?? 0, totalComprado: totalPorClave[clave] ?? 0))
+        .toList()
+      ..sort((a, b) => b.cantidadVentas.compareTo(a.cantidadVentas));
+    return lista.take(_topN).toList();
+  }
+
+  /// Clientes activos (ya filtrados por estado=true en la consulta) con más
+  /// de [_diasUmbralClienteInactivo] días desde su última compra -o que
+  /// nunca han comprado (fechaUltimaCompra null), que también cuentan como
+  /// inactivos-. Todo en memoria, sin consulta ni índice adicional (la fecha
+  /// de última compra ya viene denormalizada en cada ClienteModel desde CRM
+  /// Fase 1 — ver VentaRepository.registrarVenta).
+  List<ClienteInactivo> _calcularClientesInactivos(List<ClienteModel> clientesActivos) {
+    final ahora = DateTime.now();
+    final inactivos = <ClienteInactivo>[];
+    for (final c in clientesActivos) {
+      final ultimaCompra = c.fechaUltimaCompra;
+      if (ultimaCompra == null) {
+        inactivos.add(ClienteInactivo(nombreCompleto: c.nombreCompleto, ultimaCompra: null, diasSinComprar: null));
+        continue;
+      }
+      final dias = ahora.difference(ultimaCompra).inDays;
+      if (dias > _diasUmbralClienteInactivo) {
+        inactivos.add(ClienteInactivo(nombreCompleto: c.nombreCompleto, ultimaCompra: ultimaCompra, diasSinComprar: dias));
+      }
+    }
+    // Los que nunca han comprado van al final: no hay "hace cuántos días" que
+    // ordenar ahí, y los más urgentes de recuperar son los que sí compraron
+    // pero hace más tiempo.
+    inactivos.sort((a, b) {
+      if (a.diasSinComprar == null && b.diasSinComprar == null) return 0;
+      if (a.diasSinComprar == null) return 1;
+      if (b.diasSinComprar == null) return -1;
+      return b.diasSinComprar!.compareTo(a.diasSinComprar!);
+    });
+    return inactivos;
   }
 
   List<RankingProducto> _rankearPorCantidad(Iterable<(String, String, double)> lineas) {

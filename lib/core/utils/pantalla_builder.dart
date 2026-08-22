@@ -10,6 +10,7 @@ import '../../features/negocio/presentation/screens/negocio_screen.dart';
 import '../../features/colores/presentation/screens/colores_screen.dart';
 import '../../features/clientes/presentation/screens/clientes_screen.dart';
 import '../../features/proveedores/presentation/screens/proveedores_screen.dart';
+import '../../features/referidores/presentation/screens/referidores_screen.dart';
 import '../../features/ventas_credito/presentation/screens/ventas_credito_screen.dart';
 import '../../features/compras_credito/presentation/screens/compras_credito_screen.dart';
 import '../../features/reportes/presentation/screens/reporte_ventas_screen.dart';
@@ -91,6 +92,8 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono, String
       return const ClientesScreen();
     case 'proveedores':
       return const ProveedoresScreen();
+    case 'referidores':
+      return const ReferidoresScreen();
     case 'ventas_credito':
       return const VentasCreditoScreen();
     case 'compras_credito':

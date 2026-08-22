@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../data/cliente_model.dart';
-import '../../providers/clientes_provider.dart';
+import '../../data/referidor_model.dart';
+import '../../providers/referidores_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
-import '../widgets/cliente_form_dialog.dart';
-import 'detalle_cliente_screen.dart';
+import '../widgets/referidor_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../clientes/providers/clientes_provider.dart';
+import '../../../clientes/data/cliente_model.dart';
 
-class ClientesScreen extends ConsumerStatefulWidget {
-  const ClientesScreen({super.key});
+class ReferidoresScreen extends ConsumerStatefulWidget {
+  const ReferidoresScreen({super.key});
 
   @override
-  ConsumerState<ClientesScreen> createState() => _ClientesScreenState();
+  ConsumerState<ReferidoresScreen> createState() => _ReferidoresScreenState();
 }
 
-class _ClientesScreenState extends ConsumerState<ClientesScreen> {
+class _ReferidoresScreenState extends ConsumerState<ReferidoresScreen> {
   final _busquedaController = TextEditingController();
   String? _filaSeleccionada;
 
@@ -27,25 +28,25 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
   }
 
   void _buscar() {
-    ref.read(clientesBusquedaProvider.notifier).actualizar(_busquedaController.text.trim());
+    ref.read(referidoresBusquedaProvider.notifier).actualizar(_busquedaController.text.trim());
   }
 
   void _limpiarBusqueda() {
     _busquedaController.clear();
-    ref.read(clientesBusquedaProvider.notifier).actualizar('');
+    ref.read(referidoresBusquedaProvider.notifier).actualizar('');
   }
 
-  void _abrirFormulario([ClienteModel? cliente]) {
-    showDialog(context: context, builder: (context) => ClienteFormDialog(cliente: cliente));
+  void _abrirFormulario([ReferidorModel? referidor]) {
+    showDialog(context: context, builder: (context) => ReferidorFormDialog(referidor: referidor));
   }
 
-  Future<void> _eliminar(ClienteModel cliente) async {
+  Future<void> _eliminar(ReferidorModel referidor) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar cliente', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar este cliente?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text('Eliminar referidor', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text('¿Seguro que querés eliminar este referidor?', style: GoogleFonts.poppins(fontSize: 13)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
           FilledButton(
@@ -57,30 +58,22 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       ),
     );
     if (confirmar != true) return;
-    await ref.read(clienteRepositoryProvider).eliminar(cliente.id);
+    await ref.read(referidorRepositoryProvider).eliminar(referidor.id);
   }
 
-  void _verDetalle(ClienteModel cliente) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => DetalleClienteScreen(cliente: cliente)));
-  }
-
-  void _manejarAccion(String valor, ClienteModel cliente) {
+  void _manejarAccion(String valor, ReferidorModel referidor) {
     switch (valor) {
-      case 'detalle':
-        _verDetalle(cliente);
-        break;
       case 'editar':
-        _abrirFormulario(cliente);
+        _abrirFormulario(referidor);
         break;
       case 'eliminar':
-        _eliminar(cliente);
+        _eliminar(referidor);
         break;
     }
   }
 
   List<PopupMenuEntry<String>> _opcionesMenu() {
     return [
-      _opcionMenu(valor: 'detalle', icono: Icons.visibility_outlined, texto: 'Ver detalle'),
       _opcionMenu(valor: 'editar', icono: Icons.edit_outlined, texto: 'Editar'),
       _opcionMenu(valor: 'eliminar', icono: Icons.delete_outline, texto: 'Eliminar'),
     ];
@@ -94,11 +87,27 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
   }
 
+  /// Cantidad de clientes que trajo cada referidor: se calcula al vuelo
+  /// filtrando la lista de clientes ya cargada (clientesStreamProvider) por
+  /// idReferidor -sin contador denormalizado que haya que mantener aparte,
+  /// tal como pide el plan: a este volumen de datos no hace falta-.
+  Map<String, int> _conteoPorReferidor(List<ClienteModel> clientes) {
+    final conteo = <String, int>{};
+    for (final c in clientes) {
+      final idReferidor = c.idReferidor;
+      if (idReferidor == null || idReferidor.isEmpty) continue;
+      conteo[idReferidor] = (conteo[idReferidor] ?? 0) + 1;
+    }
+    return conteo;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesStreamProvider);
-    final busqueda = ref.watch(clientesBusquedaProvider);
-    final vista = ref.watch(clientesVistaProvider);
+    final referidoresAsync = ref.watch(referidoresStreamProvider);
+    final clientes = ref.watch(clientesStreamProvider).value ?? const [];
+    final conteoPorReferidor = _conteoPorReferidor(clientes);
+    final busqueda = ref.watch(referidoresBusquedaProvider);
+    final vista = ref.watch(referidoresVistaProvider);
 
     return Container(
       color: const Color(0xFFF2F3F7),
@@ -111,7 +120,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
                   child: Text(
-                    'Clientes',
+                    'Referidores',
                     style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                   ),
                 ),
@@ -124,7 +133,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                       SizedBox(width: esMovil ? constraints.maxWidth : 210, child: _selectorVista(vista)),
                       SizedBox(width: esMovil ? constraints.maxWidth : 320, child: _buscador(busqueda)),
                       OutlinedButton.icon(
-                        onPressed: () => ref.invalidate(clientesStreamProvider),
+                        onPressed: () => ref.invalidate(referidoresStreamProvider),
                         icon: const Icon(Icons.refresh, size: 18),
                         label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
@@ -137,7 +146,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                       FilledButton.icon(
                         onPressed: () => _abrirFormulario(),
                         icon: const Icon(Icons.add, size: 18),
-                        label: Text('Nuevo Cliente', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                        label: Text('Nuevo Referidor', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFC62828),
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -156,11 +165,11 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
                 ),
-                child: clientesAsync.when(
-                      data: (clientes) {
-                        var lista = clientes;
+                child: referidoresAsync.when(
+                      data: (referidores) {
+                        var lista = referidores;
                         if (busqueda.isNotEmpty) {
-                          lista = lista.where((c) => coincideFuzzy(c.textoBusqueda, busqueda)).toList();
+                          lista = lista.where((r) => coincideFuzzy(r.textoBusqueda, busqueda)).toList();
                         } else if (vista == 'filtrados') {
                           lista = [];
                         }
@@ -170,10 +179,10 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.groups_outlined, size: 56, color: Colors.grey.shade300),
+                                Icon(Icons.handshake_outlined, size: 56, color: Colors.grey.shade300),
                                 const SizedBox(height: 12),
                                 Text(
-                                  vista == 'filtrados' && busqueda.isEmpty ? 'Escribí algo y presioná buscar' : 'No hay clientes encontrados',
+                                  vista == 'filtrados' && busqueda.isEmpty ? 'Escribí algo y presioná buscar' : 'No hay referidores encontrados',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.poppins(color: Colors.grey.shade500),
                                 ),
@@ -182,7 +191,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                           );
                         }
 
-                        return esMovil ? _tarjetas(lista) : _tabla(lista);
+                        return esMovil ? _tarjetas(lista, conteoPorReferidor) : _tabla(lista, conteoPorReferidor);
                       },
                       loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
                       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
@@ -206,12 +215,12 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
           items: const [
-            DropdownMenuItem(value: 'filtrados', child: Text('Clientes filtrados')),
+            DropdownMenuItem(value: 'filtrados', child: Text('Referidores filtrados')),
             DropdownMenuItem(value: 'todos', child: Text('Mostrar todos')),
           ],
           onChanged: (v) {
             if (v == null) return;
-            ref.read(clientesVistaProvider.notifier).actualizar(v);
+            ref.read(referidoresVistaProvider.notifier).actualizar(v);
           },
         ),
       ),
@@ -232,7 +241,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
               controller: _busquedaController,
               numerico: false,
               onSubmitted: (_) => _buscar(),
-              titulo: 'Buscar por DNI, nombre, dirección o teléfono...',
+              titulo: 'Buscar por nombre, teléfono o dirección...',
               child: TextField(
               inputFormatters: [mayusculasInputFormatter],
               autocorrect: false,
@@ -240,7 +249,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
               controller: _busquedaController,
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
-                hintText: 'Buscar por DNI, nombre, dirección o teléfono...',
+                hintText: 'Buscar por nombre, teléfono o dirección...',
                 hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
                 border: InputBorder.none,
                 isDense: true,
@@ -256,7 +265,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
   }
 
-  Widget _tabla(List<ClienteModel> lista) {
+  Widget _tabla(List<ReferidorModel> lista, Map<String, int> conteoPorReferidor) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final mostrarDireccion = constraints.maxWidth >= 950;
@@ -271,34 +280,34 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                 decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
                 child: Row(
                   children: [
-                    _celdaHeader('DNI', 2),
                     _celdaHeader('NOMBRE COMPLETO', 3),
                     if (mostrarDireccion) _celdaHeader('DIRECCIÓN', 3),
                     _celdaHeader('TELÉFONO', 2),
+                    _celdaHeader('CLIENTES REFERIDOS', 2),
                     _celdaHeader('ESTADO', 1),
                     const SizedBox(width: 56),
                   ],
                 ),
               );
             }
-            final cliente = lista[index - 1];
-            final seleccionada = _filaSeleccionada == cliente.id;
+            final referidor = lista[index - 1];
+            final seleccionado = _filaSeleccionada == referidor.id;
             return Column(
               children: [
                 if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
                 InkWell(
-                  onTap: () => setState(() => _filaSeleccionada = seleccionada ? null : cliente.id),
+                  onTap: () => setState(() => _filaSeleccionada = seleccionado ? null : referidor.id),
                   child: Container(
-                    color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+                    color: seleccionado ? const Color(0xFFFBEAEA) : Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        _celda(2, cliente.dni.isEmpty ? '-' : cliente.dni, peso: FontWeight.w600),
-                        _celda(3, cliente.nombreCompleto.isEmpty ? '-' : cliente.nombreCompleto),
-                        if (mostrarDireccion) _celda(3, cliente.direccion.isEmpty ? '-' : cliente.direccion, gris: true),
-                        _celda(2, cliente.telefono.isEmpty ? '-' : cliente.telefono, gris: true),
-                        Expanded(flex: 1, child: _chipEstado(cliente.estado)),
-                        SizedBox(width: 56, child: _celdaAcciones(cliente)),
+                        _celda(3, referidor.nombreCompleto.isEmpty ? '-' : referidor.nombreCompleto, peso: FontWeight.w600),
+                        if (mostrarDireccion) _celda(3, referidor.direccion.isEmpty ? '-' : referidor.direccion, gris: true),
+                        _celda(2, referidor.telefono.isEmpty ? '-' : referidor.telefono, gris: true),
+                        _celda(2, '${conteoPorReferidor[referidor.id] ?? 0}', peso: FontWeight.w700),
+                        Expanded(flex: 1, child: _chipEstado(referidor.estado)),
+                        SizedBox(width: 56, child: _celdaAcciones(referidor)),
                       ],
                     ),
                   ),
@@ -344,7 +353,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
   }
 
-  Widget _celdaAcciones(ClienteModel cliente) {
+  Widget _celdaAcciones(ReferidorModel referidor) {
     return PopupMenuButton<String>(
       tooltip: 'Más acciones',
       padding: EdgeInsets.zero,
@@ -352,28 +361,28 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
       position: PopupMenuPosition.under,
-      onSelected: (valor) => _manejarAccion(valor, cliente),
+      onSelected: (valor) => _manejarAccion(valor, referidor),
       itemBuilder: (context) => _opcionesMenu(),
     );
   }
 
-  Widget _tarjetas(List<ClienteModel> lista) {
+  Widget _tarjetas(List<ReferidorModel> lista, Map<String, int> conteoPorReferidor) {
     return ListView.separated(
       padding: const EdgeInsets.all(14),
       itemCount: lista.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final cliente = lista[index];
-        final seleccionada = _filaSeleccionada == cliente.id;
+        final referidor = lista[index];
+        final seleccionado = _filaSeleccionada == referidor.id;
         return InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => setState(() => _filaSeleccionada = seleccionada ? null : cliente.id),
+          onTap: () => setState(() => _filaSeleccionada = seleccionado ? null : referidor.id),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+              color: seleccionado ? const Color(0xFFFBEAEA) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: seleccionada ? const Color(0xFFC62828) : const Color(0xFFC7CBD3)),
+              border: Border.all(color: seleccionado ? const Color(0xFFC62828) : const Color(0xFFC7CBD3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,11 +392,11 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        cliente.nombreCompleto.isEmpty ? 'Sin nombre' : cliente.nombreCompleto,
+                        referidor.nombreCompleto.isEmpty ? 'Sin nombre' : referidor.nombreCompleto,
                         style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                       ),
                     ),
-                    _celdaAcciones(cliente),
+                    _celdaAcciones(referidor),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -395,10 +404,10 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if (cliente.dni.isNotEmpty) _chipInfo('DNI', cliente.dni),
-                    if (cliente.direccion.isNotEmpty) _chipInfo('Dirección', cliente.direccion),
-                    if (cliente.telefono.isNotEmpty) _chipInfo('Teléfono', cliente.telefono),
-                    _chipEstado(cliente.estado),
+                    if (referidor.telefono.isNotEmpty) _chipInfo('Teléfono', referidor.telefono),
+                    if (referidor.direccion.isNotEmpty) _chipInfo('Dirección', referidor.direccion),
+                    _chipInfo('Clientes referidos', '${conteoPorReferidor[referidor.id] ?? 0}'),
+                    _chipEstado(referidor.estado),
                   ],
                 ),
               ],

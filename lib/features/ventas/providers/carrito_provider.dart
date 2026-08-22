@@ -43,6 +43,11 @@ class CarritoVentaState {
   final String metodoPago;
   final String documentoCliente;
   final String nombreCliente;
+  // Vínculo real al registro de 'clientes' (ver CRM de clientes). Se limpia
+  // a null apenas el cajero edita a mano el nombre o el documento después de
+  // haber elegido un cliente por el buscador, para no dejar un vínculo
+  // falso -ver establecerDocumentoCliente/establecerNombreClienteManual-.
+  final String? idCliente;
   final DateTime fecha;
   final DateTime? fechaVencimiento;
   final String oc;
@@ -64,6 +69,7 @@ class CarritoVentaState {
     this.metodoPago = 'Efectivo',
     this.documentoCliente = '',
     this.nombreCliente = '',
+    this.idCliente,
     DateTime? fecha,
     this.fechaVencimiento,
     this.oc = '',
@@ -119,6 +125,7 @@ class CarritoVentaState {
     String? metodoPago,
     String? documentoCliente,
     String? nombreCliente,
+    Object? idCliente = _sinCambio,
     DateTime? fecha,
     Object? fechaVencimiento = _sinCambio,
     String? oc,
@@ -138,6 +145,7 @@ class CarritoVentaState {
       metodoPago: metodoPago ?? this.metodoPago,
       documentoCliente: documentoCliente ?? this.documentoCliente,
       nombreCliente: nombreCliente ?? this.nombreCliente,
+      idCliente: idCliente == _sinCambio ? this.idCliente : idCliente as String?,
       fecha: fecha ?? this.fecha,
       fechaVencimiento: fechaVencimiento == _sinCambio ? this.fechaVencimiento : fechaVencimiento as DateTime?,
       oc: oc ?? this.oc,
@@ -260,6 +268,8 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       reembasado: reembasado ?? actual.reembasado,
       descuentoPorcentaje: nuevoDescuento,
       componentes: actual.componentes,
+      pendienteCompra: actual.pendienteCompra,
+      codigosColor: actual.codigosColor,
     );
     state = state.copyWith(items: nuevos);
   }
@@ -287,6 +297,16 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     state = state.copyWith(items: nuevos);
   }
 
+  /// Reemplaza la lista completa de códigos de color de una línea del
+  /// carrito (viene de CodigosColorDialog, que maneja su propia lista local
+  /// y entrega el resultado final al cerrar). Sí se puede dejar vacía
+  /// -quitar todos los códigos ya cargados es una edición válida-.
+  void actualizarCodigosColor(int index, List<String> nuevosCodigos) {
+    final nuevos = [...state.items];
+    nuevos[index] = nuevos[index].copyWith(codigosColor: nuevosCodigos);
+    state = state.copyWith(items: nuevos);
+  }
+
   void establecerDescuentoGlobal(double v) => state = state.copyWith(descuentoGlobalPorcentaje: v);
 
   void establecerTipoDocumento(String v) => state = state.copyWith(tipoDocumento: v);
@@ -305,10 +325,23 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// Guarda el desglose confirmado en PagoMixtoDialog. No cambia metodoPago:
   /// eso ya se hizo al elegir "Mixto" en el dropdown.
   void establecerPagosMixtos(List<PagoDetalle> pagos) => state = state.copyWith(pagosMixtos: pagos);
-  void establecerCliente({required String documento, required String nombre}) {
-    state = state.copyWith(documentoCliente: documento, nombreCliente: nombre);
+
+  /// [idCliente] es el vínculo real al registro de 'clientes' (viene de
+  /// BuscarClienteDialog). Al no pasarlo (o pasar null explícito) se limpia
+  /// -es lo correcto para un nombre/documento tipeado a mano sin cliente
+  /// elegido-.
+  void establecerCliente({required String documento, required String nombre, String? idCliente}) {
+    state = state.copyWith(documentoCliente: documento, nombreCliente: nombre, idCliente: idCliente);
   }
-  void establecerDocumentoCliente(String v) => state = state.copyWith(documentoCliente: v);
+
+  /// El cajero tipeó el documento a mano: si antes había un cliente elegido
+  /// por el buscador, ese vínculo ya no es confiable (pudo cambiar el RTN a
+  /// mano sin que sea el mismo cliente), así que se limpia.
+  void establecerDocumentoCliente(String v) => state = state.copyWith(documentoCliente: v, idCliente: null);
+
+  /// Igual que establecerDocumentoCliente pero para el campo de nombre
+  /// (RegistrarVentaScreen lo conecta al onChanged del campo "Cliente").
+  void establecerNombreClienteManual(String v) => state = state.copyWith(nombreCliente: v, idCliente: null);
   void establecerFecha(DateTime v) => state = state.copyWith(fecha: v);
   void establecerFechaVencimiento(DateTime v) => state = state.copyWith(fechaVencimiento: v);
   void establecerOc(String v) => state = state.copyWith(oc: v);
@@ -334,6 +367,11 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       metodoPago: sesion.metodoPago,
       documentoCliente: sesion.documentoCliente,
       nombreCliente: sesion.nombreCliente,
+      // Restaura el vínculo real tal cual estaba al poner la venta en
+      // espera -sin esto, resumirla la dejaba dependiendo de la
+      // re-resolución por nombre en VentaRepository al confirmar, con
+      // riesgo de emparejar mal o duplicar el cliente-.
+      idCliente: sesion.idCliente,
       fechaVencimiento: sesion.fechaVencimiento,
       oc: sesion.oc,
       regExonerado: sesion.regExonerado,
@@ -367,6 +405,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
                 precioCompraUsado: item.precioCompraUsado,
                 descuentoPorcentaje: item.descuentoPorcentaje,
                 componentes: item.componentes,
+                codigosColor: item.codigosColor,
               ))
           .toList(),
       tipoDocumento: (forzarFactura && venta.tipoDocumento == 'Cotizacion') ? 'Factura' : venta.tipoDocumento,
@@ -374,6 +413,10 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       metodoPago: venta.condicion == 'Credito' ? '' : (venta.metodoPago.isEmpty ? 'Efectivo' : venta.metodoPago),
       documentoCliente: venta.documentoCliente,
       nombreCliente: venta.nombreCliente,
+      // La venta original ya tiene un vínculo real a 'clientes' (o no lo
+      // tiene, si es de antes de este campo): se copia tal cual, no hay
+      // ambigüedad -es el mismo cliente, solo se está duplicando la venta-.
+      idCliente: venta.idCliente,
       fechaVencimiento: venta.condicion == 'Credito' ? DateTime.now().add(const Duration(days: 30)) : null,
       oc: venta.oc,
       regExonerado: venta.regExonerado,

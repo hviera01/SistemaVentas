@@ -22,6 +22,9 @@ class VentaCreditoModel {
   final String id;
   final String documentoCliente;
   final String nombreCliente;
+  // Vínculo real al registro de 'clientes' (ver CRM de clientes, Fase 1).
+  // null en créditos manuales sin cliente elegido y en créditos viejos.
+  final String? idCliente;
   final String numeroDocumento;
   final double montoTotal;
   final double saldoPendiente;
@@ -44,6 +47,7 @@ class VentaCreditoModel {
     required this.id,
     required this.documentoCliente,
     required this.nombreCliente,
+    this.idCliente,
     required this.numeroDocumento,
     required this.montoTotal,
     required this.saldoPendiente,
@@ -65,6 +69,7 @@ class VentaCreditoModel {
       id: id,
       documentoCliente: data['documentoCliente'] ?? '',
       nombreCliente: data['nombreCliente'] ?? '',
+      idCliente: data['idCliente'] as String?,
       numeroDocumento: data['numeroDocumento'] ?? '',
       montoTotal: (data['montoTotal'] ?? 0).toDouble(),
       saldoPendiente: (data['saldoPendiente'] ?? 0).toDouble(),

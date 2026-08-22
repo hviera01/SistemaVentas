@@ -34,6 +34,48 @@ class VentaRepository {
   final _colContadores = FirebaseFirestore.instance.collection('contadores');
   final _colVentasCredito = FirebaseFirestore.instance.collection('ventasCredito');
   final _colPendientesReposicion = FirebaseFirestore.instance.collection('pendientesReposicion');
+  final _colClientes = FirebaseFirestore.instance.collection('clientes');
+
+  /// Cuando la venta no trae un `idCliente` real (el cajero no usó el
+  /// buscador de cliente) pero sí escribió un nombre, se busca un cliente ya
+  /// registrado con ese mismo nombre para vincular la venta a él -sin
+  /// duplicar-, o si no existe, se crea uno mínimo (solo nombre y, si lo
+  /// hay, documento) y se vincula al nuevo registro. Así ninguna venta con
+  /// nombre queda "suelta" sin cliente vinculado (ver plan de CRM,
+  /// Fase 1 punto 2).
+  ///
+  /// Comparación por igualdad EXACTA sobre el nombre tal como se escribió
+  /// (ya viene en mayúsculas: el campo de texto fuerza mayúsculas con
+  /// mayusculasInputFormatter). Firestore no permite consultas sin distinguir
+  /// mayúsculas/espacios de forma nativa -hacerlo hubiera significado traer
+  /// toda la colección 'clientes' a memoria en cada venta, y esto tiene que
+  /// sentirse instantáneo-, así que esta es una simplificación aceptada:
+  /// variaciones menores de tipeo (espacios extra en medio, tildes,
+  /// abreviaturas distintas) no emparejan con un cliente ya existente y
+  /// terminan creando uno nuevo en vez de reusarlo.
+  Future<String?> _resolverIdCliente({
+    required String? idClienteExistente,
+    required String nombreCliente,
+    required String documentoCliente,
+  }) async {
+    if (idClienteExistente != null && idClienteExistente.isNotEmpty) return idClienteExistente;
+    final nombre = nombreCliente.trim();
+    if (nombre.isEmpty || nombre.toUpperCase() == 'CONSUMIDOR FINAL') return null;
+
+    final existente = await _colClientes.where('nombreCompleto', isEqualTo: nombre).limit(1).get();
+    if (existente.docs.isNotEmpty) return existente.docs.first.id;
+
+    final documento = documentoCliente.trim();
+    final nuevo = await _colClientes.add({
+      'dni': (documento.isEmpty || documento == 'N/A') ? '' : documento,
+      'nombreCompleto': nombre,
+      'direccion': '',
+      'telefono': '',
+      'estado': true,
+      'fechaRegistro': FieldValue.serverTimestamp(),
+    });
+    return nuevo.id;
+  }
 
   String _claveContador(String tipoDocumento) {
     switch (tipoDocumento) {
@@ -121,6 +163,10 @@ class VentaRepository {
     required String metodoPago,
     required String documentoCliente,
     required String nombreCliente,
+    // Vínculo real al registro de 'clientes' (viene de BuscarClienteDialog,
+    // ver carrito.idCliente). Si viene null pero hay nombreCliente, se
+    // resuelve/crea uno solo -ver _resolverIdCliente-.
+    String? idCliente,
     required DateTime fechaRegistro,
     required DateTime? fechaVencimiento,
     required String oc,
@@ -149,6 +195,16 @@ class VentaRepository {
     final contadorRef = _colContadores.doc(claveContador);
     final ventaRef = _colVentas.doc();
     final itemsADescontar = _expandirComponentes(items).where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)).toList();
+
+    // Se resuelve ANTES de entrar a la transacción: es una consulta (y,
+    // eventualmente, una creación de cliente) que Firestore no permite hacer
+    // dentro de una transacción (Transaction.get solo acepta referencias a
+    // documentos puntuales, no queries). Una cotización todavía no es una
+    // venta concretada, así que no dispara el auto-registro de clientes -si
+    // ya traía un idCliente elegido a mano, ese sí se respeta igual-.
+    final idClienteResuelto = tipoDocumento == 'Cotizacion'
+        ? idCliente
+        : await _resolverIdCliente(idClienteExistente: idCliente, nombreCliente: nombreCliente, documentoCliente: documentoCliente);
 
     late String numeroDocumento;
     late Map<ItemVentaModel, double> costosFifo;
@@ -210,6 +266,7 @@ class VentaRepository {
         'numeroDocumento': numeroDocumento,
         'documentoCliente': documentoCliente,
         'nombreCliente': nombreCliente,
+        'idCliente': idClienteResuelto,
         'metodoPago': metodoPago,
         'montoPago': montoPago,
         'montoCambio': montoCambio,
@@ -249,7 +306,12 @@ class VentaRepository {
         // leer la subcolección de cada venta una por una. 'orden' es la
         // posición de la línea en el carrito, para que la reimpresión
         // respete el mismo orden con el que se registró (ver _ordenarDetalle).
-        transaction.set(itemRef, {...itemAGuardar.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro), 'orden': entry.key});
+        // 'idCliente' se agrega acá (no es parte de ItemVentaModel: es
+        // contexto de la venta completa, no de la línea) para que una
+        // consulta collectionGroup('detalle').where('idCliente', ...) -ver
+        // Detalle de Cliente- encuentre el historial de códigos de color sin
+        // tener que hacer join con la venta.
+        transaction.set(itemRef, {...itemAGuardar.toMap(), 'fecha': Timestamp.fromDate(fechaRegistro), 'orden': entry.key, 'idCliente': idClienteResuelto});
 
         // "Venta anticipada": deja un registro para que la próxima compra de
         // este producto lo empareje solo (ver CompraRepository.registrarCompra
@@ -278,12 +340,21 @@ class VentaRepository {
         transaction.set(_colVentasCredito.doc(ventaRef.id), {
           'documentoCliente': documentoCliente.isEmpty ? 'N/A' : documentoCliente,
           'nombreCliente': nombreCliente,
+          'idCliente': idClienteResuelto,
           'numeroDocumento': numeroDocumento,
           'montoTotal': totalAPagar,
           'saldoPendiente': totalAPagar,
           'fechaRegistro': Timestamp.fromDate(fechaRegistro),
           'fechaVencimiento': Timestamp.fromDate(fechaVencimiento ?? fechaRegistro),
         });
+      }
+
+      // Denormalizado para detectar clientes inactivos sin recorrer todas
+      // sus ventas (Fase 3 del CRM). No aplica a cotizaciones -no son una
+      // compra real todavía-. merge:true porque este mismo doc de cliente
+      // puede tener otros campos (dni, teléfono, etc.) que no se deben tocar.
+      if (idClienteResuelto != null && tipoDocumento != 'Cotizacion') {
+        transaction.set(_colClientes.doc(idClienteResuelto), {'fechaUltimaCompra': Timestamp.fromDate(fechaRegistro)}, SetOptions(merge: true));
       }
 
       for (final item in itemsADescontar) {
@@ -337,6 +408,7 @@ class VentaRepository {
       numeroDocumento: numeroDocumento,
       documentoCliente: documentoCliente,
       nombreCliente: nombreCliente,
+      idCliente: idClienteResuelto,
       metodoPago: metodoPago,
       montoPago: montoPago,
       montoCambio: montoCambio,

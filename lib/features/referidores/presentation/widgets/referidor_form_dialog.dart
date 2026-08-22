@@ -1,60 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../data/cliente_model.dart';
-import '../../providers/clientes_provider.dart';
+import '../../data/referidor_model.dart';
+import '../../providers/referidores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
-import '../../../referidores/providers/referidores_provider.dart';
 
-class ClienteFormDialog extends ConsumerStatefulWidget {
-  final ClienteModel? cliente;
+class ReferidorFormDialog extends ConsumerStatefulWidget {
+  final ReferidorModel? referidor;
 
-  const ClienteFormDialog({super.key, this.cliente});
+  const ReferidorFormDialog({super.key, this.referidor});
 
   @override
-  ConsumerState<ClienteFormDialog> createState() => _ClienteFormDialogState();
+  ConsumerState<ReferidorFormDialog> createState() => _ReferidorFormDialogState();
 }
 
-class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
-  final _dniController = TextEditingController();
+class _ReferidorFormDialogState extends ConsumerState<ReferidorFormDialog> {
   final _nombreController = TextEditingController();
-  final _direccionController = TextEditingController();
   final _telefonoController = TextEditingController();
+  final _direccionController = TextEditingController();
   bool _activo = true;
   bool _guardando = false;
   String? _error;
-  // Quién refirió a este cliente (pintor/contratista, ver módulo
-  // referidores). null = "Ninguno" -no todos los clientes tienen uno-.
-  String? _idReferidor;
 
   @override
   void initState() {
     super.initState();
-    final c = widget.cliente;
-    if (c != null) {
-      _dniController.text = c.dni;
-      _nombreController.text = c.nombreCompleto;
-      _direccionController.text = c.direccion;
-      _telefonoController.text = c.telefono;
-      _activo = c.estado;
-      _idReferidor = c.idReferidor;
+    final r = widget.referidor;
+    if (r != null) {
+      _nombreController.text = r.nombreCompleto;
+      _telefonoController.text = r.telefono;
+      _direccionController.text = r.direccion;
+      _activo = r.estado;
     }
   }
 
   @override
   void dispose() {
-    _dniController.dispose();
     _nombreController.dispose();
-    _direccionController.dispose();
     _telefonoController.dispose();
+    _direccionController.dispose();
     super.dispose();
   }
 
   Future<void> _guardar() async {
     final nombre = _nombreController.text.trim();
     if (nombre.isEmpty) {
-      setState(() => _error = 'El nombre completo es obligatorio');
+      setState(() => _error = 'El nombre es obligatorio');
       return;
     }
     setState(() {
@@ -62,25 +54,21 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       _error = null;
     });
     try {
-      final repo = ref.read(clienteRepositoryProvider);
-      if (widget.cliente == null) {
+      final repo = ref.read(referidorRepositoryProvider);
+      if (widget.referidor == null) {
         await repo.crear(
-          dni: _dniController.text.trim(),
           nombreCompleto: nombre,
-          direccion: _direccionController.text.trim(),
           telefono: _telefonoController.text.trim(),
+          direccion: _direccionController.text.trim(),
           estado: _activo,
-          idReferidor: _idReferidor,
         );
       } else {
         await repo.actualizar(
-          id: widget.cliente!.id,
-          dni: _dniController.text.trim(),
+          id: widget.referidor!.id,
           nombreCompleto: nombre,
-          direccion: _direccionController.text.trim(),
           telefono: _telefonoController.text.trim(),
+          direccion: _direccionController.text.trim(),
           estado: _activo,
-          idReferidor: _idReferidor,
         );
       }
       if (mounted) Navigator.pop(context);
@@ -97,8 +85,8 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar cliente', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar este cliente?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text('Eliminar referidor', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text('¿Seguro que querés eliminar este referidor?', style: GoogleFonts.poppins(fontSize: 13)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
           FilledButton(
@@ -112,7 +100,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     if (confirmar != true) return;
     setState(() => _guardando = true);
     try {
-      await ref.read(clienteRepositoryProvider).eliminar(widget.cliente!.id);
+      await ref.read(referidorRepositoryProvider).eliminar(widget.referidor!.id);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -132,45 +120,9 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     );
   }
 
-  /// "¿Quién lo refirió?": lista chica de pintores/contratistas (módulo
-  /// referidores), con "Ninguno" como opción para dejarlo sin referidor o
-  /// limpiar uno ya asignado. Un DropdownButtonFormField simple alcanza acá
-  /// -a diferencia de BuscarClienteDialog- porque esta lista es chica, no
-  /// hace falta un diálogo de búsqueda aparte.
-  Widget _selectorReferidor() {
-    final referidoresAsync = ref.watch(referidoresStreamProvider);
-    return referidoresAsync.when(
-      data: (referidores) {
-        final activos = referidores.where((r) => r.estado).toList();
-        // Si el cliente ya tenía un referidor que ahora está inactivo (o ya
-        // no existe), igual se muestra en la lista para no perder de vista
-        // a quién estaba asignado -si no, el dropdown reventaría al no
-        // encontrar el value actual entre sus items-.
-        final idActual = _idReferidor;
-        if (idActual != null && !activos.any((r) => r.id == idActual)) {
-          final referidorActual = referidores.where((r) => r.id == idActual).toList();
-          if (referidorActual.isNotEmpty) activos.add(referidorActual.first);
-        }
-        return DropdownButtonFormField<String?>(
-          initialValue: _idReferidor,
-          isExpanded: true,
-          decoration: _decoracion('¿Quién lo refirió? (opcional)'),
-          style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
-          items: [
-            const DropdownMenuItem<String?>(value: null, child: Text('Ninguno')),
-            for (final r in activos) DropdownMenuItem<String?>(value: r.id, child: Text(r.nombreCompleto, overflow: TextOverflow.ellipsis)),
-          ],
-          onChanged: (v) => setState(() => _idReferidor = v),
-        );
-      },
-      loading: () => const SizedBox(height: 56),
-      error: (e, st) => Text('No se pudo cargar la lista de referidores', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade600)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final editando = widget.cliente != null;
+    final editando = widget.referidor != null;
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 480;
     final anchoDialog = esMovil ? tamano.width - 48 : 420.0;
@@ -192,12 +144,12 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.groups_outlined, color: Color(0xFFC62828)),
+                    child: const Icon(Icons.handshake_outlined, color: Color(0xFFC62828)),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      editando ? 'Editar Cliente' : 'Nuevo Cliente',
+                      editando ? 'Editar Referidor' : 'Nuevo Referidor',
                       style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                     ),
                   ),
@@ -212,42 +164,16 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CampoTecladoCompacto(
-                      controller: _dniController,
+                      controller: _nombreController,
                       numerico: false,
                       child: TextField(
                       inputFormatters: [mayusculasInputFormatter],
                       autocorrect: false,
                       enableSuggestions: false,
-                      controller: _dniController,
+                      controller: _nombreController,
                       autofocus: true,
                       style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('DNI (opcional)'),
-                    ),
-                    ),
-                    const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _nombreController,
-                      numerico: false,
-                      child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _nombreController,
-                      style: GoogleFonts.poppins(fontSize: 14),
                       decoration: _decoracion('Nombre completo'),
-                    ),
-                    ),
-                    const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _direccionController,
-                      numerico: false,
-                      child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _direccionController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Dirección (opcional)'),
                     ),
                     ),
                     const SizedBox(height: 14),
@@ -264,7 +190,18 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     ),
                     ),
                     const SizedBox(height: 14),
-                    _selectorReferidor(),
+                    CampoTecladoCompacto(
+                      controller: _direccionController,
+                      numerico: false,
+                      child: TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: _direccionController,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: _decoracion('Dirección (opcional)'),
+                    ),
+                    ),
                     const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

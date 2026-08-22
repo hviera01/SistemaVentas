@@ -33,9 +33,36 @@ class VentaCreditoRepository {
     });
   }
 
+  /// Igual que [obtenerAbonos] pero de una sola vez (no stream): para
+  /// agregaciones puntuales como la puntualidad histórica de pago en
+  /// Detalle de Cliente, que no necesitan quedar escuchando cambios en vivo.
+  Future<List<AbonoModel>> obtenerAbonosUnaVez(String idCredito) async {
+    final snap = await _col.doc(idCredito).collection('abonos').get();
+    return snap.docs.map((d) => AbonoModel.fromMap(d.id, d.data())).toList();
+  }
+
+  /// Créditos de un cliente vinculado, para el aviso de "crédito vencido" al
+  /// fiar de nuevo (ver RegistrarVentaScreen/RegistrarCreditoDialog) y para
+  /// Detalle de Cliente. Prioriza [idCliente] (vínculo real); si no hay,
+  /// cae a [documentoCliente] (RTN/DNI, el único dato confiable que ya
+  /// existía antes del vínculo real).
+  Future<List<VentaCreditoModel>> obtenerCreditosDeCliente({String? idCliente, String? documentoCliente}) async {
+    Query<Map<String, dynamic>> query;
+    if (idCliente != null && idCliente.isNotEmpty) {
+      query = _col.where('idCliente', isEqualTo: idCliente);
+    } else if (documentoCliente != null && documentoCliente.trim().isNotEmpty && documentoCliente.trim() != 'N/A') {
+      query = _col.where('documentoCliente', isEqualTo: documentoCliente.trim());
+    } else {
+      return [];
+    }
+    final snap = await query.get();
+    return snap.docs.map((d) => VentaCreditoModel.fromMap(d.id, d.data())).toList();
+  }
+
   Future<void> crearCreditoManual({
     required String documentoCliente,
     required String nombreCliente,
+    String? idCliente,
     required String numeroDocumento,
     required double montoTotal,
     required double saldoPendiente,
@@ -44,6 +71,7 @@ class VentaCreditoRepository {
     await _col.add({
       'documentoCliente': documentoCliente.isEmpty ? 'N/A' : documentoCliente,
       'nombreCliente': nombreCliente,
+      'idCliente': idCliente,
       'numeroDocumento': numeroDocumento.isEmpty ? _generarNumeroDocumento() : numeroDocumento,
       'montoTotal': montoTotal,
       'saldoPendiente': saldoPendiente,

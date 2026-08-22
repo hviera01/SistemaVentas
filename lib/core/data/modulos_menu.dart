@@ -86,6 +86,7 @@ List<ModuloMenu> obtenerModulos() {
       color: const Color(0xFF8B5CF6),
       subModulos: [
         SubModulo(titulo: 'Proveedores', icono: Icons.local_shipping_outlined, moduleKey: 'proveedores'),
+        SubModulo(titulo: 'Referidores', icono: Icons.handshake_outlined, moduleKey: 'referidores'),
       ],
     ),
     ModuloMenu(

@@ -1002,6 +1002,146 @@ Widget _tablaClientesTop(List<ClienteTop> lista) {
   );
 }
 
+// ---------- Clientes (mejores clientes, no registrados, inactivos) ----------
+
+const _diasInactivoTexto = '90';
+
+Widget seccionClientes(ReporteFinancieroData data, bool esMovil) {
+  final ia = data.inteligenciaNegocio;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _explicacion(
+        'Mejores clientes, ventas a nombres que todavía no quedaron vinculados a un cliente registrado, y clientes activos que llevan más de $_diasInactivoTexto días sin comprar. Se calcula con los mismos datos del resto del reporte, sin consultas adicionales.',
+      ),
+      Text('Mejores Clientes', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text(
+        'Top 10 por monto comprado en el periodo (agrupado por el cliente vinculado cuando existe; si no, por el nombre tal como se escribió). No incluye Consumidor Final.',
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+      ),
+      const SizedBox(height: 10),
+      _tablaMejoresClientesConTicket(ia.clientesTop),
+      const SizedBox(height: 20),
+      Text('Ventas a Nombres No Registrados', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text(
+        'Nombres tipeados en la venta que no quedaron vinculados a ningún cliente registrado. Debería ir bajando con el tiempo, ya que las ventas nuevas con nombre se auto-registran solas.',
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+      ),
+      const SizedBox(height: 10),
+      _tablaVentasNoRegistradas(ia.ventasNoRegistradas),
+      const SizedBox(height: 20),
+      Text('Clientes Inactivos', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 3),
+      Text(
+        'Clientes activos con más de $_diasInactivoTexto días sin comprar, o que nunca han comprado (independiente del rango de fechas de arriba: se calcula sobre la fecha de última compra de cada cliente).',
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+      ),
+      const SizedBox(height: 10),
+      _listaClientesInactivos(ia.clientesInactivos),
+    ],
+  );
+}
+
+Widget _tablaMejoresClientesConTicket(List<ClienteTop> lista) {
+  if (lista.isEmpty) {
+    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  final maximo = lista.first.totalComprado;
+  return _tarjeta(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final c in lista)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text(c.cliente, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    const SizedBox(width: 10),
+                    SizedBox(width: 100, child: Text(formatearMoneda(c.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text('Ticket promedio: ${formatearMoneda(c.ticketPromedio)}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: maximo <= 0 ? 0 : (c.totalComprado / maximo).clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFF0F1F5),
+                    color: const Color(0xFF3B82F6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+Widget _tablaVentasNoRegistradas(List<VentaSinCliente> lista) {
+  if (lista.isEmpty) {
+    return _tarjeta(child: Text('Todas las ventas con nombre quedaron vinculadas a un cliente registrado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  return _tarjeta(
+    child: Column(
+      children: [
+        for (final v in lista) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(child: Text(v.nombre, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                Text('${v.cantidadVentas} venta(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                const SizedBox(width: 10),
+                SizedBox(width: 100, child: Text(formatearMoneda(v.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
+              ],
+            ),
+          ),
+          if (v != lista.last) Divider(height: 1, color: Colors.grey.shade200),
+        ],
+      ],
+    ),
+  );
+}
+
+Widget _listaClientesInactivos(List<ClienteInactivo> lista) {
+  if (lista.isEmpty) {
+    return _tarjeta(child: Text('Ningún cliente activo lleva más de $_diasInactivoTexto días sin comprar.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+  }
+  return _tarjeta(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${lista.length} cliente(s) inactivo(s)', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+        const SizedBox(height: 10),
+        for (final c in lista.take(30))
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                Expanded(child: Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 12.5), overflow: TextOverflow.ellipsis)),
+                Text(
+                  c.diasSinComprar == null ? 'Nunca ha comprado' : 'Hace ${c.diasSinComprar} días',
+                  style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                ),
+              ],
+            ),
+          ),
+        if (lista.length > 30) Padding(padding: const EdgeInsets.only(top: 8), child: Text('+ ${lista.length - 30} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500))),
+      ],
+    ),
+  );
+}
+
 Widget _filaBalance(String etiqueta, double valor, {bool negrita = false}) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),

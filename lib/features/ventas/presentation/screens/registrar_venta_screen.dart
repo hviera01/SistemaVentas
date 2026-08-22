@@ -20,6 +20,10 @@ import '../../providers/usuario_venta_provider.dart';
 import '../../../../core/providers/tabs_provider.dart';
 import '../../providers/ventas_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../clientes/data/cliente_model.dart';
+import '../../../clientes/providers/clientes_provider.dart';
+import '../../../clientes/presentation/widgets/cliente_form_dialog.dart';
+import '../../../ventas_credito/providers/ventas_credito_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../negocio/data/negocio_model.dart';
 import '../../../negocio/presentation/widgets/acceso_especial.dart';
@@ -38,6 +42,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/buscar_cliente_dialog.dart';
+import '../widgets/codigos_color_dialog.dart';
 import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
@@ -51,6 +56,7 @@ import '../widgets/ticket_escpos_preview.dart';
 import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 
 const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
@@ -85,6 +91,29 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _descuentoGlobalController = TextEditingController();
   bool _datosExpandidos = false;
   bool _precioCarritoConIsv = true;
+  // Cliente elegido por BuscarClienteDialog (o cargado de una venta
+  // duplicada): permite abrir "Completar datos del cliente" sin tener que
+  // ir a buscarlo de nuevo. Se limpia apenas el cajero edita a mano el
+  // nombre/documento (ver _limpiarVinculoClienteSiHaceFalta) — si eso pasa,
+  // el botón de completar datos deja de mostrarse porque carrito.idCliente
+  // también se limpia (ver CarritoVentaNotifier.establecerDocumentoCliente/
+  // establecerNombreClienteManual).
+  ClienteModel? _clienteVinculado;
+  // Sugerencias de clientes ya registrados mientras se tipea a mano en
+  // "Cliente" -pedido explícito del dueño-: además del buscador aparte
+  // (ícono de lupa), se muestra un mini listado debajo del campo con
+  // coincidencias, para no duplicar un cliente que ya existe por error de
+  // tipeo. _clienteLayerLink ancla el overlay justo debajo del campo.
+  final _focusNombreCliente = FocusNode();
+  final _clienteLayerLink = LayerLink();
+  OverlayEntry? _overlaySugerenciasCliente;
+  // Saldo vencido (si hay) del cliente actual cuando la condición es
+  // Crédito: aviso NO bloqueante (ver _verificarCreditoVencido). null =
+  // no hay nada vencido, o todavía no se pudo verificar.
+  double? _saldoVencidoCliente;
+  // Evita repetir la consulta de crédito vencido si no cambió ni el cliente
+  // ni la condición desde la última vez que se verificó.
+  String? _claveUltimaVerificacionCredito;
   // true mientras está abierto el diálogo de "ver la tabla más grande" (ver
   // _expandirTablaProductos): mientras tanto, la tabla de acá abajo no
   // renderiza sus filas, porque esas filas comparten los mismos
@@ -223,6 +252,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     if (_esWebMovil) _scrollControllerMovil.addListener(_alScrollearMovil);
 
+    // Oculta el mini listado de sugerencias de cliente en cuanto el campo
+    // "Cliente" deja de tener foco (tocar afuera, tocar una sugerencia,
+    // pasar a otro campo), para que no quede flotando sobre el resto de la
+    // pantalla.
+    _focusNombreCliente.addListener(() {
+      if (!_focusNombreCliente.hasFocus) _ocultarSugerenciasCliente();
+    });
+
     // En escritorio, cada vez que el foco queda en nada (el usuario tocó
     // afuera de un campo, o cerró un diálogo) se lo devuelve al campo de
     // código de barras invisible (ver _campoCodigoBarras): así un lector
@@ -263,6 +300,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         if (mounted) _agregarProductoDesdeBusqueda();
       });
     }
+
+    // Por si esta pestaña arrancó ya con condición Crédito y cliente
+    // vinculado (por ejemplo, al duplicar una venta a crédito de arriba):
+    // ref.listen (ver build) solo dispara con cambios posteriores, así que
+    // hace falta esta verificación inicial aparte.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _verificarCreditoVencido(ref.read(carritoVentaProvider));
+    });
   }
 
   // Muestra/oculta la barra flotante de totales (ver _barraFlotanteTotales)
@@ -413,6 +458,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _ctrlCodigoBarras.dispose();
     _focusCodigoBarras.dispose();
     _focusAnclaMovil.dispose();
+    _ocultarSugerenciasCliente();
+    _focusNombreCliente.dispose();
     _nombreClienteController.dispose();
     _documentoClienteController.dispose();
     _ocController.dispose();
@@ -469,10 +516,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // ---------- Cliente ----------
 
   Future<void> _buscarCliente() async {
-    final cliente = await showDialog(context: context, builder: (context) => const BuscarClienteDialog());
+    final cliente = await showDialog<ClienteModel>(context: context, builder: (context) => const BuscarClienteDialog());
     if (cliente == null) return;
-    final documento = (cliente as dynamic).dni ?? '';
-    final nombre = cliente.nombreCompleto ?? '';
+    final documento = cliente.dni;
+    final nombre = cliente.nombreCompleto;
     // Antes solo se actualizaba el nombre visible en el campo "Cliente": el
     // RTN/documento sí quedaba guardado en el carrito (se usaba al grabar la
     // venta), pero el campo "RTN / Documento" en pantalla no se refrescaba,
@@ -480,8 +527,195 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     setState(() {
       _nombreClienteController.text = nombre;
       _documentoClienteController.text = documento;
+      _clienteVinculado = cliente;
     });
-    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: documento, nombre: nombre);
+    // idCliente: cliente.id es el vínculo real que antes se descartaba -ver
+    // CRM de clientes-: sin esto, ninguna venta quedaba conectada de verdad
+    // al registro de Clientes aunque se hubiera elegido uno con el buscador.
+    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: documento, nombre: nombre, idCliente: cliente.id);
+  }
+
+  /// Arma (o refresca, si ya está abierto) el mini listado de clientes
+  /// registrados que coinciden con lo que se va tipeando en "Cliente".
+  /// No usa un diálogo aparte para no cortar el tipeo -el cajero ve las
+  /// coincidencias sin dejar de escribir, y toca una para vincularla-.
+  void _actualizarSugerenciasCliente(String texto) {
+    final consulta = texto.trim();
+    if (consulta.length < 2 || !_focusNombreCliente.hasFocus) {
+      _ocultarSugerenciasCliente();
+      return;
+    }
+    final todos = ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
+    final coincidencias = todos.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, consulta)).take(5).toList();
+    if (coincidencias.isEmpty) {
+      _ocultarSugerenciasCliente();
+      return;
+    }
+    if (_overlaySugerenciasCliente == null) {
+      _overlaySugerenciasCliente = OverlayEntry(builder: (context) => _sugerenciasClienteOverlay(coincidencias));
+      Overlay.of(context).insert(_overlaySugerenciasCliente!);
+    } else {
+      _sugerenciasClienteActuales = coincidencias;
+      _overlaySugerenciasCliente!.markNeedsBuild();
+    }
+  }
+
+  List<ClienteModel> _sugerenciasClienteActuales = const [];
+
+  Widget _sugerenciasClienteOverlay(List<ClienteModel> coincidencias) {
+    _sugerenciasClienteActuales = coincidencias;
+    return Positioned(
+      width: 320,
+      child: CompositedTransformFollower(
+        link: _clienteLayerLink,
+        showWhenUnlinked: false,
+        offset: const Offset(0, 58),
+        child: Material(
+          elevation: 6,
+          borderRadius: BorderRadius.circular(12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shrinkWrap: true,
+              itemCount: _sugerenciasClienteActuales.length,
+              separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade200),
+              itemBuilder: (context, i) {
+                final c = _sugerenciasClienteActuales[i];
+                return InkWell(
+                  onTap: () => _seleccionarClienteSugerido(c),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                        if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _seleccionarClienteSugerido(ClienteModel cliente) {
+    _ocultarSugerenciasCliente();
+    setState(() {
+      _nombreClienteController.text = cliente.nombreCompleto;
+      _documentoClienteController.text = cliente.dni;
+      _clienteVinculado = cliente;
+    });
+    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: cliente.dni, nombre: cliente.nombreCompleto, idCliente: cliente.id);
+    _focusNombreCliente.unfocus();
+  }
+
+  void _ocultarSugerenciasCliente() {
+    _overlaySugerenciasCliente?.remove();
+    _overlaySugerenciasCliente = null;
+  }
+
+  /// Cliente vinculado a esta venta (carrito.idCliente), para el botón
+  /// "Completar datos del cliente". Usa el que ya se tiene en memoria si
+  /// coincide (elegido recién por el buscador); si no -por ejemplo, viene de
+  /// duplicar una venta vieja o de una venta en espera recuperada- lo busca
+  /// primero en la lista ya cargada de clientesStreamProvider y, si tampoco
+  /// está ahí, lo lee directo de Firestore.
+  Future<ClienteModel?> _resolverClienteVinculado(String idCliente) async {
+    final actual = _clienteVinculado;
+    if (actual != null && actual.id == idCliente) return actual;
+    final lista = ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
+    for (final c in lista) {
+      if (c.id == idCliente) return c;
+    }
+    return ref.read(clienteRepositoryProvider).obtenerPorId(idCliente);
+  }
+
+  Future<void> _completarDatosCliente() async {
+    final idCliente = ref.read(carritoVentaProvider).idCliente;
+    if (idCliente == null) return;
+    final cliente = await _resolverClienteVinculado(idCliente);
+    if (!mounted) return;
+    if (cliente == null) {
+      _mostrarMensaje('No se encontró el cliente vinculado a esta venta.');
+      return;
+    }
+    await showDialog(context: context, builder: (context) => ClienteFormDialog(cliente: cliente));
+    if (!mounted) return;
+    // El formulario pudo haber cambiado nombre/dni: se refresca el cliente
+    // en memoria y los campos visibles de la venta para que no queden
+    // desactualizados sin salir de esta pantalla.
+    final actualizado = await ref.read(clienteRepositoryProvider).obtenerPorId(idCliente);
+    if (!mounted || actualizado == null) return;
+    setState(() {
+      _clienteVinculado = actualizado;
+      _nombreClienteController.text = actualizado.nombreCompleto;
+      _documentoClienteController.text = actualizado.dni;
+    });
+    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: actualizado.dni, nombre: actualizado.nombreCompleto, idCliente: actualizado.id);
+  }
+
+  /// Se llama en cada cambio del carrito (ver ref.listen en build): revisa si
+  /// el cliente vinculado a esta venta tiene algún crédito vencido, para
+  /// mostrar un aviso NO bloqueante (el cajero puede seguir aunque haya algo
+  /// vencido). A propósito NO depende de que la condición de ESTA venta sea
+  /// Crédito -el dueño quiere saber del vencido aunque esta venta sea al
+  /// contado, para poder cobrarle o decidir si venderle o no-: el único
+  /// gatillo es tener un cliente vinculado (o, como respaldo, un documento
+  /// tipeado). Best-effort: si falla la consulta (sin internet, etc.)
+  /// simplemente no se muestra el aviso, no interrumpe la venta.
+  Future<void> _verificarCreditoVencido(CarritoVentaState carrito) async {
+    final idCliente = carrito.idCliente;
+    final documento = carrito.documentoCliente.trim();
+    if ((idCliente == null || idCliente.isEmpty) && (documento.isEmpty || documento == 'N/A')) {
+      _claveUltimaVerificacionCredito = null;
+      if (_saldoVencidoCliente != null && mounted) setState(() => _saldoVencidoCliente = null);
+      return;
+    }
+    final clave = idCliente ?? documento;
+    if (_claveUltimaVerificacionCredito == clave) return;
+    _claveUltimaVerificacionCredito = clave;
+    try {
+      final creditos = await ref.read(ventaCreditoRepositoryProvider).obtenerCreditosDeCliente(idCliente: idCliente, documentoCliente: documento);
+      final totalVencido = creditos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
+      if (!mounted) return;
+      setState(() => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null);
+    } catch (_) {
+      // Sin internet u otro error transitorio: no se muestra el aviso esta
+      // vez, no bloquea la venta.
+    }
+  }
+
+  /// Aviso NO bloqueante: se muestra aunque esta venta sea al contado (no
+  /// hace falta estar fiando de nuevo para que importe saber que el cliente
+  /// ya tiene algo vencido); el cajero puede seguir la venta como sea, solo
+  /// se le avisa para que lo tenga en cuenta.
+  Widget _avisoCreditoVencido(double saldoVencido) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 20, color: Colors.orange.shade800),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Este cliente tiene un crédito vencido de ${formatearMoneda(saldoVencido)} — revisá antes de continuar.',
+              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.orange.shade900),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ---------- Producto: agregar directo desde el buscador ----------
@@ -1206,6 +1440,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       metodoPago: carrito.metodoPago,
       documentoCliente: carrito.documentoCliente,
       nombreCliente: _nombreClienteController.text.trim(),
+      // Se guarda para que "en espera" no pierda el vínculo real al cliente
+      // -ver VentaEnEsperaModel.idCliente-.
+      idCliente: carrito.idCliente,
       fechaVencimiento: carrito.fechaVencimiento,
       oc: carrito.oc,
       regExonerado: carrito.regExonerado,
@@ -1253,6 +1490,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       metodoPago: carrito.metodoPago,
       documentoCliente: carrito.documentoCliente,
       nombreCliente: _nombreClienteController.text.trim(),
+      // Se guarda para que "en espera" no pierda el vínculo real al cliente
+      // -ver VentaEnEsperaModel.idCliente-.
+      idCliente: carrito.idCliente,
       fechaVencimiento: carrito.fechaVencimiento,
       oc: carrito.oc,
       regExonerado: carrito.regExonerado,
@@ -1278,7 +1518,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   Future<void> _verEnEspera() async {
     final sesion = await showDialog<VentaEnEsperaModel>(context: context, builder: (context) => const VentasEnEsperaDialog());
     if (sesion == null || !mounted) return;
-    ref.read(carritoVentaProvider.notifier).cargarSesion(sesion);
+    // OJO con el orden: setState de acá abajo ANTES de cargarSesion().
+    // Asignarle .text a los controladores de nombre/documento dispara su
+    // onChanged (establecerNombreClienteManual/establecerDocumentoCliente),
+    // que limpia carrito.idCliente a propósito para una edición manual real
+    // -ver esos métodos-. Si cargarSesion() (que sí trae el idCliente
+    // correcto de la sesión) corriera primero, ese onChanged lo borraría
+    // justo después sin querer. Llamándolo al final, cargarSesion() siempre
+    // tiene la última palabra y el vínculo real queda restaurado tal como
+    // estaba al guardar en espera.
     setState(() {
       _nombreClienteController.text = sesion.nombreCliente;
       _documentoClienteController.text = sesion.documentoCliente;
@@ -1287,7 +1535,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _regSagController.text = sesion.regSag;
       _observacionesController.text = sesion.observaciones;
       _descuentoGlobalController.text = sesion.descuentoGlobal == 0 ? '' : _formatoCantidad(sesion.descuentoGlobal);
+      // No se tiene el ClienteModel completo acá, solo el id -se resuelve
+      // on-demand si se toca "Completar datos del cliente" (ver
+      // _resolverClienteVinculado)-.
+      _clienteVinculado = null;
     });
+    ref.read(carritoVentaProvider.notifier).cargarSesion(sesion);
   }
 
   void _limpiarTodo() {
@@ -1326,6 +1579,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _focusDescripcion.clear();
     _confirmarDescripcion.clear();
     _conteoItemsControladores = 0;
+    _clienteVinculado = null;
+    _saldoVencidoCliente = null;
+    _claveUltimaVerificacionCredito = null;
   }
 
   Future<void> _confirmarLimpiar() async {
@@ -1471,6 +1727,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             metodoPago: esCotizacion ? 'N/A' : (carrito.condicion == 'Credito' ? 'N/A' : carrito.metodoPago),
             documentoCliente: carrito.documentoCliente.trim().isEmpty ? 'N/A' : carrito.documentoCliente.trim(),
             nombreCliente: nombreCliente,
+            idCliente: carrito.idCliente,
             fechaRegistro: carrito.fecha,
             fechaVencimiento: (!esCotizacion && carrito.condicion == 'Credito') ? carrito.fechaVencimiento : null,
             oc: carrito.oc,
@@ -1781,7 +2038,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   Widget build(BuildContext context) {
     final carrito = ref.watch(carritoVentaProvider);
-    ref.listen<CarritoVentaState>(carritoVentaProvider, (previous, next) => _programarAutoguardadoEnEspera(next));
+    ref.listen<CarritoVentaState>(carritoVentaProvider, (previous, next) {
+      _programarAutoguardadoEnEspera(next);
+      _verificarCreditoVencido(next);
+    });
     // Si el diálogo de "ver la tabla más grande" está abierto, le pide que
     // se vuelva a pintar con los datos ya leídos por este `ref` (el
     // correcto para esta pestaña) cada vez que el carrito cambia — ver
@@ -2104,7 +2364,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: CampoTecladoCompacto(
+                      child: CompositedTransformTarget(
+                        link: _clienteLayerLink,
+                        child: CampoTecladoCompacto(
                         controller: _nombreClienteController,
                         numerico: false,
                         titulo: 'Vacío = Consumidor Final',
@@ -2113,11 +2375,24 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         autocorrect: false,
                         enableSuggestions: false,
                         controller: _nombreClienteController,
+                        focusNode: _focusNombreCliente,
                         style: GoogleFonts.poppins(fontSize: 13),
                         decoration: _decoracion('Cliente').copyWith(
                           hintText: 'Vacío = Consumidor Final',
                           hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
                         ),
+                        // Si el cajero tipea acá directo (no usó el
+                        // buscador), el vínculo real a un cliente elegido
+                        // antes ya no es confiable -ver
+                        // establecerNombreClienteManual-. Además se
+                        // refrescan las sugerencias de clientes ya
+                        // registrados que coincidan con lo tipeado.
+                        onChanged: (v) {
+                          ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(v);
+                          if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
+                          _actualizarSugerenciasCliente(v);
+                        },
+                      ),
                       ),
                       ),
                     ),
@@ -2127,6 +2402,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       icon: const Icon(Icons.search),
                       style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     ),
+                    // Visible con un cliente vinculado a esta venta (elegido
+                    // por el buscador, o cargado de una venta duplicada):
+                    // abre el mismo formulario de Clientes ya precargado,
+                    // para completarle teléfono/dirección sin salir de acá.
+                    if (carrito.idCliente != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Completar datos del cliente',
+                        onPressed: _completarDatosCliente,
+                        icon: const Icon(Icons.person_add_alt_1_outlined),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -2142,7 +2430,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   controller: _documentoClienteController,
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: _decoracion('RTN / Documento'),
-                  onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerDocumentoCliente(v),
+                  onChanged: (v) {
+                    ref.read(carritoVentaProvider.notifier).establecerDocumentoCliente(v);
+                    if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
+                  },
                 ),
                 ),
               ),
@@ -2199,6 +2490,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ),
             ],
           ),
+          if (_saldoVencidoCliente != null) ...[
+            const SizedBox(height: 10),
+            _avisoCreditoVencido(_saldoVencidoCliente!),
+          ],
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
@@ -2831,6 +3126,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         const SizedBox(width: 28),
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 4, child: Text('Descripción', style: estilo)),
+        Expanded(flex: 2, child: Text('Código Color', style: estilo)),
         Expanded(flex: 2, child: Text('Cantidad', textAlign: TextAlign.center, style: estilo)),
         Expanded(flex: 2, child: Text(_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', textAlign: TextAlign.center, style: estilo)),
         Expanded(flex: 2, child: Text('Descuento %', textAlign: TextAlign.center, style: estilo)),
@@ -3064,6 +3360,54 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
+  /// Botón/badge de código(s) de color de una línea del carrito: abre
+  /// CodigosColorDialog (lista chica de códigos, no un campo de texto suelto
+  /// -una línea puede llevar más de un código, ej. una mezcla con dos
+  /// tintes-). Sin código cargado se ve como un botón vacío ("+ Color"); con
+  /// alguno cargado, se ve el primero + cuántos más hay, para que el cajero
+  /// vea de un vistazo que ya se cargó algo sin tener que reabrir el diálogo.
+  Widget _botonCodigoColor(int index, dynamic item) {
+    final List<String> codigos = item.codigosColor;
+
+    Future<void> abrir() async {
+      final resultado = await showDialog<List<String>>(
+        context: context,
+        builder: (context) => CodigosColorDialog(codigosIniciales: codigos),
+      );
+      if (resultado == null) return;
+      ref.read(carritoVentaProvider.notifier).actualizarCodigosColor(index, resultado);
+    }
+
+    final texto = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
+
+    return InkWell(
+      onTap: abrir,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: codigos.isEmpty ? const Color(0xFFE8EAF0) : const Color(0xFFFBEAEA),
+          borderRadius: BorderRadius.circular(8),
+          border: codigos.isEmpty ? null : Border.all(color: const Color(0xFFC62828).withOpacity(0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.palette_outlined, size: 14, color: codigos.isEmpty ? Colors.grey.shade500 : const Color(0xFFC62828)),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                texto,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: codigos.isEmpty ? Colors.grey.shade600 : const Color(0xFFC62828)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
@@ -3082,6 +3426,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           SizedBox(width: 28, child: _botonesOrden(index, totalItems)),
           Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
           Expanded(flex: 4, child: _campoDescripcion(index, item)),
+          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Align(alignment: Alignment.centerLeft, child: _botonCodigoColor(index, item)))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true))),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
@@ -3123,6 +3468,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   children: [
                     _campoDescripcion(index, item),
                     Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    const SizedBox(height: 6),
+                    _botonCodigoColor(index, item),
                   ],
                 ),
               ),
