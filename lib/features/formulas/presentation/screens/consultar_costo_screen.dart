@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
@@ -5,6 +6,7 @@ import '../../../productos/data/tinte_lookup.dart';
 import '../../../ventas/data/costo_tinte_service.dart';
 import '../../../ventas/presentation/widgets/agregar_tinte_manual_dialog.dart';
 import '../../../ventas/presentation/widgets/buscar_producto_dialog.dart';
+import '../../../ventas/presentation/widgets/campo_cantidad_tinte.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../data/formula_colortrend_model.dart';
 import '../../data/formula_tamano_utils.dart';
@@ -110,12 +112,17 @@ class _ModoSoloTinte extends StatefulWidget {
 }
 
 class _ModoSoloTinteState extends State<_ModoSoloTinte> {
-  final _onzasController = TextEditingController();
   final _servicio = CostoTinteService();
   Future<List<ProductoModel>>? _futureTintes;
   ProductoModel? _tinteElegido;
+  double _onzas = 0;
   ResultadoCostoTinte? _calculado;
   bool _calculando = false;
+  Timer? _debounce;
+  // Se cambia esta key cada vez que se "Limpia" para forzar que
+  // CampoCantidadTinte se recree desde cero (Y/48avos vacíos) -el widget no
+  // expone un controller propio, ver su doc.
+  int _resetCantidad = 0;
 
   @override
   void initState() {
@@ -125,20 +132,32 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
 
   @override
   void dispose() {
-    _onzasController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  // Debounce: antes se recalculaba en cada tecla del campo de onzas -una
+  // ida y vuelta a Firestore por dígito escrito-, ahora se espera una pausa
+  // corta antes de disparar el cálculo (mismo criterio que
+  // AgregarTinteManualDialog).
+  void _onCantidadCambiada(double onzas) {
+    _onzas = onzas;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _calcular);
   }
 
   Future<void> _calcular() async {
     final tinte = _tinteElegido;
-    final onzas = double.tryParse(_onzasController.text.replaceAll(',', '.'));
-    if (tinte == null || onzas == null || onzas <= 0) {
+    final onzas = _onzas;
+    if (tinte == null || onzas <= 0) {
       setState(() => _calculado = null);
       return;
     }
     setState(() => _calculando = true);
     final colorante = tinte.nombre.replaceFirst('COLORANTE ', '').trim();
-    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas)]);
+    // productoConocido: tinte -> se salta la consulta a Firestore por
+    // nombre (ya se tiene el producto exacto, elegido del dropdown).
+    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas, productoConocido: tinte)]);
     if (!mounted) return;
     setState(() {
       _calculado = resultados.first;
@@ -146,8 +165,18 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
     });
   }
 
+  void _limpiar() {
+    setState(() {
+      _tinteElegido = null;
+      _calculado = null;
+      _onzas = 0;
+      _resetCantidad++;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hayAlgoQueLimpiar = _tinteElegido != null || _onzas > 0 || _calculado != null;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -155,7 +184,18 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('¿Cuánto cuesta tanto de tal tinte?', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+          Row(
+            children: [
+              Expanded(child: Text('¿Cuánto cuesta tanto de tal tinte?', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700))),
+              if (hayAlgoQueLimpiar)
+                TextButton.icon(
+                  onPressed: _limpiar,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF666A72), padding: const EdgeInsets.symmetric(horizontal: 8)),
+                ),
+            ],
+          ),
           const SizedBox(height: 12),
           FutureBuilder<List<ProductoModel>>(
             future: _futureTintes,
@@ -181,22 +221,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             },
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _onzasController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: GoogleFonts.poppins(fontSize: 13),
-            decoration: InputDecoration(
-              labelText: 'Onzas',
-              labelStyle: GoogleFonts.poppins(fontSize: 12.5),
-              filled: true,
-              fillColor: const Color(0xFFF2F3F7),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
-            onChanged: (_) => _calcular(),
-            onSubmitted: (_) => _calcular(),
-          ),
+          CampoCantidadTinte(key: ValueKey(_resetCantidad), onChanged: _onCantidadCambiada),
           const SizedBox(height: 16),
           if (_calculando) const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(color: Color(0xFFC62828)))),
           if (!_calculando && _calculado != null) _resumen(_calculado!),
@@ -287,10 +312,19 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
     setState(() => _tintes.add(resultado));
   }
 
+  void _limpiar() {
+    setState(() {
+      _productoBase = null;
+      _tamanoManual = null;
+      _tintes.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final costoTinte = _tintes.fold<double>(0, (s, t) => s + t.costoTotal);
     final costoBase = _productoBase?.precioCompra ?? 0;
+    final hayAlgoQueLimpiar = _productoBase != null || _tintes.isNotEmpty;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -298,7 +332,18 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Producto base', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+          Row(
+            children: [
+              Expanded(child: Text('Producto base', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700))),
+              if (hayAlgoQueLimpiar)
+                TextButton.icon(
+                  onPressed: _limpiar,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF666A72), padding: const EdgeInsets.symmetric(horizontal: 8)),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _elegirProductoBase,

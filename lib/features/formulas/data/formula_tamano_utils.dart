@@ -1,9 +1,12 @@
 import 'formula_colortrend_model.dart';
 
 /// Tamaño de presentación de una fórmula del libro Color Codex -ver
-/// FormulaColortrendModel- más "quinto", que no existe como columna propia
-/// en el libro pero sí es un tamaño real de producto de este negocio (ver
-/// [onzasFormulaParaTamano]).
+/// FormulaColortrendModel-. "quinto" es el nombre que usa este negocio para
+/// la cubeta de 5 galones (NO es 1/5 de un galón, aunque el nombre parezca
+/// indicar eso -corregido tras un reporte real del dueño: el cálculo
+/// original asumía 1/5 de galón y salía 25 veces más barato de lo real-),
+/// así que usa exactamente los mismos valores que `cubeta5gal` (dato real
+/// del libro, no un estimado).
 enum TamanoFormula { cuarto, galon, cubeta5gal, quinto }
 
 String etiquetaTamano(TamanoFormula t) {
@@ -42,13 +45,11 @@ TamanoFormula? tamanoDesdeNombreProducto(String nombreProducto) {
 /// - CUARTO: valor real del libro si `formula.cuartoDisponible`, si no
 ///   Galón ÷ 4 -mismo estimado que ya usa FormulaDetalleCard, marcado igual
 ///   de aproximado-.
-/// - GALÓN / CUBETA 5 GAL.: valor real del libro.
-/// - QUINTO: no existe en el libro -un quinto es exactamente 1/5 de un
-///   galón, así que se deriva como Galón ÷ 5 (más preciso que aproximar vía
-///   Cuarto), pero SIEMPRE como estimado: es un valor derivado, no impreso
-///   en el libro físico.
+/// - GALÓN / CUBETA 5 GAL. / QUINTO: valor real del libro -QUINTO es el
+///   nombre de este negocio para la cubeta de 5 galones, usa la misma
+///   columna del libro que CUBETA 5 GAL., NO Galón ÷ 5-.
 /// Devuelve null si no hay forma de resolverlo (ni el dato real ni el
-/// insumo -Galón- para estimarlo).
+/// insumo -Galón- para estimarlo, en el caso de Cuarto).
 ({double onzas, bool esEstimado})? onzasColoranteParaTamano(FormulaColortrendModel formula, ColoranteFormula colorante, TamanoFormula tamano) {
   switch (tamano) {
     case TamanoFormula.cuarto:
@@ -59,10 +60,8 @@ TamanoFormula? tamanoDesdeNombreProducto(String nombreProducto) {
       if (colorante.galonOz != null) return (onzas: colorante.galonOz!, esEstimado: false);
       return null;
     case TamanoFormula.cubeta5gal:
-      if (colorante.cubeta5galOz != null) return (onzas: colorante.cubeta5galOz!, esEstimado: false);
-      return null;
     case TamanoFormula.quinto:
-      if (colorante.galonOz != null) return (onzas: colorante.galonOz! / 5, esEstimado: true);
+      if (colorante.cubeta5galOz != null) return (onzas: colorante.cubeta5galOz!, esEstimado: false);
       return null;
   }
 }

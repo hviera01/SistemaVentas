@@ -196,6 +196,40 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     state = state.copyWith(items: [...state.items, item]);
   }
 
+  /// Igual que agregarProductoDirecto, pero cuando [fusionarSiYaExiste] es
+  /// true y el producto ya está en el carrito como línea normal (no combo),
+  /// en vez de crear una línea nueva le suma 1 a la cantidad de esa línea
+  /// existente -devuelve el índice de la línea afectada (la existente si se
+  /// fusionó, o la recién creada si no), para que quien llama (por ejemplo,
+  /// para aplicar una promoción) sepa sobre cuál línea actuar-.
+  ///
+  /// Quién decide [fusionarSiYaExiste] es RegistrarVentaScreen: al escanear
+  /// un código de barras SIEMPRE se fusiona (sin importar la categoría del
+  /// producto) -pedido explícito del dueño-; al agregar a mano desde el
+  /// buscador (BuscarProductoDialog) se fusiona solo si la categoría NO es
+  /// de pintura -ver _esCategoriaPintura-, porque una línea de pintura puede
+  /// llevar su propio código/tinte de color (ver CodigosColorDialog) y el
+  /// dueño quiere poder vender, por ejemplo, "2 galones de la misma pintura
+  /// base" como dos líneas separadas, cada una teñida a un color distinto,
+  /// en vez de una sola línea de cantidad 2 que solo podría llevar un color.
+  int agregarOFusionarProductoDirecto(
+    ProductoModel producto, {
+    double? precioSeleccionado,
+    double precioCompraUsado = 0,
+    bool reembasado = false,
+    bool fusionarSiYaExiste = false,
+  }) {
+    if (fusionarSiYaExiste) {
+      final idx = state.items.indexWhere((i) => i.idProducto == producto.id && !i.esCombo);
+      if (idx != -1) {
+        actualizarLinea(idx, cantidad: state.items[idx].cantidad + 1);
+        return idx;
+      }
+    }
+    agregarProductoDirecto(producto, precioSeleccionado: precioSeleccionado, precioCompraUsado: precioCompraUsado, reembasado: reembasado);
+    return state.items.length - 1;
+  }
+
   /// Agrega un producto tipo combo/kit directamente a la tabla, en una sola
   /// línea. La receta de componentes se congela (snapshot) en el momento de
   /// agregarlo -no se resuelve de nuevo después- para que anular la venta

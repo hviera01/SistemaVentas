@@ -1,15 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/data/tinte_lookup.dart';
 import '../../data/costo_tinte_service.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import 'campo_cantidad_tinte.dart';
 
 /// Diálogo para cargar un tinte "a ojo" (Escenario B, sin código de fórmula
 /// conectado, ver CodigosColorDialog): el cajero elige el producto de tinte
-/// real (categoría TINTES) y cuántas onzas le echó -mismas unidades que ya
-/// usa la pantalla de Fórmulas, para razonar igual en los dos casos-. Calcula
-/// el costo (FIFO, solo lectura) antes de confirmar, para que el cajero vea
+/// real (categoría TINTES) y cuántas onzas le echó, en la notación real de
+/// la máquina tintométrica (Y + 48avos, ver CampoCantidadTinte). Calcula el
+/// costo (FIFO, solo lectura) antes de confirmar, para que el cajero vea
 /// cuánto va a sumar esa línea antes de agregarla. Devuelve el
 /// [ResultadoCostoTinte] elegido, o null si se cancela.
 class AgregarTinteManualDialog extends StatefulWidget {
@@ -20,12 +22,13 @@ class AgregarTinteManualDialog extends StatefulWidget {
 }
 
 class _AgregarTinteManualDialogState extends State<AgregarTinteManualDialog> {
-  final _onzasController = TextEditingController();
   final _servicio = CostoTinteService();
   Future<List<ProductoModel>>? _futureTintes;
   ProductoModel? _tinteElegido;
+  double _onzas = 0;
   ResultadoCostoTinte? _calculado;
   bool _calculando = false;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -35,24 +38,37 @@ class _AgregarTinteManualDialogState extends State<AgregarTinteManualDialog> {
 
   @override
   void dispose() {
-    _onzasController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  /// Antes esto recalculaba en cada tecla que tocaba el campo de onzas -una
+  /// idea y vuelta a Firestore por dígito escrito, que es la demora real que
+  /// reportó el dueño ("las rueditas")-. Ahora se espera una pausa corta
+  /// (debounce) antes de disparar el cálculo, igual que un buscador
+  /// as-you-type normal.
+  void _onCantidadCambiada(double onzas) {
+    _onzas = onzas;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _calcular);
   }
 
   Future<void> _calcular() async {
     final tinte = _tinteElegido;
-    final onzas = double.tryParse(_onzasController.text.replaceAll(',', '.'));
-    if (tinte == null || onzas == null || onzas <= 0) {
+    final onzas = _onzas;
+    if (tinte == null || onzas <= 0) {
       setState(() => _calculado = null);
       return;
     }
     setState(() => _calculando = true);
-    // Se colorante desde el nombre del producto ("COLORANTE B" -> "B") en
-    // vez de pedirle al cajero que lo escriba de nuevo: ya lo eligió de la
-    // lista. El servicio vuelve a resolver el producto por ese código -mismo
-    // camino que Escenario A- para no duplicar la lógica de costeo FIFO.
+    // Se saca el colorante desde el nombre del producto ("COLORANTE B" ->
+    // "B") en vez de pedirle al cajero que lo escriba de nuevo: ya lo eligió
+    // de la lista. Se pasa además `productoConocido: tinte` para que el
+    // servicio se salte la consulta a Firestore por nombre -ya se tiene el
+    // producto exacto a mano, esa consulta redundante en CADA recálculo era
+    // la otra mitad de la demora reportada.
     final colorante = tinte.nombre.replaceFirst('COLORANTE ', '').trim();
-    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas)]);
+    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas, productoConocido: tinte)]);
     if (!mounted) return;
     setState(() {
       _calculado = resultados.first;
@@ -123,22 +139,7 @@ class _AgregarTinteManualDialogState extends State<AgregarTinteManualDialog> {
               },
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _onzasController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                labelText: 'Onzas',
-                labelStyle: GoogleFonts.poppins(fontSize: 12.5),
-                filled: true,
-                fillColor: const Color(0xFFF2F3F7),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
-              onChanged: (_) => _calcular(),
-              onSubmitted: (_) => _calcular(),
-            ),
+            CampoCantidadTinte(onChanged: _onCantidadCambiada),
             const SizedBox(height: 14),
             if (_calculando) const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(color: Color(0xFFC62828)))),
             if (!_calculando && _calculado != null) _resumenCalculo(_calculado!),

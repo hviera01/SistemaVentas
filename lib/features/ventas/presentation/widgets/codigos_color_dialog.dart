@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/utils/formato_moneda.dart';
-import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../formulas/data/formula_colortrend_model.dart';
 import '../../../formulas/data/formula_tamano_utils.dart';
 import '../../../formulas/presentation/widgets/seleccionar_formula_dialog.dart';
@@ -59,8 +57,20 @@ class CodigosColorDialog extends StatefulWidget {
 class _CodigosColorDialogState extends State<CodigosColorDialog> {
   late List<String> _codigos;
   late List<TinteConsumidoSnapshot> _tintes;
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
+  // Para que "x" en un código también borre el tinte que ese código generó
+  // (ver _buscarFormula): a cada código y a cada tinte agregados EN ESTA
+  // sesión del diálogo se les asigna el mismo id de grupo, así _quitarCodigo
+  // sabe exactamente qué tintes vinieron de ese código -y no de otro código
+  // ni de un tinte manual- y los borra junto con él. Los códigos/tintes que
+  // ya venían de widget.codigosIniciales/tintesIniciales (una línea que se
+  // reabre para editar) no tienen esa asociación registrada -ItemVentaModel
+  // no la persiste, son dos listas planas- así que quedan sin grupo (null):
+  // quitar un código viejo no borra tintes viejos, igual que se comportaba
+  // antes -sin regresión-, y el fix aplica de lleno al caso reportado
+  // (agregar fórmula y sacarla en la misma pasada).
+  late List<int?> _codigosGrupo;
+  late List<int?> _tintesGrupo;
+  int _proximoGrupoId = 0;
   bool _cargandoFormula = false;
 
   @override
@@ -68,27 +78,32 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
     super.initState();
     _codigos = [...widget.codigosIniciales];
     _tintes = [...widget.tintesIniciales];
+    _codigosGrupo = List<int?>.filled(_codigos.length, null, growable: true);
+    _tintesGrupo = List<int?>.filled(_tintes.length, null, growable: true);
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  void _agregarCodigoTexto() {
-    final texto = _controller.text.trim();
-    if (texto.isEmpty) return;
+  void _quitarCodigo(int index) {
     setState(() {
-      _codigos.add(texto);
-      _controller.clear();
+      final grupo = _codigosGrupo[index];
+      _codigos.removeAt(index);
+      _codigosGrupo.removeAt(index);
+      if (grupo != null) {
+        for (var i = _tintes.length - 1; i >= 0; i--) {
+          if (_tintesGrupo[i] == grupo) {
+            _tintes.removeAt(i);
+            _tintesGrupo.removeAt(i);
+          }
+        }
+      }
     });
-    _focusNode.requestFocus();
   }
 
-  void _quitarCodigo(int index) => setState(() => _codigos.removeAt(index));
-  void _quitarTinte(int index) => setState(() => _tintes.removeAt(index));
+  void _quitarTinte(int index) {
+    setState(() {
+      _tintes.removeAt(index);
+      _tintesGrupo.removeAt(index);
+    });
+  }
 
   void _cerrar() => Navigator.pop(context, CodigosColorResultado(codigos: _codigos, tintes: _tintes));
 
@@ -97,24 +112,32 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
   }
 
   /// Escenario A: buscar una fórmula real y calcular sus tintes para el
-  /// tamaño de esta línea. Si no se puede determinar el tamaño del
-  /// producto, se agrega igual el código elegido como texto libre (mejor
-  /// eso que no dejar anotar nada), pero sin calcular costo/stock -pedido
-  /// explícito: mejor no calcular que calcular mal-.
+  /// tamaño de esta línea. El código SIEMPRE viene de una fórmula real
+  /// elegida acá -ya no existe forma de escribir un código a mano (ver nota
+  /// de clase)-. Si no se puede determinar el tamaño del producto, se agrega
+  /// igual el código elegido (sí es real, viene de la fórmula) pero sin
+  /// calcular costo/stock -pedido explícito: mejor no calcular que calcular
+  /// mal-.
   Future<void> _buscarFormula() async {
     final formula = await showDialog<FormulaColortrendModel>(context: context, builder: (context) => const SeleccionarFormulaDialog());
     if (formula == null || !mounted) return;
 
     final tamano = tamanoDesdeNombreProducto(widget.nombreProducto);
     if (tamano == null) {
-      setState(() => _codigos.add(formula.codigo));
+      setState(() {
+        _codigos.add(formula.codigo);
+        _codigosGrupo.add(null);
+      });
       _mostrarMensaje('No se pudo determinar el tamaño de "${widget.nombreProducto}" (Cuarto/Galón/Quinto/Cubeta) -se agregó el código, pero sin calcular el costo del tinte. Podés cargarlo con "Tinte manual".');
       return;
     }
 
     final usos = onzasFormulaParaTamano(formula, tamano, widget.cantidadLinea);
     if (usos.isEmpty) {
-      setState(() => _codigos.add(formula.codigo));
+      setState(() {
+        _codigos.add(formula.codigo);
+        _codigosGrupo.add(null);
+      });
       _mostrarMensaje('Esta fórmula no tiene datos de colorante para ${etiquetaTamano(tamano)} -se agregó el código, pero sin calcular el costo del tinte.');
       return;
     }
@@ -130,16 +153,23 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
     );
     if (confirmar != true || !mounted) return;
     setState(() {
+      final grupo = _proximoGrupoId++;
       _codigos.add(formula.codigo);
+      _codigosGrupo.add(grupo);
       _tintes.addAll(resultados.map((r) => r.toSnapshot()));
+      _tintesGrupo.addAll(List<int?>.filled(resultados.length, grupo));
     });
   }
 
-  /// Escenario B: tinte cargado a mano, sin código de fórmula.
+  /// Escenario B: tinte cargado a mano, sin código de fórmula -no tiene
+  /// grupo asociado a ningún código, "x" en un código nunca lo toca-.
   Future<void> _agregarTinteManual() async {
     final resultado = await showDialog<ResultadoCostoTinte>(context: context, builder: (context) => const AgregarTinteManualDialog());
     if (resultado == null || !mounted) return;
-    setState(() => _tintes.add(resultado.toSnapshot()));
+    setState(() {
+      _tintes.add(resultado.toSnapshot());
+      _tintesGrupo.add(null);
+    });
   }
 
   @override
@@ -201,48 +231,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                             ),
                           ),
                         ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CampoTecladoCompacto(
-                            controller: _controller,
-                            numerico: false,
-                            onSubmitted: (_) => _agregarCodigoTexto(),
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: InputDecoration(
-                                hintText: 'Ej. C-104',
-                                hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
-                                filled: true,
-                                fillColor: const Color(0xFFF2F3F7),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              ),
-                              onSubmitted: (_) => _agregarCodigoTexto(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: _agregarCodigoTexto,
-                          icon: const Icon(Icons.add, size: 16),
-                          label: Text('Agregar', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A1A1A),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 4),
                     Divider(height: 1, color: Colors.grey.shade300),
                     const SizedBox(height: 12),
                     Text('Tinte usado en esta línea', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),

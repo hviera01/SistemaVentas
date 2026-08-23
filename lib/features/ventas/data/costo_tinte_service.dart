@@ -9,7 +9,20 @@ import 'item_venta_model.dart';
 class UsoTinte {
   final String colorante;
   final double onzas;
-  const UsoTinte({required this.colorante, required this.onzas});
+
+  /// Producto de tinte ya conocido -ej. el cajero ya lo eligió de un
+  /// dropdown, ver AgregarTinteManualDialog y ConsultarCostoScreen-: si se
+  /// pasa, [calcular] se salta la consulta a Firestore por nombre
+  /// (buscarProductoTinte). Sin esto, esa consulta se repetía en CADA
+  /// recálculo mientras el cajero seguía escribiendo la cantidad -una idea y
+  /// vuelta a Firestore por dígito tecleado, redundante porque ya se tenía
+  /// el producto exacto a mano- y era la causa real de que esos diálogos se
+  /// sintieran lentos ("las rueditas"), no la falta de Future.wait (eso ya
+  /// estaba resuelto acá abajo para el caso de fórmula con varios
+  /// colorantes).
+  final ProductoModel? productoConocido;
+
+  const UsoTinte({required this.colorante, required this.onzas, this.productoConocido});
 }
 
 /// Resultado de costear un uso de tinte: onzas → cuartos, producto de
@@ -64,12 +77,45 @@ class CostoTinteService {
 
   static const onzasPorCuarto = 32.0;
 
+  /// Antes esto hacía, POR CADA colorante y en SECUENCIA (un `for` con dos
+  /// `await` adentro), una consulta a `productos` (buscarProductoTinte) y
+  /// luego, si encontraba producto, otra a su subcolección `lotes`
+  /// (consultarLotes) -una fórmula de 3-4 colorantes disparaba hasta 8 idas y
+  /// vueltas a Firestore UNA DETRÁS DE OTRA antes de poder mostrar el costo,
+  /// que es la demora real que reportó el dueño al elegir una fórmula (el
+  /// buscador en sí, sobre el JSON ya cacheado en memoria por
+  /// formulasColortrendProvider, no es el cuello de botella). Ahora se
+  /// disparan todas las consultas de PRODUCTO en paralelo (Future.wait) y,
+  /// con esos resultados, todas las consultas de LOTES en paralelo también
+  /// -dos rondas en paralelo en vez de hasta 8 rondas en serie- y recién con
+  /// todo eso ya en memoria se arma el resultado final.
   Future<List<ResultadoCostoTinte>> calcular(List<UsoTinte> usos) async {
+    if (usos.isEmpty) return [];
+    final colorantes = [for (final uso in usos) normalizarColorante(uso.colorante)];
+
+    // Ronda 1: un producto de tinte por colorante, todos a la vez -salvo que
+    // el llamador ya lo tenga (productoConocido), en cuyo caso no hace falta
+    // ni siquiera esa consulta.
+    final productos = await Future.wait([
+      for (var i = 0; i < usos.length; i++)
+        if (usos[i].productoConocido != null) Future.value(usos[i].productoConocido) else buscarProductoTinte(colorantes[i]),
+    ]);
+
+    // Ronda 2: lotes de cada producto que sí se encontró, todos a la vez
+    // (se indexan por posición en `usos`, no todos los colorantes resuelven
+    // a un producto).
+    final indicesConProducto = [for (var i = 0; i < usos.length; i++) if (productos[i] != null) i];
+    final lotesPorIndice = Map.fromIterables(
+      indicesConProducto,
+      await Future.wait(indicesConProducto.map((i) => _lotes.consultarLotes(productos[i]!.id))),
+    );
+
     final resultados = <ResultadoCostoTinte>[];
-    for (final uso in usos) {
-      final colorante = normalizarColorante(uso.colorante);
+    for (var i = 0; i < usos.length; i++) {
+      final uso = usos[i];
+      final colorante = colorantes[i];
       final cuartos = uso.onzas / onzasPorCuarto;
-      final producto = await buscarProductoTinte(colorante);
+      final producto = productos[i];
       if (producto == null) {
         resultados.add(ResultadoCostoTinte(
           colorante: colorante,
@@ -82,8 +128,7 @@ class CostoTinteService {
         ));
         continue;
       }
-      final queryLotes = await _lotes.consultarLotes(producto.id);
-      final estado = _lotes.inicializarEstado(queryLotes);
+      final estado = _lotes.inicializarEstado(lotesPorIndice[i]!);
       final costoUnitario = _lotes.consumir(estado, cuartos, costoFallback: producto.precioCompra);
       String? advertencia;
       if (producto.stock < cuartos) {

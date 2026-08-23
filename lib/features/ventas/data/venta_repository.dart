@@ -337,11 +337,39 @@ class VentaRepository {
       // normales con los tintes reales consumidos (ver
       // _agregarTintesParaDescuento) para que ambos pasen por el mismo
       // bloque de lectura/descuento de stock y costeo FIFO de acá abajo.
+      //
+      // BUG corregido: cuando el mismo idProducto aparece en más de una
+      // línea de itemsADescontarTotal -dos líneas SEPARADAS del carrito para
+      // el mismo producto (no una sola línea con cantidad mayor), el mismo
+      // producto vendido a la vez como línea normal Y usado como ingrediente
+      // de tinte de otra línea, o dos combos distintos que comparten un
+      // componente- antes se leía/descontaba/escribía el stock UNA VEZ POR
+      // LÍNEA: 'stocksActuales' se llenaba con la lectura original y nunca
+      // se actualizaba entre líneas, y cada línea hacía su propio
+      // transaction.update(ref, {stock: ...}) sobre la MISMA referencia de
+      // producto -Firestore no suma updates repetidos sobre un mismo doc
+      // dentro de una transacción, el último pisa a los anteriores-, así que
+      // solo la última línea de ese producto quedaba reflejada y el stock
+      // real terminaba más alto de lo que debía después de la venta. La
+      // corrección: se agrupa la cantidad total por idProducto ANTES de
+      // leer/consumir/escribir, y de ahí en adelante todo el bloque (lectura
+      // de stock, consumo FIFO de lotes, y más abajo la escritura de
+      // 'stock'/'historial') trabaja por producto único, no por línea. El
+      // costo FIFO resultante (promedio ponderado de TODO lo consumido de
+      // ese producto en esta venta) se reparte de vuelta a cada línea
+      // original como su precioCompraUsado -ver más abajo-: al ser el mismo
+      // costo unitario para todas las líneas de un mismo producto,
+      // multiplicado por la cantidad propia de cada línea en los reportes,
+      // el reparto queda automáticamente ponderado por esa cantidad.
       final itemsADescontarTotal = [...itemsADescontar, ...tintesADescontar];
       final idsProductoUnicos = itemsADescontarTotal.map((i) => i.idProducto).toSet().toList();
+      final cantidadTotalPorProducto = <String, double>{};
+      for (final item in itemsADescontarTotal) {
+        cantidadTotalPorProducto[item.idProducto] = (cantidadTotalPorProducto[item.idProducto] ?? 0) + item.cantidad;
+      }
       final futureResultados = Future.wait([
         transaction.get(contadorRef),
-        ...itemsADescontarTotal.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+        ...idsProductoUnicos.map((id) => transaction.get(_db.collection('productos').doc(id))),
       ]);
       final futureLotes = Future.wait(idsProductoUnicos.map((id) => _lotes.consultarLotes(id)));
 
@@ -355,30 +383,43 @@ class VentaRepository {
 
       final stocksActuales = <String, double>{};
       final precioCompraActual = <String, double>{};
-      for (var i = 0; i < itemsADescontarTotal.length; i++) {
+      for (var i = 0; i < idsProductoUnicos.length; i++) {
         final data = snapsStock[i].data();
-        stocksActuales[itemsADescontarTotal[i].idProducto] = ((data?['stock'] ?? 0) as num).toDouble();
-        precioCompraActual[itemsADescontarTotal[i].idProducto] = ((data?['precioCompra'] ?? 0) as num).toDouble();
+        stocksActuales[idsProductoUnicos[i]] = ((data?['stock'] ?? 0) as num).toDouble();
+        precioCompraActual[idsProductoUnicos[i]] = ((data?['precioCompra'] ?? 0) as num).toDouble();
       }
 
-      // Costeo FIFO: si el carrito tiene más de una línea del mismo
-      // producto, comparten el mismo estado para no contar dos veces la
-      // misma capacidad de un lote.
+      // Costeo FIFO: se consume UNA sola vez por producto único, por la
+      // cantidad TOTAL agrupada (ver cantidadTotalPorProducto arriba), en
+      // vez de una vez por línea -así dos líneas del mismo producto
+      // comparten el mismo estado de lotes sin contar dos veces la misma
+      // capacidad, y el costo resultante es el promedio real de todo lo
+      // consumido de ese producto en esta venta.
       final queriesLotes = await futureLotes;
       final estadoLotesPorProducto = <String, EstadoLotesProducto>{
         for (var i = 0; i < idsProductoUnicos.length; i++) idsProductoUnicos[i]: _lotes.inicializarEstado(queriesLotes[i]),
       };
-      costosFifo = <ItemVentaModel, double>{};
-      for (final item in itemsADescontarTotal) {
-        final estado = estadoLotesPorProducto[item.idProducto]!;
-        final costoFallback = precioCompraActual[item.idProducto] ?? item.precioCompraUsado;
-        costosFifo[item] = _lotes.consumir(estado, item.cantidad, costoFallback: costoFallback);
-      }
+      final costoUnitarioPorProducto = <String, double>{
+        for (final idProducto in idsProductoUnicos)
+          idProducto: _lotes.consumir(
+            estadoLotesPorProducto[idProducto]!,
+            cantidadTotalPorProducto[idProducto] ?? 0,
+            costoFallback: precioCompraActual[idProducto] ?? 0,
+          ),
+      };
+      // Se reparte el costo unitario agregado de vuelta a cada línea de
+      // itemsADescontar (no a itemsADescontarTotal: los tintes se reparten
+      // aparte, ver costoUnitarioPorTinteProducto abajo) para que
+      // precioCompraUsado de cada línea siga siendo su costo real, ya
+      // ponderado por su propia cantidad al multiplicarse en los reportes.
+      costosFifo = <ItemVentaModel, double>{
+        for (final item in itemsADescontar) item: costoUnitarioPorProducto[item.idProducto] ?? 0,
+      };
       // Costo FIFO real por producto de tinte (uno solo por idProducto, ver
       // _agregarTintesParaDescuento): se usa abajo para reescribir el costo
       // ESTIMADO que traía cada TinteConsumidoSnapshot con el real.
       costoUnitarioPorTinteProducto = <String, double>{
-        for (final tv in tintesADescontar) tv.idProducto: costosFifo[tv] ?? precioCompraActual[tv.idProducto] ?? 0,
+        for (final tv in tintesADescontar) tv.idProducto: costoUnitarioPorProducto[tv.idProducto] ?? precioCompraActual[tv.idProducto] ?? 0,
       };
 
       transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
@@ -481,13 +522,20 @@ class VentaRepository {
         transaction.set(_colClientes.doc(idClienteResuelto), {'fechaUltimaCompra': Timestamp.fromDate(fechaRegistro)}, SetOptions(merge: true));
       }
 
-      for (final item in itemsADescontarTotal) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final stockActual = stocksActuales[item.idProducto] ?? 0;
+      // Un solo update/historial por producto único, por la cantidad TOTAL
+      // agrupada (cantidadTotalPorProducto) -no uno por línea-: escribir
+      // 'stock' más de una vez sobre la misma referencia dentro de la misma
+      // transacción no suma, la última escritura pisa a las anteriores, así
+      // que antes de este fix una segunda línea del mismo producto perdía
+      // el descuento de la primera (ver nota completa más arriba).
+      for (final idProducto in idsProductoUnicos) {
+        final ref = _db.collection('productos').doc(idProducto);
+        final stockActual = stocksActuales[idProducto] ?? 0;
+        final cantidadTotal = cantidadTotalPorProducto[idProducto] ?? 0;
         // Nunca queda en negativo: si ya estaba en 0 (por ejemplo, se vendió
         // a propósito sin existencia disponible) el piso es 0, no un número
         // negativo que después confunda los reportes de inventario.
-        final stockNuevo = (stockActual - item.cantidad) < 0 ? 0.0 : stockActual - item.cantidad;
+        final stockNuevo = (stockActual - cantidadTotal) < 0 ? 0.0 : stockActual - cantidadTotal;
         transaction.update(ref, {'stock': stockNuevo});
         final historialRef = ref.collection('historial').doc();
         transaction.set(historialRef, {
@@ -761,13 +809,27 @@ class VentaRepository {
     required List<ItemVentaModel> itemsARestaurar,
     required List<DocumentReference<Map<String, dynamic>>> pendientesReposicionRefs,
   }) async {
+    // Mismo bug (y misma corrección) que registrarVenta: si itemsARestaurar
+    // trae más de una línea con el mismo idProducto -la venta original tenía
+    // dos líneas separadas del mismo producto-, agrupar por producto único
+    // ANTES de leer/escribir evita que una segunda línea pise (en vez de
+    // sumarse a) la restauración de stock de la primera -acá el efecto sería
+    // reponer MENOS de lo que corresponde, en vez de de más-.
+    final idsProductoUnicos = itemsARestaurar.map((i) => i.idProducto).toSet().toList();
+    final cantidadTotalPorProducto = <String, double>{};
+    final costoTotalPorProducto = <String, double>{};
+    for (final item in itemsARestaurar) {
+      cantidadTotalPorProducto[item.idProducto] = (cantidadTotalPorProducto[item.idProducto] ?? 0) + item.cantidad;
+      costoTotalPorProducto[item.idProducto] = (costoTotalPorProducto[item.idProducto] ?? 0) + item.cantidad * item.precioCompraUsado;
+    }
+
     await _db.runTransaction((transaction) async {
       final stocksActuales = <String, double>{};
       final snapsStock = await Future.wait(
-        itemsARestaurar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+        idsProductoUnicos.map((idProducto) => transaction.get(_db.collection('productos').doc(idProducto))),
       );
-      for (var i = 0; i < itemsARestaurar.length; i++) {
-        stocksActuales[itemsARestaurar[i].idProducto] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
+      for (var i = 0; i < idsProductoUnicos.length; i++) {
+        stocksActuales[idsProductoUnicos[i]] = ((snapsStock[i].data()?['stock'] ?? 0) as num).toDouble();
       }
 
       transaction.update(_colVentas.doc(id), {
@@ -785,10 +847,11 @@ class VentaRepository {
         transaction.update(ref, {'estado': 'Cancelado', 'fechaCompletado': FieldValue.serverTimestamp()});
       }
 
-      for (final item in itemsARestaurar) {
-        final ref = _db.collection('productos').doc(item.idProducto);
-        final stockActual = stocksActuales[item.idProducto] ?? 0;
-        final stockNuevo = stockActual + item.cantidad;
+      for (final idProducto in idsProductoUnicos) {
+        final ref = _db.collection('productos').doc(idProducto);
+        final stockActual = stocksActuales[idProducto] ?? 0;
+        final cantidadTotal = cantidadTotalPorProducto[idProducto] ?? 0;
+        final stockNuevo = stockActual + cantidadTotal;
         transaction.update(ref, {'stock': stockNuevo});
         final historialRef = ref.collection('historial').doc();
         transaction.set(historialRef, {
@@ -802,12 +865,18 @@ class VentaRepository {
         // El stock repuesto vuelve como un lote nuevo, al costo real que
         // tenía esa venta (ya sea el costo de fábrica o el ya calculado por
         // FIFO). Es más simple y igual de correcto hacia adelante que tratar
-        // de deshacer el consumo exacto de lotes de la venta original.
+        // de deshacer el consumo exacto de lotes de la venta original. Si
+        // había más de una línea del mismo producto (posiblemente a costos
+        // distintos, en ventas viejas de antes de este fix), se repone en UN
+        // solo lote al costo promedio ponderado por cantidad de todas ellas
+        // -equivalente en total a reponer uno por línea, pero consistente
+        // con que el stock también se repone agrupado, no línea por línea.
+        final costoUnitarioPromedio = cantidadTotal > 0 ? (costoTotalPorProducto[idProducto] ?? 0) / cantidadTotal : 0.0;
         _lotes.crearLote(
           transaction,
-          item.idProducto,
-          cantidad: item.cantidad,
-          costoUnitario: item.precioCompraUsado,
+          idProducto,
+          cantidad: cantidadTotal,
+          costoUnitario: costoUnitarioPromedio,
           fecha: DateTime.now(),
           origen: 'ajuste',
         );

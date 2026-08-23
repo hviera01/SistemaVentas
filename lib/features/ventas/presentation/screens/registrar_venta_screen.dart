@@ -44,6 +44,8 @@ import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/buscar_cliente_dialog.dart';
 import '../widgets/codigos_color_dialog.dart';
+import '../widgets/campo_cantidad_tinte.dart';
+import '../../../formulas/presentation/screens/consultar_costo_screen.dart';
 import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
@@ -906,7 +908,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // Compartido entre el buscador local (_agregarProductoDesdeBusqueda) y el
   // escáner remoto por celular (_procesarCodigoEscaneadoRemoto): decide si
   // hay que ofrecer reembasado por falta de existencia, o agregar directo.
-  Future<void> _procesarProductoSeleccionado(ProductoConPrecio resultado) async {
+  // [esEscaneo] distingue el origen -escáner (código de barras, físico,
+  // cámara o remoto por celular) vs. el buscador manual (BuscarProductoDialog)-
+  // porque la fusión de líneas repetidas del mismo producto se decide
+  // distinto según de dónde vino (ver agregarOFusionarProductoDirecto y
+  // _agregarProductoConPromos).
+  Future<void> _procesarProductoSeleccionado(ProductoConPrecio resultado, {bool esEscaneo = false}) async {
     final producto = resultado.producto;
     // Un combo/kit siempre tiene stock == 0 por diseño (no tiene existencia
     // propia, se arma de otros productos) — sin este branch, cada venta de
@@ -953,14 +960,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           _mostrarMensaje('No se pudo descontar el stock del producto base');
           return;
         }
-        await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, reembasado: true);
+        await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, reembasado: true, esEscaneo: esEscaneo);
         return;
       }
       // Si dice que no, se ignora la falta de existencia y se agrega igual
       // (sin marcar reembasado): al vender no baja de 0 (ver venta_repository).
     }
     if (!mounted) return;
-    await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio);
+    await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, esEscaneo: esEscaneo);
     if (!mounted || producto.idCategoria != idCategoriaTintes) return;
     await _ofrecerConversionOnzas(producto);
   }
@@ -970,42 +977,75 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// solo se le vende tinte, sin producto base en la misma venta-: el
   /// cajero y las cajeras piensan en onzas al aplicar tinte a mano, no en
   /// cuartos (la unidad en la que de verdad está cargado el stock, ver
-  /// tinte_lookup.dart). Se le ofrece escribir cuántas onzas después de
-  /// agregarlo (cantidad 1 cuarto por defecto) y, si contesta algo, se
-  /// recalcula sola la cantidad de la línea en cuartos -si prefiere seguir
-  /// en cuartos directo, "Omitir" deja la línea como ya quedó, editable a
-  /// mano como cualquier otra-. Se busca la línea por idProducto (no "la
-  /// última de la lista") porque una promoción de regalo pudo haber
-  /// agregado otra línea encima mientras tanto.
+  /// tinte_lookup.dart). Se ofrece elegir entre dos modos (pedido explícito
+  /// del dueño):
+  /// - "Cantidad exacta": cuántas onzas en la notación real de la máquina
+  ///   tintométrica (Y + 48avos, ver CampoCantidadTinte) → se recalcula sola
+  ///   la cantidad de la línea en cuartos.
+  /// - "Cuarto completo": se vende el cuarto entero a su precio normal, sin
+  ///   ninguna conversión -la línea ya quedó así por defecto al agregarla
+  ///   (cantidad 1), así que este modo simplemente no le hace nada-.
+  /// Se busca la línea por idProducto (no "la última de la lista") porque
+  /// una promoción de regalo pudo haber agregado otra línea encima mientras
+  /// tanto.
   Future<void> _ofrecerConversionOnzas(ProductoModel producto) async {
-    final controller = TextEditingController();
-    final texto = await showDialog<String>(
+    bool modoExacto = true;
+    double onzas = 0;
+    final confirmado = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('¿Cuántas onzas de tinte?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: GoogleFonts.poppins(fontSize: 14),
-          decoration: InputDecoration(hintText: 'Ej. 2.5', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400)),
-          onSubmitted: (v) => Navigator.pop(context, v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Omitir (dejar en cuartos)', style: GoogleFonts.poppins())),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
-            child: Text('Usar', style: GoogleFonts.poppins(color: Colors.white)),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          Widget opcion(String texto, bool valor) {
+            final activo = modoExacto == valor;
+            return InkWell(
+              onTap: () => setStateDialog(() => modoExacto = valor),
+              borderRadius: BorderRadius.circular(8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+                child: Text(texto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72))),
+              ),
+            );
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('¿Cuánto tinte se vende?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
+                  child: Row(children: [Expanded(child: opcion('Cantidad exacta', true)), Expanded(child: opcion('Cuarto completo', false))]),
+                ),
+                const SizedBox(height: 14),
+                if (modoExacto)
+                  CampoCantidadTinte(onChanged: (v) => onzas = v)
+                else
+                  Text(
+                    'Se agrega el cuarto completo a su precio normal, sin conversión a onzas.',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+                child: Text('Confirmar', style: GoogleFonts.poppins(color: Colors.white)),
+              ),
+            ],
+          );
+        },
       ),
     );
-    controller.dispose();
-    if (texto == null || !mounted) return;
-    final onzas = double.tryParse(texto.trim().replaceAll(',', '.'));
-    if (onzas == null || onzas <= 0) return;
+    if (confirmado != true || !mounted) return;
+    if (!modoExacto || onzas <= 0) return; // cuarto completo, o cantidad exacta vacía: la línea se queda como ya quedó (1 cuarto, precio normal).
     final items = ref.read(carritoVentaProvider).items;
     final idx = items.lastIndexWhere((i) => i.idProducto == producto.id);
     if (idx == -1) return;
@@ -1027,16 +1067,29 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// ya se ofreció un combo por cantidad/regalo con este agregado, no se
   /// ofrece además un combo multiproducto encima (nunca dos diálogos
   /// apilados por la misma acción).
-  Future<void> _agregarProductoConPromos(ProductoModel producto, {required double precioSeleccionado, bool reembasado = false}) async {
+  Future<void> _agregarProductoConPromos(ProductoModel producto, {required double precioSeleccionado, bool reembasado = false, bool esEscaneo = false}) async {
     final carritoAntes = ref.read(carritoVentaProvider);
     final condicion = carritoAntes.condicion;
     final metodoPago = carritoAntes.metodoPago;
     final cantidadAntes = carritoAntes.items.where((i) => i.idProducto == producto.id).fold<double>(0, (s, i) => s + i.cantidad);
     final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
 
-    ref.read(carritoVentaProvider.notifier).agregarProductoDirecto(producto, precioSeleccionado: precioSeleccionado, reembasado: reembasado);
+    // Escanear un código de barras SIEMPRE fusiona con la línea existente
+    // del mismo producto, sin importar la categoría -pedido explícito del
+    // dueño-. Agregar a mano (buscador) solo fusiona si la categoría NO es
+    // de pintura: una línea de pintura puede llevar su propio código/tinte
+    // de color (ver CodigosColorDialog), así que el dueño quiere poder
+    // vender, por ejemplo, "2 galones de la misma pintura base" como dos
+    // líneas separadas, cada una teñida a un color distinto -ver
+    // agregarOFusionarProductoDirecto-.
+    final fusionarSiYaExiste = esEscaneo || !_esCategoriaPintura(producto.idCategoria);
+    final indiceNuevo = ref.read(carritoVentaProvider.notifier).agregarOFusionarProductoDirecto(
+          producto,
+          precioSeleccionado: precioSeleccionado,
+          reembasado: reembasado,
+          fusionarSiYaExiste: fusionarSiYaExiste,
+        );
     if (!mounted) return;
-    final indiceNuevo = ref.read(carritoVentaProvider).items.length - 1;
 
     final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion, metodoPago: metodoPago);
     if (promoPrecio != null) {
@@ -1234,6 +1287,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     await showDialog(context: context, builder: (context) => const PromocionesVigentesDialog());
   }
 
+  /// Atajo a la pantalla de consulta de costo de un color (ConsultarCostoScreen,
+  /// hasta ahora solo alcanzable desde Colores) directo desde la venta -pedido
+  /// explícito del dueño-: para que la cajera pueda chequear cuánto cuesta un
+  /// color mientras atiende al cliente, sin salirse de la pantalla de venta.
+  /// Es de solo lectura (no toca el carrito ni el stock), así que un simple
+  /// push normal alcanza.
+  Future<void> _abrirConsultarCosto() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ConsultarCostoScreen()));
+  }
+
   /// Busca un producto por código exacto (código de barras o código interno)
   /// y lo agrega directo al carrito, con el mismo flujo de siempre (incluido
   /// el aviso de reembasado si no hay existencia) — sin pasar por el modal
@@ -1276,7 +1339,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _mostrarMensaje('"${producto.nombre}" no tiene un precio configurado');
       return;
     }
-    await _procesarProductoSeleccionado(ProductoConPrecio(producto: producto, precio: precio, nivelPrecio: 1));
+    await _procesarProductoSeleccionado(ProductoConPrecio(producto: producto, precio: precio, nivelPrecio: 1), esEscaneo: true);
   }
 
   double? _primerPrecioDisponible(ProductoModel p) {
@@ -2952,6 +3015,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           icon: const Icon(Icons.local_offer_outlined, size: 20),
                           color: Colors.grey.shade600,
                         ),
+                        IconButton(
+                          tooltip: 'Consultar costo de un color',
+                          onPressed: _abrirConsultarCosto,
+                          icon: const Icon(Icons.calculate_outlined, size: 20),
+                          color: Colors.grey.shade600,
+                        ),
                       ],
                     ),
                   ],
@@ -2976,6 +3045,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       tooltip: 'Ver promociones vigentes',
                       onPressed: _abrirPromocionesVigentes,
                       icon: const Icon(Icons.local_offer_outlined, size: 18),
+                      color: Colors.grey.shade600,
+                    ),
+                    IconButton(
+                      tooltip: 'Consultar costo de un color',
+                      onPressed: _abrirConsultarCosto,
+                      icon: const Icon(Icons.calculate_outlined, size: 18),
                       color: Colors.grey.shade600,
                     ),
                     const Spacer(),
@@ -3579,9 +3654,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       ref.read(carritoVentaProvider.notifier).actualizarTintesConsumidos(index, resultado.tintes);
     }
 
-    final costoTinte = tintes.fold<double>(0, (s, t) => s + t.costoTotal);
-    final textoBase = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
-    final texto = tintes.isEmpty ? textoBase : '$textoBase · ${formatearMoneda(costoTinte)}';
+    // El costo del tinte -antes se agregaba acá como "· L 45.00" pegado al
+    // código- se saca de esta insignia de la tabla del carrito por pedido
+    // explícito del dueño: se queda solo el identificador de código, que es
+    // lo que sí quiere ver de un vistazo en la tabla. El desglose de costo
+    // sigue viéndose igual que siempre en el paso de SELECCIÓN, dentro de
+    // CodigosColorDialog/SeleccionarFormulaDialog, antes de confirmar la
+    // línea -eso no se tocó-.
+    final texto = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
     final tieneAlgo = codigos.isNotEmpty || tintes.isNotEmpty;
 
     return InkWell(
