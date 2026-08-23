@@ -1,89 +1,110 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../productos/data/lote_costo_repository.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/data/tinte_lookup.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../ventas/data/costo_tinte_service.dart';
 import '../../../ventas/presentation/widgets/agregar_tinte_manual_dialog.dart';
 import '../../../ventas/presentation/widgets/buscar_producto_dialog.dart';
-import '../../../ventas/presentation/widgets/campo_cantidad_tinte.dart';
+import '../../../ventas/presentation/widgets/campo_margen_precio_venta.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../data/formula_colortrend_model.dart';
 import '../../data/formula_tamano_utils.dart';
+import '../../providers/formulas_colortrend_provider.dart';
 import '../widgets/seleccionar_formula_dialog.dart';
 
 /// Herramienta de consulta de costo de un color preparado, SIN necesidad de
 /// hacer una venta -pedido explícito del dueño-: pura lectura, no descuenta
-/// stock ni escribe nada en Firestore. Dos modos:
+/// stock ni escribe nada en Firestore. Tres modos:
 /// - "Fórmula + producto base": elegir una fórmula real (o cargar tintes a
 ///   mano) + un producto base del inventario → tamaño implícito según el
 ///   nombre del producto (mismo criterio que Escenario A de la venta, ver
 ///   formula_tamano_utils.dart) → costo de tinte + costo del producto base
-///   (su precioCompra vigente, no ligado a una venta real) + total.
+///   (su precioCompra vigente, no ligado a una venta real) + total + ¿a
+///   cuánto venderlo? (margen/precio, ver CampoMargenPrecioVenta).
 /// - "Solo tinte": "cuánto me cuesta tanto de tal tinte", sin fórmula ni
 ///   producto base -solo el motor de costeo (CostoTinteService) sobre un
-///   tinte y una cantidad en onzas.
+///   tinte y una cantidad en onzas- + ¿a cuánto venderlo?
+/// - "Promedios por base": costo promedio de tinte agrupado por el "base" de
+///   la fórmula (Pastel/Deep/Accent/Tint Base) y por tamaño, para tener una
+///   referencia rápida de precio base sin revisar cada una de las ~1500
+///   fórmulas a mano (ver _ModoPromediosPorBase).
 class ConsultarCostoScreen extends StatefulWidget {
-  const ConsultarCostoScreen({super.key});
+  // true (default): pantalla completa con su propio Scaffold/SafeArea y
+  // flecha de "atrás" -uso normal, empujada con Navigator desde dentro del
+  // sistema (ver ColoresScreen/RegistrarVentaScreen). false: contenido
+  // "pelado" (sin Scaffold ni flecha propia) para embeberse dentro de otra
+  // pantalla que ya trae su propio Scaffold/encabezado -ver
+  // ConsultarCostoKioskScreen, mismo criterio que BuscarFormulaScreen.esDialogo.
+  final bool esDialogo;
+
+  const ConsultarCostoScreen({super.key, this.esDialogo = true});
 
   @override
   State<ConsultarCostoScreen> createState() => _ConsultarCostoScreenState();
 }
 
+enum _ModoConsulta { formula, soloTinte, promedios }
+
 class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
-  bool _modoSoloTinte = false;
+  _ModoConsulta _modo = _ModoConsulta.formula;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final esMovil = constraints.maxWidth < 720;
-            return SingleChildScrollView(
-              padding: EdgeInsets.all(esMovil ? 14 : 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
-                      const SizedBox(width: 6),
-                      Text('Consultar costo de un color', style: GoogleFonts.poppins(fontSize: esMovil ? 18 : 21, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: EdgeInsets.only(left: esMovil ? 0 : 54),
-                    child: Text(
-                      'Solo consulta -no descuenta stock ni registra nada, es para saber cuánto cuesta antes de vender.',
-                      style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _selectorModo(),
-                  const SizedBox(height: 16),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 560),
-                    child: _modoSoloTinte ? const _ModoSoloTinte() : const _ModoFormulaConProducto(),
-                  ),
-                ],
+    final contenido = LayoutBuilder(
+      builder: (context, constraints) {
+        final esMovil = constraints.maxWidth < 720;
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(esMovil ? 14 : 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.esDialogo)
+                Row(
+                  children: [
+                    IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+                    const SizedBox(width: 6),
+                    Text('Consultar costo de un color', style: GoogleFonts.poppins(fontSize: esMovil ? 18 : 21, fontWeight: FontWeight.w700)),
+                  ],
+                )
+              else
+                Text('Consultar costo de un color', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+              const SizedBox(height: 6),
+              Padding(
+                padding: EdgeInsets.only(left: (widget.esDialogo && !esMovil) ? 54 : 0),
+                child: Text(
+                  'Solo consulta -no descuenta stock ni registra nada, es para saber cuánto cuesta antes de vender.',
+                  style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                ),
               ),
-            );
-          },
-        ),
-      ),
+              const SizedBox(height: 16),
+              _selectorModo(),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: _modo == _ModoConsulta.promedios ? 720 : 560),
+                child: switch (_modo) {
+                  _ModoConsulta.formula => const _ModoFormulaConProducto(),
+                  _ModoConsulta.soloTinte => const _ModoSoloTinte(),
+                  _ModoConsulta.promedios => const _ModoPromediosPorBase(),
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
+
+    if (!widget.esDialogo) return Container(color: const Color(0xFFF2F3F7), child: contenido);
+    return Scaffold(backgroundColor: const Color(0xFFF2F3F7), body: SafeArea(child: contenido));
   }
 
   Widget _selectorModo() {
-    Widget opcion(String texto, bool valor) {
-      final activo = _modoSoloTinte == valor;
+    Widget opcion(String texto, _ModoConsulta valor) {
+      final activo = _modo == valor;
       return InkWell(
-        onTap: () => setState(() => _modoSoloTinte = valor),
+        onTap: () => setState(() => _modo = valor),
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -98,80 +119,64 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
       height: 50,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [opcion('Fórmula + producto base', false), opcion('Solo tinte', true)]),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            opcion('Fórmula + producto base', _ModoConsulta.formula),
+            opcion('Solo tinte', _ModoConsulta.soloTinte),
+            opcion('Promedios por base', _ModoConsulta.promedios),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// Modo "Solo tinte": elegir un tinte real + cuántas onzas → costo, sin
-/// fórmula ni producto base involucrado (pedido explícito: "cuánto me
-/// cuesta tanto de tal tinte").
-class _ModoSoloTinte extends ConsumerStatefulWidget {
+/// Modo "Solo tinte": una entintada personalizada armada a mano, SIN libro
+/// de fórmulas ni producto base -pedido explícito del dueño: a veces se
+/// mezcla a ojo "tanto Y de B, tanto Y de V, tanto Y de AXX" sin que
+/// corresponda a ningún código del libro-, así que la lista de tintes es
+/// growable (una entrada por cada tinte que se le fue echando), igual que
+/// _ModoFormulaConProducto -mismo widget de agregar (AgregarTinteManualDialog),
+/// misma fila por tinte con su "x" para quitar, mismo total sumado abajo-.
+/// La única diferencia real con _ModoFormulaConProducto es que acá no hay
+/// "Buscar fórmula" (no aplica, por definición de este modo) ni producto
+/// base.
+class _ModoSoloTinte extends StatefulWidget {
   const _ModoSoloTinte();
 
   @override
-  ConsumerState<_ModoSoloTinte> createState() => _ModoSoloTinteState();
+  State<_ModoSoloTinte> createState() => _ModoSoloTinteState();
 }
 
-class _ModoSoloTinteState extends ConsumerState<_ModoSoloTinte> {
-  final _servicio = CostoTinteService();
-  ProductoModel? _tinteElegido;
-  double _onzas = 0;
-  ResultadoCostoTinte? _calculado;
-  bool _calculando = false;
-  Timer? _debounce;
-  // Se cambia esta key cada vez que se "Limpia" para forzar que
-  // CampoCantidadTinte se recree desde cero (Y/48avos vacíos) -el widget no
-  // expone un controller propio, ver su doc.
-  int _resetCantidad = 0;
+class _ModoSoloTinteState extends State<_ModoSoloTinte> {
+  final List<ResultadoCostoTinte> _tintes = [];
+  // Ver el comentario equivalente en _ModoFormulaConProductoState._resetMargen:
+  // fuerza a CampoMargenPrecioVenta a recrearse desde cero al "Limpiar".
+  int _resetMargen = 0;
 
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
+  Future<void> _agregarTinte() async {
+    final resultado = await showDialog<ResultadoCostoTinte>(context: context, builder: (context) => const AgregarTinteManualDialog());
+    if (resultado == null || !mounted) return;
+    setState(() => _tintes.add(resultado));
   }
 
-  // Debounce: antes se recalculaba en cada tecla del campo de onzas -una
-  // ida y vuelta a Firestore por dígito escrito-, ahora se espera una pausa
-  // corta antes de disparar el cálculo (mismo criterio que
-  // AgregarTinteManualDialog).
-  void _onCantidadCambiada(double onzas) {
-    _onzas = onzas;
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), _calcular);
-  }
-
-  Future<void> _calcular() async {
-    final tinte = _tinteElegido;
-    final onzas = _onzas;
-    if (tinte == null || onzas <= 0) {
-      setState(() => _calculado = null);
-      return;
-    }
-    setState(() => _calculando = true);
-    final colorante = tinte.nombre.replaceFirst('COLORANTE ', '').trim();
-    // productoConocido: tinte -> se salta la consulta a Firestore por
-    // nombre (ya se tiene el producto exacto, elegido del dropdown).
-    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas, productoConocido: tinte)]);
-    if (!mounted) return;
-    setState(() {
-      _calculado = resultados.first;
-      _calculando = false;
-    });
+  void _quitarTinte(int index) {
+    setState(() => _tintes.removeAt(index));
   }
 
   void _limpiar() {
     setState(() {
-      _tinteElegido = null;
-      _calculado = null;
-      _onzas = 0;
-      _resetCantidad++;
+      _tintes.clear();
+      _resetMargen++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final hayAlgoQueLimpiar = _tinteElegido != null || _onzas > 0 || _calculado != null;
+    final costoTotal = _tintes.fold<double>(0, (s, t) => s + t.costoTotal);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -181,8 +186,8 @@ class _ModoSoloTinteState extends ConsumerState<_ModoSoloTinte> {
         children: [
           Row(
             children: [
-              Expanded(child: Text('¿Cuánto cuesta tanto de tal tinte?', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700))),
-              if (hayAlgoQueLimpiar)
+              Expanded(child: Text('Entintada personalizada (sin código de fórmula)', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700))),
+              if (_tintes.isNotEmpty)
                 TextButton.icon(
                   onPressed: _limpiar,
                   icon: const Icon(Icons.refresh, size: 16),
@@ -191,66 +196,76 @@ class _ModoSoloTinteState extends ConsumerState<_ModoSoloTinte> {
                 ),
             ],
           ),
+          const SizedBox(height: 4),
+          Text('"Tanto Y de tal tinte, tanto Y de tal otro..." -uno o varios tintes mezclados a ojo, sin fórmula del libro.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
           const SizedBox(height: 12),
-          Builder(
-            builder: (context) {
-              // Se filtra la lista de productos que la app ya tiene viva en
-              // memoria (productosStreamProvider, usada en todo Inventario)
-              // en vez de pedir de nuevo los ~12 tintes a Firestore cada vez
-              // que se abre esta pantalla -esa consulta repetida en cada
-              // apertura era la demora real que reportó el dueño ("siempre
-              // cuesta bastante que cargue"), no algo que un debounce
-              // pudiera arreglar.
-              final productosAsync = ref.watch(productosStreamProvider);
-              if (!productosAsync.hasValue) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
-              final tintes = productosAsync.value!.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<ProductoModel>(
-                    isExpanded: true,
-                    hint: Text('Elegí un tinte...', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
-                    value: _tinteElegido,
-                    items: [for (final t in tintes) DropdownMenuItem(value: t, child: Text('${t.nombre}${t.descripcion.isNotEmpty ? " (${t.descripcion})" : ""}', style: GoogleFonts.poppins(fontSize: 13)))],
-                    onChanged: (v) {
-                      setState(() => _tinteElegido = v);
-                      _calcular();
-                    },
-                  ),
-                ),
-              );
-            },
+          if (_tintes.isEmpty)
+            Text('Sin tinte cargado todavía.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500))
+          else
+            for (var i = 0; i < _tintes.length; i++) _filaTinte(i, _tintes[i]),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _agregarTinte,
+            icon: const Icon(Icons.colorize, size: 16),
+            label: Text('Agregar tinte', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFC62828),
+              side: const BorderSide(color: Color(0xFFC62828)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           ),
-          const SizedBox(height: 12),
-          CampoCantidadTinte(key: ValueKey(_resetCantidad), onChanged: _onCantidadCambiada),
-          const SizedBox(height: 16),
-          if (_calculando) const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(color: Color(0xFFC62828)))),
-          if (!_calculando && _calculado != null) _resumen(_calculado!),
+          if (_tintes.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Text('Costo total de la entintada', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700))),
+                Text(formatearMoneda(costoTotal), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
+              ],
+            ),
+          ],
+          if (costoTotal > 0) ...[
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Colors.grey.shade300),
+            const SizedBox(height: 14),
+            Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+            CampoMargenPrecioVenta(key: ValueKey('margen_$_resetMargen'), costoBase: costoTotal, onPrecioVentaCambiado: (_) {}),
+          ],
         ],
       ),
     );
   }
 
-  Widget _resumen(ResultadoCostoTinte r) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE0E2E8))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('${r.cuartos.toStringAsFixed(3)} cuartos', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
-          const SizedBox(height: 4),
-          Text(
-            r.resuelto ? 'Costo: ${formatearMoneda(r.costoTotal)}' : 'No se puede calcular -sin producto en inventario.',
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: r.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
-          ),
-          if (r.advertencia != null) ...[
-            const SizedBox(height: 6),
-            Text(r.advertencia!, style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309))),
+  Widget _filaTinte(int index, ResultadoCostoTinte t) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(color: t.resuelto ? const Color(0xFFF8F9FB) : const Color(0xFFFCE9E9), borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(3)} ct', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text(
+                    t.resuelto ? formatearMoneda(t.costoTotal) : 'sin producto en inventario',
+                    style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: t.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
+                  ),
+                ],
+              ),
+            ),
+            InkWell(
+              onTap: () => _quitarTinte(index),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(padding: EdgeInsets.all(2), child: Icon(Icons.close, size: 16, color: Color(0xFFC62828))),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -258,7 +273,7 @@ class _ModoSoloTinteState extends ConsumerState<_ModoSoloTinte> {
 
 /// Modo "Fórmula + producto base": el modo completo del §8 original -elegir
 /// fórmula real (o cargar tintes a mano) + producto base → costo de tinte,
-/// costo del producto base, y total combinado.
+/// costo del producto base, total combinado, y ¿a cuánto venderlo?.
 class _ModoFormulaConProducto extends StatefulWidget {
   const _ModoFormulaConProducto();
 
@@ -271,6 +286,9 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
   TamanoFormula? _tamanoManual;
   final List<ResultadoCostoTinte> _tintes = [];
   bool _calculando = false;
+  // Ver el comentario equivalente en _ModoSoloTinteState._resetCantidad:
+  // fuerza a CampoMargenPrecioVenta a recrearse desde cero al "Limpiar".
+  int _resetMargen = 0;
 
   TamanoFormula? get _tamanoEfectivo {
     if (_productoBase == null) return null;
@@ -319,6 +337,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
       _productoBase = null;
       _tamanoManual = null;
       _tintes.clear();
+      _resetMargen++;
     });
   }
 
@@ -326,6 +345,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
   Widget build(BuildContext context) {
     final costoTinte = _tintes.fold<double>(0, (s, t) => s + t.costoTotal);
     final costoBase = _productoBase?.precioCompra ?? 0;
+    final costoCombinado = costoTinte + costoBase;
     final hayAlgoQueLimpiar = _productoBase != null || _tintes.isNotEmpty;
     return Container(
       width: double.infinity,
@@ -426,14 +446,22 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
             ),
           const SizedBox(height: 16),
           Divider(height: 1, color: Colors.grey.shade300),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           _filaCosto('Costo de tinte', costoTinte, const Color(0xFFC62828)),
           const SizedBox(height: 4),
           _filaCosto('Costo del producto base', costoBase, const Color(0xFF2B6CB0)),
           const SizedBox(height: 8),
           Divider(height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 8),
-          _filaCosto('Total combinado', costoTinte + costoBase, const Color(0xFF1A1A1A), grande: true),
+          _filaCosto('Total combinado', costoCombinado, const Color(0xFF1A1A1A), grande: true),
+          if (costoCombinado > 0) ...[
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Colors.grey.shade300),
+            const SizedBox(height: 14),
+            Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+            CampoMargenPrecioVenta(key: ValueKey('margen_$_resetMargen'), costoBase: costoCombinado, onPrecioVentaCambiado: (_) {}),
+          ],
         ],
       ),
     );
@@ -445,6 +473,212 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
         Expanded(child: Text(etiqueta, style: GoogleFonts.poppins(fontSize: grande ? 14 : 12.5, fontWeight: grande ? FontWeight.w700 : FontWeight.w500))),
         Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: grande ? 18 : 13, fontWeight: FontWeight.w800, color: color)),
       ],
+    );
+  }
+}
+
+/// Modo "Promedios por base": pedido explícito del dueño -con ~1500
+/// fórmulas del libro no es viable revisar el costo de tinte de cada una a
+/// mano antes de fijar precios base. Acá se ve el costo PROMEDIO de tinte,
+/// agrupado por el "base" de la fórmula (Pastel/Deep/Accent/Tint Base,
+/// los 4 valores reales del dataset) y por tamaño (Cuarto/Galón/Quinto), con
+/// cuántas fórmulas entraron en cada promedio -para poder juzgar qué tan
+/// representativo es-.
+///
+/// Para no disparar miles de lecturas a Firestore (una consulta de costo
+/// FIFO por colorante y por fórmula sería ~1500 fórmulas × varios
+/// colorantes cada una), el costo actual por cuarto se trae UNA SOLA VEZ
+/// para los ~12 productos de tinte reales (en paralelo, ver
+/// _costoPorCuartoDeTintesReales), y con ese mapa ya en memoria se recorre
+/// toda la lista de fórmulas (también ya cacheada en memoria por
+/// formulasColortrendProvider, no se vuelve a leer el asset) sin ninguna
+/// otra consulta a Firestore.
+class _ModoPromediosPorBase extends ConsumerStatefulWidget {
+  const _ModoPromediosPorBase();
+
+  @override
+  ConsumerState<_ModoPromediosPorBase> createState() => _ModoPromediosPorBaseState();
+}
+
+typedef _PromedioBaseTamano = ({double promedio, int incluidas, int excluidas});
+
+class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
+  // Los 4 valores reales de FormulaColortrendModel.base en el dataset
+  // (confirmado contra assets/data/formulas_colortrend.json). Cualquier otro
+  // valor -no debería haber, pero por las dudas- cae en "Otra" en vez de
+  // perderse en silencio.
+  static const _basesConocidas = ['Pastel Base', 'Deep Base', 'Accent Base', 'Tint Base'];
+  static const _tamanos = [TamanoFormula.cuarto, TamanoFormula.galon, TamanoFormula.quinto];
+
+  // Se calcula una sola vez al abrir este modo (no en cada rebuild): ver la
+  // nota grande de la clase sobre el costo de recorrer ~1500 fórmulas.
+  late final Future<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>> _futuro = _calcular();
+
+  Future<Map<String, double>> _costoPorCuartoDeTintesReales() async {
+    final productosAsync = ref.read(productosStreamProvider);
+    final productos = productosAsync.hasValue ? productosAsync.value! : await ref.read(productosStreamProvider.future);
+    final tintes = productos.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList();
+    final repo = LoteCostoRepository();
+    final snapshots = await Future.wait(tintes.map((p) => repo.consultarLotes(p.id)));
+    final mapa = <String, double>{};
+    for (var i = 0; i < tintes.length; i++) {
+      final producto = tintes[i];
+      final estado = repo.inicializarEstado(snapshots[i]);
+      // Costo de consumir 1 cuarto completo con el estado de lotes vigente
+      // ahora mismo -un "costo unitario actual" representativo, mismo motor
+      // FIFO que usa CostoTinteService en cualquier otro lado de la app.
+      final costoPorCuarto = repo.consumir(estado, 1.0, costoFallback: producto.precioCompra);
+      final colorante = normalizarColorante(producto.nombre.replaceFirst('COLORANTE ', ''));
+      mapa[colorante] = costoPorCuarto;
+    }
+    return mapa;
+  }
+
+  Future<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>> _calcular() async {
+    final costoPorCuarto = await _costoPorCuartoDeTintesReales();
+    final formulas = await ref.read(formulasColortrendProvider.future);
+
+    // sumas[base][tamano] = (sumaDeCosto, cantidadIncluidas, cantidadExcluidas)
+    final sumas = <String, Map<TamanoFormula, (double, int, int)>>{
+      for (final base in [..._basesConocidas, 'Otra']) base: {for (final t in _tamanos) t: (0.0, 0, 0)},
+    };
+
+    for (final formula in formulas) {
+      final base = _basesConocidas.contains(formula.base) ? formula.base : 'Otra';
+      for (final tamano in _tamanos) {
+        final usos = onzasFormulaParaTamano(formula, tamano, 1);
+        final actual = sumas[base]![tamano]!;
+        if (usos.isEmpty) {
+          // Sin datos de colorante del libro para este tamaño -no cuenta ni
+          // a favor ni en contra del promedio, solo se anota como excluida.
+          sumas[base]![tamano] = (actual.$1, actual.$2, actual.$3 + 1);
+          continue;
+        }
+        var costoFormula = 0.0;
+        var completa = true;
+        for (final u in usos) {
+          final costo = costoPorCuarto[normalizarColorante(u.colorante)];
+          if (costo == null) {
+            // Un colorante de esta fórmula no tiene producto de tinte real
+            // en inventario (o sin lotes con costo) -no se suma parcial: se
+            // excluye la fórmula ENTERA de este tamaño para no subestimar el
+            // promedio con un costo incompleto.
+            completa = false;
+            break;
+          }
+          costoFormula += (u.onzas / CostoTinteService.onzasPorCuarto) * costo;
+        }
+        sumas[base]![tamano] = completa ? (actual.$1 + costoFormula, actual.$2 + 1, actual.$3) : (actual.$1, actual.$2, actual.$3 + 1);
+      }
+    }
+
+    return {
+      for (final entry in sumas.entries)
+        entry.key: {
+          for (final t in entry.value.entries)
+            t.key: (promedio: t.value.$2 > 0 ? t.value.$1 / t.value.$2 : 0.0, incluidas: t.value.$2, excluidas: t.value.$3),
+        },
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Costo promedio de tinte por tipo de base y tamaño', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(
+            'Promedio sobre todas las fórmulas del libro de ese tipo de base, con el costo FIFO vigente ahora mismo de cada tinte -para tener una referencia de precio base sin revisar cada fórmula una por una.',
+            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>>(
+            future: _futuro,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text('No se pudo calcular: ${snapshot.error}', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828))),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
+              }
+              return _tabla(snapshot.data!);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabla(Map<String, Map<TamanoFormula, _PromedioBaseTamano>> datos) {
+    final otraTieneAlgo = (datos['Otra']?.values.any((v) => v.incluidas > 0 || v.excluidas > 0)) ?? false;
+    final bases = [..._basesConocidas, if (otraTieneAlgo) 'Otra'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Table(
+        defaultColumnWidth: const IntrinsicColumnWidth(),
+        border: TableBorder.all(color: const Color(0xFFE0E2E8), borderRadius: BorderRadius.circular(8)),
+        children: [
+          TableRow(
+            decoration: const BoxDecoration(color: Color(0xFFF2F3F7)),
+            children: [
+              _celdaEncabezado('Base'),
+              for (final t in _tamanos) _celdaEncabezado(etiquetaTamano(t)),
+            ],
+          ),
+          for (final base in bases)
+            TableRow(
+              children: [
+                _celdaBase(base),
+                for (final t in _tamanos) _celdaValor(datos[base]?[t]),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _celdaEncabezado(String texto) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Text(texto, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _celdaBase(String texto) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Text(texto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _celdaValor(_PromedioBaseTamano? valor) {
+    if (valor == null || valor.incluidas == 0) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Text('Sin datos', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400)),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(formatearMoneda(valor.promedio), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
+          Text(
+            valor.excluidas > 0 ? '${valor.incluidas} fórmulas (${valor.excluidas} excluidas)' : '${valor.incluidas} fórmulas',
+            style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -7,6 +7,7 @@ import '../../../formulas/presentation/widgets/seleccionar_formula_dialog.dart';
 import '../../data/costo_tinte_service.dart';
 import '../../data/item_venta_model.dart';
 import 'agregar_tinte_manual_dialog.dart';
+import 'campo_margen_precio_venta.dart';
 
 /// Lo que devuelve CodigosColorDialog al cerrar: la lista final de códigos
 /// de texto (igual que antes) más la lista final de tintes reales
@@ -41,6 +42,14 @@ class CodigosColorDialog extends StatefulWidget {
   // cantidad para UNA unidad del tamaño, la línea puede vender más de una).
   final String nombreProducto;
   final double cantidadLinea;
+  // Costo actual del producto base de la línea (item.precioCompraUsado en
+  // registrar_venta_screen.dart) -pedido explícito del dueño: la
+  // confirmación de una fórmula (ver _ConfirmarTintesFormulaDialog) debe
+  // mostrar el costo TOTAL de la línea (tinte + producto base), no solo el
+  // costo de tinte, para poder calcular ahí mismo a cuánto conviene vender.
+  // 0 por defecto -líneas sin producto base conocido (ej. tinte manual sin
+  // costo cargado) simplemente muestran el costo de tinte solo.
+  final double costoProductoBase;
 
   const CodigosColorDialog({
     super.key,
@@ -48,6 +57,7 @@ class CodigosColorDialog extends StatefulWidget {
     this.tintesIniciales = const [],
     required this.nombreProducto,
     required this.cantidadLinea,
+    this.costoProductoBase = 0,
   });
 
   @override
@@ -124,7 +134,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => _ConfirmarTintesFormulaDialog(formula: formula, tamano: tamano, usos: usos, resultados: resultados),
+      builder: (context) => _ConfirmarTintesFormulaDialog(formula: formula, tamano: tamano, usos: usos, resultados: resultados, costoProductoBase: widget.costoProductoBase),
     );
     if (confirmar != true || !mounted) return;
     setState(() {
@@ -321,12 +331,16 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
   final TamanoFormula tamano;
   final List<({String colorante, double onzas, bool esEstimado})> usos;
   final List<ResultadoCostoTinte> resultados;
+  // Costo actual del producto base de la línea (ver CodigosColorDialog.
+  // costoProductoBase) -0 si no hay producto base conocido.
+  final double costoProductoBase;
 
-  const _ConfirmarTintesFormulaDialog({required this.formula, required this.tamano, required this.usos, required this.resultados});
+  const _ConfirmarTintesFormulaDialog({required this.formula, required this.tamano, required this.usos, required this.resultados, this.costoProductoBase = 0});
 
   @override
   Widget build(BuildContext context) {
-    final total = resultados.fold<double>(0, (s, r) => s + r.costoTotal);
+    final totalTinte = resultados.fold<double>(0, (s, r) => s + r.costoTotal);
+    final costoTotalLinea = totalTinte + costoProductoBase;
     final tamano_ = MediaQuery.sizeOf(context);
     final ancho = tamano_.width < 380 ? tamano_.width - 48 : 340.0;
     return Dialog(
@@ -334,7 +348,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.all(20),
       child: Container(
         width: ancho,
-        constraints: const BoxConstraints(maxHeight: 560),
+        constraints: const BoxConstraints(maxHeight: 680),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -386,7 +400,28 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text('Costo total estimado de tinte: ${formatearMoneda(total)}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
+            Text('Costo estimado de tinte: ${formatearMoneda(totalTinte)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+            if (costoProductoBase > 0) ...[
+              const SizedBox(height: 3),
+              Text('Costo del producto base: ${formatearMoneda(costoProductoBase)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF2B6CB0))),
+              const SizedBox(height: 6),
+              Divider(height: 1, color: Colors.grey.shade300),
+              const SizedBox(height: 6),
+              Text('Costo total de la línea: ${formatearMoneda(costoTotalLinea)}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800)),
+            ],
+            if (costoTotalLinea > 0) ...[
+              const SizedBox(height: 12),
+              Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+              const SizedBox(height: 8),
+              // Puramente informativo/calculadora: NO cambia el precio real
+              // de la línea acá -pedido explícito del dueño, "se puede", no
+              // "tiene que"-. El cajero ve la referencia y, si quiere
+              // aplicarla, la escribe a mano en el precio de la línea desde
+              // la tabla del carrito (ver _campoInlineNumero en
+              // RegistrarVentaScreen), donde además queda protegido por el
+              // mismo permiso especial que cualquier otro cambio de precio.
+              CampoMargenPrecioVenta(costoBase: costoTotalLinea, onPrecioVentaCambiado: (_) {}),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [

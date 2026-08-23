@@ -9,10 +9,10 @@ import 'dart:js_interop_unsafe';
 // Flutter llegaba tarde -el navegador ya había decidido instalar con el
 // manifest.json original de la carpeta raíz antes de que este código
 // llegara a correr-.
-void aplicarIdentidadKiosk() {
+void aplicarIdentidadKiosk(String titulo) {
   try {
     final documento = globalContext.getProperty('document'.toJS) as JSObject;
-    documento.setProperty('title'.toJS, 'Fórmulas · Super Color'.toJS);
+    documento.setProperty('title'.toJS, titulo.toJS);
   } catch (_) {
     // Cosmético nada más: si falla, el kiosco sigue funcionando igual.
   }

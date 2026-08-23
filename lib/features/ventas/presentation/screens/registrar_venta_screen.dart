@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../data/costo_tinte_service.dart';
 import '../../data/escaneo_remoto_repository.dart';
 import '../../data/item_venta_model.dart';
 import '../../data/venta_en_espera_model.dart';
@@ -45,6 +46,7 @@ import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/buscar_cliente_dialog.dart';
 import '../widgets/codigos_color_dialog.dart';
 import '../widgets/campo_cantidad_tinte.dart';
+import '../widgets/campo_margen_precio_venta.dart';
 import '../../../formulas/presentation/screens/consultar_costo_screen.dart';
 import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
@@ -842,6 +844,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return descripcion.startsWith('PINTURA') || descripcion.contains('IMPERMEABILIZANTE') || descripcion.contains('SELLADOR');
   }
 
+  /// true si la línea es un tinte vendido SUELTO (categoría TINTES, ver
+  /// tinte_lookup.dart) -pedido explícito del dueño: el cajero piensa esta
+  /// cantidad en onzas, no en los cuartos en los que de verdad está guardada
+  /// (ver _ofrecerConversionOnzas, donde se arma la línea la primera vez), así
+  /// que tanto la cantidad como el precio unitario de estas líneas se
+  /// muestran/editan en esa unidad -SOLO en pantalla, cantidad/precioVenta
+  /// siguen guardados en cuartos como siempre, ver _campoCantidadTintaInline y
+  /// los helpers _precioUnitarioMostrado/_precioPorCuartoDesdeMostrado-.
+  bool _esLineaTinte(dynamic item) => (item.idCategoria as String) == idCategoriaTintes;
+
+  /// Convierte un precio "por cuarto" (la unidad real en la que se guarda
+  /// item.precioVenta) al que corresponde mostrar en el campo de precio de
+  /// la fila -por onza si es una línea de tinte suelto, tal cual si no.
+  double _precioUnitarioMostrado(dynamic item, double precioPorCuarto) {
+    return _esLineaTinte(item) ? redondearMoneda(precioPorCuarto / CostoTinteService.onzasPorCuarto) : precioPorCuarto;
+  }
+
+  /// Inversa de [_precioUnitarioMostrado]: lo que el cajero escribió en el
+  /// campo de precio (por onza en una línea de tinte, por cuarto si no) de
+  /// vuelta a "por cuarto", la unidad real que espera _actualizarPrecio/
+  /// _actualizarPrecioSinIsv.
+  double _precioPorCuartoDesdeMostrado(dynamic item, double valorMostrado) {
+    return _esLineaTinte(item) ? valorMostrado * CostoTinteService.onzasPorCuarto : valorMostrado;
+  }
+
   /// Calcula, para un tipo de reembasado y una cantidad a vender, cuánto hay
   /// que descontar del producto base y la cantidad final que queda en la
   /// línea de venta. Compartido entre "agregar producto sin existencia" y
@@ -989,8 +1016,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// una promoción de regalo pudo haber agregado otra línea encima mientras
   /// tanto.
   Future<void> _ofrecerConversionOnzas(ProductoModel producto) async {
+    // Costo actual (FIFO) del propio tinte, convertido a "por onza" -para el
+    // calculador de margen/precio de acá abajo. Se calcula ANTES de abrir el
+    // diálogo (una sola consulta) en vez de en cada rebuild del diálogo.
+    // onzas=onzasPorCuarto (un cuarto completo) es solo la cantidad "sonda"
+    // para pedirle a CostoTinteService el costo unitario vigente por
+    // cuarto -ese costo unitario no depende de la cantidad pedida, es un
+    // promedio ponderado de los lotes consumidos hasta ese punto (ver
+    // LoteCostoRepository.consumir)-.
+    final colorante = producto.nombre.replaceFirst('COLORANTE ', '').trim();
+    final costeo = await CostoTinteService().calcular([UsoTinte(colorante: colorante, onzas: CostoTinteService.onzasPorCuarto, productoConocido: producto)]);
+    if (!mounted) return;
+    final costoPorOnza = costeo.isNotEmpty && costeo.first.resuelto ? costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto : 0.0;
+
     bool modoExacto = true;
     double onzas = 0;
+    // Precio de venta (con ISV, por onza) que el cajero terminó viendo/
+    // fijando en el calculador de margen -null si nunca lo tocó, en cuyo
+    // caso NO se toca el precio de la línea (ver más abajo).
+    double? precioPorOnzaElegido;
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -1013,24 +1057,38 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('¿Cuánto tinte se vende?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
-                  child: Row(children: [Expanded(child: opcion('Cantidad exacta', true)), Expanded(child: opcion('Cuarto completo', false))]),
-                ),
-                const SizedBox(height: 14),
-                if (modoExacto)
-                  CampoCantidadTinte(onChanged: (v) => onzas = v)
-                else
-                  Text(
-                    'Se agrega el cuarto completo a su precio normal, sin conversión a onzas.',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
+                    child: Row(children: [Expanded(child: opcion('Cantidad exacta', true)), Expanded(child: opcion('Cuarto completo', false))]),
                   ),
-              ],
+                  const SizedBox(height: 14),
+                  if (modoExacto) ...[
+                    CampoCantidadTinte(onChanged: (v) => setStateDialog(() => onzas = v)),
+                    if (onzas > 0 && costoPorOnza > 0) ...[
+                      const SizedBox(height: 16),
+                      Divider(height: 1, color: Colors.grey.shade300),
+                      const SizedBox(height: 12),
+                      Text('¿A cuánto se vende la onza?', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                      const SizedBox(height: 8),
+                      CampoMargenPrecioVenta(
+                        costoBase: costoPorOnza,
+                        etiquetaPrecio: 'Precio/oz (c/ISV)',
+                        onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
+                      ),
+                    ],
+                  ] else
+                    Text(
+                      'Se agrega el cuarto completo a su precio normal, sin conversión a onzas.',
+                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                ],
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
@@ -1049,7 +1107,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final items = ref.read(carritoVentaProvider).items;
     final idx = items.lastIndexWhere((i) => i.idProducto == producto.id);
     if (idx == -1) return;
-    ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, cantidad: onzas / 32);
+    // onzasPorCuarto: MISMA constante que usa CostoTinteService en todo el
+    // resto de la app (calibrada contra la máquina real del dueño, ver su
+    // doc) -antes acá se usaba un "/ 32" suelto sin relación con esa
+    // constante, lo que hacía que la cantidad real guardada en la línea no
+    // coincidiera con el costo/stock que sí se calculaba con 33.
+    ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, cantidad: onzas / CostoTinteService.onzasPorCuarto);
+    // El precio por onza solo se aplica si el cajero de verdad tocó el
+    // calculador (ver CampoMargenPrecioVenta.onPrecioVentaCambiado, que
+    // solo dispara al confirmar un campo) -si nunca lo tocó, la línea se
+    // queda con el precio normal del producto, no con "costo + 0% margen"
+    // por defecto.
+    if (precioPorOnzaElegido != null) {
+      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasCambiarPrecio);
+      if (!mounted) return;
+      if (autorizado) {
+        final precioPorCuartoConIsv = redondearMoneda(precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto);
+        ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, precioConIsv: precioPorCuartoConIsv);
+      }
+    }
   }
 
   // ---------- Descuentos y Promociones ----------
@@ -1600,9 +1676,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // TextField antes de que se pidiera la clave.
       final carrito = ref.read(carritoVentaProvider);
       if (index < carrito.items.length) {
-        final precioBase = carrito.items[index].precioVenta;
-        final valorMostrado = _precioCarritoConIsv ? redondearMoneda(precioBase * 1.15) : precioBase;
-        _ctrlPrecio[index]?.text = valorMostrado.toStringAsFixed(2);
+        final item = carrito.items[index];
+        final precioBase = item.precioVenta;
+        final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioBase * 1.15) : precioBase;
+        _ctrlPrecio[index]?.text = _precioUnitarioMostrado(item, precioPorCuartoMostrado).toStringAsFixed(2);
       }
       return;
     }
@@ -1620,9 +1697,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       for (var i = 0; i < carrito.items.length; i++) {
         final ctrl = _ctrlPrecio[i];
         if (ctrl == null) continue;
-        final base = carrito.items[i].precioVenta;
-        final valor = conIsv ? redondearMoneda(base * 1.15) : base;
-        ctrl.text = valor.toStringAsFixed(2);
+        final item = carrito.items[i];
+        final base = item.precioVenta;
+        final precioPorCuarto = conIsv ? redondearMoneda(base * 1.15) : base;
+        ctrl.text = _precioUnitarioMostrado(item, precioPorCuarto).toStringAsFixed(2);
       }
     });
   }
@@ -3564,13 +3642,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {bool dosDecimales = false, String? prefijo}) {
+  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {bool dosDecimales = false, String? prefijo, String? sufijo}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(etiqueta, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
         const SizedBox(height: 4),
-        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar, prefijo: prefijo, dosDecimales: dosDecimales),
+        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar, prefijo: prefijo, sufijo: sufijo, dosDecimales: dosDecimales),
       ],
     );
   }
@@ -3638,6 +3716,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         ),
         ),
         if (item.reembasado as bool) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+        // Para una línea de tinte suelto, se aclara acá "X onzas × L Y.YY/oz"
+        // -pedido explícito del dueño: que la línea se lea en la unidad en
+        // la que el cajero de verdad piensa (onzas), no en cuartos-. Es
+        // puramente de lectura: cantidad/precioVenta reales de la línea
+        // siguen en cuartos, no cambia nada de lo que se guarda.
+        if (_esLineaTinte(item))
+          Builder(builder: (context) {
+            final onzas = (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
+            final precioPorCuarto = _precioCarritoConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : (item.precioVenta as double);
+            final precioPorOnza = _precioUnitarioMostrado(item, precioPorCuarto);
+            return Text('${_formatoCantidad(onzas)} oz × ${formatearMoneda(precioPorOnza)}/oz', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500));
+          }),
       ],
     );
   }
@@ -3660,6 +3750,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           tintesIniciales: tintes,
           nombreProducto: item.nombreProducto as String,
           cantidadLinea: item.cantidad as double,
+          // Costo actual del producto base de esta línea -para que el
+          // diálogo pueda mostrar el costo TOTAL (tinte + producto base) y
+          // no solo el de tinte, ver CodigosColorDialog.costoProductoBase.
+          costoProductoBase: item.precioCompraUsado as double,
         ),
       );
       if (resultado == null) return;
@@ -3705,10 +3799,120 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
+  /// Reedición de la cantidad de una línea de tinte vendido SUELTO (ver
+  /// _esLineaTinte): en vez del campo numérico genérico en cuartos (que el
+  /// dueño reportó como confuso -"no es como pienso la cantidad"-), abre el
+  /// mismo diálogo Y/48avos que ya usa _ofrecerConversionOnzas al agregar el
+  /// producto por primera vez, más el mismo calculador de margen/precio por
+  /// onza (cost basis: costo FIFO actual del propio tinte, igual que en
+  /// _ofrecerConversionOnzas).
+  Widget _campoCantidadTintaInline(int index, dynamic item, ProductoModel? producto) {
+    final onzasActuales = (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
+
+    Future<void> editar() async {
+      var costoPorOnza = 0.0;
+      if (producto != null) {
+        final colorante = producto.nombre.replaceFirst('COLORANTE ', '').trim();
+        final costeo = await CostoTinteService().calcular([UsoTinte(colorante: colorante, onzas: CostoTinteService.onzasPorCuarto, productoConocido: producto)]);
+        if (!mounted) return;
+        if (costeo.isNotEmpty && costeo.first.resuelto) costoPorOnza = costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto;
+      }
+      if (!mounted) return;
+
+      var nuevasOnzas = onzasActuales;
+      double? precioPorOnzaElegido;
+      final precioPorCuartoActual = _precioCarritoConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : (item.precioVenta as double);
+      final precioPorOnzaActual = _precioUnitarioMostrado(item, precioPorCuartoActual);
+
+      final confirmado = await showDialog<bool>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('¿Cuántas onzas?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CampoCantidadTinte(valorInicial: onzasActuales, onChanged: (v) => setStateDialog(() => nuevasOnzas = v)),
+                    if (costoPorOnza > 0) ...[
+                      const SizedBox(height: 16),
+                      Divider(height: 1, color: Colors.grey.shade300),
+                      const SizedBox(height: 12),
+                      Text('¿A cuánto se vende la onza?', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                      const SizedBox(height: 8),
+                      CampoMargenPrecioVenta(
+                        costoBase: costoPorOnza,
+                        precioVentaInicial: precioPorOnzaActual,
+                        etiquetaPrecio: 'Precio/oz (c/ISV)',
+                        onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+                  child: Text('Confirmar', style: GoogleFonts.poppins(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      if (confirmado != true || !mounted) return;
+      if (nuevasOnzas <= 0) {
+        _mostrarMensaje('La cantidad debe ser mayor a 0');
+        return;
+      }
+      await _actualizarCantidad(index, nuevasOnzas / CostoTinteService.onzasPorCuarto);
+      if (!mounted || precioPorOnzaElegido == null) return;
+      // Optimista: si el permiso especial se niega, _actualizarPrecio ya
+      // revierte este mismo campo al valor real (ver su comentario) -mismo
+      // criterio que el campo de precio normal de cualquier otra línea. El
+      // calculador siempre trabaja en precio CON ISV (ver etiquetaPrecio
+      // arriba); si en este momento la columna de precio está mostrando
+      // SIN ISV, hay que convertir antes de escribirlo en el campo.
+      final precioPorOnzaMostrado = _precioCarritoConIsv ? precioPorOnzaElegido! : redondearMoneda(precioPorOnzaElegido! / 1.15);
+      _ctrlPrecio[index]?.text = precioPorOnzaMostrado.toStringAsFixed(2);
+      final precioPorCuartoConIsv = redondearMoneda(precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto);
+      await _actualizarPrecio(index, precioPorCuartoConIsv);
+    }
+
+    return InkWell(
+      onTap: editar,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10)),
+        child: Text('${_formatoCantidad(onzasActuales)} oz', style: GoogleFonts.poppins(fontSize: 13)),
+      ),
+    );
+  }
+
+  Widget _campoCantidadTintaInlineConEtiqueta(int index, dynamic item, ProductoModel? producto) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Onzas', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+        const SizedBox(height: 4),
+        _campoCantidadTintaInline(index, item, producto),
+      ],
+    );
+  }
+
   Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
-    final precioMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final esTinte = _esLineaTinte(item);
+    final precioMostrado = _precioUnitarioMostrado(item, precioPorCuartoMostrado);
     final importe = _importeMostrado(item);
 
     final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
@@ -3729,8 +3933,35 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ? Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Align(alignment: Alignment.centerLeft, child: _botonCodigoColor(index, item)))
                 : const SizedBox.shrink(),
           ),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true))),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: esTinte ? _campoCantidadTintaInline(index, item, producto) : _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _campoInlineNumero(
+                'precio_$index',
+                ctrlPrecio,
+                precioMostrado,
+                (v) {
+                  final vPorCuarto = _precioPorCuartoDesdeMostrado(item, v);
+                  if (_precioCarritoConIsv) {
+                    _actualizarPrecio(index, vPorCuarto);
+                  } else {
+                    _actualizarPrecioSinIsv(index, vPorCuarto);
+                  }
+                },
+                prefijo: 'L.',
+                sufijo: esTinte ? '/oz' : null,
+                dosDecimales: true,
+              ),
+            ),
+          ),
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
           Expanded(flex: 2, child: Text(formatearMoneda(importe), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
           _botonPendienteCompra(index, item as ItemVentaModel),
@@ -3746,7 +3977,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   Widget _filaCarritoMovil(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
-    final precioMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final esTinte = _esLineaTinte(item);
+    final precioMostrado = _precioUnitarioMostrado(item, precioPorCuartoMostrado);
     final importe = _importeMostrado(item);
 
     final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
@@ -3784,9 +4017,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v))),
+              Expanded(
+                child: esTinte
+                    ? _campoCantidadTintaInlineConEtiqueta(index, item, producto)
+                    : _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v)),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precio_$index', _precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', ctrlPrecio, precioMostrado, (v) => _precioCarritoConIsv ? _actualizarPrecio(index, v) : _actualizarPrecioSinIsv(index, v), prefijo: 'L.', dosDecimales: true)),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'precio_$index',
+                  (_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)') + (esTinte ? ' /oz' : ''),
+                  ctrlPrecio,
+                  precioMostrado,
+                  (v) {
+                    final vPorCuarto = _precioPorCuartoDesdeMostrado(item, v);
+                    if (_precioCarritoConIsv) {
+                      _actualizarPrecio(index, vPorCuarto);
+                    } else {
+                      _actualizarPrecioSinIsv(index, vPorCuarto);
+                    }
+                  },
+                  prefijo: 'L.',
+                  dosDecimales: true,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje, (v) => _actualizarDescuentoLinea(index, v))),
             ],

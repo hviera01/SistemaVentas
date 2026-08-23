@@ -12,6 +12,7 @@ import 'core/widgets/splash_screen.dart';
 import 'core/widgets/imagen_producto_network.dart';
 import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 import 'features/formulas/presentation/screens/formulas_kiosk_screen.dart';
+import 'features/formulas/presentation/screens/consultar_costo_kiosk_screen.dart';
 import 'core/utils/kiosk_identidad.dart';
 
 Future<void> main() async {
@@ -63,13 +64,18 @@ class SistemaVentasApp extends StatelessWidget {
     // login (ver FormulasKioskScreen), pensada como acceso directo aparte
     // en la pantalla de inicio del celular/tablet, no el sistema completo.
     final esKioskFormulas = Uri.base.queryParameters['formulas'] != null;
+    // "?costos=1": mismo mecanismo, para Consultar Costo (ver
+    // ConsultarCostoKioskScreen) -pedido explícito del dueño: quería un
+    // acceso directo aparte que no pida login, igual que ya tiene Fórmulas.
+    final esKioskCostos = Uri.base.queryParameters['costos'] != null;
     // Para que "Agregar a pantalla de inicio" instale esto como su propia
-    // app ("Fórmulas") en vez de mezclarse con el ícono de "Sistema
-    // Ventas" -ver kiosk_identidad_web.dart-.
-    if (esKioskFormulas) aplicarIdentidadKiosk();
+    // app (nombre propio en el título de la pestaña) en vez de mezclarse con
+    // el de "Sistema Ventas" -ver kiosk_identidad_web.dart-.
+    if (esKioskFormulas) aplicarIdentidadKiosk('Fórmulas · Super Color');
+    if (esKioskCostos) aplicarIdentidadKiosk('Consultar Costo · Super Color');
 
     return MaterialApp(
-      title: esKioskFormulas ? 'Fórmulas · Super Color' : 'Sistema Ventas',
+      title: esKioskFormulas ? 'Fórmulas · Super Color' : (esKioskCostos ? 'Consultar Costo · Super Color' : 'Sistema Ventas'),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF0F1B3D),
@@ -86,7 +92,9 @@ class SistemaVentasApp extends StatelessWidget {
           ? EscaneoRemotoScreen(codigo: codigoEscaneo)
           : esKioskFormulas
               ? const FormulasKioskScreen()
-              : const SplashScreen(siguiente: AuthGate()),
+              : esKioskCostos
+                  ? const ConsultarCostoKioskScreen()
+                  : const SplashScreen(siguiente: AuthGate()),
     );
   }
 }

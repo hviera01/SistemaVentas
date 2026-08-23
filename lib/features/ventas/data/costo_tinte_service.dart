@@ -76,7 +76,11 @@ class ResultadoCostoTinte {
 class CostoTinteService {
   final _lotes = LoteCostoRepository();
 
-  static const onzasPorCuarto = 32.0;
+  // Calibrado contra la máquina real del dueño (no el estándar de 32 oz por
+  // cuarto que se había asumido al inicio): probó llenar un cuarto y a 32Y
+  // quedaba un poquito corto, a 34Y se pasaba un poquito -33Y es el punto
+  // medio de esa prueba real, ajustable más adelante si se afina la medición.
+  static const onzasPorCuarto = 33.0;
 
   /// Antes esto hacía, POR CADA colorante y en SECUENCIA (un `for` con dos
   /// `await` adentro), una consulta a `productos` (buscarProductoTinte) y
