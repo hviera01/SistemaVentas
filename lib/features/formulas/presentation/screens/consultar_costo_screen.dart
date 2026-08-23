@@ -84,11 +84,18 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
               const SizedBox(height: 16),
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: _modo == _ModoConsulta.promedios ? 720 : 560),
-                child: switch (_modo) {
-                  _ModoConsulta.formula => const _ModoFormulaConProducto(),
-                  _ModoConsulta.soloTinte => const _ModoSoloTinte(),
-                  _ModoConsulta.promedios => const _ModoPromediosPorBase(),
-                },
+                // IndexedStack en vez de un switch que arma un widget nuevo
+                // por modo: un switch destruye por completo el State del
+                // modo que se deja (_productoBase, la lista de tintes
+                // cargados, etc.) y arranca uno vacío al volver -pedido
+                // explícito del dueño: cambiar de pestaña y volver tiene
+                // que respetar lo que ya tenía puesto-. Los 3 modos quedan
+                // montados todo el tiempo, solo se oculta el que no está
+                // activo.
+                child: IndexedStack(
+                  index: _modo.index,
+                  children: const [_ModoFormulaConProducto(), _ModoSoloTinte(), _ModoPromediosPorBase()],
+                ),
               ),
             ],
           ),
