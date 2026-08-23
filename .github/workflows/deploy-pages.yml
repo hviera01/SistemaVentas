@@ -39,6 +39,19 @@ jobs:
           sed -i 's#content="Sistema de ventas, compras e inventario de SUPERCOLOR."#content="Buscador rápido de fórmulas Colortrend y Registro de Colores de Super Color."#' build/web_formulas/index.html
           mkdir -p build/web/formulas
           cp -r build/web_formulas/* build/web/formulas/
+      # App "Consultar Costo" -mismo criterio exacto que la de Fórmulas de
+      # arriba (ver lib/main_costos.dart): compilación de Flutter totalmente
+      # aparte, publicada en /SistemaVentas/costos/, para que "Agregar a
+      # pantalla de inicio" instale esto como su propia app.
+      - run: flutter build web --release --target lib/main_costos.dart --base-href /SistemaVentas/costos/ -o build/web_costos
+      - name: Identidad propia para la app de Consultar Costo
+        run: |
+          cp .github/deploy/costos_manifest.json build/web_costos/manifest.json
+          sed -i 's#<title>SUPERCOLOR - Sistema de Ventas</title>#<title>Consultar Costo · Super Color</title>#' build/web_costos/index.html
+          sed -i 's#content="SUPERCOLOR"#content="Consultar Costo"#' build/web_costos/index.html
+          sed -i 's#content="Sistema de ventas, compras e inventario de SUPERCOLOR."#content="Consulta rapida de costo de colores preparados de Super Color."#' build/web_costos/index.html
+          mkdir -p build/web/costos
+          cp -r build/web_costos/* build/web/costos/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

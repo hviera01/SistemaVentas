@@ -3754,6 +3754,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           // diálogo pueda mostrar el costo TOTAL (tinte + producto base) y
           // no solo el de tinte, ver CodigosColorDialog.costoProductoBase.
           costoProductoBase: item.precioCompraUsado as double,
+          // Precio de venta YA registrado en la línea (antes de sumarle el
+          // tinte) -pedido explícito: el calculador de margen/precio tiene
+          // que arrancar mostrando ESE precio, no costo+0% de margen, para
+          // que el cajero vea de una si con el precio que ya tenía pensado
+          // alcanza para cubrir también el tinte.
+          precioVentaProductoBase: item.precioVenta as double,
         ),
       );
       if (resultado == null) return;

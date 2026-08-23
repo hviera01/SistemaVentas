@@ -460,7 +460,19 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
             const SizedBox(height: 14),
             Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
             const SizedBox(height: 10),
-            CampoMargenPrecioVenta(key: ValueKey('margen_$_resetMargen'), costoBase: costoCombinado, onPrecioVentaCambiado: (_) {}),
+            CampoMargenPrecioVenta(
+              // El producto base cambia el precio de arranque del
+              // calculador -no solo el "Limpiar"-, así que también entra en
+              // la key para que se recree con el precio correcto al elegir
+              // otro producto base.
+              key: ValueKey('margen_${_resetMargen}_${_productoBase?.id}'),
+              costoBase: costoCombinado,
+              // Precio de venta YA registrado del producto base -pedido
+              // explícito del dueño: el calculador arranca mostrando ESE
+              // precio, no costo+0% de margen.
+              precioVentaInicial: _productoBase != null && _productoBase!.precioVenta > 0 ? _productoBase!.precioVenta : null,
+              onPrecioVentaCambiado: (_) {},
+            ),
           ],
         ],
       ),
@@ -493,6 +505,123 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
 /// toda la lista de fórmulas (también ya cacheada en memoria por
 /// formulasColortrendProvider, no se vuelve a leer el asset) sin ninguna
 /// otra consulta a Firestore.
+// Los 4 valores reales de FormulaColortrendModel.base en el dataset
+// (confirmado contra assets/data/formulas_colortrend.json). Cualquier otro
+// valor -no debería haber, pero por las dudas- cae en "Otra" en vez de
+// perderse en silencio.
+const _basesConocidas = ['Pastel Base', 'Deep Base', 'Accent Base', 'Tint Base'];
+const _tamanosPromedios = [TamanoFormula.cuarto, TamanoFormula.galon, TamanoFormula.quinto];
+
+typedef _PromedioBaseTamano = ({double promedio, int incluidas, int excluidas, double minimo, double maximo});
+
+Future<Map<String, double>> _costoPorCuartoDeTintesReales(Ref ref) async {
+  final productos = await ref.watch(productosStreamProvider.future);
+  final tintes = productos.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList();
+  final repo = LoteCostoRepository();
+  final snapshots = await Future.wait(tintes.map((p) => repo.consultarLotes(p.id)));
+  final mapa = <String, double>{};
+  for (var i = 0; i < tintes.length; i++) {
+    final producto = tintes[i];
+    final estado = repo.inicializarEstado(snapshots[i]);
+    // Costo de consumir 1 cuarto completo con el estado de lotes vigente
+    // ahora mismo -un "costo unitario actual" representativo, mismo motor
+    // FIFO que usa CostoTinteService en cualquier otro lado de la app.
+    final costoPorCuarto = repo.consumir(estado, 1.0, costoFallback: producto.precioCompra);
+    final colorante = normalizarColorante(producto.nombre.replaceFirst('COLORANTE ', ''));
+    mapa[colorante] = costoPorCuarto;
+  }
+  return mapa;
+}
+
+/// Se calcula una sola vez por sesión de la app (provider normal, sin
+/// autoDispose -mismo criterio que formulasColortrendProvider/
+/// productosStreamProvider) y se reusa cada vez que se entra a este modo:
+/// antes se recalculaba desde cero (12 consultas de lotes a Firestore +
+/// recorrer ~1500 fórmulas) CADA VEZ que se montaba el widget -por ejemplo
+/// al cambiar a otro modo y volver, porque el switch de _ConsultarCostoScreenState
+/// no usa IndexedStack y por lo tanto destruye/recrea el State-, que era la
+/// demora real que reportó el dueño ("a promedio por base le cuesta mucho
+/// también cargar").
+final _promediosPorBaseProvider = FutureProvider<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>>((ref) async {
+  // Límite de tiempo total: sin esto, una conexión lenta o cortada a mitad
+  // de una consulta a Firestore (get() no tiene timeout propio) dejaba este
+  // modo cargando para siempre, sin ningún mensaje de error ni forma de
+  // reintentar -bug real reportado desde la versión web (Pages), donde la
+  // red del que consulta puede ser bastante más lenta/inestable que en la
+  // app de escritorio.
+  return Future(() async {
+    final costoPorCuarto = await _costoPorCuartoDeTintesReales(ref);
+    final formulas = await ref.watch(formulasColortrendProvider.future);
+    return _calcularPromediosDesde(costoPorCuarto, formulas);
+  }).timeout(
+    const Duration(seconds: 25),
+    onTimeout: () => throw Exception('La consulta tardó demasiado -probá con mejor conexión, o entrá de nuevo a este modo para reintentar.'),
+  );
+});
+
+Map<String, Map<TamanoFormula, _PromedioBaseTamano>> _calcularPromediosDesde(Map<String, double> costoPorCuarto, List<FormulaColortrendModel> formulas) {
+
+  // sumas[base][tamano] = (sumaDeCosto, incluidas, excluidas, minimo, maximo)
+  // -minimo/maximo dan el rango real de costo dentro de ese grupo, para que
+  // se vea que un color puntual bien arriba o abajo del promedio no es un
+  // error: el gasto de tinte varía mucho de un color a otro dentro de la
+  // misma base.
+  final sumas = <String, Map<TamanoFormula, (double, int, int, double, double)>>{
+    for (final base in [..._basesConocidas, 'Otra']) base: {for (final t in _tamanosPromedios) t: (0.0, 0, 0, double.infinity, 0.0)},
+  };
+
+  for (final formula in formulas) {
+    final base = _basesConocidas.contains(formula.base) ? formula.base : 'Otra';
+    for (final tamano in _tamanosPromedios) {
+      final usos = onzasFormulaParaTamano(formula, tamano, 1);
+      final actual = sumas[base]![tamano]!;
+      if (usos.isEmpty) {
+        // Sin datos de colorante del libro para este tamaño -no cuenta ni
+        // a favor ni en contra del promedio, solo se anota como excluida.
+        sumas[base]![tamano] = (actual.$1, actual.$2, actual.$3 + 1, actual.$4, actual.$5);
+        continue;
+      }
+      var costoFormula = 0.0;
+      var completa = true;
+      for (final u in usos) {
+        final costo = costoPorCuarto[normalizarColorante(u.colorante)];
+        if (costo == null) {
+          // Un colorante de esta fórmula no tiene producto de tinte real
+          // en inventario (o sin lotes con costo) -no se suma parcial: se
+          // excluye la fórmula ENTERA de este tamaño para no subestimar el
+          // promedio con un costo incompleto.
+          completa = false;
+          break;
+        }
+        costoFormula += (u.onzas / CostoTinteService.onzasPorCuarto) * costo;
+      }
+      sumas[base]![tamano] = completa
+          ? (
+              actual.$1 + costoFormula,
+              actual.$2 + 1,
+              actual.$3,
+              costoFormula < actual.$4 ? costoFormula : actual.$4,
+              costoFormula > actual.$5 ? costoFormula : actual.$5,
+            )
+          : (actual.$1, actual.$2, actual.$3 + 1, actual.$4, actual.$5);
+    }
+  }
+
+  return {
+    for (final entry in sumas.entries)
+      entry.key: {
+        for (final t in entry.value.entries)
+          t.key: (
+            promedio: t.value.$2 > 0 ? t.value.$1 / t.value.$2 : 0.0,
+            incluidas: t.value.$2,
+            excluidas: t.value.$3,
+            minimo: t.value.$2 > 0 ? t.value.$4 : 0.0,
+            maximo: t.value.$2 > 0 ? t.value.$5 : 0.0,
+          ),
+      },
+  };
+}
+
 class _ModoPromediosPorBase extends ConsumerStatefulWidget {
   const _ModoPromediosPorBase();
 
@@ -500,89 +629,12 @@ class _ModoPromediosPorBase extends ConsumerStatefulWidget {
   ConsumerState<_ModoPromediosPorBase> createState() => _ModoPromediosPorBaseState();
 }
 
-typedef _PromedioBaseTamano = ({double promedio, int incluidas, int excluidas});
-
 class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
-  // Los 4 valores reales de FormulaColortrendModel.base en el dataset
-  // (confirmado contra assets/data/formulas_colortrend.json). Cualquier otro
-  // valor -no debería haber, pero por las dudas- cae en "Otra" en vez de
-  // perderse en silencio.
-  static const _basesConocidas = ['Pastel Base', 'Deep Base', 'Accent Base', 'Tint Base'];
-  static const _tamanos = [TamanoFormula.cuarto, TamanoFormula.galon, TamanoFormula.quinto];
-
-  // Se calcula una sola vez al abrir este modo (no en cada rebuild): ver la
-  // nota grande de la clase sobre el costo de recorrer ~1500 fórmulas.
-  late final Future<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>> _futuro = _calcular();
-
-  Future<Map<String, double>> _costoPorCuartoDeTintesReales() async {
-    final productosAsync = ref.read(productosStreamProvider);
-    final productos = productosAsync.hasValue ? productosAsync.value! : await ref.read(productosStreamProvider.future);
-    final tintes = productos.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList();
-    final repo = LoteCostoRepository();
-    final snapshots = await Future.wait(tintes.map((p) => repo.consultarLotes(p.id)));
-    final mapa = <String, double>{};
-    for (var i = 0; i < tintes.length; i++) {
-      final producto = tintes[i];
-      final estado = repo.inicializarEstado(snapshots[i]);
-      // Costo de consumir 1 cuarto completo con el estado de lotes vigente
-      // ahora mismo -un "costo unitario actual" representativo, mismo motor
-      // FIFO que usa CostoTinteService en cualquier otro lado de la app.
-      final costoPorCuarto = repo.consumir(estado, 1.0, costoFallback: producto.precioCompra);
-      final colorante = normalizarColorante(producto.nombre.replaceFirst('COLORANTE ', ''));
-      mapa[colorante] = costoPorCuarto;
-    }
-    return mapa;
-  }
-
-  Future<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>> _calcular() async {
-    final costoPorCuarto = await _costoPorCuartoDeTintesReales();
-    final formulas = await ref.read(formulasColortrendProvider.future);
-
-    // sumas[base][tamano] = (sumaDeCosto, cantidadIncluidas, cantidadExcluidas)
-    final sumas = <String, Map<TamanoFormula, (double, int, int)>>{
-      for (final base in [..._basesConocidas, 'Otra']) base: {for (final t in _tamanos) t: (0.0, 0, 0)},
-    };
-
-    for (final formula in formulas) {
-      final base = _basesConocidas.contains(formula.base) ? formula.base : 'Otra';
-      for (final tamano in _tamanos) {
-        final usos = onzasFormulaParaTamano(formula, tamano, 1);
-        final actual = sumas[base]![tamano]!;
-        if (usos.isEmpty) {
-          // Sin datos de colorante del libro para este tamaño -no cuenta ni
-          // a favor ni en contra del promedio, solo se anota como excluida.
-          sumas[base]![tamano] = (actual.$1, actual.$2, actual.$3 + 1);
-          continue;
-        }
-        var costoFormula = 0.0;
-        var completa = true;
-        for (final u in usos) {
-          final costo = costoPorCuarto[normalizarColorante(u.colorante)];
-          if (costo == null) {
-            // Un colorante de esta fórmula no tiene producto de tinte real
-            // en inventario (o sin lotes con costo) -no se suma parcial: se
-            // excluye la fórmula ENTERA de este tamaño para no subestimar el
-            // promedio con un costo incompleto.
-            completa = false;
-            break;
-          }
-          costoFormula += (u.onzas / CostoTinteService.onzasPorCuarto) * costo;
-        }
-        sumas[base]![tamano] = completa ? (actual.$1 + costoFormula, actual.$2 + 1, actual.$3) : (actual.$1, actual.$2, actual.$3 + 1);
-      }
-    }
-
-    return {
-      for (final entry in sumas.entries)
-        entry.key: {
-          for (final t in entry.value.entries)
-            t.key: (promedio: t.value.$2 > 0 ? t.value.$1 / t.value.$2 : 0.0, incluidas: t.value.$2, excluidas: t.value.$3),
-        },
-    };
-  }
+  static const _tamanos = _tamanosPromedios;
 
   @override
   Widget build(BuildContext context) {
+    final promedios = ref.watch(_promediosPorBaseProvider);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -597,21 +649,27 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
             style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 16),
-          FutureBuilder<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>>(
-            future: _futuro,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No se pudo calcular: ${snapshot.error}', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828))),
-                );
-              }
-              if (!snapshot.hasData) {
-                return const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
-              }
-              return _tabla(snapshot.data!);
-            },
-          ),
+          if (promedios.hasError)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('No se pudo calcular: ${promedios.error}', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828))),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () => ref.invalidate(_promediosPorBaseProvider),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: Text('Reintentar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFC62828))),
+                  ),
+                ],
+              ),
+            )
+          else if (promedios.value != null)
+            _tabla(promedios.value!)
+          else
+            const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
         ],
       ),
     );
@@ -620,6 +678,17 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
   Widget _tabla(Map<String, Map<TamanoFormula, _PromedioBaseTamano>> datos) {
     final otraTieneAlgo = (datos['Otra']?.values.any((v) => v.incluidas > 0 || v.excluidas > 0)) ?? false;
     final bases = [..._basesConocidas, if (otraTieneAlgo) 'Otra'];
+    // En móvil, una tabla de 4 columnas (Base + 3 tamaños, cada una con
+    // monto+rango+cantidad de fórmulas) no entra sin scroll horizontal
+    // incómodo -pedido explícito del dueño-: ahí se arma en cambio una
+    // tarjeta por base, con los 3 tamaños apilados adentro.
+    final esMovil = MediaQuery.sizeOf(context).width < 560;
+    if (esMovil) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [for (final base in bases) _tarjetaBaseMovil(base, datos[base])],
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Table(
@@ -640,6 +709,46 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
                 for (final t in _tamanos) _celdaValor(datos[base]?[t]),
               ],
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tarjetaBaseMovil(String base, Map<TamanoFormula, _PromedioBaseTamano>? valores) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFE0E2E8))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(base, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          for (final t in _tamanos) _filaValorMovil(etiquetaTamano(t), valores?[t]),
+        ],
+      ),
+    );
+  }
+
+  Widget _filaValorMovil(String etiquetaTamano, _PromedioBaseTamano? valor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 70, child: Text(etiquetaTamano, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+          Expanded(
+            child: valor == null || valor.incluidas == 0
+                ? Text('Sin datos', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(formatearMoneda(valor.promedio), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
+                      Text(_detalleValor(valor), style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+                    ],
+                  ),
+          ),
         ],
       ),
     );
@@ -673,12 +782,19 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(formatearMoneda(valor.promedio), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
-          Text(
-            valor.excluidas > 0 ? '${valor.incluidas} fórmulas (${valor.excluidas} excluidas)' : '${valor.incluidas} fórmulas',
-            style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
-          ),
+          Text(_detalleValor(valor), style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
         ],
       ),
     );
+  }
+
+  // "Rango": muestra hasta dónde puede llegar un color puntual dentro de la
+  // misma base/tamaño -pedido explícito del dueño, que vio un color bien
+  // arriba del promedio y dudó si era un error. No lo es: el gasto de tinte
+  // varía mucho de un color a otro, así que ver el máximo real (no solo el
+  // promedio) da contexto de una.
+  String _detalleValor(_PromedioBaseTamano valor) {
+    final rango = 'rango ${formatearMoneda(valor.minimo)}-${formatearMoneda(valor.maximo)}';
+    return valor.excluidas > 0 ? '${valor.incluidas} fórmulas, $rango (${valor.excluidas} excluidas)' : '${valor.incluidas} fórmulas, $rango';
   }
 }

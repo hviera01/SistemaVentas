@@ -1,0 +1,36 @@
+{
+    "name": "Consultar Costo · Super Color",
+    "short_name": "Consultar Costo",
+    "start_url": "/SistemaVentas/costos/",
+    "scope": "/SistemaVentas/costos/",
+    "display": "standalone",
+    "background_color": "#C62828",
+    "theme_color": "#C62828",
+    "description": "Consulta rapida de costo de colores preparados (tinte + producto base) de Super Color.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

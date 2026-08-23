@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../productos/data/lote_costo_repository.dart';
 import '../../productos/data/producto_model.dart';
 import '../../productos/data/tinte_lookup.dart';
@@ -94,7 +95,19 @@ class CostoTinteService {
   /// con esos resultados, todas las consultas de LOTES en paralelo también
   /// -dos rondas en paralelo en vez de hasta 8 rondas en serie- y recién con
   /// todo eso ya en memoria se arma el resultado final.
-  Future<List<ResultadoCostoTinte>> calcular(List<UsoTinte> usos) async {
+  /// [lotesConocidos]: lotes YA consultados de antemano, por id de producto
+  /// de tinte -si quien llama ya los tiene (ver AgregarTinteManualDialog,
+  /// que precarga los lotes de los ~12 tintes reales de una sola vez al
+  /// abrir el diálogo), se usan directo y no se repite la consulta a
+  /// Firestore. Es la misma idea que [UsoTinte.productoConocido] pero para
+  /// la ronda de lotes en vez de la de producto -antes esta era la consulta
+  /// que quedaba pendiente en CADA cambio de tinte elegido, aunque el
+  /// producto ya se conociera, y era la demora real reportada ("cada que
+  /// cambio de tinte se tarda un mundo en cargar").
+  Future<List<ResultadoCostoTinte>> calcular(
+    List<UsoTinte> usos, {
+    Map<String, QuerySnapshot<Map<String, dynamic>>>? lotesConocidos,
+  }) async {
     if (usos.isEmpty) return [];
     final colorantes = [for (final uso in usos) normalizarColorante(uso.colorante)];
 
@@ -106,14 +119,19 @@ class CostoTinteService {
         if (usos[i].productoConocido != null) Future.value(usos[i].productoConocido) else buscarProductoTinte(colorantes[i]),
     ]);
 
-    // Ronda 2: lotes de cada producto que sí se encontró, todos a la vez
-    // (se indexan por posición en `usos`, no todos los colorantes resuelven
-    // a un producto).
+    // Ronda 2: lotes de cada producto que sí se encontró, todos a la vez -
+    // salvo los que ya vienen en [lotesConocidos], que se usan directo sin
+    // consultar de nuevo (se indexan por posición en `usos`, no todos los
+    // colorantes resuelven a un producto).
     final indicesConProducto = [for (var i = 0; i < usos.length; i++) if (productos[i] != null) i];
-    final lotesPorIndice = Map.fromIterables(
-      indicesConProducto,
-      await Future.wait(indicesConProducto.map((i) => _lotes.consultarLotes(productos[i]!.id))),
+    final indicesPorConsultar = [for (final i in indicesConProducto) if (lotesConocidos?[productos[i]!.id] == null) i];
+    final consultados = Map.fromIterables(
+      indicesPorConsultar,
+      await Future.wait(indicesPorConsultar.map((i) => _lotes.consultarLotes(productos[i]!.id))),
     );
+    final lotesPorIndice = {
+      for (final i in indicesConProducto) i: lotesConocidos?[productos[i]!.id] ?? consultados[i]!,
+    };
 
     final resultados = <ResultadoCostoTinte>[];
     for (var i = 0; i < usos.length; i++) {

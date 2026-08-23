@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:win32/win32.dart' show ShellExecute, SW_SHOWNORMAL;
 import '../version_app.dart';
 
 class ActualizacionDisponible {
@@ -127,7 +130,34 @@ class ActualizacionService {
       return;
     }
 
-    await Process.start(archivoDestino.path, [], mode: ProcessStartMode.detached);
+    // El instalador de Inno Setup pide administrador (PrivilegesRequired=
+    // admin en el .iss, así reemplaza los archivos del programa), y
+    // Process.start (CreateProcess por debajo) NO puede lanzar un programa
+    // así si esta app -que corre como usuario normal, sin manifest de
+    // administrador- no está ya elevada: Windows lo rechaza en seco
+    // (ERROR_ELEVATION_REQUIRED) sin mostrar ningún aviso de permisos, así
+    // que la actualización nunca llegaba a instalarse -bug real reportado
+    // por el dueño: pedía actualizar, parecía funcionar, pero al volver a
+    // abrir seguía en la versión vieja-. ShellExecute sí sabe hacer esto:
+    // ve que el instalador pide administrador y muestra el aviso de
+    // Windows (UAC) para que el usuario lo acepte, exactamente como pasa al
+    // hacer doble clic en el .exe desde el Explorador.
+    final rutaPtr = archivoDestino.path.toNativeUtf16();
+    final operacionPtr = 'open'.toNativeUtf16();
+    try {
+      final resultado = ShellExecute(0, operacionPtr, rutaPtr, nullptr, nullptr, SW_SHOWNORMAL);
+      // Según la documentación de Win32, un resultado > 32 es éxito -32 o
+      // menos es un código de error (ERROR_CANCELLED si el usuario cancela
+      // el aviso de administrador incluido). Si el usuario cancela el UAC
+      // no hay que cerrar la app: se queda como estaba, sigue pudiendo
+      // reintentar.
+      if (resultado <= 32) {
+        throw ProcessException(archivoDestino.path, [], 'ShellExecute devolvió $resultado');
+      }
+    } finally {
+      calloc.free(rutaPtr);
+      calloc.free(operacionPtr);
+    }
     exit(0);
   }
 }

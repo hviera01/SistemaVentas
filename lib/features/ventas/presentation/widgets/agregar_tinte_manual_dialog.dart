@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../productos/data/lote_costo_repository.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/data/tinte_lookup.dart';
 import '../../../productos/providers/productos_provider.dart';
@@ -25,11 +27,29 @@ class AgregarTinteManualDialog extends ConsumerStatefulWidget {
 
 class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDialog> {
   final _servicio = CostoTinteService();
+  final _lotesRepo = LoteCostoRepository();
   ProductoModel? _tinteElegido;
   double _onzas = 0;
   ResultadoCostoTinte? _calculado;
   bool _calculando = false;
   Timer? _debounce;
+
+  // Lotes de TODOS los tintes reales, precargados una sola vez al abrir el
+  // diálogo (ver _prefetchLotes) -así, cambiar el tinte elegido en el
+  // dropdown no dispara una consulta nueva a Firestore cada vez, que era la
+  // demora real reportada ("cada que cambio de tinte se tarda un mundo en
+  // cargar"). Si todavía no terminó de cargar (o el producto no estaba en
+  // la lista al momento de precargar), CostoTinteService.calcular() cae
+  // solo en su consulta individual de siempre -no se rompe nada, solo no
+  // se aprovecha la precarga para ese caso puntual.
+  Map<String, QuerySnapshot<Map<String, dynamic>>>? _lotesCache;
+  bool _prefetchIniciado = false;
+
+  Future<void> _prefetchLotes(List<ProductoModel> tintes) async {
+    final resultados = await Future.wait(tintes.map((t) => _lotesRepo.consultarLotes(t.id)));
+    if (!mounted) return;
+    setState(() => _lotesCache = {for (var i = 0; i < tintes.length; i++) tintes[i].id: resultados[i]});
+  }
 
   @override
   void dispose() {
@@ -63,7 +83,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
     // producto exacto a mano, esa consulta redundante en CADA recálculo era
     // la otra mitad de la demora reportada.
     final colorante = tinte.nombre.replaceFirst('COLORANTE ', '').trim();
-    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas, productoConocido: tinte)]);
+    final resultados = await _servicio.calcular([UsoTinte(colorante: colorante, onzas: onzas, productoConocido: tinte)], lotesConocidos: _lotesCache);
     if (!mounted) return;
     setState(() {
       _calculado = resultados.first;
@@ -109,6 +129,10 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
                   return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
                 }
                 final tintes = productosAsync.value!.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
+                if (!_prefetchIniciado) {
+                  _prefetchIniciado = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _prefetchLotes(tintes));
+                }
                 if (tintes.isEmpty) {
                   return Text('No hay productos de tinte cargados en el inventario (categoría TINTES).', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)));
                 }

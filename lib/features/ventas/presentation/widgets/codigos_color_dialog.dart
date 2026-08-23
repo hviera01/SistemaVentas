@@ -51,6 +51,13 @@ class CodigosColorDialog extends StatefulWidget {
   // costo cargado) simplemente muestran el costo de tinte solo.
   final double costoProductoBase;
 
+  // Precio de venta YA registrado en la línea (antes de sumarle el tinte):
+  // el calculador de margen/precio de _ConfirmarTintesFormulaDialog arranca
+  // mostrando ESTE precio -pedido explícito del dueño-, no costo+0% de
+  // margen, para que el cajero vea de una si el precio que ya tenía pensado
+  // alcanza también para cubrir el tinte que se está por agregar.
+  final double precioVentaProductoBase;
+
   const CodigosColorDialog({
     super.key,
     required this.codigosIniciales,
@@ -58,6 +65,7 @@ class CodigosColorDialog extends StatefulWidget {
     required this.nombreProducto,
     required this.cantidadLinea,
     this.costoProductoBase = 0,
+    this.precioVentaProductoBase = 0,
   });
 
   @override
@@ -134,7 +142,14 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => _ConfirmarTintesFormulaDialog(formula: formula, tamano: tamano, usos: usos, resultados: resultados, costoProductoBase: widget.costoProductoBase),
+      builder: (context) => _ConfirmarTintesFormulaDialog(
+        formula: formula,
+        tamano: tamano,
+        usos: usos,
+        resultados: resultados,
+        costoProductoBase: widget.costoProductoBase,
+        precioVentaProductoBase: widget.precioVentaProductoBase,
+      ),
     );
     if (confirmar != true || !mounted) return;
     setState(() {
@@ -334,8 +349,18 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
   // Costo actual del producto base de la línea (ver CodigosColorDialog.
   // costoProductoBase) -0 si no hay producto base conocido.
   final double costoProductoBase;
+  // Precio de venta YA registrado en la línea (ver CodigosColorDialog.
+  // precioVentaProductoBase) -0 si no hay producto base conocido.
+  final double precioVentaProductoBase;
 
-  const _ConfirmarTintesFormulaDialog({required this.formula, required this.tamano, required this.usos, required this.resultados, this.costoProductoBase = 0});
+  const _ConfirmarTintesFormulaDialog({
+    required this.formula,
+    required this.tamano,
+    required this.usos,
+    required this.resultados,
+    this.costoProductoBase = 0,
+    this.precioVentaProductoBase = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -420,7 +445,11 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
               // la tabla del carrito (ver _campoInlineNumero en
               // RegistrarVentaScreen), donde además queda protegido por el
               // mismo permiso especial que cualquier otro cambio de precio.
-              CampoMargenPrecioVenta(costoBase: costoTotalLinea, onPrecioVentaCambiado: (_) {}),
+              CampoMargenPrecioVenta(
+                costoBase: costoTotalLinea,
+                precioVentaInicial: precioVentaProductoBase > 0 ? precioVentaProductoBase : null,
+                onPrecioVentaCambiado: (_) {},
+              ),
             ],
             const SizedBox(height: 16),
             Row(
