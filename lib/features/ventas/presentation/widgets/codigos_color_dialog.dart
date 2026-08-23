@@ -57,20 +57,6 @@ class CodigosColorDialog extends StatefulWidget {
 class _CodigosColorDialogState extends State<CodigosColorDialog> {
   late List<String> _codigos;
   late List<TinteConsumidoSnapshot> _tintes;
-  // Para que "x" en un código también borre el tinte que ese código generó
-  // (ver _buscarFormula): a cada código y a cada tinte agregados EN ESTA
-  // sesión del diálogo se les asigna el mismo id de grupo, así _quitarCodigo
-  // sabe exactamente qué tintes vinieron de ese código -y no de otro código
-  // ni de un tinte manual- y los borra junto con él. Los códigos/tintes que
-  // ya venían de widget.codigosIniciales/tintesIniciales (una línea que se
-  // reabre para editar) no tienen esa asociación registrada -ItemVentaModel
-  // no la persiste, son dos listas planas- así que quedan sin grupo (null):
-  // quitar un código viejo no borra tintes viejos, igual que se comportaba
-  // antes -sin regresión-, y el fix aplica de lleno al caso reportado
-  // (agregar fórmula y sacarla en la misma pasada).
-  late List<int?> _codigosGrupo;
-  late List<int?> _tintesGrupo;
-  int _proximoGrupoId = 0;
   bool _cargandoFormula = false;
 
   @override
@@ -78,31 +64,26 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
     super.initState();
     _codigos = [...widget.codigosIniciales];
     _tintes = [...widget.tintesIniciales];
-    _codigosGrupo = List<int?>.filled(_codigos.length, null, growable: true);
-    _tintesGrupo = List<int?>.filled(_tintes.length, null, growable: true);
   }
 
+  // "x" en un código también borra el tinte que ese código generó, buscando
+  // por TinteConsumidoSnapshot.codigoOrigen -un campo que SÍ se guarda de
+  // verdad en ItemVentaModel (no solo en memoria mientras el diálogo está
+  // abierto), así que esto sigue funcionando aunque el cajero haya cerrado
+  // y vuelto a abrir CodigosColorDialog sobre la misma línea -antes se
+  // perdía ese vínculo al reabrir, bug reportado por el dueño-. El tinte
+  // manual (Escenario B, codigoOrigen null) nunca se toca al quitar un
+  // código.
   void _quitarCodigo(int index) {
     setState(() {
-      final grupo = _codigosGrupo[index];
+      final codigo = _codigos[index];
       _codigos.removeAt(index);
-      _codigosGrupo.removeAt(index);
-      if (grupo != null) {
-        for (var i = _tintes.length - 1; i >= 0; i--) {
-          if (_tintesGrupo[i] == grupo) {
-            _tintes.removeAt(i);
-            _tintesGrupo.removeAt(i);
-          }
-        }
-      }
+      _tintes.removeWhere((t) => t.codigoOrigen == codigo);
     });
   }
 
   void _quitarTinte(int index) {
-    setState(() {
-      _tintes.removeAt(index);
-      _tintesGrupo.removeAt(index);
-    });
+    setState(() => _tintes.removeAt(index));
   }
 
   void _cerrar() => Navigator.pop(context, CodigosColorResultado(codigos: _codigos, tintes: _tintes));
@@ -124,20 +105,14 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
 
     final tamano = tamanoDesdeNombreProducto(widget.nombreProducto);
     if (tamano == null) {
-      setState(() {
-        _codigos.add(formula.codigo);
-        _codigosGrupo.add(null);
-      });
+      setState(() => _codigos.add(formula.codigo));
       _mostrarMensaje('No se pudo determinar el tamaño de "${widget.nombreProducto}" (Cuarto/Galón/Quinto/Cubeta) -se agregó el código, pero sin calcular el costo del tinte. Podés cargarlo con "Tinte manual".');
       return;
     }
 
     final usos = onzasFormulaParaTamano(formula, tamano, widget.cantidadLinea);
     if (usos.isEmpty) {
-      setState(() {
-        _codigos.add(formula.codigo);
-        _codigosGrupo.add(null);
-      });
+      setState(() => _codigos.add(formula.codigo));
       _mostrarMensaje('Esta fórmula no tiene datos de colorante para ${etiquetaTamano(tamano)} -se agregó el código, pero sin calcular el costo del tinte.');
       return;
     }
@@ -153,23 +128,17 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
     );
     if (confirmar != true || !mounted) return;
     setState(() {
-      final grupo = _proximoGrupoId++;
       _codigos.add(formula.codigo);
-      _codigosGrupo.add(grupo);
-      _tintes.addAll(resultados.map((r) => r.toSnapshot()));
-      _tintesGrupo.addAll(List<int?>.filled(resultados.length, grupo));
+      _tintes.addAll(resultados.map((r) => r.toSnapshot(codigoOrigen: formula.codigo)));
     });
   }
 
-  /// Escenario B: tinte cargado a mano, sin código de fórmula -no tiene
-  /// grupo asociado a ningún código, "x" en un código nunca lo toca-.
+  /// Escenario B: tinte cargado a mano, sin código de fórmula -codigoOrigen
+  /// queda null, "x" en un código nunca lo toca-.
   Future<void> _agregarTinteManual() async {
     final resultado = await showDialog<ResultadoCostoTinte>(context: context, builder: (context) => const AgregarTinteManualDialog());
     if (resultado == null || !mounted) return;
-    setState(() {
-      _tintes.add(resultado.toSnapshot());
-      _tintesGrupo.add(null);
-    });
+    setState(() => _tintes.add(resultado.toSnapshot()));
   }
 
   @override
@@ -201,6 +170,44 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
             ),
             const SizedBox(height: 4),
             Text('Esta línea puede llevar más de un código.', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+            const SizedBox(height: 12),
+            // Botones siempre visibles arriba del todo -antes quedaban al
+            // final de la lista con scroll, y una vez que ya había un código
+            // agregado (con su tinte debajo) quedaban tapados sin scrollear:
+            // el dueño reportó que no encontraba dónde agregar otro código.
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _cargandoFormula ? null : _buscarFormula,
+                    icon: _cargandoFormula
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828)))
+                        : const Icon(Icons.menu_book_outlined, size: 16),
+                    label: Text('Buscar fórmula', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC62828),
+                      side: const BorderSide(color: Color(0xFFC62828)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _agregarTinteManual,
+                    icon: const Icon(Icons.colorize, size: 16),
+                    label: Text('Tinte manual', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1A1A1A),
+                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             Flexible(
               child: SingleChildScrollView(
@@ -248,40 +255,6 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                       const SizedBox(height: 4),
                       Text('Costo total de tinte: ${formatearMoneda(costoTinteTotal)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
                     ],
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _cargandoFormula ? null : _buscarFormula,
-                            icon: _cargandoFormula
-                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828)))
-                                : const Icon(Icons.menu_book_outlined, size: 16),
-                            label: Text('Buscar fórmula', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFC62828),
-                              side: const BorderSide(color: Color(0xFFC62828)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _agregarTinteManual,
-                            icon: const Icon(Icons.colorize, size: 16),
-                            label: Text('Tinte manual', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF1A1A1A),
-                              side: const BorderSide(color: Color(0xFFB6BCC7)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/data/tinte_lookup.dart';
+import '../../../productos/providers/productos_provider.dart';
 import '../../data/costo_tinte_service.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import 'campo_cantidad_tinte.dart';
@@ -14,27 +16,20 @@ import 'campo_cantidad_tinte.dart';
 /// costo (FIFO, solo lectura) antes de confirmar, para que el cajero vea
 /// cuánto va a sumar esa línea antes de agregarla. Devuelve el
 /// [ResultadoCostoTinte] elegido, o null si se cancela.
-class AgregarTinteManualDialog extends StatefulWidget {
+class AgregarTinteManualDialog extends ConsumerStatefulWidget {
   const AgregarTinteManualDialog({super.key});
 
   @override
-  State<AgregarTinteManualDialog> createState() => _AgregarTinteManualDialogState();
+  ConsumerState<AgregarTinteManualDialog> createState() => _AgregarTinteManualDialogState();
 }
 
-class _AgregarTinteManualDialogState extends State<AgregarTinteManualDialog> {
+class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDialog> {
   final _servicio = CostoTinteService();
-  Future<List<ProductoModel>>? _futureTintes;
   ProductoModel? _tinteElegido;
   double _onzas = 0;
   ResultadoCostoTinte? _calculado;
   bool _calculando = false;
   Timer? _debounce;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureTintes = listarProductosTinte();
-  }
 
   @override
   void dispose() {
@@ -104,13 +99,16 @@ class _AgregarTinteManualDialogState extends State<AgregarTinteManualDialog> {
             const SizedBox(height: 4),
             Text('Elegí el tinte real y cuántas onzas le echaste.', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
             const SizedBox(height: 14),
-            FutureBuilder<List<ProductoModel>>(
-              future: _futureTintes,
-              builder: (context, snap) {
-                if (!snap.hasData) {
+            Builder(
+              builder: (context) {
+                // Misma lista ya cacheada por la app (productosStreamProvider)
+                // en vez de volver a pedir los ~12 tintes cada vez que se abre
+                // este diálogo -ver el mismo comentario en ConsultarCostoScreen.
+                final productosAsync = ref.watch(productosStreamProvider);
+                if (!productosAsync.hasValue) {
                   return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
                 }
-                final tintes = snap.data!;
+                final tintes = productosAsync.value!.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
                 if (tintes.isEmpty) {
                   return Text('No hay productos de tinte cargados en el inventario (categoría TINTES).', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)));
                 }

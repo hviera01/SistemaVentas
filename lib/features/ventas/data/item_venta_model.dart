@@ -58,6 +58,13 @@ class TinteConsumidoSnapshot {
   final double cuartosConsumidos;
   final double costoUnitario;
   final double costoTotal;
+  // Qué código de color (ver ItemVentaModel.codigosColor) generó este tinte
+  // -null si vino de "Tinte manual" (Escenario B, sin código)-. Se guarda de
+  // verdad (no solo en memoria mientras el diálogo está abierto) para que
+  // "x" en un código siga borrando su tinte correctamente aunque el cajero
+  // haya cerrado y vuelto a abrir CodigosColorDialog sobre la misma línea
+  // -antes se perdía el vínculo al reabrir, bug reportado por el dueño-.
+  final String? codigoOrigen;
 
   TinteConsumidoSnapshot({
     required this.colorante,
@@ -66,6 +73,7 @@ class TinteConsumidoSnapshot {
     required this.cuartosConsumidos,
     required this.costoUnitario,
     required this.costoTotal,
+    this.codigoOrigen,
   });
 
   Map<String, dynamic> toMap() => {
@@ -75,6 +83,7 @@ class TinteConsumidoSnapshot {
     'cuartosConsumidos': cuartosConsumidos,
     'costoUnitario': costoUnitario,
     'costoTotal': costoTotal,
+    'codigoOrigen': codigoOrigen,
   };
 
   factory TinteConsumidoSnapshot.fromMap(Map<String, dynamic> data) {
@@ -85,6 +94,7 @@ class TinteConsumidoSnapshot {
       cuartosConsumidos: (data['cuartosConsumidos'] ?? 0).toDouble(),
       costoUnitario: (data['costoUnitario'] ?? 0).toDouble(),
       costoTotal: (data['costoTotal'] ?? 0).toDouble(),
+      codigoOrigen: data['codigoOrigen'] as String?,
     );
   }
 }

@@ -2990,7 +2990,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           child: FilledButton.icon(
                             onPressed: _agregarProductoDesdeBusqueda,
                             icon: const Icon(Icons.add, size: 18),
-                            label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                            // En móvil este botón comparte fila con
+                            // "Escanear" (ver más abajo) y "Agregar Producto"
+                            // no entraba en el ancho disponible -se cortaba
+                            // "Product" y "o" en líneas separadas, reportado
+                            // por el dueño-. El ícono "+" ya da el contexto,
+                            // así que en móvil alcanza con "Agregar" solo; en
+                            // escritorio (más ancho, sin "Escanear" al lado)
+                            // se deja el texto completo.
+                            label: Text(
+                              _esPlataformaMovil ? 'Agregar' : 'Agregar Producto',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
                             style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                           ),
                         ),

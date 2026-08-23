@@ -52,13 +52,14 @@ class ResultadoCostoTinte {
 
   bool get resuelto => producto != null;
 
-  TinteConsumidoSnapshot toSnapshot() => TinteConsumidoSnapshot(
+  TinteConsumidoSnapshot toSnapshot({String? codigoOrigen}) => TinteConsumidoSnapshot(
     colorante: colorante,
     idProductoTinte: producto?.id ?? '',
     nombreProductoTinte: producto?.nombre ?? 'COLORANTE $colorante (sin producto en inventario)',
     cuartosConsumidos: cuartos,
     costoUnitario: costoUnitario,
     costoTotal: costoTotal,
+    codigoOrigen: codigoOrigen,
   );
 }
 

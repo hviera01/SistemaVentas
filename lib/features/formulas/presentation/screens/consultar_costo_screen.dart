@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import '../../../productos/data/tinte_lookup.dart';
+import '../../../productos/providers/productos_provider.dart';
 import '../../../ventas/data/costo_tinte_service.dart';
 import '../../../ventas/presentation/widgets/agregar_tinte_manual_dialog.dart';
 import '../../../ventas/presentation/widgets/buscar_producto_dialog.dart';
@@ -104,16 +106,15 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
 /// Modo "Solo tinte": elegir un tinte real + cuántas onzas → costo, sin
 /// fórmula ni producto base involucrado (pedido explícito: "cuánto me
 /// cuesta tanto de tal tinte").
-class _ModoSoloTinte extends StatefulWidget {
+class _ModoSoloTinte extends ConsumerStatefulWidget {
   const _ModoSoloTinte();
 
   @override
-  State<_ModoSoloTinte> createState() => _ModoSoloTinteState();
+  ConsumerState<_ModoSoloTinte> createState() => _ModoSoloTinteState();
 }
 
-class _ModoSoloTinteState extends State<_ModoSoloTinte> {
+class _ModoSoloTinteState extends ConsumerState<_ModoSoloTinte> {
   final _servicio = CostoTinteService();
-  Future<List<ProductoModel>>? _futureTintes;
   ProductoModel? _tinteElegido;
   double _onzas = 0;
   ResultadoCostoTinte? _calculado;
@@ -123,12 +124,6 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
   // CampoCantidadTinte se recree desde cero (Y/48avos vacíos) -el widget no
   // expone un controller propio, ver su doc.
   int _resetCantidad = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureTintes = listarProductosTinte();
-  }
 
   @override
   void dispose() {
@@ -197,11 +192,18 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             ],
           ),
           const SizedBox(height: 12),
-          FutureBuilder<List<ProductoModel>>(
-            future: _futureTintes,
-            builder: (context, snap) {
-              if (!snap.hasData) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
-              final tintes = snap.data!;
+          Builder(
+            builder: (context) {
+              // Se filtra la lista de productos que la app ya tiene viva en
+              // memoria (productosStreamProvider, usada en todo Inventario)
+              // en vez de pedir de nuevo los ~12 tintes a Firestore cada vez
+              // que se abre esta pantalla -esa consulta repetida en cada
+              // apertura era la demora real que reportó el dueño ("siempre
+              // cuesta bastante que cargue"), no algo que un debounce
+              // pudiera arreglar.
+              final productosAsync = ref.watch(productosStreamProvider);
+              if (!productosAsync.hasValue) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
+              final tintes = productosAsync.value!.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
