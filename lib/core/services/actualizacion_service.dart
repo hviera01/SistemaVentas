@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import 'lanzador_instalador_windows.dart';
 import '../version_app.dart';
 
 class ActualizacionDisponible {
@@ -104,7 +103,12 @@ class ActualizacionService {
     void Function(double progreso) onProgreso,
   ) async {
     final carpetaTemp = await getTemporaryDirectory();
-    final nombreArchivo = Platform.isAndroid ? 'SuperColorActualizacion.apk' : 'SuperColorActualizacion.exe';
+    // El nombre incluye la versión -antes era siempre el mismo nombre fijo
+    // ("SuperColorActualizacion.exe"), así que si un intento anterior dejó
+    // el instalador viejo corriendo (o Windows todavía tenía el archivo
+    // abierto/bloqueado un instante después de "Finalizar"), la descarga
+    // nueva podía chocar con ese archivo en vez de escribir uno limpio.
+    final nombreArchivo = Platform.isAndroid ? 'SuperColorActualizacion${actualizacion.version}.apk' : 'SuperColorActualizacion${actualizacion.version}.exe';
     final archivoDestino = File('${carpetaTemp.path}${Platform.pathSeparator}$nombreArchivo');
 
     final cliente = http.Client();
@@ -136,17 +140,23 @@ class ActualizacionService {
     // (ERROR_ELEVATION_REQUIRED) sin mostrar ningún aviso de permisos, así
     // que la actualización nunca llegaba a instalarse -bug real reportado
     // por el dueño: pedía actualizar, parecía funcionar, pero al volver a
-    // abrir seguía en la versión vieja-. lanzarInstaladorElevado usa
-    // ShellExecute (ver lanzador_instalador_windows_io.dart), que sí sabe
-    // mostrar el aviso de Windows (UAC) cuando el programa que lanza pide
-    // administrador -aislado en su propio archivo con conditional import
-    // porque package:win32 no compila para Web, ver ese archivo.
-    if (!lanzarInstaladorElevado(archivoDestino.path)) {
-      // Cubre tanto un error real de ShellExecute como que el usuario haya
-      // cancelado el aviso de administrador -en ningún caso hay que cerrar
-      // la app (exit) ni asumir que el instalador quedó lanzado.
-      throw ProcessException(archivoDestino.path, [], 'No se pudo lanzar el instalador.');
-    }
+    // abrir seguía en la versión vieja-.
+    //
+    // Un primer intento de arreglo usó ShellExecute directo vía
+    // dart:ffi/package:win32, pero en la práctica tampoco terminó de
+    // aplicar la actualización -y además rompía la compilación Web-, así
+    // que se abandonó esa ruta por completo (nada de FFI acá). Esto en
+    // cambio delega en el propio `start` de cmd.exe (built-in de Windows,
+    // no un programa aparte): por dentro usa la misma ShellExecute del
+    // sistema operativo -la forma estándar y bien probada de lanzar un
+    // programa que pide elevación desde un proceso que no la tiene, la
+    // misma que dispara Windows cuando uno hace doble clic en el
+    // instalador manualmente-, sin agregar ninguna dependencia nueva. El
+    // primer argumento vacío ("") después de "start" es el título de
+    // ventana que ese comando espera cuando la ruta va entre comillas -si
+    // se omite, "start" interpreta la ruta misma como el título y falla en
+    // vez de abrir el archivo.
+    await Process.start('cmd', ['/c', 'start', '', archivoDestino.path], mode: ProcessStartMode.detached);
     exit(0);
   }
 }
