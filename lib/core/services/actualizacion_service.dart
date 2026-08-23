@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
-import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:win32/win32.dart' show ShellExecute, SW_SHOWNORMAL;
+import 'lanzador_instalador_windows.dart';
 import '../version_app.dart';
 
 class ActualizacionDisponible {
@@ -138,25 +136,16 @@ class ActualizacionService {
     // (ERROR_ELEVATION_REQUIRED) sin mostrar ningún aviso de permisos, así
     // que la actualización nunca llegaba a instalarse -bug real reportado
     // por el dueño: pedía actualizar, parecía funcionar, pero al volver a
-    // abrir seguía en la versión vieja-. ShellExecute sí sabe hacer esto:
-    // ve que el instalador pide administrador y muestra el aviso de
-    // Windows (UAC) para que el usuario lo acepte, exactamente como pasa al
-    // hacer doble clic en el .exe desde el Explorador.
-    final rutaPtr = archivoDestino.path.toNativeUtf16();
-    final operacionPtr = 'open'.toNativeUtf16();
-    try {
-      final resultado = ShellExecute(0, operacionPtr, rutaPtr, nullptr, nullptr, SW_SHOWNORMAL);
-      // Según la documentación de Win32, un resultado > 32 es éxito -32 o
-      // menos es un código de error (ERROR_CANCELLED si el usuario cancela
-      // el aviso de administrador incluido). Si el usuario cancela el UAC
-      // no hay que cerrar la app: se queda como estaba, sigue pudiendo
-      // reintentar.
-      if (resultado <= 32) {
-        throw ProcessException(archivoDestino.path, [], 'ShellExecute devolvió $resultado');
-      }
-    } finally {
-      calloc.free(rutaPtr);
-      calloc.free(operacionPtr);
+    // abrir seguía en la versión vieja-. lanzarInstaladorElevado usa
+    // ShellExecute (ver lanzador_instalador_windows_io.dart), que sí sabe
+    // mostrar el aviso de Windows (UAC) cuando el programa que lanza pide
+    // administrador -aislado en su propio archivo con conditional import
+    // porque package:win32 no compila para Web, ver ese archivo.
+    if (!lanzarInstaladorElevado(archivoDestino.path)) {
+      // Cubre tanto un error real de ShellExecute como que el usuario haya
+      // cancelado el aviso de administrador -en ningún caso hay que cerrar
+      // la app (exit) ni asumir que el instalador quedó lanzado.
+      throw ProcessException(archivoDestino.path, [], 'No se pudo lanzar el instalador.');
     }
     exit(0);
   }
