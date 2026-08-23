@@ -6,6 +6,7 @@ import 'pago_detalle_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 import '../../../core/utils/texto_utils.dart';
 import '../../productos/data/lote_costo_repository.dart';
+import '../../productos/data/tinte_lookup.dart';
 
 /// Los ítems de una venta se guardan en la subcolección 'detalle' con un id
 /// autogenerado (no correlativo), así que Firestore no garantiza devolverlos
@@ -136,6 +137,98 @@ class VentaRepository {
     return expandido;
   }
 
+  /// Junta, agrupado por producto de tinte (idProductoTinte), todos los usos
+  /// de tinte de TODAS las líneas de la venta -Escenario A/B, ver
+  /// TinteConsumidoSnapshot y CodigosColorDialog- en un solo ítem "virtual"
+  /// por producto de tinte (cantidad = suma de cuartos de todas las líneas
+  /// que usan ese mismo tinte). Se agrega así -no un ítem virtual por cada
+  /// uso- porque el bloque de descuento de stock más abajo (compartido con
+  /// productos normales y componentes de combo) lee el stock ANTES de
+  /// descontar y no acumula bien un mismo idProducto que aparezca dos veces
+  /// en la lista a descontar (cada aparición pisaría el descuento de la
+  /// anterior en vez de sumarse) -con dos líneas de color distinto usando el
+  /// mismo tinte en la misma venta, esto evita que la segunda pise a la
+  /// primera-. Entradas sin producto de inventario resuelto (colorante sin
+  /// match, ver tinte_lookup.dart) o con cuartos <= 0 se ignoran -no hay
+  /// nada que descontar-.
+  List<ItemVentaModel> _agregarTintesParaDescuento(List<ItemVentaModel> items) {
+    final cuartosPorProducto = <String, double>{};
+    final nombrePorProducto = <String, String>{};
+    for (final item in items) {
+      for (final t in item.tintesConsumidos) {
+        if (t.idProductoTinte.isEmpty || t.cuartosConsumidos <= 0) continue;
+        cuartosPorProducto[t.idProductoTinte] = (cuartosPorProducto[t.idProductoTinte] ?? 0) + t.cuartosConsumidos;
+        nombrePorProducto.putIfAbsent(t.idProductoTinte, () => t.nombreProductoTinte);
+      }
+    }
+    return [
+      for (final entry in cuartosPorProducto.entries)
+        ItemVentaModel(
+          idProducto: entry.key,
+          idCategoria: idCategoriaTintes,
+          nombreProducto: nombrePorProducto[entry.key] ?? '',
+          precioVenta: 0,
+          cantidad: entry.value,
+          subtotal: 0,
+          precioCompraUsado: 0,
+        ),
+    ];
+  }
+
+  /// Reemplaza el costo ESTIMADO de cada tinte consumido (calculado por
+  /// CostoTinteService antes de confirmar la venta) por el costo FIFO real
+  /// -mismo criterio que ya aplica registrarVenta con precioCompraUsado de
+  /// productos normales-. Entradas sin producto resuelto (idProductoTinte
+  /// vacío) quedan tal cual, no hay costo real que calcular para esas.
+  List<TinteConsumidoSnapshot> _tintesConCostoReal(List<TinteConsumidoSnapshot> tintes, Map<String, double> costoUnitarioPorTinteProducto) {
+    return [
+      for (final t in tintes)
+        if (t.idProductoTinte.isEmpty)
+          t
+        else
+          TinteConsumidoSnapshot(
+            colorante: t.colorante,
+            idProductoTinte: t.idProductoTinte,
+            nombreProductoTinte: t.nombreProductoTinte,
+            cuartosConsumidos: t.cuartosConsumidos,
+            costoUnitario: costoUnitarioPorTinteProducto[t.idProductoTinte] ?? t.costoUnitario,
+            costoTotal: (costoUnitarioPorTinteProducto[t.idProductoTinte] ?? t.costoUnitario) * t.cuartosConsumidos,
+          ),
+    ];
+  }
+
+  /// Igual que _agregarTintesParaDescuento pero para anularVenta: agrupa por
+  /// producto de tinte la cantidad a RESTAURAR, con el costo unitario
+  /// promedio ponderado de lo que de verdad se consumió en esta venta (ya el
+  /// costo FIFO REAL, escrito por registrarVenta -ver _tintesConCostoReal-,
+  /// no un estimado) -para que el lote de "ajuste" que crea la restauración
+  /// quede al costo correcto.
+  List<ItemVentaModel> _agregarTintesParaRestaurar(List<ItemVentaModel> items) {
+    final cuartosPorProducto = <String, double>{};
+    final costoTotalPorProducto = <String, double>{};
+    final nombrePorProducto = <String, String>{};
+    for (final item in items) {
+      for (final t in item.tintesConsumidos) {
+        if (t.idProductoTinte.isEmpty || t.cuartosConsumidos <= 0) continue;
+        cuartosPorProducto[t.idProductoTinte] = (cuartosPorProducto[t.idProductoTinte] ?? 0) + t.cuartosConsumidos;
+        costoTotalPorProducto[t.idProductoTinte] = (costoTotalPorProducto[t.idProductoTinte] ?? 0) + t.costoTotal;
+        nombrePorProducto.putIfAbsent(t.idProductoTinte, () => t.nombreProductoTinte);
+      }
+    }
+    return [
+      for (final entry in cuartosPorProducto.entries)
+        ItemVentaModel(
+          idProducto: entry.key,
+          idCategoria: idCategoriaTintes,
+          nombreProducto: nombrePorProducto[entry.key] ?? '',
+          precioVenta: 0,
+          cantidad: entry.value,
+          subtotal: 0,
+          precioCompraUsado: entry.value > 0 ? (costoTotalPorProducto[entry.key] ?? 0) / entry.value : 0,
+        ),
+    ];
+  }
+
   /// Próximo número que le tocaría a la próxima Factura/Boleta (comparten
   /// el mismo contador 'venta', ver _claveContador). Para uso en Negocio,
   /// donde se puede consultar y fijar manualmente antes de empezar a
@@ -207,6 +300,11 @@ class VentaRepository {
     final contadorRef = _colContadores.doc(claveContador);
     final ventaRef = _colVentas.doc();
     final itemsADescontar = _expandirComponentes(items).where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)).toList();
+    // El tinte se descuenta siempre que se haya cargado (Escenario A/B), sin
+    // importar si la categoría del producto VENDIDO controla stock o no
+    // -pedido explícito: "quiero que el stock de tinte se descuente de
+    // verdad"-, así que no pasa por el mismo filtro de arriba.
+    final tintesADescontar = _agregarTintesParaDescuento(items);
 
     // Se resuelve ANTES de entrar a la transacción: es una consulta (y,
     // eventualmente, una creación de cliente) que Firestore no permite hacer
@@ -220,6 +318,7 @@ class VentaRepository {
 
     late String numeroDocumento;
     late Map<ItemVentaModel, double> costosFifo;
+    late Map<String, double> costoUnitarioPorTinteProducto;
 
     // Timeout corto (el default del SDK es 30s): en cajas con internet
     // lento/intermitente es mejor que el cajero vea rápido que falló y
@@ -234,10 +333,15 @@ class VentaRepository {
       // con una consulta simple (no transaccional, ver consultarLotes) que
       // no depende de nada más, así que se lanza en paralelo con el resto
       // en vez de esperar a que terminen el contador y el stock primero.
-      final idsProductoUnicos = itemsADescontar.map((i) => i.idProducto).toSet().toList();
+      // itemsADescontarTotal junta los productos/componentes de combo
+      // normales con los tintes reales consumidos (ver
+      // _agregarTintesParaDescuento) para que ambos pasen por el mismo
+      // bloque de lectura/descuento de stock y costeo FIFO de acá abajo.
+      final itemsADescontarTotal = [...itemsADescontar, ...tintesADescontar];
+      final idsProductoUnicos = itemsADescontarTotal.map((i) => i.idProducto).toSet().toList();
       final futureResultados = Future.wait([
         transaction.get(contadorRef),
-        ...itemsADescontar.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
+        ...itemsADescontarTotal.map((item) => transaction.get(_db.collection('productos').doc(item.idProducto))),
       ]);
       final futureLotes = Future.wait(idsProductoUnicos.map((id) => _lotes.consultarLotes(id)));
 
@@ -251,10 +355,10 @@ class VentaRepository {
 
       final stocksActuales = <String, double>{};
       final precioCompraActual = <String, double>{};
-      for (var i = 0; i < itemsADescontar.length; i++) {
+      for (var i = 0; i < itemsADescontarTotal.length; i++) {
         final data = snapsStock[i].data();
-        stocksActuales[itemsADescontar[i].idProducto] = ((data?['stock'] ?? 0) as num).toDouble();
-        precioCompraActual[itemsADescontar[i].idProducto] = ((data?['precioCompra'] ?? 0) as num).toDouble();
+        stocksActuales[itemsADescontarTotal[i].idProducto] = ((data?['stock'] ?? 0) as num).toDouble();
+        precioCompraActual[itemsADescontarTotal[i].idProducto] = ((data?['precioCompra'] ?? 0) as num).toDouble();
       }
 
       // Costeo FIFO: si el carrito tiene más de una línea del mismo
@@ -265,11 +369,17 @@ class VentaRepository {
         for (var i = 0; i < idsProductoUnicos.length; i++) idsProductoUnicos[i]: _lotes.inicializarEstado(queriesLotes[i]),
       };
       costosFifo = <ItemVentaModel, double>{};
-      for (final item in itemsADescontar) {
+      for (final item in itemsADescontarTotal) {
         final estado = estadoLotesPorProducto[item.idProducto]!;
         final costoFallback = precioCompraActual[item.idProducto] ?? item.precioCompraUsado;
         costosFifo[item] = _lotes.consumir(estado, item.cantidad, costoFallback: costoFallback);
       }
+      // Costo FIFO real por producto de tinte (uno solo por idProducto, ver
+      // _agregarTintesParaDescuento): se usa abajo para reescribir el costo
+      // ESTIMADO que traía cada TinteConsumidoSnapshot con el real.
+      costoUnitarioPorTinteProducto = <String, double>{
+        for (final tv in tintesADescontar) tv.idProducto: costosFifo[tv] ?? precioCompraActual[tv.idProducto] ?? 0,
+      };
 
       transaction.set(contadorRef, {'ultimo': nuevo}, SetOptions(merge: true));
 
@@ -312,7 +422,9 @@ class VentaRepository {
         final item = entry.value;
         final itemRef = ventaRef.collection('detalle').doc();
         final costoReal = costosFifo[item];
-        final itemAGuardar = costoReal != null ? item.copyWith(precioCompraUsado: costoReal) : item;
+        final itemAGuardar = (costoReal != null || item.tintesConsumidos.isNotEmpty)
+            ? item.copyWith(precioCompraUsado: costoReal ?? item.precioCompraUsado, tintesConsumidos: _tintesConCostoReal(item.tintesConsumidos, costoUnitarioPorTinteProducto))
+            : item;
         // 'fecha' permite consultar el detalle de todas las ventas de un
         // rango con una sola query (collectionGroup) en vez de tener que
         // leer la subcolección de cada venta una por una. 'orden' es la
@@ -369,7 +481,7 @@ class VentaRepository {
         transaction.set(_colClientes.doc(idClienteResuelto), {'fechaUltimaCompra': Timestamp.fromDate(fechaRegistro)}, SetOptions(merge: true));
       }
 
-      for (final item in itemsADescontar) {
+      for (final item in itemsADescontarTotal) {
         final ref = _db.collection('productos').doc(item.idProducto);
         final stockActual = stocksActuales[item.idProducto] ?? 0;
         // Nunca queda en negativo: si ya estaba en 0 (por ejemplo, se vendió
@@ -441,7 +553,9 @@ class VentaRepository {
       descuentoGlobal: descuentoGlobal,
       detalle: items.map((item) {
         final costoReal = costosFifo[item];
-        return costoReal != null ? item.copyWith(precioCompraUsado: costoReal) : item;
+        return (costoReal != null || item.tintesConsumidos.isNotEmpty)
+            ? item.copyWith(precioCompraUsado: costoReal ?? item.precioCompraUsado, tintesConsumidos: _tintesConCostoReal(item.tintesConsumidos, costoUnitarioPorTinteProducto))
+            : item;
       }).toList(),
     );
   }
@@ -597,7 +711,16 @@ class VentaRepository {
         }
       }
     }
-    final itemsARestaurar = itemsExpandidos.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
+    final itemsARestaurarBase = itemsExpandidos.where((i) => !i.reembasado && !categoriasSinControlStockRestaurar.contains(i.idCategoria)).toList();
+    // El tinte consumido en cada línea (ver TinteConsumidoSnapshot) se
+    // restaura siempre, con el mismo criterio que su descuento en
+    // registrarVenta -sin importar si la categoría del producto vendido
+    // controla stock-, y agregado por producto de tinte (ver
+    // _agregarTintesParaDescuento) para no toparse con el mismo problema de
+    // "no acumula bien un idProducto repetido" del bloque de restauración de
+    // abajo. Usa 'items' (el detalle real de la venta, no el expandido de
+    // combos) porque tintesConsumidos vive en la línea original.
+    final itemsARestaurar = [...itemsARestaurarBase, ..._agregarTintesParaRestaurar(items)];
 
     // Si esta venta tenía líneas "pendientes de compra" (venta anticipada)
     // que todavía no se habían emparejado con ninguna compra, hay que

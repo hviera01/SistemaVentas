@@ -28,6 +28,7 @@ import '../../../negocio/providers/negocio_provider.dart';
 import '../../../negocio/data/negocio_model.dart';
 import '../../../negocio/presentation/widgets/acceso_especial.dart';
 import '../../../productos/data/producto_model.dart';
+import '../../../productos/data/tinte_lookup.dart';
 import '../../../productos/providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../promociones/data/promocion_model.dart';
@@ -960,6 +961,55 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
     if (!mounted) return;
     await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio);
+    if (!mounted || producto.idCategoria != idCategoriaTintes) return;
+    await _ofrecerConversionOnzas(producto);
+  }
+
+  /// Convención chica al agregar un producto de tinte (categoría TINTES)
+  /// directo al carrito -ej. el cliente trae su propia lata de pintura y
+  /// solo se le vende tinte, sin producto base en la misma venta-: el
+  /// cajero y las cajeras piensan en onzas al aplicar tinte a mano, no en
+  /// cuartos (la unidad en la que de verdad está cargado el stock, ver
+  /// tinte_lookup.dart). Se le ofrece escribir cuántas onzas después de
+  /// agregarlo (cantidad 1 cuarto por defecto) y, si contesta algo, se
+  /// recalcula sola la cantidad de la línea en cuartos -si prefiere seguir
+  /// en cuartos directo, "Omitir" deja la línea como ya quedó, editable a
+  /// mano como cualquier otra-. Se busca la línea por idProducto (no "la
+  /// última de la lista") porque una promoción de regalo pudo haber
+  /// agregado otra línea encima mientras tanto.
+  Future<void> _ofrecerConversionOnzas(ProductoModel producto) async {
+    final controller = TextEditingController();
+    final texto = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('¿Cuántas onzas de tinte?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: GoogleFonts.poppins(fontSize: 14),
+          decoration: InputDecoration(hintText: 'Ej. 2.5', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400)),
+          onSubmitted: (v) => Navigator.pop(context, v),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Omitir (dejar en cuartos)', style: GoogleFonts.poppins())),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            child: Text('Usar', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (texto == null || !mounted) return;
+    final onzas = double.tryParse(texto.trim().replaceAll(',', '.'));
+    if (onzas == null || onzas <= 0) return;
+    final items = ref.read(carritoVentaProvider).items;
+    final idx = items.lastIndexWhere((i) => i.idProducto == producto.id);
+    if (idx == -1) return;
+    ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, cantidad: onzas / 32);
   }
 
   // ---------- Descuentos y Promociones ----------
@@ -3512,17 +3562,27 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// vea de un vistazo que ya se cargó algo sin tener que reabrir el diálogo.
   Widget _botonCodigoColor(int index, dynamic item) {
     final List<String> codigos = item.codigosColor;
+    final List<TinteConsumidoSnapshot> tintes = item.tintesConsumidos;
 
     Future<void> abrir() async {
-      final resultado = await showDialog<List<String>>(
+      final resultado = await showDialog<CodigosColorResultado>(
         context: context,
-        builder: (context) => CodigosColorDialog(codigosIniciales: codigos),
+        builder: (context) => CodigosColorDialog(
+          codigosIniciales: codigos,
+          tintesIniciales: tintes,
+          nombreProducto: item.nombreProducto as String,
+          cantidadLinea: item.cantidad as double,
+        ),
       );
       if (resultado == null) return;
-      ref.read(carritoVentaProvider.notifier).actualizarCodigosColor(index, resultado);
+      ref.read(carritoVentaProvider.notifier).actualizarCodigosColor(index, resultado.codigos);
+      ref.read(carritoVentaProvider.notifier).actualizarTintesConsumidos(index, resultado.tintes);
     }
 
-    final texto = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
+    final costoTinte = tintes.fold<double>(0, (s, t) => s + t.costoTotal);
+    final textoBase = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
+    final texto = tintes.isEmpty ? textoBase : '$textoBase · ${formatearMoneda(costoTinte)}';
+    final tieneAlgo = codigos.isNotEmpty || tintes.isNotEmpty;
 
     return InkWell(
       onTap: abrir,
@@ -3530,20 +3590,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: codigos.isEmpty ? const Color(0xFFE8EAF0) : const Color(0xFFFBEAEA),
+          color: tieneAlgo ? const Color(0xFFFBEAEA) : const Color(0xFFE8EAF0),
           borderRadius: BorderRadius.circular(8),
-          border: codigos.isEmpty ? null : Border.all(color: const Color(0xFFC62828).withOpacity(0.35)),
+          border: tieneAlgo ? Border.all(color: const Color(0xFFC62828).withOpacity(0.35)) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.palette_outlined, size: 14, color: codigos.isEmpty ? Colors.grey.shade500 : const Color(0xFFC62828)),
+            Icon(Icons.palette_outlined, size: 14, color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade500),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
                 texto,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: codigos.isEmpty ? Colors.grey.shade600 : const Color(0xFFC62828)),
+                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade600),
               ),
             ),
           ],

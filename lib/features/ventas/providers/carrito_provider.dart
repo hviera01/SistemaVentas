@@ -270,6 +270,12 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       componentes: actual.componentes,
       pendienteCompra: actual.pendienteCompra,
       codigosColor: actual.codigosColor,
+      // OJO: si la línea ya tenía tinte cargado (ver CodigosColorDialog) y
+      // acá se le cambia la cantidad, el tinte NO se re-escala solo -sigue
+      // siendo la cantidad de tinte que se calculó para la cantidad vieja-.
+      // Reabrir "Código Color" y volver a cargar el tinte es lo que
+      // recalcula para la cantidad nueva.
+      tintesConsumidos: actual.tintesConsumidos,
     );
     state = state.copyWith(items: nuevos);
   }
@@ -304,6 +310,16 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   void actualizarCodigosColor(int index, List<String> nuevosCodigos) {
     final nuevos = [...state.items];
     nuevos[index] = nuevos[index].copyWith(codigosColor: nuevosCodigos);
+    state = state.copyWith(items: nuevos);
+  }
+
+  /// Igual que actualizarCodigosColor pero para el tinte real consumido en
+  /// la línea (ver TinteConsumidoSnapshot, CodigosColorDialog) -costo
+  /// estimado en este punto, VentaRepository.registrarVenta lo recalcula
+  /// con el costo FIFO real al confirmar la venta.
+  void actualizarTintesConsumidos(int index, List<TinteConsumidoSnapshot> nuevosTintes) {
+    final nuevos = [...state.items];
+    nuevos[index] = nuevos[index].copyWith(tintesConsumidos: nuevosTintes);
     state = state.copyWith(items: nuevos);
   }
 
@@ -406,6 +422,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
                 descuentoPorcentaje: item.descuentoPorcentaje,
                 componentes: item.componentes,
                 codigosColor: item.codigosColor,
+                tintesConsumidos: item.tintesConsumidos,
               ))
           .toList(),
       tipoDocumento: (forzarFactura && venta.tipoDocumento == 'Cotizacion') ? 'Factura' : venta.tipoDocumento,

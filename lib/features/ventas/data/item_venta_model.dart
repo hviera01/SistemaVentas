@@ -36,6 +36,59 @@ class ComponenteComboSnapshot {
   }
 }
 
+/// Un tinte real consumido en una línea de venta -ya sea porque el cajero
+/// eligió un código de fórmula conectado a un formula real (Escenario A) o
+/// lo cargó a mano (Escenario B), ver CodigosColorDialog-. Snapshot igual
+/// que ComponenteComboSnapshot: congela el producto/costo al momento de
+/// vender, para que anular la venta después siga sabiendo qué reponer aunque
+/// el producto de tinte cambie de nombre/costo mientras tanto.
+/// costoUnitario/costoTotal empiezan como un ESTIMADO (calculado por
+/// CostoTinteService, con el costo FIFO vigente en ese momento, antes de
+/// confirmar la venta) y se sobrescriben con el costo FIFO real dentro de la
+/// transacción de VentaRepository.registrarVenta -mismo criterio que ya usa
+/// hoy ItemVentaModel.precioCompraUsado con productos normales-.
+/// idProductoTinte vacío significa que el colorante no tiene un producto de
+/// inventario que le corresponda (ver tinte_lookup.dart): no se pudo costear
+/// ni se descuenta stock para esa parte, pero queda igual el registro de que
+/// se usó, para que el histórico no pierda el dato.
+class TinteConsumidoSnapshot {
+  final String colorante;
+  final String idProductoTinte;
+  final String nombreProductoTinte;
+  final double cuartosConsumidos;
+  final double costoUnitario;
+  final double costoTotal;
+
+  TinteConsumidoSnapshot({
+    required this.colorante,
+    required this.idProductoTinte,
+    required this.nombreProductoTinte,
+    required this.cuartosConsumidos,
+    required this.costoUnitario,
+    required this.costoTotal,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'colorante': colorante,
+    'idProductoTinte': idProductoTinte,
+    'nombreProductoTinte': nombreProductoTinte,
+    'cuartosConsumidos': cuartosConsumidos,
+    'costoUnitario': costoUnitario,
+    'costoTotal': costoTotal,
+  };
+
+  factory TinteConsumidoSnapshot.fromMap(Map<String, dynamic> data) {
+    return TinteConsumidoSnapshot(
+      colorante: data['colorante'] ?? '',
+      idProductoTinte: data['idProductoTinte'] ?? '',
+      nombreProductoTinte: data['nombreProductoTinte'] ?? '',
+      cuartosConsumidos: (data['cuartosConsumidos'] ?? 0).toDouble(),
+      costoUnitario: (data['costoUnitario'] ?? 0).toDouble(),
+      costoTotal: (data['costoTotal'] ?? 0).toDouble(),
+    );
+  }
+}
+
 class ItemVentaModel {
   final String idProducto;
   final String idCategoria;
@@ -60,6 +113,12 @@ class ItemVentaModel {
   // que es la única forma de editar esto desde la venta-). Lista vacía por
   // defecto (no todas las líneas son pintura teñida).
   final List<String> codigosColor;
+  // Tintes reales consumidos para preparar esta línea (Escenario A/B, ver
+  // TinteConsumidoSnapshot). Vacío por defecto -no toda línea de pintura usa
+  // tinte adicional-. Independiente de codigosColor: un código de color es
+  // solo una anotación de texto, esto es lo que de verdad descuenta stock y
+  // suma costo real.
+  final List<TinteConsumidoSnapshot> tintesConsumidos;
 
   ItemVentaModel({
     required this.idProducto,
@@ -74,9 +133,16 @@ class ItemVentaModel {
     this.componentes = const [],
     this.pendienteCompra = false,
     this.codigosColor = const [],
+    this.tintesConsumidos = const [],
   });
 
   bool get esCombo => componentes.isNotEmpty;
+
+  /// Costo total de tinte de esta línea (suma de todos los colorantes
+  /// consumidos) -se muestra y se suma a los reportes SEPARADO del costo del
+  /// producto base (precioCompraUsado), pedido explícito del dueño: nunca
+  /// mezclados en un solo número.
+  double get costoTinteTotal => tintesConsumidos.fold<double>(0, (s, t) => s + t.costoTotal);
 
   factory ItemVentaModel.fromMap(Map<String, dynamic> data) {
     return ItemVentaModel(
@@ -94,6 +160,9 @@ class ItemVentaModel {
           .toList(),
       pendienteCompra: data['pendienteCompra'] ?? false,
       codigosColor: (data['codigosColor'] as List<dynamic>? ?? []).map((c) => c.toString()).toList(),
+      tintesConsumidos: (data['tintesConsumidos'] as List<dynamic>? ?? [])
+          .map((t) => TinteConsumidoSnapshot.fromMap(Map<String, dynamic>.from(t)))
+          .toList(),
     );
   }
 
@@ -126,6 +195,7 @@ class ItemVentaModel {
       'componentes': componentes.map((c) => c.toMap()).toList(),
       'pendienteCompra': pendienteCompra,
       'codigosColor': codigosColor,
+      'tintesConsumidos': tintesConsumidos.map((t) => t.toMap()).toList(),
     };
   }
 
@@ -139,6 +209,7 @@ class ItemVentaModel {
     List<ComponenteComboSnapshot>? componentes,
     bool? pendienteCompra,
     List<String>? codigosColor,
+    List<TinteConsumidoSnapshot>? tintesConsumidos,
   }) {
     return ItemVentaModel(
       idProducto: idProducto,
@@ -153,6 +224,7 @@ class ItemVentaModel {
       componentes: componentes ?? this.componentes,
       pendienteCompra: pendienteCompra ?? this.pendienteCompra,
       codigosColor: codigosColor ?? this.codigosColor,
+      tintesConsumidos: tintesConsumidos ?? this.tintesConsumidos,
     );
   }
 }

@@ -12,6 +12,7 @@ import '../widgets/importar_colores_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../formulas/presentation/screens/buscar_formula_screen.dart';
+import '../../../formulas/presentation/screens/consultar_costo_screen.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -171,6 +172,19 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                         ),
                         icon: const Icon(Icons.menu_book_outlined, size: 18),
                         label: Text('Buscar Fórmula', style: GoogleFonts.poppins(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(fullscreenDialog: true, builder: (context) => const ConsultarCostoScreen()),
+                        ),
+                        icon: const Icon(Icons.calculate_outlined, size: 18),
+                        label: Text('Consultar Costo', style: GoogleFonts.poppins(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1A1A1A),
                           side: const BorderSide(color: Color(0xFFB6BCC7)),
