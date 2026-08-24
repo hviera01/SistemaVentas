@@ -47,9 +47,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // códigos largos puede "acercarse" a varios productos distintos).
   bool _busquedaPorCodigoBarras = false;
   List<ProductoModel> _listaActual = [];
-  // 'todos' (default): no filtra por estado. Mismo estilo de selector-pill
-  // que _selectorPrecioIsv -pedido explícito del dueño.
-  String _filtroEstado = 'todos';
+  // Solo Activos/Inactivos (sin "Todos" -pedido explícito), Activos por
+  // defecto. Mismo estilo de selector-pill que _selectorPrecioIsv.
+  String _filtroEstado = 'activos';
   // Campo contra el que se compara el texto del buscador -'todo' (default)
   // usa ProductoModel.textoBusqueda (código+códigoBarras+nombre+descripción
   // combinados, como ya funcionaba), cualquier otro valor compara SOLO ese
@@ -472,51 +472,15 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             child: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverToBoxAdapter(
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 12,
-                    runSpacing: 10,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Inventario',
-                        style: GoogleFonts.poppins(
-                          fontSize: esMovil ? 19 : 22,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      productosAsync.when(
-                        data: (productos) {
-                          final valorCompra = productos.fold<double>(
-                            0,
-                            (s, p) => s + (p.stock * p.precioCompra),
-                          );
-                          final valorVenta = productos.fold<double>(
-                            0,
-                            (s, p) => s + (p.stock * _precioMostrado(p)),
-                          );
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _badgeInfo(
-                                '${productos.length} productos',
-                                const Color(0xFFC62828),
-                              ),
-                              _badgeInfo(
-                                'Valor compra ${formatearMoneda(valorCompra)}',
-                                const Color(0xFF3B82F6),
-                              ),
-                              _badgeInfo(
-                                'Valor venta (${_precioConIsv ? 'con' : 'sin'} ISV) ${formatearMoneda(valorVenta)}',
-                                const Color(0xFF16A34A),
-                              ),
-                            ],
-                          );
-                        },
-                        loading: () => const SizedBox(),
-                        error: (e, st) => const SizedBox(),
-                      ),
+                      Expanded(child: _tituloYBadges(esMovil, productosAsync)),
+                      const SizedBox(width: 10),
+                      // Selectores chicos, arriba en la esquina -pedido
+                      // explícito: antes ocupaban una fila entera abajo en
+                      // la barra de herramientas.
+                      Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.end, children: [_selectorPrecioIsvChico(), _selectorEstadoChico()]),
                     ],
                   ),
                 ),
@@ -530,8 +494,6 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         width: esMovil ? constraints.maxWidth : 220,
                         child: _selectorVista(vista),
                       ),
-                      _selectorPrecioIsv(),
-                      _selectorEstado(),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 170,
                         child: _selectorCampoFiltro(),
@@ -707,11 +669,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     if (vista == 'bajo') {
                       lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
                     }
-                    if (_filtroEstado == 'activos') {
-                      lista = lista.where((p) => p.estado).toList();
-                    } else if (_filtroEstado == 'inactivos') {
-                      lista = lista.where((p) => !p.estado).toList();
-                    }
+                    lista = lista.where((p) => _filtroEstado == 'activos' ? p.estado : !p.estado).toList();
                     if (busqueda.isNotEmpty) {
                       lista = _busquedaPorCodigoBarras
                           ? lista
@@ -1567,84 +1525,84 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _selectorPrecioIsv() {
-    Widget opcion(String texto, bool valor) {
-      final activo = _precioConIsv == valor;
-      return InkWell(
-        onTap: () => setState(() => _precioConIsv = valor),
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: activo ? const Color(0xFFC62828) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            texto,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
-            ),
-          ),
+  Widget _tituloYBadges(bool esMovil, AsyncValue<List<ProductoModel>> productosAsync) {
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 10,
+      children: [
+        Text(
+          'Inventario',
+          style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
         ),
-      );
-    }
+        productosAsync.when(
+          data: (productos) {
+            final valorCompra = productos.fold<double>(0, (s, p) => s + (p.stock * p.precioCompra));
+            final valorVenta = productos.fold<double>(0, (s, p) => s + (p.stock * _precioMostrado(p)));
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _badgeInfo('${productos.length} productos', const Color(0xFFC62828)),
+                _badgeInfo('Valor compra ${formatearMoneda(valorCompra)}', const Color(0xFF3B82F6)),
+                _badgeInfo('Valor venta (${_precioConIsv ? 'con' : 'sin'} ISV) ${formatearMoneda(valorVenta)}', const Color(0xFF16A34A)),
+              ],
+            );
+          },
+          loading: () => const SizedBox(),
+          error: (e, st) => const SizedBox(),
+        ),
+      ],
+    );
+  }
 
+  // Versión chica del selector-pill -pedido explícito del dueño: el
+  // original (46 de alto, 14/11 de padding, 13 de letra) ocupaba demasiado
+  // espacio para vivir arriba en una esquina junto al título.
+  Widget _pildoraChica<T>(T valor, T valorActual, ValueChanged<T> onTap, List<(String, T)> opciones) {
     return Container(
-      height: 46,
-      padding: const EdgeInsets.all(3),
+      height: 28,
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFB6BCC7)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [opcion('Con ISV', true), opcion('Sin ISV', false)],
+        children: [
+          for (final (texto, v) in opciones)
+            InkWell(
+              onTap: () => onTap(v),
+              borderRadius: BorderRadius.circular(6),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: valorActual == v ? const Color(0xFFC62828) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  texto,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: valorActual == v ? Colors.white : const Color(0xFF666A72),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _selectorEstado() {
-    Widget opcion(String texto, String valor) {
-      final activo = _filtroEstado == valor;
-      return InkWell(
-        onTap: () => setState(() => _filtroEstado = valor),
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: activo ? const Color(0xFFC62828) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            texto,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
-            ),
-          ),
-        ),
-      );
-    }
+  Widget _selectorPrecioIsvChico() {
+    return _pildoraChica<bool>(_precioConIsv, _precioConIsv, (v) => setState(() => _precioConIsv = v), const [('Con ISV', true), ('Sin ISV', false)]);
+  }
 
-    return Container(
-      height: 46,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [opcion('Todos', 'todos'), opcion('Activos', 'activos'), opcion('Inactivos', 'inactivos')],
-      ),
-    );
+  Widget _selectorEstadoChico() {
+    return _pildoraChica<String>(_filtroEstado, _filtroEstado, (v) => setState(() => _filtroEstado = v), const [('Activos', 'activos'), ('Inactivos', 'inactivos')]);
   }
 
   Widget _selectorCampoFiltro() {
