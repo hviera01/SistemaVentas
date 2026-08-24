@@ -6,41 +6,76 @@ import 'package:barcode/barcode.dart' as bc;
 import 'producto_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 
+/// Columna a columna, cómo sacar el valor de texto de un producto para
+/// cada clave de columna -mismas claves que usa ExportarInventarioOpcionesDialog
+/// (columnasInventarioDisponibles), compartidas entre Excel y PDF para no
+/// repetir el mapeo dos veces.
+Map<String, String> Function(ProductoModel) _valoresColumna(Map<String, String> mapaCategorias) {
+  return (p) => {
+    'codigo': p.codigo,
+    'codigoBarras': p.codigoBarras,
+    'nombre': p.nombre,
+    'descripcion': p.descripcion.isEmpty ? '-' : p.descripcion,
+    'categoria': mapaCategorias[p.idCategoria] ?? '-',
+    'existencia': p.stock.toString(),
+    'precioVenta': formatearMoneda(p.precioVenta),
+    'precioCompra': formatearMoneda(p.precioCompra),
+    'estado': p.estado ? 'Activo' : 'Inactivo',
+  };
+}
+
+const _etiquetasColumna = {
+  'codigo': 'Código',
+  'codigoBarras': 'Cód. Barras',
+  'nombre': 'Nombre',
+  'descripcion': 'Descripción',
+  'categoria': 'Categoría',
+  'existencia': 'Existencia',
+  'precioVenta': 'P. Venta',
+  'precioCompra': 'P. Compra',
+  'estado': 'Estado',
+};
+
+const _ordenColumnas = ['codigo', 'codigoBarras', 'nombre', 'descripcion', 'categoria', 'existencia', 'precioVenta', 'precioCompra', 'estado'];
+
 class ProductoExportService {
-  Uint8List generarExcel(List<ProductoModel> lista, Map<String, String> mapaCategorias) {
+  /// [columnas] null o vacío -> todas (compatibilidad con los llamadores
+  /// que no pasan nada, ej. generarPdfEtiquetasGrid no usa esto en absoluto).
+  Uint8List generarExcel(List<ProductoModel> lista, Map<String, String> mapaCategorias, {Set<String>? columnas}) {
+    final claves = _ordenColumnas.where((c) => columnas == null || columnas.contains(c)).toList();
+    final valores = _valoresColumna(mapaCategorias);
     final libro = xls.Excel.createExcel();
     final hoja = libro['Inventario'];
     libro.delete('Sheet1');
 
-    hoja.appendRow([
-      xls.TextCellValue('Código'),
-      xls.TextCellValue('Nombre'),
-      xls.TextCellValue('Descripción'),
-      xls.TextCellValue('Categoría'),
-      xls.TextCellValue('Existencia'),
-      xls.TextCellValue('Precio Venta'),
-      xls.TextCellValue('Precio Compra'),
-      xls.TextCellValue('Estado'),
-    ]);
+    hoja.appendRow([for (final c in claves) xls.TextCellValue(_etiquetasColumna[c]!)]);
 
     for (final p in lista) {
-      hoja.appendRow([
-        xls.TextCellValue(p.codigo),
-        xls.TextCellValue(p.nombre),
-        xls.TextCellValue(p.descripcion),
-        xls.TextCellValue(mapaCategorias[p.idCategoria] ?? '-'),
-        xls.TextCellValue(p.stock.toString()),
-        xls.TextCellValue(formatearMoneda(p.precioVenta)),
-        xls.TextCellValue(formatearMoneda(p.precioCompra)),
-        xls.TextCellValue(p.estado ? 'Activo' : 'Inactivo'),
-      ]);
+      final fila = valores(p);
+      hoja.appendRow([for (final c in claves) xls.TextCellValue(fila[c]!)]);
     }
 
     final bytes = libro.save();
     return Uint8List.fromList(bytes ?? []);
   }
 
-  Future<Uint8List> generarPdfInventario(List<ProductoModel> lista, Map<String, String> mapaCategorias) async {
+  Future<Uint8List> generarPdfInventario(List<ProductoModel> lista, Map<String, String> mapaCategorias, {Set<String>? columnas}) async {
+    final claves = _ordenColumnas.where((c) => columnas == null || columnas.contains(c)).toList();
+    final valores = _valoresColumna(mapaCategorias);
+    // Anchos relativos ya calibrados por columna (ver columnWidths más
+    // abajo) -se reusan solo los de las columnas elegidas, en el mismo
+    // orden, para que ninguna quede angosta por accidente.
+    const anchoPorColumna = {
+      'codigo': 1.2,
+      'codigoBarras': 1.6,
+      'nombre': 2.4,
+      'descripcion': 2.4,
+      'categoria': 1.6,
+      'existencia': 1.1,
+      'precioVenta': 1.3,
+      'precioCompra': 1.3,
+      'estado': 1.1,
+    };
     final doc = pw.Document();
     doc.addPage(
       pw.MultiPage(
@@ -57,18 +92,10 @@ class ProductoExportService {
         ),
         build: (context) => [
           pw.TableHelper.fromTextArray(
-            headers: ['Código', 'Nombre', 'Descripción', 'Categoría', 'Existencia', 'P. Venta', 'P. Compra', 'Estado'],
+            headers: [for (final c in claves) _etiquetasColumna[c]!],
             data: lista.map((p) {
-              return [
-                p.codigo,
-                p.nombre,
-                p.descripcion.isEmpty ? '-' : p.descripcion,
-                mapaCategorias[p.idCategoria] ?? '-',
-                p.stock.toString(),
-                formatearMoneda(p.precioVenta),
-                formatearMoneda(p.precioCompra),
-                p.estado ? 'Activo' : 'Inactivo',
-              ];
+              final fila = valores(p);
+              return [for (final c in claves) fila[c]!];
             }).toList(),
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: PdfColors.white),
             headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFC62828)),
@@ -77,16 +104,7 @@ class ProductoExportService {
             cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 7),
             oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFE8EAF0)),
             border: null,
-            columnWidths: {
-              0: const pw.FlexColumnWidth(1.2),
-              1: const pw.FlexColumnWidth(2.4),
-              2: const pw.FlexColumnWidth(2.4),
-              3: const pw.FlexColumnWidth(1.6),
-              4: const pw.FlexColumnWidth(1.1),
-              5: const pw.FlexColumnWidth(1.3),
-              6: const pw.FlexColumnWidth(1.3),
-              7: const pw.FlexColumnWidth(1.1),
-            },
+            columnWidths: {for (var i = 0; i < claves.length; i++) i: pw.FlexColumnWidth(anchoPorColumna[claves[i]]!)},
           ),
         ],
       ),

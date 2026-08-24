@@ -12,6 +12,7 @@ import '../../../../core/utils/exportador.dart';
 import '../widgets/producto_form_dialog.dart';
 import '../widgets/detalle_producto_dialog.dart';
 import '../widgets/importar_inventario_dialog.dart';
+import '../widgets/exportar_inventario_opciones_dialog.dart';
 import '../widgets/ajuste_stock_dialog.dart';
 import '../widgets/historial_stock_dialog.dart';
 import '../widgets/historial_movimientos_dialog.dart';
@@ -46,6 +47,36 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // códigos largos puede "acercarse" a varios productos distintos).
   bool _busquedaPorCodigoBarras = false;
   List<ProductoModel> _listaActual = [];
+  // 'todos' (default): no filtra por estado. Mismo estilo de selector-pill
+  // que _selectorPrecioIsv -pedido explícito del dueño.
+  String _filtroEstado = 'todos';
+  // Campo contra el que se compara el texto del buscador -'todo' (default)
+  // usa ProductoModel.textoBusqueda (código+códigoBarras+nombre+descripción
+  // combinados, como ya funcionaba), cualquier otro valor compara SOLO ese
+  // campo. Pedido explícito: "inicialmente siempre buscar en todo pero
+  // poder ponerlo" si hace falta acotar la búsqueda a un campo puntual.
+  String _campoFiltro = 'todo';
+
+  static const _opcionesCampoFiltro = [
+    ('todo', 'Todo'),
+    ('codigo', 'Código'),
+    ('codigoBarras', 'Código de barras'),
+    ('nombre', 'Nombre'),
+    ('descripcion', 'Descripción'),
+    ('categoria', 'Categoría'),
+  ];
+
+  bool _coincideBusqueda(ProductoModel p, String busqueda, Map<String, String> mapaCategorias) {
+    final texto = switch (_campoFiltro) {
+      'codigo' => p.codigo,
+      'codigoBarras' => p.codigoBarras,
+      'nombre' => p.nombre,
+      'descripcion' => p.descripcion,
+      'categoria' => mapaCategorias[p.idCategoria] ?? '',
+      _ => p.textoBusqueda,
+    };
+    return coincideFuzzy(texto, busqueda);
+  }
 
   /// Precio de venta a mostrar según la vista elegida (con o sin ISV). El
   /// precio guardado en el producto siempre incluye ISV.
@@ -165,21 +196,35 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
+  // Antes de exportar (Excel o PDF), deja elegir qué productos de la lista
+  // actual van al archivo y qué columnas incluir -pedido explícito del
+  // dueño-. Null si se cancela.
+  Future<ExportarInventarioOpciones?> _elegirOpcionesExport(Map<String, String> mapaCategorias, String titulo) {
+    return showDialog<ExportarInventarioOpciones>(
+      context: context,
+      builder: (context) => ExportarInventarioOpcionesDialog(productos: _listaActual, mapaCategorias: mapaCategorias, titulo: titulo),
+    );
+  }
+
   Future<void> _exportarExcel(Map<String, String> mapaCategorias) async {
     if (_listaActual.isEmpty) return;
-    final bytes = _servicioExport.generarExcel(_listaActual, mapaCategorias);
+    final opciones = await _elegirOpcionesExport(mapaCategorias, 'Exportar a Excel');
+    if (opciones == null || !mounted) return;
+    final bytes = _servicioExport.generarExcel(opciones.productos, mapaCategorias, columnas: opciones.columnas);
     await guardarOCompartirArchivo(bytes, 'inventario.xlsx');
   }
 
-  void _exportarPdf(Map<String, String> mapaCategorias) {
+  Future<void> _exportarPdf(Map<String, String> mapaCategorias) async {
     if (_listaActual.isEmpty) return;
+    final opciones = await _elegirOpcionesExport(mapaCategorias, 'Exportar a PDF');
+    if (opciones == null || !mounted) return;
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Inventario',
         nombreArchivo: 'inventario.pdf',
         generarPdf: () =>
-            _servicioExport.generarPdfInventario(_listaActual, mapaCategorias),
+            _servicioExport.generarPdfInventario(opciones.productos, mapaCategorias, columnas: opciones.columnas),
       ),
     );
   }
@@ -486,6 +531,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         child: _selectorVista(vista),
                       ),
                       _selectorPrecioIsv(),
+                      _selectorEstado(),
+                      SizedBox(
+                        width: esMovil ? constraints.maxWidth : 170,
+                        child: _selectorCampoFiltro(),
+                      ),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 340,
                         child: _buscador(busqueda),
@@ -657,6 +707,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     if (vista == 'bajo') {
                       lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
                     }
+                    if (_filtroEstado == 'activos') {
+                      lista = lista.where((p) => p.estado).toList();
+                    } else if (_filtroEstado == 'inactivos') {
+                      lista = lista.where((p) => !p.estado).toList();
+                    }
                     if (busqueda.isNotEmpty) {
                       lista = _busquedaPorCodigoBarras
                           ? lista
@@ -668,8 +723,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                 .toList()
                           : lista
                                 .where(
-                                  (p) =>
-                                      coincideFuzzy(p.textoBusqueda, busqueda),
+                                  (p) => _coincideBusqueda(p, busqueda, mapaCategorias),
                                 )
                                 .toList();
                     } else if (vista == 'filtrados') {
@@ -1549,6 +1603,73 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [opcion('Con ISV', true), opcion('Sin ISV', false)],
+      ),
+    );
+  }
+
+  Widget _selectorEstado() {
+    Widget opcion(String texto, String valor) {
+      final activo = _filtroEstado == valor;
+      return InkWell(
+        onTap: () => setState(() => _filtroEstado = valor),
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: activo ? const Color(0xFFC62828) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            texto,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: activo ? Colors.white : const Color(0xFF666A72),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [opcion('Todos', 'todos'), opcion('Activos', 'activos'), opcion('Inactivos', 'inactivos')],
+      ),
+    );
+  }
+
+  Widget _selectorCampoFiltro() {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _campoFiltro,
+          isExpanded: true,
+          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+          items: [
+            for (final (valor, etiqueta) in _opcionesCampoFiltro)
+              DropdownMenuItem(value: valor, child: Text('Filtrar por: $etiqueta')),
+          ],
+          onChanged: (v) {
+            if (v == null) return;
+            setState(() => _campoFiltro = v);
+          },
+        ),
       ),
     );
   }
