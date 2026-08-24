@@ -476,8 +476,13 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               costoBase: costoCombinado,
               // Precio de venta YA registrado del producto base -pedido
               // explícito del dueño: el calculador arranca mostrando ESE
-              // precio, no costo+0% de margen.
-              precioVentaInicial: _productoBase != null && _productoBase!.precioVenta > 0 ? _productoBase!.precioVenta : null,
+              // precio, no costo+0% de margen. ProductoModel.precioVenta se
+              // guarda CON ISV (ver CarritoVentaNotifier.agregarProductoDirecto,
+              // que lo usa directo como "precioConIsv"), pero acá se compara
+              // contra un costo SIN ISV (costoCombinado, viene de
+              // precioCompra/FIFO) -sin esta conversión el margen mostrado
+              // salía inflado por el 15% de ISV mezclado adentro.
+              precioVentaInicial: _productoBase != null && _productoBase!.precioVenta > 0 ? _productoBase!.precioVenta / 1.15 : null,
               onPrecioVentaCambiado: (_) {},
             ),
           ],

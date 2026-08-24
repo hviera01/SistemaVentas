@@ -15,16 +15,17 @@ import '../../../../core/widgets/campo_teclado_compacto.dart';
 ///   porcentaje = (precioVenta - costo) / costo * 100
 ///   precioVenta = costo * (1 + porcentaje / 100)
 ///
-/// Sincronización: los dos campos NO están conectados por `onChanged` -eso
-/// dispararía en cada tecla y sería imposible terminar de escribir un
-/// número sin que el otro campo se reescriba a mitad de camino-, sino por la
-/// misma convención de "confirmar al perder el foco" que ya usa el resto de
-/// la app (`FocusNode.addListener`, ver `_campoInlineNumero` en
-/// registrar_compra_screen.dart): al confirmar un campo, el OTRO se
-/// actualiza escribiendo directo su `TextEditingController.text` -una
-/// asignación de propiedad simple, sin pasar por un método que dispare foco
-/// ni reconstruya el campo- que es precisamente lo que evita el loop
-/// infinito.
+/// Sincronización: en vivo, en cada tecla, escuchando directo los
+/// TextEditingController (no `onChanged` del TextField ni FocusNode.
+/// addListener/confirmar-al-perder-el-foco, que era el mecanismo original
+/// -copiado de Compras- pero en la práctica no servía acá: el cajero
+/// cambia el precio y toca un botón de una sin "salir" del campo primero
+/// -no hay Tab, y tocar un botón no siempre cuenta como perder el foco
+/// antes de que se lea el valor-, así que el otro campo se quedaba
+/// desactualizado). Para evitar el loop infinito (A actualiza B, B
+/// notifica su listener, que actualizaría A de nuevo...) hay una bandera
+/// [_sincronizando] que cada listener revisa antes de hacer nada: mientras
+/// un campo está escribiendo en el OTRO, ese otro no reacciona.
 class CampoMargenPrecioVenta extends StatefulWidget {
   /// Costo contra el que se calcula el margen. Puede cambiar en caliente
   /// (ej. el cajero agrega otro tinte y el costo total sube): cuando eso
@@ -65,6 +66,7 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
   late final FocusNode _focusMargen;
   late final FocusNode _focusPrecio;
   late double _precioVenta;
+  bool _sincronizando = false;
 
   double get precioVentaVigente => _precioVenta;
 
@@ -74,14 +76,10 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
     _precioVenta = redondearMoneda(widget.precioVentaInicial ?? widget.costoBase);
     _ctrlPrecio = TextEditingController(text: _precioVenta.toStringAsFixed(2));
     _ctrlMargen = TextEditingController(text: _margenDesde(_precioVenta).toStringAsFixed(1));
-    _focusMargen = FocusNode()
-      ..addListener(() {
-        if (!_focusMargen.hasFocus) _confirmarMargen();
-      });
-    _focusPrecio = FocusNode()
-      ..addListener(() {
-        if (!_focusPrecio.hasFocus) _confirmarPrecio();
-      });
+    _focusMargen = FocusNode();
+    _focusPrecio = FocusNode();
+    _ctrlMargen.addListener(_confirmarMargen);
+    _ctrlPrecio.addListener(_confirmarPrecio);
   }
 
   @override
@@ -93,7 +91,9 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
     // Compras-, sin tocar el precio de venta solo y sin pisar lo que el
     // usuario esté escribiendo en ese momento.
     if (oldWidget.costoBase != widget.costoBase && !_focusMargen.hasFocus && !_focusPrecio.hasFocus) {
+      _sincronizando = true;
       setState(() => _ctrlMargen.text = _margenDesde(_precioVenta).toStringAsFixed(1));
+      _sincronizando = false;
     }
   }
 
@@ -108,40 +108,32 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
 
   double _margenDesde(double precio) => widget.costoBase > 0 ? ((precio - widget.costoBase) / widget.costoBase * 100) : 0.0;
 
+  // Escuchan directo los TextEditingController (dispara con cada tecla, no
+  // solo al perder el foco -ver la nota grande de la clase sobre por qué se
+  // cambió-). [_sincronizando] evita el loop: mientras uno de los dos está
+  // escribiendo en el controller del OTRO, ese otro no vuelve a reaccionar.
   void _confirmarMargen() {
+    if (_sincronizando) return;
     final valor = double.tryParse(_ctrlMargen.text.replaceAll(',', '').trim());
     if (valor == null) return;
     final nuevoPrecio = redondearMoneda(widget.costoBase * (1 + valor / 100));
-    setState(() {
-      _precioVenta = nuevoPrecio;
-      _ctrlPrecio.text = nuevoPrecio.toStringAsFixed(2);
-    });
+    _precioVenta = nuevoPrecio;
+    _sincronizando = true;
+    _ctrlPrecio.text = nuevoPrecio.toStringAsFixed(2);
+    _sincronizando = false;
     widget.onPrecioVentaCambiado(nuevoPrecio);
   }
 
   void _confirmarPrecio() {
+    if (_sincronizando) return;
     final valor = double.tryParse(_ctrlPrecio.text.replaceAll(',', '').trim());
     if (valor == null || valor < 0) return;
     final precio = redondearMoneda(valor);
-    setState(() {
-      _precioVenta = precio;
-      _ctrlMargen.text = _margenDesde(precio).toStringAsFixed(1);
-    });
+    _precioVenta = precio;
+    _sincronizando = true;
+    _ctrlMargen.text = _margenDesde(precio).toStringAsFixed(1);
+    _sincronizando = false;
     widget.onPrecioVentaCambiado(precio);
-  }
-
-  /// Fuerza la confirmación del campo que tenga el foco en este momento -por
-  /// si el usuario escribió un valor pero todavía no salió del campo (ni con
-  /// Tab ni tocando afuera)- y devuelve el precio de venta ya vigente. Pensado
-  /// para el botón "Agregar"/"Confirmar" de un diálogo que use este widget,
-  /// para no perder un valor recién tecleado que nunca llegó a perder el foco.
-  double confirmarYObtenerPrecioVenta() {
-    if (_focusMargen.hasFocus) {
-      _confirmarMargen();
-    } else if (_focusPrecio.hasFocus) {
-      _confirmarPrecio();
-    }
-    return _precioVenta;
   }
 
   @override
