@@ -1078,6 +1078,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       const SizedBox(height: 8),
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
+                        precioConIsv: true,
                         etiquetaPrecio: 'Precio/oz (c/ISV)',
                         onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
                       ),
@@ -3827,8 +3828,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
       var nuevasOnzas = onzasActuales;
       double? precioPorOnzaElegido;
-      final precioPorCuartoActual = _precioCarritoConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : (item.precioVenta as double);
-      final precioPorOnzaActual = _precioUnitarioMostrado(item, precioPorCuartoActual);
+      // Siempre con ISV acá (sin importar cómo esté la columna de precio
+      // del carrito en este momento): lo que confirma el calculador se
+      // aplica más abajo como precioConIsv directo (ver
+      // "precioPorCuartoConIsv" tras cerrar el diálogo), así que tiene que
+      // estar en esa misma unidad de punta a punta.
+      final precioActualPorCuartoConIsv = redondearMoneda((item.precioVenta as double) * 1.15);
+      final precioPorOnzaActual = _precioUnitarioMostrado(item, precioActualPorCuartoConIsv);
 
       final confirmado = await showDialog<bool>(
         context: context,
@@ -3852,6 +3858,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
                         precioVentaInicial: precioPorOnzaActual,
+                        precioConIsv: true,
                         etiquetaPrecio: 'Precio/oz (c/ISV)',
                         onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
                       ),
