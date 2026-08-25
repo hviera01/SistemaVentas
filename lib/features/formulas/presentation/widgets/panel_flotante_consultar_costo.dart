@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/widgets/route_panel_flotante.dart';
 import '../screens/consultar_costo_screen.dart';
 
 /// Controla un panel flotante de Consultar Costo (Venta, Colores) -pedido
@@ -9,24 +10,27 @@ import '../screens/consultar_costo_screen.dart';
 /// cajero tenía cargado) y su "tocar afuera" solo sabe cerrar del todo, no
 /// minimizar.
 ///
-/// Se implementa empujando una Route transparente (PageRouteBuilder con
-/// opaque:false) al Navigator RAÍZ, no insertando un OverlayEntry suelto a
-/// mano -eso fue lo que se probó primero y causaba que "Buscar producto"/
-/// "Buscar fórmula" (abiertos con showDialog DESDE ADENTRO de este panel)
-/// terminaran renderizando DETRÁS del panel: showDialog usa por defecto el
-/// Navigator raíz para apilar sus diálogos, y un OverlayEntry insertado a
-/// mano no participa de ese mismo orden -Flutter solo garantiza que una
-/// Route nueva quede arriba de las Routes anteriores DEL MISMO Navigator,
-/// no arriba de cualquier OverlayEntry suelto que haya por ahí-. Al ser
-/// también una Route de ese mismo Navigator, cualquier diálogo que se abra
-/// después (sea de este panel o de la pantalla de atrás) queda ordenado
-/// correctamente arriba, con las mismas reglas de siempre.
+/// Se implementa empujando una Route transparente (RoutePanelFlotante, ver
+/// core/widgets/route_panel_flotante.dart, opaque:false) al Navigator RAÍZ,
+/// no insertando un OverlayEntry suelto a mano -eso fue lo que se probó
+/// primero y causaba que "Buscar producto"/"Buscar fórmula" (abiertos con
+/// showDialog DESDE ADENTRO de este panel) terminaran renderizando DETRÁS
+/// del panel: showDialog usa por defecto el Navigator raíz para apilar sus
+/// diálogos, y un OverlayEntry insertado a mano no participa de ese mismo
+/// orden -Flutter solo garantiza que una Route nueva quede arriba de las
+/// Routes anteriores DEL MISMO Navigator, no arriba de cualquier
+/// OverlayEntry suelto que haya por ahí-. Al ser también una Route de ese
+/// mismo Navigator, cualquier diálogo que se abra después (sea de este
+/// panel o de la pantalla de atrás) queda ordenado correctamente arriba,
+/// con las mismas reglas de siempre. RoutePanelFlotante en particular (y no
+/// PageRouteBuilder/ModalRoute) es lo que evita el congelamiento de toda la
+/// app al minimizar -ver el doc grande de esa clase para el porqué exacto-.
 ///
 /// - [abrir] empuja el panel una sola vez; si ya está abierto (minimizado
 ///   o no), lo vuelve a mostrar en vez de crear uno nuevo.
 /// - [minimizar] lo oculta pero mantiene su contenido vivo -Consultar Costo
-///   con lo que se tenía cargado, gracias a Visibility(maintainState:true)-,
-///   Y deja de capturar toques (así se puede seguir usando la pantalla de
+///   con lo que se tenía cargado, ver PanelFlotanteConsultarCosto.build- Y
+///   deja de capturar toques (así se puede seguir usando la pantalla de
 ///   atrás mientras el panel sigue "abierto" técnicamente, solo invisible).
 /// - [cerrar] sí lo descarta del todo (el "X" del panel): saca la Route del
 ///   Navigator, ahí sí se pierde el State.
@@ -35,7 +39,7 @@ import '../screens/consultar_costo_screen.dart';
 /// Quien use este controlador tiene que llamar [dispose] cuando su propia
 /// pantalla se destruye, para no dejar la Route huérfana.
 class ConsultarCostoFlotanteController {
-  Route<void>? _route;
+  RoutePanelFlotante? _route;
   final ValueNotifier<bool> minimizado = ValueNotifier(false);
 
   void abrir(BuildContext context) {
@@ -44,12 +48,8 @@ class ConsultarCostoFlotanteController {
       return;
     }
     minimizado.value = false;
-    final route = PageRouteBuilder<void>(
-      opaque: false,
-      barrierDismissible: false,
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
-      pageBuilder: (context, animation, secondaryAnimation) => PanelFlotanteConsultarCosto(controlador: this),
+    final route = RoutePanelFlotante(
+      builder: (context) => PanelFlotanteConsultarCosto(controlador: this),
     );
     _route = route;
     Navigator.of(context, rootNavigator: true).push(route).whenComplete(() => _route = null);
@@ -92,19 +92,16 @@ class PanelFlotanteConsultarCosto extends StatelessWidget {
             //
             // ExcludeSemantics + IgnorePointer + Opacity en vez de
             // Visibility(maintainState:true) -que por dentro envuelve en un
-            // Offstage-: Offstage SÍ mantiene el subárbol completo "vivo"
-            // (sigue en layout, sigue en el árbol de semántica/accesibilidad
-            // y en Flutter Web como nodos del DOM), incluidos los TextField
-            // de ConsultarCostoScreen -que ahí adentro pueden seguir
-            // reclamando foco de teclado aunque estén invisibles. Eso era
-            // lo que dejaba el sistema entero "congelado" al minimizar
-            // -pedido explícito del dueño, bug real reportado-: no es que
-            // se trabara el hilo de UI, es que el foco de teclado quedaba
-            // atrapado en un campo invisible que ya no se podía tocar para
-            // sacarlo de ahí. Opacity(0) + IgnorePointer + ExcludeSemantics
-            // logra lo mismo (mantener el State vivo, nada se pinta, nada
-            // se toca) pero además saca el subárbol del foco/accesibilidad
-            // mientras está minimizado.
+            // Offstage, que mantiene el subárbol completo "vivo" en layout/
+            // semántica/DOM- mantiene el State del panel (lo que el cajero
+            // tenía cargado) sin pintarlo ni dejarlo tocable mientras está
+            // minimizado. IMPORTANTE: esto por sí solo NO alcanzaba para
+            // arreglar el congelamiento de toda la app al minimizar -se
+            // probó y el dueño confirmó que seguía pasando incluso con este
+            // cambio-. La causa real era otra, más abajo en la pila: la
+            // Route en la que vive este panel. El fix definitivo está en
+            // cómo [ConsultarCostoFlotanteController.abrir] empuja la Route
+            // -ver RoutePanelFlotante en core/widgets/route_panel_flotante.dart-.
             Positioned.fill(
               child: ExcludeSemantics(
                 excluding: minimizado,

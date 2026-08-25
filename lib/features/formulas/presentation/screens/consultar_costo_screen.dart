@@ -477,14 +477,12 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               // Precio de venta YA registrado del producto base, el mismo
               // "precio final" que se ve en Inventario -pedido explícito
               // del dueño: el calculador arranca mostrando ESE precio tal
-              // cual, no costo+0% de margen ni un derivado. Se muestra sin
-              // convertir (ProductoModel.precioVenta ya está con ISV
-              // incluido, igual que en Inventario) y precioConIsv:true le
-              // dice al widget que convierta por dentro SOLO para calcular
-              // el margen contra costoCombinado (que es sin ISV) -así el
-              // número que ve el cajero siempre coincide con Inventario.
+              // cual, no costo+0% de margen ni un derivado. costoCombinado
+              // (costoTinte + _productoBase.precioCompra) también es con ISV
+              // -el costo FIFO de cada lote se guarda con ISV incluido, ver
+              // CompraRepository- igual que precioVenta, así que se comparan
+              // directo sin convertir nada.
               precioVentaInicial: _productoBase != null && _productoBase!.precioVenta > 0 ? _productoBase!.precioVenta : null,
-              precioConIsv: true,
               etiquetaPrecio: 'Precio de venta (c/ISV)',
               onPrecioVentaCambiado: (_) {},
             ),

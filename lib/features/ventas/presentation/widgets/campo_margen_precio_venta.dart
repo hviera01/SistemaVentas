@@ -34,30 +34,22 @@ class CampoMargenPrecioVenta extends StatefulWidget {
   /// cuando cambia el costo unitario o el descuento de línea-.
   final double costoBase;
 
-  /// Precio de venta inicial a mostrar/partir, en la misma unidad que
-  /// declara [precioConIsv]. Si es null, arranca en el propio [costoBase]
-  /// (0% de margen).
+  /// Precio de venta inicial a mostrar/partir, con ISV incluido igual que
+  /// [costoBase]. Si es null, arranca en el propio [costoBase] (0% de
+  /// margen).
   final double? precioVentaInicial;
 
-  /// [costoBase] SIEMPRE es sin ISV (el costo real, FIFO/precioCompra,
-  /// nunca lleva impuesto). El campo de precio, en cambio, puede mostrarse
-  /// en cualquiera de las dos unidades según de dónde salga el precio que
-  /// el cajero reconoce -ej. el "Precio de venta" que ya tiene cargado un
-  /// producto en Inventario (ProductoModel.precioVenta) se guarda CON ISV
-  /// incluido, mientras que el precio de una línea de venta ya en el
-  /// carrito (ItemVentaModel.precioVenta) se maneja SIN ISV puertas
-  /// adentro-. [precioConIsv] en true hace que el campo muestre/edite el
-  /// precio CON ISV pero siga calculando el margen contra el costo (sin
-  /// ISV) convirtiendo por dentro -si no, un precio con ISV comparado
-  /// directo contra un costo sin ISV infla el margen mostrado como si el
-  /// 15% de impuesto fuera ganancia real.
-  final bool precioConIsv;
-
-  /// Se llama cada vez que se confirma un cambio en cualquiera de los dos
-  /// campos (margen o precio), con el precio de venta resultante ya
-  /// recalculado -en la misma unidad que [precioVentaInicial]/[precioConIsv]-,
-  /// así que el que use este widget puede leer el precio vigente sin
-  /// necesidad de un controller propio.
+  /// Comparación DIRECTA contra [costoBase], sin convertir nada por ISV -
+  /// mismo criterio EXACTO que Compras (ver _costoFinalItem/_margenActual en
+  /// registrar_compra_screen.dart): el costo que usa toda esta app (lotes de
+  /// compra, FIFO, `item.precioCompraUsado`, `ProductoModel.precioCompra`)
+  /// YA se guarda CON ISV incluido -ver CompraRepository.registrarCompra,
+  /// `precioFinalConIsv = precioCompra * (1-descuento) * (1+isv/100)`, eso
+  /// es lo que se graba como costoUnitario de cada lote-, y el precio de
+  /// venta que se muestra acá también es con ISV. Antes este widget SÍ
+  /// intentaba convertir (asumiendo que costoBase era sin ISV), lo que
+  /// mezclaba mal las unidades y mostraba un margen negativo con precios
+  /// que en realidad sí dejaban ganancia -bug real reportado por el dueño-.
   final ValueChanged<double> onPrecioVentaCambiado;
 
   final String etiquetaMargen;
@@ -67,7 +59,6 @@ class CampoMargenPrecioVenta extends StatefulWidget {
     super.key,
     required this.costoBase,
     this.precioVentaInicial,
-    this.precioConIsv = false,
     required this.onPrecioVentaCambiado,
     this.etiquetaMargen = 'Margen %',
     this.etiquetaPrecio = 'Precio de venta',
@@ -123,18 +114,13 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
     super.dispose();
   }
 
-  // El margen siempre se calcula sin ISV de los dos lados (costoBase ya es
-  // sin ISV siempre; [precio] puede venir con ISV -ver precioConIsv-, así
-  // que se convierte antes de comparar).
   double _margenDesde(double precio) {
     if (widget.costoBase <= 0) return 0.0;
-    final precioSinIsv = widget.precioConIsv ? precio / 1.15 : precio;
-    return (precioSinIsv - widget.costoBase) / widget.costoBase * 100;
+    return (precio - widget.costoBase) / widget.costoBase * 100;
   }
 
   double _precioDesdeMargen(double margen) {
-    final precioSinIsv = widget.costoBase * (1 + margen / 100);
-    return redondearMoneda(widget.precioConIsv ? precioSinIsv * 1.15 : precioSinIsv);
+    return redondearMoneda(widget.costoBase * (1 + margen / 100));
   }
 
   // Escuchan directo los TextEditingController (dispara con cada tecla, no

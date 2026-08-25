@@ -449,11 +449,10 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                 costoBase: costoTotalLinea,
                 // precioVentaProductoBase ya viene con ISV (ver
                 // RegistrarVentaScreen, "el precio final" -pedido explícito
-                // del dueño-), así que hay que avisarle al widget con
-                // precioConIsv:true para que compare bien el margen contra
-                // costoTotalLinea, que siempre es sin ISV.
+                // del dueño-); costoTotalLinea también es con ISV (viene de
+                // costos FIFO, ver CampoMargenPrecioVenta), así que se
+                // comparan directo sin convertir nada.
                 precioVentaInicial: precioVentaProductoBase > 0 ? precioVentaProductoBase : null,
-                precioConIsv: true,
                 etiquetaPrecio: 'Precio de venta (c/ISV)',
                 onPrecioVentaCambiado: (_) {},
               ),

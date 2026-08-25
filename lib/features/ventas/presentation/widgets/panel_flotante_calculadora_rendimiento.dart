@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/widgets/route_panel_flotante.dart';
 import '../../data/rendimiento_pintura_data.dart';
 
 /// Calculadora de cuánta pintura hace falta según el área a pintar, como
@@ -7,12 +8,14 @@ import '../../data/rendimiento_pintura_data.dart';
 /// calculadora en Registrar Venta, una ventana igual que lo de Consulta de
 /// Costos que se pueda minimizar". Mismo patrón EXACTO que
 /// ConsultarCostoFlotanteController (ver panel_flotante_consultar_costo.dart,
-/// ya corregido y verificado): Route transparente al Navigator raíz -no un
-/// OverlayEntry suelto, eso fue el bug real corregido ahí y no hay que
-/// repetirlo acá-, minimizar mantiene el contenido vivo
-/// (Visibility.maintainState), cerrar sí lo descarta, tocar afuera minimiza.
+/// ya corregido y verificado): RoutePanelFlotante al Navigator raíz -no un
+/// OverlayEntry suelto (bug de orden ya corregido ahí) ni PageRouteBuilder/
+/// ModalRoute (bug de congelamiento al minimizar, ver el doc grande de
+/// RoutePanelFlotante en core/widgets/route_panel_flotante.dart para el
+/// porqué exacto)-, minimizar mantiene el contenido vivo, cerrar sí lo
+/// descarta, tocar afuera minimiza.
 class CalculadoraRendimientoFlotanteController {
-  Route<void>? _route;
+  RoutePanelFlotante? _route;
   final ValueNotifier<bool> minimizado = ValueNotifier(false);
 
   void abrir(BuildContext context) {
@@ -21,12 +24,8 @@ class CalculadoraRendimientoFlotanteController {
       return;
     }
     minimizado.value = false;
-    final route = PageRouteBuilder<void>(
-      opaque: false,
-      barrierDismissible: false,
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
-      pageBuilder: (context, animation, secondaryAnimation) => PanelFlotanteCalculadoraRendimiento(controlador: this),
+    final route = RoutePanelFlotante(
+      builder: (context) => PanelFlotanteCalculadoraRendimiento(controlador: this),
     );
     _route = route;
     Navigator.of(context, rootNavigator: true).push(route).whenComplete(() => _route = null);
@@ -64,11 +63,14 @@ class PanelFlotanteCalculadoraRendimiento extends StatelessWidget {
           children: [
             // Positioned.fill tiene que ser hijo DIRECTO del Stack, y
             // ExcludeSemantics+IgnorePointer+Opacity en vez de
-            // Visibility(maintainState:true) -ver la nota grande en
-            // panel_flotante_consultar_costo.dart: Offstage (lo que
-            // Visibility usa por dentro) deja los TextField del formulario
-            // "vivos" y con foco reclamable aunque estén invisibles, que
-            // era lo que dejaba el sistema entero atascado al minimizar.
+            // Visibility(maintainState:true) mantiene el State del
+            // formulario sin pintarlo ni dejarlo tocable mientras está
+            // minimizado -ver panel_flotante_consultar_costo.dart. El
+            // congelamiento real de toda la app al minimizar NO era esto:
+            // era la Route (ModalRoute inserta una barrera invisible de
+            // pantalla completa aparte del contenido); el fix real está en
+            // RoutePanelFlotante (core/widgets/route_panel_flotante.dart),
+            // usada arriba en [abrir].
             Positioned.fill(
               child: ExcludeSemantics(
                 excluding: minimizado,

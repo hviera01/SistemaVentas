@@ -1082,7 +1082,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       const SizedBox(height: 8),
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
-                        precioConIsv: true,
                         etiquetaPrecio: 'Precio/oz (c/ISV)',
                         onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
                       ),
@@ -3902,7 +3901,6 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
                         precioVentaInicial: precioPorOnzaActual,
-                        precioConIsv: true,
                         etiquetaPrecio: 'Precio/oz (c/ISV)',
                         onPrecioVentaCambiado: (v) => precioPorOnzaElegido = v,
                       ),
