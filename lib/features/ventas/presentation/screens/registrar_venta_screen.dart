@@ -41,6 +41,7 @@ import '../../../../core/services/impresora_usb_windows_service.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/buscar_cliente_dialog.dart';
@@ -1368,10 +1369,52 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// hasta ahora solo alcanzable desde Colores) directo desde la venta -pedido
   /// explícito del dueño-: para que la cajera pueda chequear cuánto cuesta un
   /// color mientras atiende al cliente, sin salirse de la pantalla de venta.
-  /// Es de solo lectura (no toca el carrito ni el stock), así que un simple
-  /// push normal alcanza.
+  /// Es de solo lectura (no toca el carrito ni el stock).
+  ///
+  /// Antes era un Navigator.push de pantalla completa (MaterialPageRoute):
+  /// tapaba entera la venta en curso para una consulta rápida, y el botón de
+  /// "atrás" propio de ConsultarCostoScreen (pensado para cuando SÍ es una
+  /// pantalla completa navegable) terminaba sin verse bien en ese contexto
+  /// -pedido explícito del dueño: "no en pantalla completa" y "el botón de
+  /// cerrar no sale". Ahora es un diálogo de tamaño fijo (no pantalla
+  /// completa) con su propio botón "X" siempre visible en la esquina, mismo
+  /// patrón que el resto de los diálogos de la app -esDialogo:false para que
+  /// ConsultarCostoScreen no dibuje su propio Scaffold/flecha de atrás,
+  /// ese chrome ahora lo pone este diálogo.
   Future<void> _abrirConsultarCosto() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ConsultarCostoScreen()));
+    final tamano = MediaQuery.sizeOf(context);
+    final ancho = tamano.width - 48 < 820 ? tamano.width - 48 : 820.0;
+    final alto = tamano.height - 48 < 760 ? tamano.height - 48 : 760.0;
+    await showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: SizedBox(
+          width: ancho,
+          height: alto,
+          child: Container(
+            decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(20)),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text('Consultar Costo', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
+                      IconButton(icon: const Icon(Icons.close), tooltip: 'Cerrar', onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                ),
+                const Expanded(child: ConsultarCostoScreen(esDialogo: false)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Busca un producto por código exacto (código de barras o código interno)
@@ -1993,6 +2036,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // ese caso la venta NO quedó registrada — con opción de reintentar sin
     // tener que cargar todo de nuevo.
     _limpiarTodo();
+    // Check verde solo para una venta real -pedido explícito del dueño-,
+    // no para una cotización (no es una transacción realizada todavía, no
+    // cobra ni mueve stock).
+    if (!esCotizacion && mounted) mostrarExitoTransaccion(context);
 
     unawaited(_guardarVentaEnSegundoPlano(
       ventaRepo: ventaRepo,
@@ -2340,6 +2387,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   Widget build(BuildContext context) {
     final carrito = ref.watch(carritoVentaProvider);
+    // _esCategoriaPintura/_categoriaControlaStock leen categoriasStreamProvider
+    // con ref.read() -no pueden usar ref.watch() ahí porque también se
+    // llaman desde fuera de build (ej. al agregar un producto)-, así que
+    // sin este watch acá arriba la pantalla nunca se enteraba de que las
+    // categorías ya habían terminado de cargar si todavía no estaban listas
+    // en el primer build: el botón de "Código Color" se quedaba oculto para
+    // siempre en esa sesión -bug real reportado al reabrir una venta en
+    // espera con líneas de pintura como la primera acción del día, antes de
+    // que cualquier otra pantalla hubiera "calentado" ese provider-.
+    ref.watch(categoriasStreamProvider);
     ref.listen<CarritoVentaState>(carritoVentaProvider, (previous, next) {
       _programarAutoguardadoEnEspera(next);
       _verificarCreditoVencido(next);
@@ -3759,8 +3816,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           // tinte) -pedido explícito: el calculador de margen/precio tiene
           // que arrancar mostrando ESE precio, no costo+0% de margen, para
           // que el cajero vea de una si con el precio que ya tenía pensado
-          // alcanza para cubrir también el tinte.
-          precioVentaProductoBase: item.precioVenta as double,
+          // alcanza para cubrir también el tinte. Con ISV -"el precio
+          // final", pedido explícito del dueño: item.precioVenta se
+          // guarda sin ISV puertas adentro del carrito (ver
+          // CodigosColorDialog.precioVentaProductoBase/precioConIsv).
+          precioVentaProductoBase: redondearMoneda((item.precioVenta as double) * 1.15),
         ),
       );
       if (resultado == null) return;

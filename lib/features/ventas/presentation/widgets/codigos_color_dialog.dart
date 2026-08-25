@@ -447,7 +447,14 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
               // mismo permiso especial que cualquier otro cambio de precio.
               CampoMargenPrecioVenta(
                 costoBase: costoTotalLinea,
+                // precioVentaProductoBase ya viene con ISV (ver
+                // RegistrarVentaScreen, "el precio final" -pedido explícito
+                // del dueño-), así que hay que avisarle al widget con
+                // precioConIsv:true para que compare bien el margen contra
+                // costoTotalLinea, que siempre es sin ISV.
                 precioVentaInicial: precioVentaProductoBase > 0 ? precioVentaProductoBase : null,
+                precioConIsv: true,
+                etiquetaPrecio: 'Precio de venta (c/ISV)',
                 onPrecioVentaCambiado: (_) {},
               ),
             ],
