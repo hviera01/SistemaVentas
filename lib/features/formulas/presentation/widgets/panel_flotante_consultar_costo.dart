@@ -63,13 +63,23 @@ class PanelFlotanteConsultarCosto extends StatelessWidget {
       builder: (context, minimizado, _) {
         return Stack(
           children: [
-            // maintainState:true es lo que hace que ConsultarCostoScreen
-            // nunca se destruya mientras el panel exista -minimizar solo
-            // deja de pintarlo/tocarlo, no lo saca del árbol.
-            Visibility(
-              visible: !minimizado,
-              maintainState: true,
-              child: Positioned.fill(
+            // Positioned.fill tiene que ser hijo DIRECTO del Stack -Visibility
+            // con maintainState:true envuelve a su hijo en un Offstage por
+            // dentro (ver el propio código fuente de Visibility), así que
+            // ponerla ENCIMA del Positioned rompía el mecanismo de Stack
+            // para ubicarlo (Positioned esperaba que el Stack fuera su
+            // padre directo, y en realidad terminaba siendo Offstage) -esto
+            // era el "Stack Overflow" real reportado al abrir el panel. Acá
+            // el Positioned.fill queda afuera, y Visibility adentro
+            // envolviendo un Stack normal (no un Positioned), donde sí es
+            // inofensivo.
+            Positioned.fill(
+              child: Visibility(
+                visible: !minimizado,
+                maintainState: true,
+                // ConsultarCostoScreen nunca se destruye mientras el panel
+                // exista -minimizar solo deja de pintarlo/tocarlo, no lo
+                // saca del árbol.
                 child: Stack(
                   children: [
                     Positioned.fill(
