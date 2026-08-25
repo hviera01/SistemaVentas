@@ -62,28 +62,41 @@ class PanelFlotanteCalculadoraRendimiento extends StatelessWidget {
       builder: (context, minimizado, _) {
         return Stack(
           children: [
-            // Positioned.fill tiene que ser hijo DIRECTO del Stack -ver la
-            // nota grande en panel_flotante_consultar_costo.dart sobre por
-            // qué (Visibility con maintainState envuelve en Offstage por
-            // dentro, y eso rompe Positioned si queda arriba en vez de
-            // abajo de Visibility).
+            // Positioned.fill tiene que ser hijo DIRECTO del Stack, y
+            // ExcludeSemantics+IgnorePointer+Opacity en vez de
+            // Visibility(maintainState:true) -ver la nota grande en
+            // panel_flotante_consultar_costo.dart: Offstage (lo que
+            // Visibility usa por dentro) deja los TextField del formulario
+            // "vivos" y con foco reclamable aunque estén invisibles, que
+            // era lo que dejaba el sistema entero atascado al minimizar.
             Positioned.fill(
-              child: Visibility(
-                visible: !minimizado,
-                maintainState: true,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: controlador.minimizarPanel,
-                        child: Container(color: Colors.black.withValues(alpha: 0.4)),
+              child: ExcludeSemantics(
+                excluding: minimizado,
+                child: IgnorePointer(
+                  ignoring: minimizado,
+                  child: Opacity(
+                    opacity: minimizado ? 0 : 1,
+                    // Sin Material acá el texto de adentro sale con el
+                    // subrayado amarillo doble de "falta ancestro Material"
+                    // -esta Route no es MaterialPageRoute, no lo trae solo.
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: controlador.minimizarPanel,
+                              child: Container(color: Colors.black.withValues(alpha: 0.4)),
+                            ),
+                          ),
+                          Center(
+                            child: GestureDetector(onTap: () {}, child: _ContenidoCalculadora(controlador: controlador)),
+                          ),
+                        ],
                       ),
                     ),
-                    Center(
-                      child: GestureDetector(onTap: () {}, child: _ContenidoCalculadora(controlador: controlador)),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

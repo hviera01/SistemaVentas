@@ -60,29 +60,40 @@ class _ExitoTransaccionOverlayState extends State<_ExitoTransaccionOverlay> with
             opacity: _opacidad,
             child: ScaleTransition(
               scale: _escala,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 26),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 30, offset: const Offset(0, 12))],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 68,
-                      height: 68,
-                      decoration: const BoxDecoration(color: Color(0xFF1E9E5A), shape: BoxShape.circle),
-                      child: const Icon(Icons.check, color: Colors.white, size: 40),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      widget.mensaje,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
-                    ),
-                  ],
+              // Material(type: transparency): este widget se inserta con un
+              // OverlayEntry crudo, no con showDialog/MaterialPageRoute -
+              // esos SIEMPRE envuelven su contenido en un Material por
+              // dentro, pero un OverlayEntry a mano no. Sin esto, el Text de
+              // abajo no encuentra un ancestro Material y Flutter lo marca
+              // con un subrayado amarillo doble -pedido explícito del
+              // dueño: "esas remarcaciones de amarillo no me gustan", eso
+              // es justo lo que eran, no un dato mal calculado.
+              child: Material(
+                type: MaterialType.transparency,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 26),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 30, offset: const Offset(0, 12))],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: const BoxDecoration(color: Color(0xFF1E9E5A), shape: BoxShape.circle),
+                        child: const Icon(Icons.check, color: Colors.white, size: 40),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        widget.mensaje,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -85,39 +85,62 @@ class PanelFlotanteConsultarCosto extends StatelessWidget {
       builder: (context, minimizado, _) {
         return Stack(
           children: [
-            // Positioned.fill tiene que ser hijo DIRECTO del Stack -Visibility
-            // con maintainState:true envuelve a su hijo en un Offstage por
-            // dentro (ver el propio código fuente de Visibility), así que
-            // ponerla ENCIMA del Positioned rompía el mecanismo de Stack
-            // para ubicarlo (Positioned esperaba que el Stack fuera su
-            // padre directo, y en realidad terminaba siendo Offstage) -esto
-            // era el "Stack Overflow" real reportado al abrir el panel. Acá
-            // el Positioned.fill queda afuera, y Visibility adentro
-            // envolviendo un Stack normal (no un Positioned), donde sí es
-            // inofensivo.
+            // Positioned.fill tiene que ser hijo DIRECTO del Stack -ver la
+            // nota grande más abajo sobre por qué ya no se usa Visibility/
+            // Offstage acá (el "Stack Overflow" que eso causaba ya está
+            // resuelto de otra forma, no hacía falta Visibility para nada).
+            //
+            // ExcludeSemantics + IgnorePointer + Opacity en vez de
+            // Visibility(maintainState:true) -que por dentro envuelve en un
+            // Offstage-: Offstage SÍ mantiene el subárbol completo "vivo"
+            // (sigue en layout, sigue en el árbol de semántica/accesibilidad
+            // y en Flutter Web como nodos del DOM), incluidos los TextField
+            // de ConsultarCostoScreen -que ahí adentro pueden seguir
+            // reclamando foco de teclado aunque estén invisibles. Eso era
+            // lo que dejaba el sistema entero "congelado" al minimizar
+            // -pedido explícito del dueño, bug real reportado-: no es que
+            // se trabara el hilo de UI, es que el foco de teclado quedaba
+            // atrapado en un campo invisible que ya no se podía tocar para
+            // sacarlo de ahí. Opacity(0) + IgnorePointer + ExcludeSemantics
+            // logra lo mismo (mantener el State vivo, nada se pinta, nada
+            // se toca) pero además saca el subárbol del foco/accesibilidad
+            // mientras está minimizado.
             Positioned.fill(
-              child: Visibility(
-                visible: !minimizado,
-                maintainState: true,
-                // ConsultarCostoScreen nunca se destruye mientras el panel
-                // exista -minimizar solo deja de pintarlo/tocarlo, no lo
-                // saca del árbol.
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: controlador.minimizarPanel,
-                        child: Container(color: Colors.black.withValues(alpha: 0.4)),
+              child: ExcludeSemantics(
+                excluding: minimizado,
+                child: IgnorePointer(
+                  ignoring: minimizado,
+                  child: Opacity(
+                    opacity: minimizado ? 0 : 1,
+                    // Material(type: transparency): esta Route se empuja con
+                    // PageRouteBuilder genérico, no con MaterialPageRoute -
+                    // ese sí envuelve su contenido en un Material solo, este
+                    // no-, así que sin esto el texto de adentro (Consultar
+                    // Costo entero) no encuentra un ancestro Material y sale
+                    // con el subrayado amarillo doble de Flutter -pedido
+                    // explícito del dueño, eso era lo que veía, no un dato
+                    // mal calculado.
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: controlador.minimizarPanel,
+                              child: Container(color: Colors.black.withValues(alpha: 0.4)),
+                            ),
+                          ),
+                          Center(
+                            // Absorbe el tap para que tocar DENTRO del panel no
+                            // burbujee hasta el GestureDetector de arriba y lo
+                            // minimice sin querer.
+                            child: GestureDetector(onTap: () {}, child: _panel(context)),
+                          ),
+                        ],
                       ),
                     ),
-                    Center(
-                      // Absorbe el tap para que tocar DENTRO del panel no
-                      // burbujee hasta el GestureDetector de arriba y lo
-                      // minimice sin querer.
-                      child: GestureDetector(onTap: () {}, child: _panel(context)),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
