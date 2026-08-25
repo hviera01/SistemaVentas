@@ -2,37 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../screens/consultar_costo_screen.dart';
 
-/// Controla un panel flotante de Consultar Costo insertado directo en el
-/// Overlay de la pantalla que lo abre (Venta, Colores) -pedido explícito
-/// del dueño: "no en pantalla completa" y "que se pueda minimizar para
-/// hacer otra cosa". No usa Navigator/showDialog: un diálogo modal normal
-/// destruye el State del contenido al cerrarlo (perdiendo lo que el cajero
-/// tenía cargado) y su "tocar afuera" solo sabe cerrar del todo, no
-/// minimizar. Acá:
-/// - [abrir] inserta el panel una sola vez; si ya está abierto (minimizado
+/// Controla un panel flotante de Consultar Costo (Venta, Colores) -pedido
+/// explícito del dueño: "no en pantalla completa" y "que se pueda
+/// minimizar para hacer otra cosa". No usa showDialog normal: un diálogo
+/// modal destruye el State del contenido al cerrarlo (perdiendo lo que el
+/// cajero tenía cargado) y su "tocar afuera" solo sabe cerrar del todo, no
+/// minimizar.
+///
+/// Se implementa empujando una Route transparente (PageRouteBuilder con
+/// opaque:false) al Navigator RAÍZ, no insertando un OverlayEntry suelto a
+/// mano -eso fue lo que se probó primero y causaba que "Buscar producto"/
+/// "Buscar fórmula" (abiertos con showDialog DESDE ADENTRO de este panel)
+/// terminaran renderizando DETRÁS del panel: showDialog usa por defecto el
+/// Navigator raíz para apilar sus diálogos, y un OverlayEntry insertado a
+/// mano no participa de ese mismo orden -Flutter solo garantiza que una
+/// Route nueva quede arriba de las Routes anteriores DEL MISMO Navigator,
+/// no arriba de cualquier OverlayEntry suelto que haya por ahí-. Al ser
+/// también una Route de ese mismo Navigator, cualquier diálogo que se abra
+/// después (sea de este panel o de la pantalla de atrás) queda ordenado
+/// correctamente arriba, con las mismas reglas de siempre.
+///
+/// - [abrir] empuja el panel una sola vez; si ya está abierto (minimizado
 ///   o no), lo vuelve a mostrar en vez de crear uno nuevo.
 /// - [minimizar] lo oculta pero mantiene su contenido vivo -Consultar Costo
-///   con lo que se tenía cargado, gracias a Visibility(maintainState:true)-
-///   así que volver a abrirlo lo deja tal cual estaba.
-/// - [cerrar] sí lo descarta del todo (el "X" del panel).
+///   con lo que se tenía cargado, gracias a Visibility(maintainState:true)-,
+///   Y deja de capturar toques (así se puede seguir usando la pantalla de
+///   atrás mientras el panel sigue "abierto" técnicamente, solo invisible).
+/// - [cerrar] sí lo descarta del todo (el "X" del panel): saca la Route del
+///   Navigator, ahí sí se pierde el State.
 /// - Tocar afuera del panel (la zona oscurecida) minimiza, no cierra -mismo
 ///   pedido explícito.
 /// Quien use este controlador tiene que llamar [dispose] cuando su propia
-/// pantalla se destruye, para no dejar el panel flotando sin dueño.
+/// pantalla se destruye, para no dejar la Route huérfana.
 class ConsultarCostoFlotanteController {
-  OverlayEntry? _entrada;
+  Route<void>? _route;
   final ValueNotifier<bool> minimizado = ValueNotifier(false);
 
-  bool get abiertoOMinimizado => _entrada != null;
-
   void abrir(BuildContext context) {
-    if (_entrada != null) {
+    if (_route != null) {
       minimizado.value = false;
       return;
     }
     minimizado.value = false;
-    _entrada = OverlayEntry(builder: (context) => PanelFlotanteConsultarCosto(controlador: this));
-    Overlay.of(context).insert(_entrada!);
+    final route = PageRouteBuilder<void>(
+      opaque: false,
+      barrierDismissible: false,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (context, animation, secondaryAnimation) => PanelFlotanteConsultarCosto(controlador: this),
+    );
+    _route = route;
+    Navigator.of(context, rootNavigator: true).push(route).whenComplete(() => _route = null);
   }
 
   void minimizarPanel() => minimizado.value = true;
@@ -40,13 +60,15 @@ class ConsultarCostoFlotanteController {
   void restaurarPanel() => minimizado.value = false;
 
   void cerrar() {
-    _entrada?.remove();
-    _entrada = null;
+    final route = _route;
+    _route = null;
+    if (route != null && route.isActive) {
+      route.navigator?.removeRoute(route);
+    }
   }
 
   void dispose() {
-    _entrada?.remove();
-    _entrada = null;
+    cerrar();
     minimizado.dispose();
   }
 }
