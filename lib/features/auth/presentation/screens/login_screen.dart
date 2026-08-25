@@ -4,17 +4,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/face_id_storage.dart';
+import '../../../../core/utils/tablet_utils_stub.dart' if (dart.library.html) '../../../../core/utils/tablet_utils_web.dart' as tactil;
 import '../../../../core/utils/webauthn.dart';
 import '../../../../core/widgets/face_id_icon.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 
-// Solo el navegador de un celular (no la PC, no la app de escritorio):
-// ahí conviene el teclado numérico porque el código de acceso y la
-// contraseña de esta app son siempre dígitos, y el teclado numérico ocupa
-// menos pantalla que el completo.
+// Solo el navegador de un celular/tablet (no la PC, no la app de
+// escritorio): ahí conviene el teclado numérico porque el código de acceso
+// y la contraseña de esta app son siempre dígitos, y es donde vive Face
+// ID/Touch ID (WebAuthn, ver webauthn.dart). Un iPad con Safari es un caso
+// especial: iPadOS se identifica a sí mismo como macOS de escritorio (no
+// iOS), así que `defaultTargetPlatform` solo no alcanza para reconocerlo
+// -bug real reportado por el dueño: en su iPad no aparecía la opción de
+// Touch ID, aunque en el celular (iPhone) sí-. Mismo criterio ya
+// establecido para esto en tablet_utils.dart (usado por
+// CampoTecladoCompacto): si el navegador dice "macOS" pero el dispositivo
+// SÍ tiene pantalla táctil (navigator.maxTouchPoints > 0, algo que un Mac
+// de escritorio real nunca tiene), es un iPad de verdad.
 bool get _esWebMovil =>
-    kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+    kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        (defaultTargetPlatform == TargetPlatform.macOS && tactil.esDispositivoTactil()));
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

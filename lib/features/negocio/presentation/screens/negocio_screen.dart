@@ -16,12 +16,23 @@ import '../widgets/negocio_logo_picker.dart';
 import '../widgets/selector_impresora.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/utils/tablet_utils_stub.dart' if (dart.library.html) '../../../../core/utils/tablet_utils_web.dart' as tactil;
 
-// Específicamente el navegador de un celular (no la PC, no la app de
-// escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID que ya usa
-// LoginScreen para entrar más rápido.
+// Específicamente el navegador de un celular/tablet (no la PC, no la app de
+// escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID/Touch ID que
+// ya usa LoginScreen para entrar más rápido. Mismo criterio EXACTO que
+// LoginScreen._esWebMovil -tiene que ser el mismo acá y ahí, si no
+// "Activar Face ID" (acá) y el botón para usarlo (LoginScreen) podrían
+// terminar en desacuerdo sobre si el dispositivo cuenta o no-: un iPad con
+// Safari se identifica a sí mismo como macOS de escritorio, así que hace
+// falta la señal aparte de tablet_utils_web.dart (navigator.maxTouchPoints)
+// para no perderlo -bug real reportado por el dueño: no aparecía la opción
+// de Touch ID en su iPad.
 bool get _esWebMovil =>
-    kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+    kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        (defaultTargetPlatform == TargetPlatform.macOS && tactil.esDispositivoTactil()));
 
 // El script que manda el reporte financiero por WhatsApp (ver
 // tool/reporte_whatsapp) es un proceso de Node.js aparte que solo existe en
