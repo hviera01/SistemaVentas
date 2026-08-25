@@ -49,6 +49,7 @@ import '../widgets/codigos_color_dialog.dart';
 import '../widgets/campo_cantidad_tinte.dart';
 import '../widgets/campo_margen_precio_venta.dart';
 import '../../../formulas/presentation/widgets/panel_flotante_consultar_costo.dart';
+import '../widgets/panel_flotante_calculadora_rendimiento.dart';
 import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
@@ -453,6 +454,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   @override
   void dispose() {
     _costoFlotante.dispose();
+    _calculadoraRendimiento.dispose();
     _debounceEnEspera?.cancel();
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
     if (!_esPlataformaMovil) {
@@ -1380,6 +1382,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _costoFlotante = ConsultarCostoFlotanteController();
 
   void _abrirConsultarCosto() => _costoFlotante.abrir(context);
+
+  /// Calculadora de cuánta pintura hace falta según el área a pintar -pedido
+  /// explícito del dueño, misma calculadora que ya está en el sitio web
+  /// público, y mismo panel flotante minimizable que Consultar Costo (ver
+  /// panel_flotante_calculadora_rendimiento.dart).
+  final _calculadoraRendimiento = CalculadoraRendimientoFlotanteController();
 
   /// Busca un producto por código exacto (código de barras o código interno)
   /// y lo agrega directo al carrito, con el mismo flujo de siempre (incluido
@@ -3134,6 +3142,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           icon: const Icon(Icons.calculate_outlined, size: 20),
                           color: Colors.grey.shade600,
                         ),
+                        IconButton(
+                          tooltip: 'Calculadora de pintura',
+                          onPressed: () => _calculadoraRendimiento.abrir(context),
+                          icon: const Icon(Icons.straighten, size: 20),
+                          color: Colors.grey.shade600,
+                        ),
                       ],
                     ),
                   ],
@@ -3164,6 +3178,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       tooltip: 'Consultar costo de un color',
                       onPressed: _abrirConsultarCosto,
                       icon: const Icon(Icons.calculate_outlined, size: 18),
+                      color: Colors.grey.shade600,
+                    ),
+                    IconButton(
+                      tooltip: 'Calculadora de pintura',
+                      onPressed: () => _calculadoraRendimiento.abrir(context),
+                      icon: const Icon(Icons.straighten, size: 18),
                       color: Colors.grey.shade600,
                     ),
                     const Spacer(),
