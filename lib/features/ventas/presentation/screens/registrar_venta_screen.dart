@@ -48,7 +48,7 @@ import '../widgets/buscar_cliente_dialog.dart';
 import '../widgets/codigos_color_dialog.dart';
 import '../widgets/campo_cantidad_tinte.dart';
 import '../widgets/campo_margen_precio_venta.dart';
-import '../../../formulas/presentation/screens/consultar_costo_screen.dart';
+import '../../../formulas/presentation/widgets/panel_flotante_consultar_costo.dart';
 import '../widgets/cambiar_usuario_venta_dialog.dart';
 import '../widgets/reembase_dialog.dart';
 import '../widgets/cobrar_dialog.dart';
@@ -452,6 +452,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   @override
   void dispose() {
+    _costoFlotante.dispose();
     _debounceEnEspera?.cancel();
     HardwareKeyboard.instance.removeHandler(_manejarAtajoTeclado);
     if (!_esPlataformaMovil) {
@@ -1365,57 +1366,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     await showDialog(context: context, builder: (context) => const PromocionesVigentesDialog());
   }
 
-  /// Atajo a la pantalla de consulta de costo de un color (ConsultarCostoScreen,
-  /// hasta ahora solo alcanzable desde Colores) directo desde la venta -pedido
-  /// explícito del dueño-: para que la cajera pueda chequear cuánto cuesta un
-  /// color mientras atiende al cliente, sin salirse de la pantalla de venta.
-  /// Es de solo lectura (no toca el carrito ni el stock).
+  /// Atajo a la consulta de costo de un color (hasta ahora solo alcanzable
+  /// desde Colores) directo desde la venta -pedido explícito del dueño-:
+  /// para que la cajera pueda chequear cuánto cuesta un color mientras
+  /// atiende al cliente, sin salirse de la pantalla de venta. Es de solo
+  /// lectura (no toca el carrito ni el stock).
   ///
-  /// Antes era un Navigator.push de pantalla completa (MaterialPageRoute):
-  /// tapaba entera la venta en curso para una consulta rápida, y el botón de
-  /// "atrás" propio de ConsultarCostoScreen (pensado para cuando SÍ es una
-  /// pantalla completa navegable) terminaba sin verse bien en ese contexto
-  /// -pedido explícito del dueño: "no en pantalla completa" y "el botón de
-  /// cerrar no sale". Ahora es un diálogo de tamaño fijo (no pantalla
-  /// completa) con su propio botón "X" siempre visible en la esquina, mismo
-  /// patrón que el resto de los diálogos de la app -esDialogo:false para que
-  /// ConsultarCostoScreen no dibuje su propio Scaffold/flecha de atrás,
-  /// ese chrome ahora lo pone este diálogo.
-  Future<void> _abrirConsultarCosto() async {
-    final tamano = MediaQuery.sizeOf(context);
-    final ancho = tamano.width - 48 < 820 ? tamano.width - 48 : 820.0;
-    final alto = tamano.height - 48 < 760 ? tamano.height - 48 : 760.0;
-    await showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(24),
-        child: SizedBox(
-          width: ancho,
-          height: alto,
-          child: Container(
-            decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(20)),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text('Consultar Costo', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
-                      IconButton(icon: const Icon(Icons.close), tooltip: 'Cerrar', onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                ),
-                const Expanded(child: ConsultarCostoScreen(esDialogo: false)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  /// Panel flotante minimizable (ver ConsultarCostoFlotanteController), no
+  /// un diálogo modal normal: "minimizarlo" deja lo que se tenía cargado
+  /// tal cual (Visibility.maintainState, ver ese archivo) para poder hacer
+  /// otra cosa en la venta mientras tanto y volver después, en vez de tener
+  /// que empezar la consulta de cero -pedido explícito del dueño-.
+  final _costoFlotante = ConsultarCostoFlotanteController();
+
+  void _abrirConsultarCosto() => _costoFlotante.abrir(context);
 
   /// Busca un producto por código exacto (código de barras o código interno)
   /// y lo agrega directo al carrito, con el mismo flujo de siempre (incluido

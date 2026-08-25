@@ -12,7 +12,7 @@ import '../widgets/importar_colores_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../formulas/presentation/screens/buscar_formula_screen.dart';
-import '../../../formulas/presentation/screens/consultar_costo_screen.dart';
+import '../../../formulas/presentation/widgets/panel_flotante_consultar_costo.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -24,11 +24,13 @@ class ColoresScreen extends ConsumerStatefulWidget {
 class _ColoresScreenState extends ConsumerState<ColoresScreen> {
   final _busquedaController = TextEditingController();
   final _servicioExport = ColorExportService();
+  final _costoFlotante = ConsultarCostoFlotanteController();
   List<ColorModel> _listaActual = [];
   String? _filaSeleccionada;
 
   @override
   void dispose() {
+    _costoFlotante.dispose();
     _busquedaController.dispose();
     super.dispose();
   }
@@ -180,9 +182,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                         ),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(fullscreenDialog: true, builder: (context) => const ConsultarCostoScreen()),
-                        ),
+                        onPressed: () => _costoFlotante.abrir(context),
                         icon: const Icon(Icons.calculate_outlined, size: 18),
                         label: Text('Consultar Costo', style: GoogleFonts.poppins(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
