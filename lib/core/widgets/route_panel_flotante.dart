@@ -49,8 +49,22 @@ class RoutePanelFlotante extends TransitionRoute<void> {
   @override
   bool get popGestureEnabled => false;
 
+  // maintainState:true -SIN esto (el default de OverlayEntry es false) todo
+  // el contenido del panel (ConsultarCostoScreen/CalculadoraRendimiento,
+  // con lo que el cajero tenía cargado) se descarta apenas se abre ARRIBA
+  // un diálogo opaco -Buscar Producto, Buscar Fórmula, MaterialPageRoute
+  // fullscreenDialog-, porque Overlay deja de construir las entries de
+  // abajo que no piden mantenerse vivas (ver Overlay._RenderTheaterMixin,
+  // "skip building entries below that entry unless they have
+  // maintainState"). Eso es lo que causaba "elijo un producto base y no se
+  // carga": el diálogo de selección sí abría bien (es su propia Route), pero
+  // al volver, este panel ya se había descartado y desmontado mientras
+  // estaba tapado, así que el resultado se perdía en el `if (!mounted)
+  // return` de quien lo esperaba. ModalRoute (lo que este archivo
+  // reemplaza) sí mapeaba esto solo -ModalRoute.maintainState- , acá hay
+  // que pedirlo a mano.
   @override
   Iterable<OverlayEntry> createOverlayEntries() {
-    return [OverlayEntry(builder: builder)];
+    return [OverlayEntry(builder: builder, maintainState: true)];
   }
 }
