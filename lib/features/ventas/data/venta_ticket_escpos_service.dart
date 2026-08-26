@@ -162,28 +162,33 @@ class VentaTicketEscPosService {
   // del cabezal-.
   static const _altoLienzoGuiaGrande = 576;
   static const _margenGuiaGrande = 24.0;
-  static const _separacionSeccionGuiaGrande = 56.0;
+  static const _separacionSeccionGuiaGrande = 48.0;
 
   /// Arma la guía "grande" como imagen y la rota 90° -ver el doc grande de
   /// [generarGuiaEnvio]-. Cada dato (nombre, dirección, teléfono) es una
   /// franja: etiqueta chica arriba, valor en letra grande abajo, una franja
   /// al lado de la otra a lo ANCHO del lienzo (que es lo que se vuelve el
-  /// LARGO de la tira ya impresa, sin límite real). No se prueba en una
-  /// impresora física desde acá -si sale al revés (hay que girar la tira
-  /// para el otro lado) o la letra sale cortada por los bordes, avisar: es
-  /// un ajuste de una línea (cambiar el ángulo en copyRotate, o los
-  /// tamaños de fuente de abajo).
+  /// LARGO de la tira ya impresa, sin límite real). [maxAnchoValor] de cada
+  /// sección se deja angosto A PROPÓSITO -pedido explícito del dueño,
+  /// después de ver la primera versión: "no lo quiero tan grande, que
+  /// agarre varias líneas siempre, no tan largo el papel"-: fuerza que el
+  /// texto envuelva en 2-4 líneas en vez de salir como una sola línea
+  /// gigante, dejando la tira bastante más corta con la misma letra clara.
+  /// No se prueba en una impresora física desde acá -si sale al revés (hay
+  /// que girar la tira para el otro lado) o la letra sale cortada por los
+  /// bordes, avisar: es un ajuste de una línea (ángulo en copyRotate, o los
+  /// tamaños de acá abajo).
   Future<img.Image> _renderizarGuiaRotada(VentaModel venta, NegocioModel negocio) async {
     final secciones = <_SeccionGuiaGrande>[
-      _SeccionGuiaGrande('PARA', venta.envioNombre, fontEtiqueta: 30, fontValor: 150, maxAnchoValor: 2400),
-      if (venta.envioDireccion.isNotEmpty) _SeccionGuiaGrande('DIRECCION', venta.envioDireccion, fontEtiqueta: 30, fontValor: 90, maxAnchoValor: 2200),
-      if (venta.envioTelefono.isNotEmpty) _SeccionGuiaGrande('TELEFONO', venta.envioTelefono, fontEtiqueta: 30, fontValor: 150, maxAnchoValor: 1600),
+      _SeccionGuiaGrande('PARA', venta.envioNombre, fontEtiqueta: 26, fontValor: 65, maxAnchoValor: 550),
+      if (venta.envioDireccion.isNotEmpty) _SeccionGuiaGrande('DIRECCION', venta.envioDireccion, fontEtiqueta: 26, fontValor: 50, maxAnchoValor: 550),
+      if (venta.envioTelefono.isNotEmpty) _SeccionGuiaGrande('TELEFONO', venta.envioTelefono, fontEtiqueta: 26, fontValor: 65, maxAnchoValor: 400),
       _SeccionGuiaGrande(
         negocio.nombre.isEmpty ? '' : negocio.nombre.toUpperCase(),
         '${venta.tipoDocumento} ${negocio.rangoPrefijo}${venta.numeroDocumento}',
-        fontEtiqueta: 26,
-        fontValor: 34,
-        maxAnchoValor: 1200,
+        fontEtiqueta: 22,
+        fontValor: 28,
+        maxAnchoValor: 500,
       ),
     ];
 
