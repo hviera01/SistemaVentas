@@ -301,44 +301,78 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
 
   Future<void> _imprimirGuiaEnvioInterno(VentaModel venta) async {
     var ventaConEnvio = venta;
-    if (!venta.esEnvio || venta.envioNombre.isEmpty) {
-      String direccionInicial = '';
-      String telefonoInicial = '';
-      if (venta.idCliente != null) {
-        final cliente = await ref.read(clienteRepositoryProvider).obtenerPorId(venta.idCliente!);
-        direccionInicial = cliente?.direccion ?? '';
-        telefonoInicial = cliente?.telefono ?? '';
-      }
-      if (!mounted) return;
-      final resultado = await showDialog<DatosEnvioResultado>(
-        context: context,
-        builder: (context) => DatosEnvioDialog(
-          nombreInicial: venta.nombreCliente == 'CONSUMIDOR FINAL' ? '' : venta.nombreCliente,
-          direccionInicial: direccionInicial,
-          telefonoInicial: telefonoInicial,
-          mostrarOpcionImprimir: false,
-        ),
-      );
-      if (resultado == null || !mounted) return;
-      try {
-        await ref.read(ventaRepositoryProvider).actualizarDatosEnvio(
-              id: venta.id,
-              envioNombre: resultado.nombre,
-              envioDireccion: resultado.direccion,
-              envioTelefono: resultado.telefono,
-            );
-      } catch (e) {
-        _mostrarMensaje('No se pudieron guardar los datos de envío: $e');
-        return;
-      }
-      ventaConEnvio = venta.copyWith(esEnvio: true, envioNombre: resultado.nombre, envioDireccion: resultado.direccion, envioTelefono: resultado.telefono);
-      if (mounted) setState(() => _venta = ventaConEnvio);
+    // El formato (normal/grande) SIEMPRE se pregunta acá, tenga o no la
+    // venta datos de envío guardados ya -pedido explícito del dueño: dejar
+    // las dos opciones de impresión disponibles siempre, no solo la primera
+    // vez que se genera la guía-.
+    String direccionInicial = venta.envioDireccion;
+    String telefonoInicial = venta.envioTelefono;
+    if (direccionInicial.isEmpty && telefonoInicial.isEmpty && venta.idCliente != null) {
+      final cliente = await ref.read(clienteRepositoryProvider).obtenerPorId(venta.idCliente!);
+      direccionInicial = cliente?.direccion ?? '';
+      telefonoInicial = cliente?.telefono ?? '';
     }
+    if (!mounted) return;
+    final resultado = await showDialog<DatosEnvioResultado>(
+      context: context,
+      builder: (context) => DatosEnvioDialog(
+        nombreInicial: venta.envioNombre.isNotEmpty ? venta.envioNombre : (venta.nombreCliente == 'CONSUMIDOR FINAL' ? '' : venta.nombreCliente),
+        direccionInicial: direccionInicial,
+        telefonoInicial: telefonoInicial,
+        mostrarOpcionImprimir: false,
+      ),
+    );
+    if (resultado == null || !mounted) return;
+    try {
+      await ref.read(ventaRepositoryProvider).actualizarDatosEnvio(
+            id: venta.id,
+            envioNombre: resultado.nombre,
+            envioDireccion: resultado.direccion,
+            envioTelefono: resultado.telefono,
+          );
+    } catch (e) {
+      _mostrarMensaje('No se pudieron guardar los datos de envío: $e');
+      return;
+    }
+    ventaConEnvio = venta.copyWith(esEnvio: true, envioNombre: resultado.nombre, envioDireccion: resultado.direccion, envioTelefono: resultado.telefono);
+    if (mounted) setState(() => _venta = ventaConEnvio);
 
     final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
+
+    // Misma filosofía que _reimprimir: en Android/iOS (donde normalmente no
+    // hay impresora térmica a mano) si no se puede imprimir directo por red,
+    // se le pide a la PC principal -pedido explícito del dueño: "que
+    // funcione en remoto, así como toda impresión"-. En escritorio, esta PC
+    // ya es la candidata a "PC principal", así que si falla se avisa
+    // directo, sin pedirle a nadie más (igual que el resto de la pantalla).
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      if (negocio.impresoraRedIp.isNotEmpty) {
+        try {
+          final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio, grande: resultado.formatoGrande);
+          final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+          if (ok) {
+            _mostrarMensaje('Guía de envío impresa');
+            return;
+          }
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      try {
+        await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionGuiaEnvio(venta.id, true, grande: resultado.formatoGrande);
+      } catch (_) {}
+      final pcConectada = await _presencia.estaConectada();
+      if (!mounted) return;
+      if (pcConectada) {
+        _mostrarMensaje('Se envió la orden de impresión de la guía a la caja principal');
+      } else {
+        _mostrarMensaje('No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal');
+      }
+      return;
+    }
+
     try {
-      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio);
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio, grande: resultado.formatoGrande);
       if (!kIsWeb && Platform.isWindows) {
         if (negocio.impresoraTermicaNombre.isEmpty) {
           _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');

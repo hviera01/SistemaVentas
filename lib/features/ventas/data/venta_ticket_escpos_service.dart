@@ -48,10 +48,22 @@ class VentaTicketEscPosService {
   /// más grande (PosTextSize.size2) en vez del layout de dos columnas del
   /// recibo normal -mismo Generator/PaperSize.mm80 que generarTicket, ticket
   /// completamente aparte, se manda a imprimir por separado-.
-  Future<List<int>> generarGuiaEnvio(VentaModel venta, NegocioModel negocio) async {
+  ///
+  /// [grande] agrega una SEGUNDA opción de formato -pedido explícito del
+  /// dueño: "dejá siempre las dos opciones"-, no reemplaza la normal. En la
+  /// normal la dirección solo sale más ALTA (mismo ancho de 48 caracteres,
+  /// para no partir una dirección larga en demasiadas líneas). En
+  /// [grande]==true la dirección TAMBIÉN sale a doble ANCHO -"al tener más
+  /// espacio a lo ancho, más grande"-, igual que nombre/teléfono: cada línea
+  /// entra la mitad de caracteres, así que una dirección larga se reparte en
+  /// más líneas -tira más larga a cambio de letra más grande en todo, no
+  /// solo en el nombre-.
+  Future<List<int>> generarGuiaEnvio(VentaModel venta, NegocioModel negocio, {bool grande = false}) async {
     final perfil = await CapabilityProfile.load();
     final generador = Generator(PaperSize.mm80, perfil);
     final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
+    final estiloGrande = PosStyles(bold: true, height: PosTextSize.size2, width: grande ? PosTextSize.size2 : PosTextSize.size1);
+    final anchoDireccion = grande ? _anchoDoble : _anchoCompleto;
 
     List<int> bytes = [];
     bytes += generador.reset();
@@ -74,10 +86,8 @@ class VentaTicketEscPosService {
 
     if (venta.envioDireccion.isNotEmpty) {
       bytes += _texto(generador, 'DIRECCION:', styles: const PosStyles(bold: true));
-      // Solo más alto (no más ancho): una dirección puede ser larga, y a
-      // doble ancho se partiría en demasiadas líneas para leerse cómodo.
-      for (final linea in _envolverDescripcion(venta.envioDireccion, _anchoCompleto)) {
-        bytes += _texto(generador, linea, styles: const PosStyles(bold: true, height: PosTextSize.size2));
+      for (final linea in _envolverDescripcion(venta.envioDireccion, anchoDireccion)) {
+        bytes += _texto(generador, linea, styles: estiloGrande);
       }
       bytes += generador.emptyLines(1);
     }

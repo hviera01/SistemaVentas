@@ -19,3 +19,7 @@ final ventasPendientesImpresionStreamProvider = StreamProvider<List<VentaModel>>
 final ventasConSolicitudImpresionEnVivoStreamProvider = StreamProvider<List<VentaModel>>((ref) {
   return ref.watch(ventaRepositoryProvider).obtenerVentasConSolicitudImpresionEnVivo();
 });
+
+final ventasConSolicitudImpresionGuiaEnvioStreamProvider = StreamProvider<List<VentaModel>>((ref) {
+  return ref.watch(ventaRepositoryProvider).obtenerVentasConSolicitudImpresionGuiaEnvio();
+});

@@ -114,6 +114,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   String _envioDireccion = '';
   String _envioTelefono = '';
   bool _imprimirGuiaAlConfirmar = false;
+  bool _formatoGuiaGrande = false;
   // Sugerencias de clientes ya registrados mientras se tipea a mano en
   // "Cliente" -pedido explícito del dueño-: además del buscador aparte
   // (ícono de lupa), se muestra un mini listado debajo del campo con
@@ -1911,6 +1912,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _envioDireccion = '';
     _envioTelefono = '';
     _imprimirGuiaAlConfirmar = false;
+    _formatoGuiaGrande = false;
   }
 
   /// Abre el modal de datos de envío -prellenado con el nombre que ya está
@@ -1934,6 +1936,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _envioDireccion = resultado.direccion;
       _envioTelefono = resultado.telefono;
       _imprimirGuiaAlConfirmar = resultado.imprimir;
+      _formatoGuiaGrande = resultado.formatoGrande;
     });
   }
 
@@ -2081,6 +2084,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final envioDireccion = _envioDireccion;
     final envioTelefono = _envioTelefono;
     final imprimirGuiaAlConfirmar = _imprimirGuiaAlConfirmar;
+    final formatoGuiaGrande = _formatoGuiaGrande;
 
     // A partir de acá la pantalla avanza al toque -se limpia el carrito y
     // queda lista para la próxima venta- SIN esperar la confirmación real
@@ -2112,6 +2116,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       envioDireccion: envioDireccion,
       envioTelefono: envioTelefono,
       imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
+      formatoGuiaGrande: formatoGuiaGrande,
     ));
   }
 
@@ -2132,6 +2137,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     String envioDireccion = '',
     String envioTelefono = '',
     bool imprimirGuiaAlConfirmar = false,
+    bool formatoGuiaGrande = false,
   }) async {
     try {
       final venta = await ventaRepo.registrarVenta(
@@ -2168,7 +2174,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       }
 
       if (!esCotizacion && esEnvio && imprimirGuiaAlConfirmar) {
-        unawaited(_imprimirGuiaEnvio(venta));
+        unawaited(_imprimirGuiaEnvio(venta, grande: formatoGuiaGrande));
       }
 
       if (esFacturable) {
@@ -2212,6 +2218,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               envioDireccion: envioDireccion,
               envioTelefono: envioTelefono,
               imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
+              formatoGuiaGrande: formatoGuiaGrande,
             ),
           ),
         ),
@@ -2373,12 +2380,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// factura (esto es un ticket auxiliar para pegar en una caja, no el
   /// documento fiscal). Se usa tanto al confirmar una venta marcada como
   /// envío (ver _guardarVentaEnSegundoPlano) como al reimprimir/generar
-  /// desde Detalle Venta.
-  Future<void> _imprimirGuiaEnvio(VentaModel venta) async {
+  /// desde Detalle Venta. [grande] elige el formato (ver DatosEnvioDialog:
+  /// las DOS opciones -normal/grande- quedan siempre disponibles, esto solo
+  /// decide cuál generar esta vez).
+  ///
+  /// Igual que el resto de la impresión de esta pantalla (ver
+  /// _manejarImpresion/_imprimirEscPosRed): en escritorio (Windows/macOS/
+  /// Linux) esta PC YA es la "PC principal" candidata, así que si falla acá
+  /// se avisa directo, sin pedirle a nadie más. En Android/iOS -donde
+  /// normalmente no hay impresora térmica a mano- si no se puede imprimir
+  /// directo por red, se le pide a la PC principal que la imprima ella sola
+  /// en cuanto la detecte (mismo mecanismo que la impresión en vivo del
+  /// recibo, ver AppShell/marcarSolicitudImpresionGuiaEnvio) -pedido
+  /// explícito del dueño: "que funcione en remoto, así como toda impresión".
+  Future<void> _imprimirGuiaEnvio(VentaModel venta, {bool grande = false}) async {
     final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
     if (!mounted) return;
+
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      await _imprimirGuiaEscPosRedOPendiente(venta, negocio, grande);
+      return;
+    }
+
     try {
-      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio);
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio, grande: grande);
       if (!kIsWeb && Platform.isWindows) {
         if (negocio.impresoraTermicaNombre.isEmpty) {
           _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
@@ -2394,6 +2419,32 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       }
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir la guía de envío');
+    }
+  }
+
+  Future<void> _imprimirGuiaEscPosRedOPendiente(VentaModel venta, NegocioModel negocio, bool grande) async {
+    if (negocio.impresoraRedIp.isNotEmpty) {
+      try {
+        final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio, grande: grande);
+        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        if (ok) {
+          _mostrarMensaje('Guía de envío impresa');
+          return;
+        }
+      } catch (_) {
+        // sigue al respaldo de pedirle a la PC principal
+      }
+    }
+    if (!mounted) return;
+    try {
+      await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionGuiaEnvio(venta.id, true, grande: grande);
+    } catch (_) {}
+    final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+    if (!mounted) return;
+    if (pcConectada) {
+      _mostrarMensaje('Se envió la orden de impresión de la guía a la caja principal');
+    } else {
+      _mostrarMensaje('No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal');
     }
   }
 

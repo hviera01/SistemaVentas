@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:printing/printing.dart';
 import '../../negocio/data/negocio_model.dart';
 import '../../../core/services/impresora_usb_windows_service.dart';
+import '../../../core/services/impresora_red_service.dart';
 import 'venta_export_service.dart';
 import 'venta_model.dart';
 import 'venta_ticket_escpos_service.dart';
@@ -22,6 +23,7 @@ import 'venta_ticket_escpos_service.dart';
 class ImpresionEnVivoService {
   final _servicioExport = VentaExportService();
   final _servicioTicketEscPos = VentaTicketEscPosService();
+  final _servicioImpresoraRed = ImpresoraRedService();
 
   /// [forzarCopia] respeta la elección "Copia"/"Original" que se haya hecho
   /// del lado del celular al pedir esta reimpresión en vivo (ver
@@ -51,6 +53,27 @@ class ImpresionEnVivoService {
         onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: forzarCopia, formatoImpresora: formato),
       );
       return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Mismo criterio que [imprimirSilencioso] pero para la guía de envío
+  /// (solicitudImpresionGuiaEnvio, ver AppShell). A diferencia del recibo,
+  /// la guía no tiene versión PDF (ver VentaTicketEscPosService.
+  /// generarGuiaEnvio, es ESC/POS puro): en Windows va por USB directo, en
+  /// el resto de escritorio por la impresora de red configurada -sin
+  /// fallback a `printing` porque no hay PDF que mandarle-. Devuelve true
+  /// si logró imprimir.
+  Future<bool> imprimirGuiaSilencioso(VentaModel venta, NegocioModel negocio, {bool grande = false}) async {
+    try {
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio, grande: grande);
+      if (!kIsWeb && Platform.isWindows) {
+        if (negocio.impresoraTermicaNombre.isEmpty) return false;
+        return ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+      }
+      if (negocio.impresoraRedIp.isEmpty) return false;
+      return await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
     } catch (_) {
       return false;
     }

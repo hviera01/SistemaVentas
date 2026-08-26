@@ -691,6 +691,25 @@ class VentaRepository {
     });
   }
 
+  /// Mismo mecanismo que marcarSolicitudImpresionEnVivo/
+  /// obtenerVentasConSolicitudImpresionEnVivo, pero para la guía de envío
+  /// -pedido explícito del dueño: que la guía también se pueda pedir en
+  /// remoto igual que cualquier otra impresión-. [grande] viaja junto para
+  /// que la PC principal sepa qué formato imprimir (ver AppShell).
+  Future<void> marcarSolicitudImpresionGuiaEnvio(String id, bool valor, {bool grande = false}) async {
+    try {
+      await _colVentas.doc(id).update({'solicitudImpresionGuiaEnvio': valor, 'solicitudImpresionGuiaGrande': grande});
+    } on FirebaseException catch (e) {
+      if (e.code != 'not-found' && e.code != 'invalid-argument') rethrow;
+    }
+  }
+
+  Stream<List<VentaModel>> obtenerVentasConSolicitudImpresionGuiaEnvio() {
+    return _colVentas.where('solicitudImpresionGuiaEnvio', isEqualTo: true).snapshots().map((snap) {
+      return snap.docs.map((d) => VentaModel.fromMap(d.id, d.data(), const [])).toList();
+    });
+  }
+
   Future<VentaModel?> obtenerVentaPorId(String id) async {
     // Las dos lecturas no dependen una de la otra (el id ya se conoce de
     // entrada), así que se disparan juntas en vez de esperar el documento

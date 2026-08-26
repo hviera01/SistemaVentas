@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/mayusculas_input_formatter.dart';
 
 /// Lo que arma el diálogo -pedido explícito del dueño: "un modal de cuando
 /// es envío... datos de envío y la opción de si imprimir guía de envío"-.
@@ -12,7 +13,12 @@ class DatosEnvioResultado {
   final String direccion;
   final String telefono;
   final bool imprimir;
-  const DatosEnvioResultado({required this.nombre, required this.direccion, required this.telefono, required this.imprimir});
+  // true = formato grande (letra doble ancho Y doble alto en más del
+  // contenido, tira más larga -pedido explícito del dueño: "más grande, más
+  // largo"-); false = el ticket compacto normal. Se dejan las DOS opciones
+  // siempre disponibles, nunca se reemplaza una por la otra.
+  final bool formatoGrande;
+  const DatosEnvioResultado({required this.nombre, required this.direccion, required this.telefono, required this.imprimir, required this.formatoGrande});
 }
 
 class DatosEnvioDialog extends StatefulWidget {
@@ -36,10 +42,15 @@ class DatosEnvioDialog extends StatefulWidget {
 }
 
 class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
-  late final _ctrlNombre = TextEditingController(text: widget.nombreInicial);
-  late final _ctrlDireccion = TextEditingController(text: widget.direccionInicial);
+  // .toUpperCase() en el valor inicial también -pedido explícito del dueño:
+  // "que lo que yo escriba siempre se escriba en mayúsculas"-, para que un
+  // nombre/dirección prellenado desde el cliente (que puede venir en
+  // minúscula de antes) también quede en mayúscula acá.
+  late final _ctrlNombre = TextEditingController(text: widget.nombreInicial.toUpperCase());
+  late final _ctrlDireccion = TextEditingController(text: widget.direccionInicial.toUpperCase());
   late final _ctrlTelefono = TextEditingController(text: widget.telefonoInicial);
   bool _imprimir = true;
+  bool _formatoGrande = false;
 
   @override
   void dispose() {
@@ -61,6 +72,7 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
         direccion: _ctrlDireccion.text.trim(),
         telefono: _ctrlTelefono.text.trim(),
         imprimir: widget.mostrarOpcionImprimir ? _imprimir : true,
+        formatoGrande: _formatoGrande,
       ),
     );
   }
@@ -94,11 +106,21 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
               style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 16),
-            _campo('Nombre de quien recibe', _ctrlNombre, icono: Icons.person_outline),
+            _campo('Nombre de quien recibe', _ctrlNombre, icono: Icons.person_outline, mayusculas: true),
             const SizedBox(height: 10),
-            _campo('Dirección', _ctrlDireccion, icono: Icons.place_outlined, lineas: 3),
+            _campo('Dirección', _ctrlDireccion, icono: Icons.place_outlined, lineas: 3, mayusculas: true),
             const SizedBox(height: 10),
             _campo('Teléfono', _ctrlTelefono, icono: Icons.phone_outlined, teclado: TextInputType.phone),
+            const SizedBox(height: 14),
+            Text('Formato de la guía', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(child: _botonFormato('Normal', 'Ticket compacto', esGrande: false)),
+                const SizedBox(width: 8),
+                Expanded(child: _botonFormato('Grande', 'Letra grande, tira más larga', esGrande: true)),
+              ],
+            ),
             if (widget.mostrarOpcionImprimir) ...[
               const SizedBox(height: 12),
               InkWell(
@@ -130,11 +152,37 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
     );
   }
 
-  Widget _campo(String etiqueta, TextEditingController controller, {required IconData icono, int lineas = 1, TextInputType? teclado}) {
+  Widget _botonFormato(String titulo, String subtitulo, {required bool esGrande}) {
+    final activo = _formatoGrande == esGrande;
+    return InkWell(
+      onTap: () => setState(() => _formatoGrande = esGrande),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: activo ? const Color(0xFF1565C0) : const Color(0xFFF2F3F7),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: activo ? const Color(0xFF1565C0) : const Color(0xFFB6BCC7)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: activo ? Colors.white : const Color(0xFF1A1A1A))),
+            Text(subtitulo, style: GoogleFonts.poppins(fontSize: 10.5, color: activo ? Colors.white.withValues(alpha: 0.85) : Colors.grey.shade600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _campo(String etiqueta, TextEditingController controller, {required IconData icono, int lineas = 1, TextInputType? teclado, bool mayusculas = false}) {
     return TextField(
       controller: controller,
       maxLines: lineas,
       keyboardType: teclado,
+      inputFormatters: mayusculas ? [mayusculasInputFormatter] : null,
+      autocorrect: false,
+      enableSuggestions: false,
       style: GoogleFonts.poppins(fontSize: 13.5),
       decoration: InputDecoration(
         labelText: etiqueta,

@@ -141,6 +141,32 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
   }
 
+  // Mismo mecanismo que _procesarSolicitudImpresionEnVivo, pero para la
+  // guía de envío -pedido explícito del dueño-. No hace falta pedir el
+  // detalle (generarGuiaEnvio no lo usa, solo nombre/dirección/teléfono de
+  // envío, ya presentes en [venta]).
+  Future<void> _procesarSolicitudImpresionGuiaEnvio(VentaModel venta) async {
+    final idProceso = 'guia_${venta.id}';
+    if (_idsSolicitudEnProceso.contains(idProceso)) return;
+    _idsSolicitudEnProceso.add(idProceso);
+    try {
+      final ventaRepo = ref.read(ventaRepositoryProvider);
+      unawaited(ventaRepo.marcarSolicitudImpresionGuiaEnvio(venta.id, false));
+      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final ok = await _servicioImpresionEnVivo.imprimirGuiaSilencioso(venta, negocio, grande: venta.solicitudImpresionGuiaGrande);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Guía de envío de la venta ${venta.numeroDocumento} (pedida desde otro dispositivo): no se pudo imprimir automáticamente.'),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+    } finally {
+      _idsSolicitudEnProceso.remove(idProceso);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tabsState = ref.watch(tabsProvider);
@@ -151,6 +177,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       ref.listen<AsyncValue<List<VentaModel>>>(ventasConSolicitudImpresionEnVivoStreamProvider, (previous, next) {
         for (final venta in next.value ?? const <VentaModel>[]) {
           unawaited(_procesarSolicitudImpresionEnVivo(venta));
+        }
+      });
+      ref.listen<AsyncValue<List<VentaModel>>>(ventasConSolicitudImpresionGuiaEnvioStreamProvider, (previous, next) {
+        for (final venta in next.value ?? const <VentaModel>[]) {
+          unawaited(_procesarSolicitudImpresionGuiaEnvio(venta));
         }
       });
     }

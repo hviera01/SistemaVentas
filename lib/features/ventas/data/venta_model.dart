@@ -66,6 +66,13 @@ class VentaModel {
   final String envioNombre;
   final String envioDireccion;
   final String envioTelefono;
+  // Mismo mecanismo/criterio que solicitudImpresionEnVivo, pero para la
+  // guía -pedido explícito del dueño: "que también funcione la impresión y
+  // reimpresión de estas guías en remoto, así como toda impresión"-: si
+  // este dispositivo no tiene la impresora a mano, le pide a la PC
+  // principal que imprima la guía sola apenas la detecte (ver AppShell).
+  final bool solicitudImpresionGuiaEnvio;
+  final bool solicitudImpresionGuiaGrande;
 
   bool get estaAnulada => estado == 'Anulada';
 
@@ -74,7 +81,15 @@ class VentaModel {
   // detalle, ver VentaRepository.obtenerVentasConSolicitudImpresionEnVivo)
   // sin tener que releer el documento completo de nuevo — para que la
   // impresión remota en vivo tarde lo menos posible, ver AppShell.
-  VentaModel copyWith({List<ItemVentaModel>? detalle, bool? esEnvio, String? envioNombre, String? envioDireccion, String? envioTelefono}) {
+  VentaModel copyWith({
+    List<ItemVentaModel>? detalle,
+    bool? esEnvio,
+    String? envioNombre,
+    String? envioDireccion,
+    String? envioTelefono,
+    bool? solicitudImpresionGuiaEnvio,
+    bool? solicitudImpresionGuiaGrande,
+  }) {
     return VentaModel(
       id: id,
       tipoDocumento: tipoDocumento,
@@ -111,6 +126,8 @@ class VentaModel {
       envioNombre: envioNombre ?? this.envioNombre,
       envioDireccion: envioDireccion ?? this.envioDireccion,
       envioTelefono: envioTelefono ?? this.envioTelefono,
+      solicitudImpresionGuiaEnvio: solicitudImpresionGuiaEnvio ?? this.solicitudImpresionGuiaEnvio,
+      solicitudImpresionGuiaGrande: solicitudImpresionGuiaGrande ?? this.solicitudImpresionGuiaGrande,
     );
   }
 
@@ -150,6 +167,8 @@ class VentaModel {
     this.envioNombre = '',
     this.envioDireccion = '',
     this.envioTelefono = '',
+    this.solicitudImpresionGuiaEnvio = false,
+    this.solicitudImpresionGuiaGrande = false,
   });
 
   factory VentaModel.fromMap(String id, Map<String, dynamic> data, List<ItemVentaModel> detalle) {
@@ -189,6 +208,8 @@ class VentaModel {
       envioNombre: data['envioNombre'] ?? '',
       envioDireccion: data['envioDireccion'] ?? '',
       envioTelefono: data['envioTelefono'] ?? '',
+      solicitudImpresionGuiaEnvio: data['solicitudImpresionGuiaEnvio'] ?? false,
+      solicitudImpresionGuiaGrande: data['solicitudImpresionGuiaGrande'] ?? false,
     );
   }
 }
