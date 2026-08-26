@@ -318,7 +318,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                 children: [
                   Text(t.nombreProductoTinte.isEmpty ? 'COLORANTE ${t.colorante}' : t.nombreProductoTinte, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
                   Text(
-                    sinProducto ? '${t.cuartosConsumidos.toStringAsFixed(3)} cuartos · sin producto en inventario' : '${t.cuartosConsumidos.toStringAsFixed(3)} cuartos · ${formatearMoneda(t.costoTotal)}',
+                    sinProducto ? '${t.cuartosConsumidos.toStringAsFixed(2)} cuartos · sin producto en inventario' : '${t.cuartosConsumidos.toStringAsFixed(2)} cuartos · ${formatearMoneda(t.costoTotal)}',
                     style: GoogleFonts.poppins(fontSize: 11, color: sinProducto ? const Color(0xFFC62828) : Colors.grey.shade600),
                   ),
                 ],
@@ -408,7 +408,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                                 ],
                               ),
                               Text(
-                                r.resuelto ? '${r.cuartos.toStringAsFixed(3)} cuartos · ${formatearMoneda(r.costoTotal)}' : 'Sin producto en inventario -no se calcula costo.',
+                                r.resuelto ? '${r.cuartos.toStringAsFixed(2)} cuartos · ${formatearMoneda(r.costoTotal)}' : 'Sin producto en inventario -no se calcula costo.',
                                 style: GoogleFonts.poppins(fontSize: 11.5, color: r.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
                               ),
                               if (r.advertencia != null)

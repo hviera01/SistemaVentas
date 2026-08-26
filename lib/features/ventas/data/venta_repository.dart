@@ -296,6 +296,10 @@ class VentaRepository {
     // antes de cada venta, y el registro de venta tiene que sentirse casi
     // instantáneo.
     Set<String> categoriasSinControlStock = const {},
+    bool esEnvio = false,
+    String envioNombre = '',
+    String envioDireccion = '',
+    String envioTelefono = '',
   }) async {
     final claveContador = _claveContador(tipoDocumento);
     final contadorRef = _colContadores.doc(claveContador);
@@ -463,6 +467,10 @@ class VentaRepository {
         'observaciones': observaciones,
         'descuentoGlobal': descuentoGlobal,
         'pendienteImpresion': false,
+        'esEnvio': esEnvio,
+        'envioNombre': envioNombre,
+        'envioDireccion': envioDireccion,
+        'envioTelefono': envioTelefono,
       });
 
       for (final entry in items.asMap().entries) {
@@ -620,7 +628,30 @@ class VentaRepository {
             ? item.copyWith(precioCompraUsado: costoReal ?? item.precioCompraUsado, tintesConsumidos: _tintesConCostoReal(item.tintesConsumidos, costoUnitarioPorTinteProducto))
             : item;
       }).toList(),
+      esEnvio: esEnvio,
+      envioNombre: envioNombre,
+      envioDireccion: envioDireccion,
+      envioTelefono: envioTelefono,
     );
+  }
+
+  /// Guarda/actualiza los datos de envío de una venta YA hecha -pedido
+  /// explícito del dueño: "en una venta ya hecha que pueda generarse siempre
+  /// en detalle venta"-. No hace falta que la venta se haya marcado como
+  /// envío al momento de registrarla; esto la marca (o corrige los datos)
+  /// en cualquier momento después.
+  Future<void> actualizarDatosEnvio({
+    required String id,
+    required String envioNombre,
+    required String envioDireccion,
+    required String envioTelefono,
+  }) async {
+    await _colVentas.doc(id).update({
+      'esEnvio': true,
+      'envioNombre': envioNombre,
+      'envioDireccion': envioDireccion,
+      'envioTelefono': envioTelefono,
+    });
   }
 
   // Best-effort: es solo una bandera de conveniencia para ubicar después

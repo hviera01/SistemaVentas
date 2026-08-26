@@ -258,7 +258,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(3)} ct', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                   Text(
                     t.resuelto ? formatearMoneda(t.costoTotal) : 'sin producto en inventario',
                     style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: t.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
@@ -418,7 +418,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                   decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(10)),
                   child: Row(
                     children: [
-                      Expanded(child: Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(3)} ct', style: GoogleFonts.poppins(fontSize: 12))),
+                      Expanded(child: Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct', style: GoogleFonts.poppins(fontSize: 12))),
                       Text(t.resuelto ? formatearMoneda(t.costoTotal) : 'sin inventario', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: t.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828))),
                     ],
                   ),

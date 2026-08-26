@@ -57,6 +57,15 @@ class VentaModel {
   // distinto de "false", que fuerza una sola hoja ORIGINAL sin importar esa
   // configuración.
   final bool? solicitudImpresionEsCopia;
+  // Datos de envío -pedido explícito del dueño: poder marcar una venta como
+  // envío, con nombre/dirección/teléfono propios (prellenados del cliente
+  // pero editables, para envíos a otra persona/dirección), e imprimir una
+  // guía aparte del recibo (ver VentaTicketEscPosService.generarGuiaEnvio).
+  // Vacíos/false en cualquier venta que no sea envío.
+  final bool esEnvio;
+  final String envioNombre;
+  final String envioDireccion;
+  final String envioTelefono;
 
   bool get estaAnulada => estado == 'Anulada';
 
@@ -65,7 +74,7 @@ class VentaModel {
   // detalle, ver VentaRepository.obtenerVentasConSolicitudImpresionEnVivo)
   // sin tener que releer el documento completo de nuevo — para que la
   // impresión remota en vivo tarde lo menos posible, ver AppShell.
-  VentaModel copyWith({List<ItemVentaModel>? detalle}) {
+  VentaModel copyWith({List<ItemVentaModel>? detalle, bool? esEnvio, String? envioNombre, String? envioDireccion, String? envioTelefono}) {
     return VentaModel(
       id: id,
       tipoDocumento: tipoDocumento,
@@ -98,6 +107,10 @@ class VentaModel {
       pendienteImpresion: pendienteImpresion,
       solicitudImpresionEnVivo: solicitudImpresionEnVivo,
       solicitudImpresionEsCopia: solicitudImpresionEsCopia,
+      esEnvio: esEnvio ?? this.esEnvio,
+      envioNombre: envioNombre ?? this.envioNombre,
+      envioDireccion: envioDireccion ?? this.envioDireccion,
+      envioTelefono: envioTelefono ?? this.envioTelefono,
     );
   }
 
@@ -133,6 +146,10 @@ class VentaModel {
     this.pendienteImpresion = false,
     this.solicitudImpresionEnVivo = false,
     this.solicitudImpresionEsCopia,
+    this.esEnvio = false,
+    this.envioNombre = '',
+    this.envioDireccion = '',
+    this.envioTelefono = '',
   });
 
   factory VentaModel.fromMap(String id, Map<String, dynamic> data, List<ItemVentaModel> detalle) {
@@ -168,6 +185,10 @@ class VentaModel {
       pendienteImpresion: data['pendienteImpresion'] ?? false,
       solicitudImpresionEnVivo: data['solicitudImpresionEnVivo'] ?? false,
       solicitudImpresionEsCopia: data['solicitudImpresionEsCopia'] as bool?,
+      esEnvio: data['esEnvio'] ?? false,
+      envioNombre: data['envioNombre'] ?? '',
+      envioDireccion: data['envioDireccion'] ?? '',
+      envioTelefono: data['envioTelefono'] ?? '',
     );
   }
 }

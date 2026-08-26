@@ -192,7 +192,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${r.cuartos.toStringAsFixed(3)} cuartos de tinte', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+          Text('${r.cuartos.toStringAsFixed(2)} cuartos de tinte', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(
             r.resuelto ? 'Costo estimado: ${formatearMoneda(r.costoTotal)}' : 'No se puede calcular el costo -sin producto en inventario.',

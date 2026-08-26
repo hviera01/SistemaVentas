@@ -40,6 +40,66 @@ class VentaTicketEscPosService {
     return bytes;
   }
 
+  /// Guía de envío -pedido explícito del dueño: "imprimir en la térmica así
+  /// como a lo ancho para poder hacer la letra un poco grande y clara y
+  /// poder pegar eso a una caja"-. Un ticket térmico no puede rotarse a
+  /// paisaje de verdad (el papel sale en una sola tira angosta), así que
+  /// "más ancho/grande" acá significa usar TODO el ancho del papel con texto
+  /// más grande (PosTextSize.size2) en vez del layout de dos columnas del
+  /// recibo normal -mismo Generator/PaperSize.mm80 que generarTicket, ticket
+  /// completamente aparte, se manda a imprimir por separado-.
+  Future<List<int>> generarGuiaEnvio(VentaModel venta, NegocioModel negocio) async {
+    final perfil = await CapabilityProfile.load();
+    final generador = Generator(PaperSize.mm80, perfil);
+    final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
+
+    List<int> bytes = [];
+    bytes += generador.reset();
+
+    if (negocio.nombre.isNotEmpty) {
+      bytes += _texto(generador, negocio.nombre.toUpperCase(), styles: const PosStyles(align: PosAlign.center, bold: true));
+    }
+    bytes += _texto(generador, 'GUIA DE ENVIO', styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+    bytes += generador.hr();
+    bytes += generador.emptyLines(1);
+
+    bytes += _texto(generador, 'PARA:', styles: const PosStyles(bold: true));
+    // _anchoDoble (24, la mitad de las 48 columnas normales de una línea
+    // completa en papel de 80mm): a doble ancho cada carácter ocupa el
+    // doble de espacio, así que entra la mitad por línea.
+    for (final linea in _envolverDescripcion(venta.envioNombre, _anchoDoble)) {
+      bytes += _texto(generador, linea, styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+    }
+    bytes += generador.emptyLines(1);
+
+    if (venta.envioDireccion.isNotEmpty) {
+      bytes += _texto(generador, 'DIRECCION:', styles: const PosStyles(bold: true));
+      // Solo más alto (no más ancho): una dirección puede ser larga, y a
+      // doble ancho se partiría en demasiadas líneas para leerse cómodo.
+      for (final linea in _envolverDescripcion(venta.envioDireccion, _anchoCompleto)) {
+        bytes += _texto(generador, linea, styles: const PosStyles(bold: true, height: PosTextSize.size2));
+      }
+      bytes += generador.emptyLines(1);
+    }
+
+    if (venta.envioTelefono.isNotEmpty) {
+      bytes += _texto(generador, 'TELEFONO:', styles: const PosStyles(bold: true));
+      bytes += _texto(generador, venta.envioTelefono, styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+      bytes += generador.emptyLines(1);
+    }
+
+    bytes += generador.hr();
+    bytes += _texto(generador, '${venta.tipoDocumento} ${negocio.rangoPrefijo}${venta.numeroDocumento}');
+    bytes += _texto(generador, 'Fecha: ${venta.fechaRegistro != null ? formatoFecha.format(venta.fechaRegistro!) : '-'}');
+    if (venta.nombreCliente.isNotEmpty && venta.nombreCliente != venta.envioNombre) {
+      bytes += _texto(generador, 'Comprador: ${venta.nombreCliente}');
+    }
+    bytes += generador.emptyLines(2);
+    bytes += generador.cut();
+
+    return bytes;
+  }
+
   // Muchas impresoras térmicas no tienen bien configurada la página de
   // códigos para tildes/eñes y las imprimen mal (un carácter random, o
   // cortan la línea ahí) — por eso todo el texto que se manda a imprimir
@@ -60,6 +120,13 @@ class VentaTicketEscPosService {
   // Si algún día cambia el ancho de columna acá (8) o el tamaño de papel,
   // este número hay que recalcularlo con la misma fórmula.
   static const _anchoDescripcion = 31;
+
+  // Usados por generarGuiaEnvio: 48 caracteres por línea completa a ancho
+  // normal (mismo dato citado arriba, ver Generator en esc_pos_utils_plus
+  // para papel de 80mm); a doble ancho (PosTextSize.size2 en width) cada
+  // carácter ocupa el doble de espacio, así que entran la mitad por línea.
+  static const _anchoCompleto = 48;
+  static const _anchoDoble = 24;
 
   // La librería (Generator.row con multiLine) parte el texto que no entra
   // en una línea cortando a la cantidad de caracteres exacta, sin importar

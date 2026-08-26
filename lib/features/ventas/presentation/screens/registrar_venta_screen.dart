@@ -60,6 +60,7 @@ import '../widgets/ventas_pendientes_impresion_dialog.dart';
 import '../widgets/teclado_numerico_dialog.dart';
 import '../widgets/escanear_remoto_dialog.dart';
 import '../widgets/ticket_escpos_preview.dart';
+import '../widgets/datos_envio_dialog.dart';
 import '../../data/tipos_documento.dart';
 import 'detalle_venta_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
@@ -106,6 +107,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // también se limpia (ver CarritoVentaNotifier.establecerDocumentoCliente/
   // establecerNombreClienteManual).
   ClienteModel? _clienteVinculado;
+  // Datos de envío -pedido explícito del dueño: ver DatosEnvioDialog. Vacíos
+  // hasta que el cajero abre el modal de "Es envío" y confirma.
+  bool _esEnvio = false;
+  String _envioNombre = '';
+  String _envioDireccion = '';
+  String _envioTelefono = '';
+  bool _imprimirGuiaAlConfirmar = false;
   // Sugerencias de clientes ya registrados mientras se tipea a mano en
   // "Cliente" -pedido explícito del dueño-: además del buscador aparte
   // (ícono de lupa), se muestra un mini listado debajo del campo con
@@ -1898,6 +1906,75 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _clienteVinculado = null;
     _saldoVencidoCliente = null;
     _claveUltimaVerificacionCredito = null;
+    _esEnvio = false;
+    _envioNombre = '';
+    _envioDireccion = '';
+    _envioTelefono = '';
+    _imprimirGuiaAlConfirmar = false;
+  }
+
+  /// Abre el modal de datos de envío -prellenado con el nombre que ya está
+  /// en el campo Cliente y, si hay un cliente vinculado (_clienteVinculado),
+  /// su dirección/teléfono guardados. Se puede volver a abrir para editar
+  /// -pedido explícito del dueño-, incluso para desmarcar "es envío" del
+  /// todo (botón "Quitar" en el chip, ver _chipEnvio).
+  Future<void> _abrirDatosEnvio() async {
+    final resultado = await showDialog<DatosEnvioResultado>(
+      context: context,
+      builder: (context) => DatosEnvioDialog(
+        nombreInicial: _envioNombre.isNotEmpty ? _envioNombre : _nombreClienteController.text.trim(),
+        direccionInicial: _envioDireccion.isNotEmpty ? _envioDireccion : (_clienteVinculado?.direccion ?? ''),
+        telefonoInicial: _envioTelefono.isNotEmpty ? _envioTelefono : (_clienteVinculado?.telefono ?? ''),
+      ),
+    );
+    if (resultado == null || !mounted) return;
+    setState(() {
+      _esEnvio = true;
+      _envioNombre = resultado.nombre;
+      _envioDireccion = resultado.direccion;
+      _envioTelefono = resultado.telefono;
+      _imprimirGuiaAlConfirmar = resultado.imprimir;
+    });
+  }
+
+  void _quitarEnvio() {
+    setState(() {
+      _esEnvio = false;
+      _envioNombre = '';
+      _envioDireccion = '';
+      _envioTelefono = '';
+      _imprimirGuiaAlConfirmar = false;
+    });
+  }
+
+  Widget _chipEnvio() {
+    if (!_esEnvio) {
+      return OutlinedButton.icon(
+        onPressed: _abrirDatosEnvio,
+        icon: const Icon(Icons.local_shipping_outlined, size: 16),
+        label: Text('Es envío', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1565C0), side: const BorderSide(color: Color(0xFF1565C0)), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: const Color(0xFF1565C0).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1565C0))),
+      child: Row(
+        children: [
+          const Icon(Icons.local_shipping, size: 17, color: Color(0xFF1565C0)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Envío a $_envioNombre${_imprimirGuiaAlConfirmar ? ' · se imprime guía al confirmar' : ''}',
+              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1565C0)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(onPressed: _abrirDatosEnvio, child: Text('Editar', style: GoogleFonts.poppins(fontSize: 12))),
+          TextButton(onPressed: _quitarEnvio, child: Text('Quitar', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)))),
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmarLimpiar() async {
@@ -1998,6 +2075,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // Hay que capturar esto ANTES de _limpiarTodo(): ese método vacía el
     // controlador de texto, así que leerlo después ya daría vacío.
     final nombreCliente = _nombreClienteController.text.trim().isEmpty ? 'CONSUMIDOR FINAL' : _nombreClienteController.text.trim();
+    // Mismo motivo: _limpiarTodo() también resetea los datos de envío.
+    final esEnvio = _esEnvio;
+    final envioNombre = _envioNombre;
+    final envioDireccion = _envioDireccion;
+    final envioTelefono = _envioTelefono;
+    final imprimirGuiaAlConfirmar = _imprimirGuiaAlConfirmar;
 
     // A partir de acá la pantalla avanza al toque -se limpia el carrito y
     // queda lista para la próxima venta- SIN esperar la confirmación real
@@ -2024,6 +2107,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       usuario: usuario,
       categoriasSinControlStock: categoriasSinControlStock,
       negocio: negocioFinal,
+      esEnvio: esEnvio,
+      envioNombre: envioNombre,
+      envioDireccion: envioDireccion,
+      envioTelefono: envioTelefono,
+      imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
     ));
   }
 
@@ -2039,6 +2127,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     required String usuario,
     required Set<String> categoriasSinControlStock,
     required NegocioModel? negocio,
+    bool esEnvio = false,
+    String envioNombre = '',
+    String envioDireccion = '',
+    String envioTelefono = '',
+    bool imprimirGuiaAlConfirmar = false,
   }) async {
     try {
       final venta = await ventaRepo.registrarVenta(
@@ -2064,10 +2157,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             totalAPagar: carrito.totalAPagar,
             usuario: usuario,
             categoriasSinControlStock: categoriasSinControlStock,
+            esEnvio: esEnvio,
+            envioNombre: envioNombre,
+            envioDireccion: envioDireccion,
+            envioTelefono: envioTelefono,
           );
 
       if (carrito.idEnEspera != null) {
         unawaited(ventaRepo.eliminarVentaEnEspera(carrito.idEnEspera!));
+      }
+
+      if (!esCotizacion && esEnvio && imprimirGuiaAlConfirmar) {
+        unawaited(_imprimirGuiaEnvio(venta));
       }
 
       if (esFacturable) {
@@ -2106,6 +2207,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               usuario: usuario,
               categoriasSinControlStock: categoriasSinControlStock,
               negocio: negocio,
+              esEnvio: esEnvio,
+              envioNombre: envioNombre,
+              envioDireccion: envioDireccion,
+              envioTelefono: envioTelefono,
+              imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
             ),
           ),
         ),
@@ -2257,6 +2363,37 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       await Printing.directPrintPdf(printer: impresora, onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato));
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+    }
+  }
+
+  /// Imprime la guía de envío -pedido explícito del dueño: directo por
+  /// ESC/POS crudo (mismos transportes ya probados que usa el ticket
+  /// normal: USB en Windows, red en el resto), sin pasar por la vista
+  /// previa de PDF/diálogo de plataforma completos que sí necesita la
+  /// factura (esto es un ticket auxiliar para pegar en una caja, no el
+  /// documento fiscal). Se usa tanto al confirmar una venta marcada como
+  /// envío (ver _guardarVentaEnSegundoPlano) como al reimprimir/generar
+  /// desde Detalle Venta.
+  Future<void> _imprimirGuiaEnvio(VentaModel venta) async {
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    try {
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio);
+      if (!kIsWeb && Platform.isWindows) {
+        if (negocio.impresoraTermicaNombre.isEmpty) {
+          _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+          return;
+        }
+        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
+      } else if (negocio.impresoraRedIp.isNotEmpty) {
+        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
+      } else {
+        _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+      }
+    } catch (_) {
+      _mostrarMensaje('No se pudo imprimir la guía de envío');
     }
   }
 
@@ -3000,6 +3137,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               ),
                               ),
                             ),
+                            SizedBox(width: double.infinity, child: _chipEnvio()),
                           ],
                         ),
                       ],

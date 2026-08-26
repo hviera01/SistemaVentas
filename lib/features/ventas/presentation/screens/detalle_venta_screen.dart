@@ -18,6 +18,9 @@ import '../../../negocio/providers/negocio_provider.dart';
 import '../../../../core/models/tab_item.dart';
 import '../../../../core/providers/tabs_provider.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../../core/services/impresora_usb_windows_service.dart';
+import '../widgets/datos_envio_dialog.dart';
+import '../../../clientes/providers/clientes_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/pantalla_builder.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
@@ -61,6 +64,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   bool _cargando = false;
   bool _anulando = false;
   bool _procesandoPdf = false;
+  bool _procesandoGuia = false;
   String? _error;
   bool _precioConIsv = true;
   // Opcional: acota la búsqueda a un tipo de documento en particular. Hace
@@ -274,6 +278,83 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       }
     }
     await _pedirImpresionEnVivo(venta, esCopia);
+  }
+
+  /// Imprime la guía de envío de esta venta -pedido explícito del dueño:
+  /// "que pueda reimprimirse en detalle venta y también en una venta ya
+  /// hecha que pueda generarse siempre... e imprimirse desde ahí"-. Si la
+  /// venta YA tiene datos de envío guardados (esEnvio true), imprime
+  /// directo. Si no (una venta que se hizo sin marcarla como envío en su
+  /// momento), abre el mismo modal que Registrar Venta -prellenado del
+  /// cliente vinculado si lo hay- para completarlos, los guarda en la
+  /// venta, y recién ahí imprime.
+  Future<void> _imprimirGuiaEnvio() async {
+    final venta = _venta;
+    if (venta == null) return;
+    setState(() => _procesandoGuia = true);
+    try {
+      await _imprimirGuiaEnvioInterno(venta);
+    } finally {
+      if (mounted) setState(() => _procesandoGuia = false);
+    }
+  }
+
+  Future<void> _imprimirGuiaEnvioInterno(VentaModel venta) async {
+    var ventaConEnvio = venta;
+    if (!venta.esEnvio || venta.envioNombre.isEmpty) {
+      String direccionInicial = '';
+      String telefonoInicial = '';
+      if (venta.idCliente != null) {
+        final cliente = await ref.read(clienteRepositoryProvider).obtenerPorId(venta.idCliente!);
+        direccionInicial = cliente?.direccion ?? '';
+        telefonoInicial = cliente?.telefono ?? '';
+      }
+      if (!mounted) return;
+      final resultado = await showDialog<DatosEnvioResultado>(
+        context: context,
+        builder: (context) => DatosEnvioDialog(
+          nombreInicial: venta.nombreCliente == 'CONSUMIDOR FINAL' ? '' : venta.nombreCliente,
+          direccionInicial: direccionInicial,
+          telefonoInicial: telefonoInicial,
+          mostrarOpcionImprimir: false,
+        ),
+      );
+      if (resultado == null || !mounted) return;
+      try {
+        await ref.read(ventaRepositoryProvider).actualizarDatosEnvio(
+              id: venta.id,
+              envioNombre: resultado.nombre,
+              envioDireccion: resultado.direccion,
+              envioTelefono: resultado.telefono,
+            );
+      } catch (e) {
+        _mostrarMensaje('No se pudieron guardar los datos de envío: $e');
+        return;
+      }
+      ventaConEnvio = venta.copyWith(esEnvio: true, envioNombre: resultado.nombre, envioDireccion: resultado.direccion, envioTelefono: resultado.telefono);
+      if (mounted) setState(() => _venta = ventaConEnvio);
+    }
+
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    try {
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio);
+      if (!kIsWeb && Platform.isWindows) {
+        if (negocio.impresoraTermicaNombre.isEmpty) {
+          _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+          return;
+        }
+        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
+      } else if (negocio.impresoraRedIp.isNotEmpty) {
+        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
+      } else {
+        _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+      }
+    } catch (_) {
+      _mostrarMensaje('No se pudo imprimir la guía de envío');
+    }
   }
 
   Future<void> _pedirImpresionEnVivo(VentaModel venta, bool esCopia, {String mensajeSinPc = 'No se pudo reimprimir desde este dispositivo'}) async {
@@ -634,6 +715,15 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 13)),
               style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             ),
+            if (!venta.estaAnulada)
+              OutlinedButton.icon(
+                onPressed: _procesandoGuia ? null : _imprimirGuiaEnvio,
+                icon: _procesandoGuia
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)))
+                    : const Icon(Icons.local_shipping_outlined, size: 18),
+                label: Text(venta.esEnvio ? 'Reimprimir guía de envío' : 'Generar guía de envío', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1565C0), side: const BorderSide(color: Color(0xFF1565C0)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
             if (esCredito && !venta.estaAnulada)
               OutlinedButton.icon(
                 onPressed: _abrirRegistrarAbono,
