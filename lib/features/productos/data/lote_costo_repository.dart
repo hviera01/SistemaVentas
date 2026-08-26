@@ -84,16 +84,9 @@ class LoteCostoRepository {
   Stream<List<LoteCostoModel>> obtenerLotes(String idProducto) {
     return colLotes(idProducto).orderBy('fecha').snapshots().map((snap) {
       final lotes = snap.docs.map((d) => LoteCostoModel.fromMap(d.id, d.data())).toList();
-      lotes.sort(_compararPorPrioridad);
+      lotes.sort(_compararLotesPorPrioridad);
       return lotes;
     });
-  }
-
-  int _compararPorPrioridad(LoteCostoModel a, LoteCostoModel b) {
-    if (a.prioridad != null && b.prioridad != null) return a.prioridad!.compareTo(b.prioridad!);
-    if (a.prioridad != null) return -1;
-    if (b.prioridad != null) return 1;
-    return a.fecha.compareTo(b.fecha);
   }
 
   /// Cambia a mano cuál lote sale primero: se le asigna una prioridad nueva
@@ -108,6 +101,10 @@ class LoteCostoRepository {
       batch.update(colLotes(idProducto).doc(idsEnOrdenDeseado[i]), {'prioridad': i});
     }
     await batch.commit();
+    // Reordenar a mano puede cambiar cuál es el lote activo (el que sale
+    // primero) sin que se haya vendido/comprado nada -mismo criterio que el
+    // resto de operaciones sobre lotes, ver sincronizarPrecioCompraActivo.
+    await sincronizarPrecioCompraActivo(idProducto);
   }
 
   /// Arma el estado de trabajo a partir del resultado de [consultarLotes].
@@ -167,4 +164,61 @@ class LoteCostoRepository {
       if (entry.value.tocado) transaction.update(entry.key, {'cantidadRestante': entry.value.restante});
     }
   }
+
+  /// Sincroniza `productos/{id}.precioCompra` con el costo del lote que el
+  /// FIFO va a consumir A CONTINUACIÓN (el más viejo con existencia, o el de
+  /// prioridad manual más alta) -pedido explícito del dueño: la columna
+  /// "P. Compra" de Inventario, el "Valor compra" del inventario, y el costo
+  /// de arranque del estimado de Consultar Costo tienen que reflejar lo que
+  /// en verdad se está vendiendo ahora mismo, no la última compra
+  /// registrada ni el último ajuste manual. Antes `precioCompra` se pisaba
+  /// directo en cada compra/edición manual sin mirar los lotes -bug real
+  /// reportado por el dueño: con dos lotes (uno viejo con existencia a costo
+  /// 10, uno nuevo a costo 12), la columna mostraba 12 aunque la próxima
+  /// unidad vendida en verdad costara 10-.
+  ///
+  /// Se llama DESPUÉS de que la operación que tocó lotes (compra, venta,
+  /// ajuste de stock, anulación, reordenar) ya haya CONFIRMADO sus cambios
+  /// -por eso es una escritura aparte, no algo más que agregar dentro de esa
+  /// misma transacción: una query normal (no transaccional, que es lo único
+  /// que Firestore permite para queries del lado del cliente, ver
+  /// [consultarLotes]) hecha DENTRO de esa transacción no vería los cambios
+  /// de lotes que esa misma transacción todavía no confirmó-. Si ya no
+  /// queda ningún lote con existencia, no toca nada (se deja el último
+  /// precioCompra conocido, igual que el comportamiento de siempre).
+  Future<void> sincronizarPrecioCompraActivo(String idProducto) async {
+    final snap = await colLotes(idProducto).orderBy('fecha').get();
+    final lotes = snap.docs.map((d) => LoteCostoModel.fromMap(d.id, d.data())).toList();
+    final activo = loteActivo(lotes);
+    if (activo != null) {
+      await _db.collection('productos').doc(idProducto).update({'precioCompra': activo.costoUnitario});
+    }
+  }
+}
+
+/// Lote que el FIFO va a consumir a continuación de una lista YA completa
+/// de lotes de un producto (agotados o no): el primero, en el mismo orden
+/// que usa el costeo real -prioridad manual si existe (ver
+/// LoteCostoRepository.reordenarLotes), si no la fecha, más viejo primero-,
+/// que todavía tenga cantidadRestante > 0. Null si no queda ninguno. Función
+/// de nivel superior (no un método de la clase) y sin Firestore a propósito,
+/// para poder probarla con datos de prueba sin necesitar un backend real.
+LoteCostoModel? loteActivo(List<LoteCostoModel> lotes) {
+  final ordenados = [...lotes]..sort(_compararLotesPorPrioridad);
+  for (final lote in ordenados) {
+    if (lote.cantidadRestante > 0) return lote;
+  }
+  return null;
+}
+
+/// Mismo criterio de orden que usa el costeo FIFO real (ver
+/// LoteCostoRepository.inicializarEstado): prioridad manual si existe, si
+/// no la fecha, más viejo primero. Nivel superior -no un método de la
+/// clase- para que tanto [obtenerLotes] como [loteActivo] compartan
+/// exactamente el mismo criterio sin duplicarlo.
+int _compararLotesPorPrioridad(LoteCostoModel a, LoteCostoModel b) {
+  if (a.prioridad != null && b.prioridad != null) return a.prioridad!.compareTo(b.prioridad!);
+  if (a.prioridad != null) return -1;
+  if (b.prioridad != null) return 1;
+  return a.fecha.compareTo(b.fecha);
 }

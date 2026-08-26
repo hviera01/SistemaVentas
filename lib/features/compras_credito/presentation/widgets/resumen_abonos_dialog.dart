@@ -12,8 +12,13 @@ class _FilaResumen {
   final String proveedor;
   final double totalAbonado;
   final int numeroAbonos;
+  // Cuánto abonó cada usuario dentro de este grupo (día+proveedor, o
+  // proveedor solo) -pedido explícito del dueño: "quiero ver quien registró
+  // ese abono, ya sea global [un solo usuario] o si es más de uno ver
+  // quiénes y cuánto cada uno".
+  final Map<String, double> montoPorUsuario;
 
-  _FilaResumen({required this.dia, required this.proveedor, required this.totalAbonado, required this.numeroAbonos});
+  _FilaResumen({required this.dia, required this.proveedor, required this.totalAbonado, required this.numeroAbonos, required this.montoPorUsuario});
 }
 
 class ResumenAbonosDialog extends ConsumerStatefulWidget {
@@ -93,11 +98,20 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     for (final a in filtrados) {
       final dia = _vista == 'dia_proveedor' && a.fecha != null ? DateTime(a.fecha!.year, a.fecha!.month, a.fecha!.day) : null;
       final clave = _vista == 'dia_proveedor' ? '${dia?.toIso8601String()}_${a.nombreProveedor}' : a.nombreProveedor;
+      final usuario = a.usuario.isEmpty ? 'Sin usuario' : a.usuario;
       final existente = mapa[clave];
       if (existente == null) {
-        mapa[clave] = _FilaResumen(dia: dia, proveedor: a.nombreProveedor, totalAbonado: a.montoAbonado, numeroAbonos: 1);
+        mapa[clave] = _FilaResumen(dia: dia, proveedor: a.nombreProveedor, totalAbonado: a.montoAbonado, numeroAbonos: 1, montoPorUsuario: {usuario: a.montoAbonado});
       } else {
-        mapa[clave] = _FilaResumen(dia: dia, proveedor: a.nombreProveedor, totalAbonado: existente.totalAbonado + a.montoAbonado, numeroAbonos: existente.numeroAbonos + 1);
+        final montoPorUsuario = Map<String, double>.from(existente.montoPorUsuario);
+        montoPorUsuario[usuario] = (montoPorUsuario[usuario] ?? 0) + a.montoAbonado;
+        mapa[clave] = _FilaResumen(
+          dia: dia,
+          proveedor: a.nombreProveedor,
+          totalAbonado: existente.totalAbonado + a.montoAbonado,
+          numeroAbonos: existente.numeroAbonos + 1,
+          montoPorUsuario: montoPorUsuario,
+        );
       }
     }
     final lista = mapa.values.toList();
@@ -301,6 +315,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
               children: [
                 if (mostrarDia) Expanded(flex: 2, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
                 Expanded(flex: 4, child: Text('PROVEEDOR', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                Expanded(flex: 3, child: Text('USUARIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
                 Expanded(flex: 3, child: Text('TOTAL ABONADO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
                 Expanded(flex: 2, child: Text('Nº ABONOS', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
               ],
@@ -318,6 +333,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     children: [
                       if (mostrarDia) Expanded(flex: 2, child: Text(f.dia != null ? formatoFecha.format(f.dia!) : '-', style: GoogleFonts.poppins(fontSize: 12.5))),
                       Expanded(flex: 4, child: Text(f.proveedor, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                      Expanded(flex: 3, child: _celdaUsuarios(f.montoPorUsuario)),
                       Expanded(flex: 3, child: Text(formatearMoneda(f.totalAbonado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF16A34A)))),
                       Expanded(flex: 2, child: Text(f.numeroAbonos.toString(), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5))),
                     ],
@@ -327,6 +343,33 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Un solo usuario en el grupo: se muestra el nombre directo. Más de
+  /// uno: chip "N usuarios" con un Tooltip -mismo texto que un desglose,
+  /// pero sin necesitar abrir otro diálogo- que lista a cada uno con lo
+  /// que abonó, ordenado de mayor a menor aporte.
+  Widget _celdaUsuarios(Map<String, double> montoPorUsuario) {
+    if (montoPorUsuario.length <= 1) {
+      return Text(montoPorUsuario.keys.firstOrNull ?? '-', style: GoogleFonts.poppins(fontSize: 12.5), overflow: TextOverflow.ellipsis);
+    }
+    final entradas = montoPorUsuario.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final desglose = entradas.map((e) => '${e.key}: ${formatearMoneda(e.value)}').join('\n');
+    return Tooltip(
+      message: desglose,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: const Color(0xFF2B6CB0).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.group_outlined, size: 13, color: Color(0xFF2B6CB0)),
+            const SizedBox(width: 4),
+            Text('${entradas.length} usuarios', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF2B6CB0))),
+          ],
+        ),
       ),
     );
   }

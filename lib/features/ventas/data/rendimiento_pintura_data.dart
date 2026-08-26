@@ -10,14 +10,14 @@
 /// de producto -pedido explícito del dueño: sin cargar nada a mano por
 /// producto exacto ("hazlo todo vos")-. látex, sellador/base y aceite salen
 /// de un dato real que dio el dueño (consultó directo con el pintor que
-/// hace los proyectos, no es una ficha técnica): látex (mate y satinada
-/// cubren igual) y sellador/base rinden ~18 m²/cubeta (5 gal) A DOS MANOS
-/// -18/5=3.6 m²/galón a dos manos, ×2 = 7.2 m²/galón por mano-; aceite rinde
-/// ~15 m²/galón A DOS MANOS -×2 = 30 m²/galón por mano-. Para el resto
-/// (impermeabilizante, piscina) donde sí encontré ficha técnica real de
-/// LANCO o no hay dato del dueño, se deja igual: impermeabilizante Dry Coat
-/// ~37 m²/galón como pintura o ~9.5 m²/galón como sellador (mucho más
-/// grueso), piscina una cifra típica de la industria.
+/// hace los proyectos, no es una ficha técnica): un GALÓN de látex (mate y
+/// satinada cubren igual) o de sellador/base rinde ~18 m²/galón A DOS MANOS
+/// -×2 = 36 m²/galón por mano-; un galón de aceite rinde ~15 m²/galón A DOS
+/// MANOS -×2 = 30 m²/galón por mano-. Para el resto (impermeabilizante,
+/// piscina) donde sí encontré ficha técnica real de LANCO o no hay dato del
+/// dueño, se deja igual: impermeabilizante Dry Coat ~37 m²/galón como
+/// pintura o ~9.5 m²/galón como sellador (mucho más grueso), piscina una
+/// cifra típica de la industria.
 enum TipoProductoPintura {
   latex,
   aceite,
@@ -39,12 +39,12 @@ const _etiquetasTipoProducto = {
 String etiquetaTipoProductoPintura(TipoProductoPintura t) => _etiquetasTipoProducto[t]!;
 
 const _rendimientoM2PorGalon = {
-  TipoProductoPintura.latex: 7.2,
+  TipoProductoPintura.latex: 36.0,
   TipoProductoPintura.aceite: 30.0,
   TipoProductoPintura.impermeabilizantePintura: 37.0,
   TipoProductoPintura.impermeabilizanteSellador: 9.5,
   TipoProductoPintura.piscina: 22.0,
-  TipoProductoPintura.selladorBase: 7.2,
+  TipoProductoPintura.selladorBase: 36.0,
 };
 
 class CompraSugeridaPintura {

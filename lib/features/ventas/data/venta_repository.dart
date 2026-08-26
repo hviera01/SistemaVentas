@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'venta_model.dart';
 import 'venta_en_espera_model.dart';
@@ -305,6 +306,11 @@ class VentaRepository {
     // -pedido explícito: "quiero que el stock de tinte se descuente de
     // verdad"-, así que no pasa por el mismo filtro de arriba.
     final tintesADescontar = _agregarTintesParaDescuento(items);
+    // Mismos productos únicos que se calculan de nuevo adentro de la
+    // transacción (ver más abajo) -se necesita también acá afuera para
+    // sincronizar precioCompra después de que la transacción confirme, ver
+    // el comentario grande junto al await final de este método.
+    final idsProductoUnicosParaSync = [...itemsADescontar, ...tintesADescontar].map((i) => i.idProducto).toSet().toList();
 
     // Se resuelve ANTES de entrar a la transacción: es una consulta (y,
     // eventualmente, una creación de cliente) que Firestore no permite hacer
@@ -574,6 +580,15 @@ class VentaRepository {
       }
     }, timeout: const Duration(seconds: 12));
 
+    // Sincroniza productos.precioCompra con el lote que el FIFO va a
+    // consumir a continuación, ya con los lotes de esta venta confirmados
+    // -ver el doc grande de LoteCostoRepository.sincronizarPrecioCompraActivo
+    // para el porqué de por qué esto va DESPUÉS de la transacción y no
+    // adentro-. Best-effort: si falla, la venta ya se registró bien (lo que
+    // importa) y precioCompra simplemente queda con el valor anterior hasta
+    // la próxima operación que sí sincronice.
+    unawaited(Future.wait(idsProductoUnicosParaSync.map((id) => _lotes.sincronizarPrecioCompraActivo(id))).catchError((_) => <void>[]));
+
     return VentaModel(
       id: ventaRef.id,
       tipoDocumento: tipoDocumento,
@@ -798,6 +813,11 @@ class VentaRepository {
       }
       rethrow;
     }
+    // Mismo criterio que registrarVenta: sincroniza precioCompra con el
+    // lote activo de cada producto restaurado, ya con el lote nuevo de esta
+    // anulación (ver _anularVentaTransaccion, crea uno a costo promedio) y
+    // los stocks restaurados confirmados. Best-effort.
+    unawaited(Future.wait(itemsARestaurar.map((i) => i.idProducto).toSet().map((id) => _lotes.sincronizarPrecioCompraActivo(id))).catchError((_) => <void>[]));
   }
 
   Future<void> _anularVentaTransaccion({

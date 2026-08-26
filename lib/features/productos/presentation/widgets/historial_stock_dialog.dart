@@ -54,7 +54,10 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
     final formatoDia = DateFormat('dd/MM/yyyy');
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 640;
-    final anchoDialog = esMovil ? tamano.width - 24 : 720.0;
+    // 1040 en vez de 720 -pedido explícito del dueño: la columna MOTIVO se
+    // desbordaba con los movimientos de tintes, cuyo motivo suele ser más
+    // largo (describe la fórmula/colorante, no solo "venta"/"compra").
+    final anchoDialog = esMovil ? tamano.width - 24 : (tamano.width - 64 < 1040 ? tamano.width - 64 : 1040.0);
     final altoDialog = tamano.height < 640 ? tamano.height - 40 : 580.0;
 
     return Dialog(
@@ -112,11 +115,19 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                             children: [
                               Row(
                                 children: [
+                                  _chipTipo(r.tipo),
+                                  const Spacer(),
+                                  Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
                                   Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 15, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
                                   const SizedBox(width: 6),
                                   Text('${r.stockAnterior} → ${r.stockNuevo}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
-                                  const Spacer(),
-                                  Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                                  const SizedBox(width: 8),
+                                  Text('(${subio ? '+' : ''}${r.delta.toStringAsFixed(r.delta == r.delta.roundToDouble() ? 0 : 2)})', style: GoogleFonts.poppins(fontSize: 12, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828))),
                                 ],
                               ),
                               if (r.motivo.isNotEmpty) ...[
@@ -140,11 +151,13 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                           decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                           child: Row(
                             children: [
-                              Expanded(flex: 3, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 2, child: Text('ANTERIOR', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 2, child: Text('NUEVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 4, child: Text('MOTIVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 3, child: Text('USUARIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 2, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 2, child: Text('TIPO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 1, child: Text('ANTERIOR', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 1, child: Text('NUEVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 1, child: Text('CAMBIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 5, child: Text('MOTIVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 2, child: Text('USUARIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
                             ],
                           ),
                         ),
@@ -159,10 +172,11 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 child: Row(
                                   children: [
-                                    Expanded(flex: 3, child: Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 12))),
-                                    Expanded(flex: 2, child: Text(r.stockAnterior.toString(), style: GoogleFonts.poppins(fontSize: 12))),
+                                    Expanded(flex: 2, child: Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 12))),
+                                    Expanded(flex: 2, child: _chipTipo(r.tipo)),
+                                    Expanded(flex: 1, child: Text(r.stockAnterior.toString(), style: GoogleFonts.poppins(fontSize: 12))),
                                     Expanded(
-                                      flex: 2,
+                                      flex: 1,
                                       child: Row(
                                         children: [
                                           Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
@@ -171,8 +185,15 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                         ],
                                       ),
                                     ),
-                                    Expanded(flex: 4, child: Text(r.motivo.isEmpty ? '-' : r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis, maxLines: 2)),
-                                    Expanded(flex: 3, child: Text(r.usuario, style: GoogleFonts.poppins(fontSize: 12), overflow: TextOverflow.ellipsis)),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Text(
+                                        '${subio ? '+' : ''}${r.delta.toStringAsFixed(r.delta == r.delta.roundToDouble() ? 0 : 2)}',
+                                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                                      ),
+                                    ),
+                                    Expanded(flex: 5, child: Text(r.motivo.isEmpty ? '-' : r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis, maxLines: 3)),
+                                    Expanded(flex: 2, child: Text(r.usuario, style: GoogleFonts.poppins(fontSize: 12), overflow: TextOverflow.ellipsis)),
                                   ],
                                 ),
                               );
@@ -187,6 +208,30 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _chipTipo(TipoMovimientoStock tipo) {
+    final (color, icono) = switch (tipo) {
+      TipoMovimientoStock.venta => (const Color(0xFF16A34A), Icons.point_of_sale),
+      TipoMovimientoStock.anulacionVenta => (const Color(0xFFC62828), Icons.undo),
+      TipoMovimientoStock.compra => (const Color(0xFF2B6CB0), Icons.local_shipping_outlined),
+      TipoMovimientoStock.anulacionCompra => (const Color(0xFFC62828), Icons.undo),
+      TipoMovimientoStock.reembasado => (const Color(0xFF9333EA), Icons.opacity),
+      TipoMovimientoStock.ajusteEntrada => (const Color(0xFF6B7280), Icons.tune),
+      TipoMovimientoStock.ajusteSalida => (const Color(0xFF6B7280), Icons.tune),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icono, size: 12, color: color),
+          const SizedBox(width: 4),
+          Flexible(child: Text(etiquetasTipoMovimientoStock[tipo]!, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: color), overflow: TextOverflow.ellipsis)),
+        ],
       ),
     );
   }

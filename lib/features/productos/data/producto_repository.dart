@@ -282,12 +282,17 @@ class ProductoRepository {
       });
       lotes.crearLote(transaction, id, cantidad: cantidad, costoUnitario: costoUnitario, fecha: DateTime.now(), origen: 'ajuste');
     });
+    await lotes.sincronizarPrecioCompraActivo(id);
   }
 
-  /// Salida manual de existencia (Inventario): a diferencia de una venta
-  /// (que consume lotes por FIFO automático), acá es el usuario quien elige
-  /// a mano de qué lote/costo sale -[idLote] null significa "sin lote
-  /// específico", para stock viejo que quedó sin lotes asociados-.
+  /// Salida manual de existencia (Inventario). Si el usuario elige un lote
+  /// específico, sale de ahí (con su propio costo). Si elige "sin lote
+  /// específico" ([idLote] null -pensado para stock viejo que quedó sin
+  /// lotes asociados-, pero disponible siempre), consume por FIFO de los
+  /// lotes con existencia (más viejo primero, mismo motor que una venta) en
+  /// vez de solo bajar el stock total sin tocarlos -bug real reportado por
+  /// el dueño: antes eso desalineaba "cuánto suman los lotes" contra el
+  /// stock de verdad apenas el producto ya tenía lotes de por medio-.
   Future<void> registrarSalida({
     required String id,
     required double cantidad,
@@ -297,7 +302,13 @@ class ProductoRepository {
   }) async {
     if (cantidad <= 0) throw Exception('La cantidad debe ser mayor a 0');
     final ref = _col.doc(id);
-    final loteRef = idLote == null ? null : LoteCostoRepository().colLotes(id).doc(idLote);
+    final lotes = LoteCostoRepository();
+    final loteRef = idLote == null ? null : lotes.colLotes(id).doc(idLote);
+    // La query de lotes no puede ir DENTRO de la transacción (Firestore no
+    // deja queries transaccionales del cliente, ver
+    // LoteCostoRepository.consultarLotes), así que se lanza en paralelo con
+    // la lectura transaccional del producto en vez de esperarlas en serie.
+    final futureQueryLotes = idLote == null ? lotes.consultarLotes(id) : null;
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapProducto = await transaction.get(ref);
@@ -311,8 +322,14 @@ class ProductoRepository {
           throw Exception('Ese lote solo tiene ${restanteLote.toStringAsFixed(restanteLote == restanteLote.roundToDouble() ? 0 : 2)} unidades disponibles');
         }
         transaction.update(loteRef, {'cantidadRestante': restanteLote - cantidad});
-      } else if (cantidad > stockActual) {
-        throw Exception('No hay suficiente existencia sin lote específico');
+      } else {
+        if (cantidad > stockActual) {
+          throw Exception('No hay suficiente existencia sin lote específico');
+        }
+        final precioCompraActual = ((snapProducto.data()?['precioCompra'] ?? 0) as num).toDouble();
+        final estado = lotes.inicializarEstado(await futureQueryLotes!);
+        lotes.consumir(estado, cantidad, costoFallback: precioCompraActual);
+        lotes.aplicarEstado(transaction, estado);
       }
 
       final stockNuevo = stockActual - cantidad;
@@ -326,6 +343,7 @@ class ProductoRepository {
         'fecha': FieldValue.serverTimestamp(),
       });
     });
+    await lotes.sincronizarPrecioCompraActivo(id);
   }
 
   /// Descuenta stock de un producto de forma atómica (lee el stock actual y lo decrementa),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'compra_en_espera_model.dart';
 import 'compra_model.dart';
@@ -378,6 +379,13 @@ class CompraRepository {
       }
     }, timeout: const Duration(seconds: 12));
 
+    // Mismo criterio que registrarVenta: sincroniza precioCompra con el
+    // lote activo de cada producto, ya con los lotes de esta compra
+    // confirmados. TODOS los productos de la compra (no solo
+    // idsProductoUnicos, que excluye los vinculados a una venta pendiente
+    // -ver más arriba-: esos también se crean su propio lote). Best-effort.
+    unawaited(Future.wait(items.map((i) => i.idProducto).toSet().map((id) => _lotes.sincronizarPrecioCompraActivo(id))).catchError((_) => <void>[]));
+
     return CompraModel(
       id: compraRef.id,
       tipoDocumento: 'Factura',
@@ -539,5 +547,10 @@ class CompraRepository {
         });
       }
     }, timeout: const Duration(seconds: 12));
+
+    // Mismo criterio que registrarCompra/registrarVenta: sincroniza
+    // precioCompra con el lote activo de cada producto, ya con el lote de
+    // esta compra descontado/agotado. Best-effort.
+    unawaited(Future.wait(items.map((i) => i.idProducto).toSet().map((id) => _lotes.sincronizarPrecioCompraActivo(id))).catchError((_) => <void>[]));
   }
 }
