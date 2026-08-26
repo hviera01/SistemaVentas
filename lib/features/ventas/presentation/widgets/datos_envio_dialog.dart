@@ -13,9 +13,12 @@ class DatosEnvioResultado {
   final String direccion;
   final String telefono;
   final bool imprimir;
-  // true = formato grande (letra doble ancho Y doble alto en más del
-  // contenido, tira más larga -pedido explícito del dueño: "más grande, más
-  // largo"-); false = el ticket compacto normal. Se dejan las DOS opciones
+  // true = formato "volteado" -pedido explícito del dueño, aclarado
+  // después de una primera versión que solo agrandaba el texto sin
+  // rotarlo, que no era lo que pedía-: se imprime como una imagen ya
+  // rotada 90°, letra enorme, hay que girar la tira de lado para leerla
+  // (ver VentaTicketEscPosService.generarGuiaEnvio). false = el ticket
+  // compacto normal, texto ESC/POS derecho. Se dejan las DOS opciones
   // siempre disponibles, nunca se reemplaza una por la otra.
   final bool formatoGrande;
   const DatosEnvioResultado({required this.nombre, required this.direccion, required this.telefono, required this.imprimir, required this.formatoGrande});
@@ -118,7 +121,7 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
               children: [
                 Expanded(child: _botonFormato('Normal', 'Ticket compacto', esGrande: false)),
                 const SizedBox(width: 8),
-                Expanded(child: _botonFormato('Grande', 'Letra grande, tira más larga', esGrande: true)),
+                Expanded(child: _botonFormato('Grande (volteada)', 'Letra enorme, hay que girar la tira de lado para leerla', esGrande: true)),
               ],
             ),
             if (widget.mostrarOpcionImprimir) ...[

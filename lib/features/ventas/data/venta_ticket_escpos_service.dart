@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
+import 'package:flutter/painting.dart';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import 'venta_model.dart';
@@ -7,6 +9,48 @@ import '../../../core/utils/formato_moneda.dart';
 import '../../../core/utils/logo_escpos.dart';
 import '../../../core/utils/texto_utils.dart';
 import '../../negocio/data/negocio_model.dart';
+
+/// Una franja de la guía "grande" (ver
+/// VentaTicketEscPosService._renderizarGuiaRotada): etiqueta chica arriba,
+/// valor grande abajo. [medir] arma los TextPainter y calcula [ancho]
+/// -llamarlo antes de [pintar]-; el valor se envuelve solo si hace falta
+/// (TextPainter con maxWidth), no a mano como en el ticket normal.
+class _SeccionGuiaGrande {
+  _SeccionGuiaGrande(this.etiqueta, this.valor, {required this.fontEtiqueta, required this.fontValor, required this.maxAnchoValor});
+
+  final String etiqueta;
+  final String valor;
+  final double fontEtiqueta;
+  final double fontValor;
+  final double maxAnchoValor;
+
+  late TextPainter _painterEtiqueta;
+  late TextPainter _painterValor;
+  double ancho = 0;
+
+  void medir() {
+    _painterEtiqueta = TextPainter(
+      text: TextSpan(text: etiqueta, style: TextStyle(color: const Color(0xFF000000), fontSize: fontEtiqueta, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
+    _painterValor = TextPainter(
+      text: TextSpan(text: valor, style: TextStyle(color: const Color(0xFF000000), fontSize: fontValor, fontWeight: FontWeight.bold)),
+      textDirection: ui.TextDirection.ltr,
+    )..layout(maxWidth: maxAnchoValor);
+    ancho = [_painterEtiqueta.width, _painterValor.width].reduce((a, b) => a > b ? a : b);
+  }
+
+  void pintar(Canvas canvas, double x, double altoLienzo) {
+    // La etiqueta va arriba y el valor centrado en el espacio que sobra
+    // -así una etiqueta+valor cortos no quedan pegados al borde de arriba
+    // ni desalineados entre secciones de distinto tamaño de fuente-.
+    const espacioEtiquetaValor = 14.0;
+    final altoBloque = _painterEtiqueta.height + espacioEtiquetaValor + _painterValor.height;
+    final yInicial = ((altoLienzo - altoBloque) / 2).clamp(0.0, altoLienzo);
+    _painterEtiqueta.paint(canvas, Offset(x, yInicial));
+    _painterValor.paint(canvas, Offset(x, yInicial + _painterEtiqueta.height + espacioEtiquetaValor));
+  }
+}
 
 /// Genera el mismo contenido del ticket térmico de `generarPdfFactura` (ver
 /// VentaExportService) pero como comandos ESC/POS crudos: la vía que ya
@@ -42,32 +86,33 @@ class VentaTicketEscPosService {
 
   /// Guía de envío -pedido explícito del dueño: "imprimir en la térmica así
   /// como a lo ancho para poder hacer la letra un poco grande y clara y
-  /// poder pegar eso a una caja"-. Un ticket térmico no puede rotarse a
-  /// paisaje de verdad (el papel sale en una sola tira angosta), así que
-  /// "más ancho/grande" acá significa usar TODO el ancho del papel con texto
-  /// más grande (PosTextSize.size2) en vez del layout de dos columnas del
-  /// recibo normal -mismo Generator/PaperSize.mm80 que generarTicket, ticket
-  /// completamente aparte, se manda a imprimir por separado-.
-  ///
-  /// [grande] agrega una SEGUNDA opción de formato -pedido explícito del
-  /// dueño: "dejá siempre las dos opciones"-, no reemplaza la normal. En la
-  /// normal la dirección solo sale más ALTA (mismo ancho de 48 caracteres,
-  /// para no partir una dirección larga en demasiadas líneas). En
-  /// [grande]==true la dirección TAMBIÉN sale a doble ANCHO -"al tener más
-  /// espacio a lo ancho, más grande"-, igual que nombre/teléfono: cada línea
-  /// entra la mitad de caracteres, así que una dirección larga se reparte en
-  /// más líneas -tira más larga a cambio de letra más grande en todo, no
-  /// solo en el nombre-.
+  /// poder pegar eso a una caja"-. [grande]==false: ticket normal, angosto,
+  /// con PosTextSize.size2 en nombre/teléfono (texto ESC/POS de verdad, más
+  /// rápido/liviano). [grande]==true: "volteado" -pedido explícito del
+  /// dueño, aclarado después de que la primera versión (solo letra doble
+  /// ancho/alto, sin rotar) no era lo que pedía-: se arma como una IMAGEN
+  /// (no hay comando ESC/POS que rote texto de verdad) con cada dato en una
+  /// franja bien grande, y esa imagen se rota 90° antes de mandarla a
+  /// imprimir. El resultado es una tira más larga que hay que girar de lado
+  /// para leer, pero con letra mucho más grande que cualquier texto ESC/POS
+  /// normal -el ancho del papel (fijo, ~8cm) pasa a ser la ALTURA de la
+  /// letra en vez de cuántos caracteres entran por línea-.
   Future<List<int>> generarGuiaEnvio(VentaModel venta, NegocioModel negocio, {bool grande = false}) async {
     final perfil = await CapabilityProfile.load();
     final generador = Generator(PaperSize.mm80, perfil);
-    final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
-    final estiloGrande = PosStyles(bold: true, height: PosTextSize.size2, width: grande ? PosTextSize.size2 : PosTextSize.size1);
-    final anchoDireccion = grande ? _anchoDoble : _anchoCompleto;
 
     List<int> bytes = [];
     bytes += generador.reset();
 
+    if (grande) {
+      final imagen = await _renderizarGuiaRotada(venta, negocio);
+      bytes += generador.image(imagen);
+      bytes += generador.emptyLines(2);
+      bytes += generador.cut();
+      return bytes;
+    }
+
+    final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
     if (negocio.nombre.isNotEmpty) {
       bytes += _texto(generador, negocio.nombre.toUpperCase(), styles: const PosStyles(align: PosAlign.center, bold: true));
     }
@@ -86,8 +131,8 @@ class VentaTicketEscPosService {
 
     if (venta.envioDireccion.isNotEmpty) {
       bytes += _texto(generador, 'DIRECCION:', styles: const PosStyles(bold: true));
-      for (final linea in _envolverDescripcion(venta.envioDireccion, anchoDireccion)) {
-        bytes += _texto(generador, linea, styles: estiloGrande);
+      for (final linea in _envolverDescripcion(venta.envioDireccion, _anchoCompleto)) {
+        bytes += _texto(generador, linea, styles: const PosStyles(bold: true, height: PosTextSize.size2));
       }
       bytes += generador.emptyLines(1);
     }
@@ -108,6 +153,66 @@ class VentaTicketEscPosService {
     bytes += generador.cut();
 
     return bytes;
+  }
+
+  // Alto del lienzo ANTES de rotar = ancho real de impresión de una
+  // térmica de 80mm en puntos (mismo dato citado en todo este archivo).
+  // Después de rotar 90°, este alto se convierte en el ANCHO de la imagen
+  // ya impresa -tiene que quedar exacto o menor a esto, es un límite físico
+  // del cabezal-.
+  static const _altoLienzoGuiaGrande = 576;
+  static const _margenGuiaGrande = 24.0;
+  static const _separacionSeccionGuiaGrande = 56.0;
+
+  /// Arma la guía "grande" como imagen y la rota 90° -ver el doc grande de
+  /// [generarGuiaEnvio]-. Cada dato (nombre, dirección, teléfono) es una
+  /// franja: etiqueta chica arriba, valor en letra grande abajo, una franja
+  /// al lado de la otra a lo ANCHO del lienzo (que es lo que se vuelve el
+  /// LARGO de la tira ya impresa, sin límite real). No se prueba en una
+  /// impresora física desde acá -si sale al revés (hay que girar la tira
+  /// para el otro lado) o la letra sale cortada por los bordes, avisar: es
+  /// un ajuste de una línea (cambiar el ángulo en copyRotate, o los
+  /// tamaños de fuente de abajo).
+  Future<img.Image> _renderizarGuiaRotada(VentaModel venta, NegocioModel negocio) async {
+    final secciones = <_SeccionGuiaGrande>[
+      _SeccionGuiaGrande('PARA', venta.envioNombre, fontEtiqueta: 30, fontValor: 150, maxAnchoValor: 2400),
+      if (venta.envioDireccion.isNotEmpty) _SeccionGuiaGrande('DIRECCION', venta.envioDireccion, fontEtiqueta: 30, fontValor: 90, maxAnchoValor: 2200),
+      if (venta.envioTelefono.isNotEmpty) _SeccionGuiaGrande('TELEFONO', venta.envioTelefono, fontEtiqueta: 30, fontValor: 150, maxAnchoValor: 1600),
+      _SeccionGuiaGrande(
+        negocio.nombre.isEmpty ? '' : negocio.nombre.toUpperCase(),
+        '${venta.tipoDocumento} ${negocio.rangoPrefijo}${venta.numeroDocumento}',
+        fontEtiqueta: 26,
+        fontValor: 34,
+        maxAnchoValor: 1200,
+      ),
+    ];
+
+    for (final s in secciones) {
+      s.medir();
+    }
+    final anchoTotal = secciones.fold<double>(_margenGuiaGrande, (s, seccion) => s + seccion.ancho + _separacionSeccionGuiaGrande);
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, anchoTotal, _altoLienzoGuiaGrande.toDouble()));
+    canvas.drawRect(Rect.fromLTWH(0, 0, anchoTotal, _altoLienzoGuiaGrande.toDouble()), Paint()..color = const Color(0xFFFFFFFF));
+
+    var x = _margenGuiaGrande;
+    for (final seccion in secciones) {
+      seccion.pintar(canvas, x, _altoLienzoGuiaGrande.toDouble());
+      x += seccion.ancho + _separacionSeccionGuiaGrande;
+    }
+
+    final picture = recorder.endRecording();
+    final imagenUi = await picture.toImage(anchoTotal.ceil(), _altoLienzoGuiaGrande);
+    final bytesRgba = await imagenUi.toByteData(format: ui.ImageByteFormat.rawRgba);
+    final lienzo = img.Image.fromBytes(
+      width: imagenUi.width,
+      height: imagenUi.height,
+      bytes: bytesRgba!.buffer,
+      numChannels: 4,
+      order: img.ChannelOrder.rgba,
+    );
+    return img.copyRotate(lienzo, angle: 90).convert(numChannels: 3);
   }
 
   // Muchas impresoras térmicas no tienen bien configurada la página de
