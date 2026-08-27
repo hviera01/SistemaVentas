@@ -128,7 +128,23 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
               const SizedBox(height: 16),
               formulasAsync.when(
                 loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
-                error: (e, st) => Center(child: Text('No se pudo cargar el libro de fórmulas: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                error: (e, st) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('No se pudo cargar el libro de fórmulas: $e', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.red)),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => ref.invalidate(formulasColortrendProvider),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text('Reintentar', style: GoogleFonts.poppins(fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 data: (formulas) {
                   if (_busqueda.isEmpty) {
                     return Padding(

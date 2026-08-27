@@ -79,7 +79,23 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
             Flexible(
               child: formulasAsync.when(
                 loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
-                error: (e, st) => Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Text('No se pudo cargar el libro de fórmulas: $e', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12))),
+                error: (e, st) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('No se pudo cargar el libro de fórmulas: $e', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: () => ref.invalidate(formulasColortrendProvider),
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: Text('Reintentar', style: GoogleFonts.poppins(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 data: (formulas) {
                   if (_busqueda.isEmpty) {
                     return Padding(
