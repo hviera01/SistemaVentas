@@ -3,12 +3,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image/image.dart' as img;
 import '../../data/producto_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
+import '../../../../core/services/remove_bg_service.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
@@ -94,6 +96,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
   String _imagenUrl = '';
   Uint8List? _imagenPreviewBytes;
   bool _subiendoImagen = false;
+  bool _quitandoFondo = false;
 
   @override
   void initState() {
@@ -142,18 +145,59 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     super.dispose();
   }
 
+  /// Pregunta en qué formato guardar la foto elegida -pedido explícito del
+  /// dueño-. null si el usuario cierra el diálogo sin elegir (se cancela la
+  /// subida). PNG solo tiene sentido de verdad si después se le va a quitar
+  /// el fondo (ver _quitarFondo) — sin eso, PNG de una foto común no se ve
+  /// distinto a JPG, solo pesa más.
+  Future<String?> _elegirFormatoImagen() {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('¿Guardar la foto como?', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15)),
+        content: Text(
+          'PNG permite fondo transparente (útil si después vas a usar "Quitar fondo"); JPG pesa menos.',
+          style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, 'jpg'), child: Text('JPG', style: GoogleFonts.poppins(fontWeight: FontWeight.w600))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, 'png'),
+            child: Text('PNG', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _elegirImagen() async {
     final resultado = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'], withData: true);
     if (resultado == null || resultado.files.isEmpty || !mounted) return;
     final archivo = resultado.files.first;
-    final bytes = archivo.bytes;
-    if (bytes == null) return;
+    final bytesOriginales = archivo.bytes;
+    if (bytesOriginales == null) return;
+
+    final formato = await _elegirFormatoImagen();
+    if (formato == null || !mounted) return;
+
+    // Reencodea al formato elegido (paquete `image`, ya usado en el proyecto
+    // para los logos de tickets) — si por algún motivo no se puede decodificar
+    // la imagen (archivo corrupto/formato raro), se sube tal cual vino en vez
+    // de fallar la subida entera.
+    final decodificada = img.decodeImage(bytesOriginales);
+    final bytes = decodificada == null
+        ? bytesOriginales
+        : Uint8List.fromList(formato == 'png' ? img.encodePng(decodificada) : img.encodeJpg(decodificada, quality: 90));
+    final nombreArchivo = '${archivo.name.split('.').first}.$formato';
+
     setState(() {
       _imagenPreviewBytes = bytes;
       _subiendoImagen = true;
     });
     try {
-      final url = await CloudinaryService().subirImagen(bytes, archivo.name);
+      final url = await CloudinaryService().subirImagen(bytes, nombreArchivo);
       if (!mounted) return;
       setState(() {
         _imagenUrl = url;
@@ -174,6 +218,32 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       _imagenUrl = '';
       _imagenPreviewBytes = null;
     });
+  }
+
+  /// Manda la foto YA subida a remove.bg (plan gratis, 50/mes, resolución
+  /// miniatura) y sube el resultado (PNG con transparencia) de vuelta a
+  /// Cloudinary, reemplazando la foto del producto -pedido explícito del
+  /// dueño-. Sirve tanto para una foto recién subida como para una que ya
+  /// tenía el producto desde antes.
+  Future<void> _quitarFondo() async {
+    if (_imagenUrl.isEmpty) return;
+    setState(() => _quitandoFondo = true);
+    try {
+      final sinFondo = await RemoveBgService().quitarFondo(_imagenUrl);
+      final url = await CloudinaryService().subirImagen(sinFondo, 'sin_fondo.png');
+      if (!mounted) return;
+      setState(() {
+        _imagenUrl = url;
+        _imagenPreviewBytes = null;
+        _quitandoFondo = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _quitandoFondo = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo quitar el fondo (¿se acabaron las 50 gratis de este mes?, revisá tu conexión).')),
+      );
+    }
   }
 
   double _parseDouble(String texto) {
@@ -802,7 +872,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       clipBehavior: Clip.none,
       children: [
         InkWell(
-          onTap: _subiendoImagen ? null : _elegirImagen,
+          onTap: (_subiendoImagen || _quitandoFondo) ? null : _elegirImagen,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             width: lado,
@@ -815,13 +885,13 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
-              child: _subiendoImagen
+              child: (_subiendoImagen || _quitandoFondo)
                   ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Color(0xFFC62828), strokeWidth: 2.2))
                   : contenido,
             ),
           ),
         ),
-        if (!_subiendoImagen && (_imagenUrl.isNotEmpty || _imagenPreviewBytes != null))
+        if (!_subiendoImagen && !_quitandoFondo && (_imagenUrl.isNotEmpty || _imagenPreviewBytes != null))
           Positioned(
             top: -8,
             right: -8,
@@ -832,6 +902,27 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(color: Color(0xFFC62828), shape: BoxShape.circle),
                 child: const Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        // "Quitar fondo" (remove.bg, plan gratis) -pedido explícito del
+        // dueño-: solo tiene sentido si la foto YA está subida de verdad
+        // (_imagenUrl, no una vista previa local todavía sin subir) porque
+        // remove.bg necesita una URL pública para descargarla.
+        if (!_subiendoImagen && !_quitandoFondo && _imagenUrl.isNotEmpty)
+          Positioned(
+            bottom: -8,
+            right: -8,
+            child: Tooltip(
+              message: 'Quitar fondo (remove.bg, 50 gratis por mes)',
+              child: InkWell(
+                onTap: _quitarFondo,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: const BoxDecoration(color: Color(0xFF1A1A1A), shape: BoxShape.circle),
+                  child: const Icon(Icons.auto_fix_high, size: 13, color: Colors.white),
+                ),
               ),
             ),
           ),
