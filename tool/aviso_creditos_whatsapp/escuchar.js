@@ -1,25 +1,29 @@
 // Punto de entrada: node escuchar.js
-// A diferencia de index.js (corre una vez al día y termina), este proceso
-// se queda corriendo: cada pocos segundos revisa si hay créditos con
-// `solicitudAvisoWhatsApp: true` (botón "Enviar aviso de WhatsApp ahora" en
-// VentasCreditoScreen, ver VentaCreditoRepository.solicitarAvisoWhatsApp) y
-// los manda al toque, sin esperar a la tanda diaria. Pensado para dejarse
-// corriendo en la PC principal (ver README.md).
+// A diferencia de index.js (tarea diaria, un rango fijo de fechas), este
+// corre igual de rápido -revisa, manda lo que haya pendiente, y TERMINA-
+// pero está pensado para programarse cada 2 minutos (Programador de Tareas,
+// /SC MINUTE /MO 2) en vez de una vez al día, para que "Enviar estado de
+// cuenta por WhatsApp" (botón en VentasCreditoScreen, ver
+// VentaCreditoRepository.solicitarAvisoWhatsApp) se despache pronto sin
+// depender de un proceso que se quede corriendo para siempre -eso sí le daba
+// problemas al Programador de Tareas de Windows (error "argumentos no
+// válidos" al combinar disparador "al iniciar sesión" con "sin límite de
+// tiempo de ejecución"), este formato (correr y terminar, programado cada
+// pocos minutos) es el mismo que ya usa tool/reporte_whatsapp sin líos.
 const { consultarCampoIgualA, actualizarCampos } = require('./firestore');
 const { obtenerGrupoDeCredito, marcarAvisoEnviado } = require('./estadoCuenta');
 const { generarPdfEstadoCuenta } = require('./pdf');
 const { enviarDocumentoWhatsApp } = require('./whatsapp');
 const { armarCaption, nombreArchivoPdf } = require('./mensaje');
 
-const INTERVALO_MS = 15000;
-
 // Latido de presencia (mismo patrón que `presenciaImpresion` en la app
-// Flutter, ver PresenciaImpresionRepository): sin esto, si nadie deja este
-// proceso corriendo, el botón "Enviar estado de cuenta por WhatsApp" quedaba
-// marcando el pedido en silencio y nunca se enteraba nadie de que no había
-// quién lo despachara -bug real reportado por el dueño-. La app chequea
-// `presenciaAvisoWhatsapp/escuchador` (PresenciaAvisoWhatsappRepository)
-// antes de avisar que "se manda en unos segundos".
+// Flutter, ver PresenciaImpresionRepository): si la tarea programada se
+// desactiva o falla seguido, la app puede avisar que no hay quién despache
+// el aviso en vez de dejarlo pedido en silencio -bug real reportado por el
+// dueño-. Con esta tarea corriendo cada 2 minutos, un latido reciente
+// significa "la tarea programada sigue viva" (ver PresenciaAvisoWhatsapp
+// Repository.umbralConectada, tiene que ser bastante mayor a 2 minutos para
+// no marcar falso "desconectado" entre corridas).
 async function enviarLatido() {
   try {
     await actualizarCampos('presenciaAvisoWhatsapp', 'escuchador', { ultimoLatido: new Date() });
@@ -76,22 +80,22 @@ async function procesarPendientes() {
       const motivo = err.message || String(err);
       console.error(`Falló el aviso manual del crédito ${solicitud.id}:`, err);
       // OJO: no se limpia `solicitudAvisoWhatsApp` acá -queda en true a
-      // propósito, para reintentarlo solo en el próximo ciclo (ej. si
-      // falló por un corte de internet momentáneo)-, pero SÍ se deja
-      // guardado el motivo para que VentasCreditoScreen lo muestre.
+      // propósito, para reintentarlo solo en la próxima corrida (2 minutos
+      // después), ej. si falló por un corte de internet momentáneo-, pero SÍ
+      // se deja guardado el motivo para que VentasCreditoScreen lo muestre.
       await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: motivo }).catch(() => {});
     }
   }
 }
 
 async function main() {
-  console.log(`Escuchando pedidos de aviso manual de crédito vencido (cada ${INTERVALO_MS / 1000}s). Ctrl+C para salir.`);
-  const ciclo = () => {
-    enviarLatido();
-    procesarPendientes().catch((err) => console.error('Error revisando solicitudes:', err));
-  };
-  ciclo();
-  setInterval(ciclo, INTERVALO_MS);
+  await enviarLatido();
+  await procesarPendientes();
 }
 
-main();
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Falló la corrida de escuchar.js:', err);
+    process.exit(1);
+  });

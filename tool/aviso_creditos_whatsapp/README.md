@@ -4,12 +4,13 @@ Script aparte de la app de Flutter (Node.js) que revisa los créditos de
 clientes vencidos en Firestore y le manda a cada cliente, por WhatsApp, su
 estado de cuenta en PDF (facturas vencidas, días de atraso, saldo total).
 
-Son DOS programas separados, para dos formas de dispararlo:
-- `index.js` — corre una vez, revisa todo, manda lo que le toque, y
-  termina. Pensado para la tarea diaria programada.
-- `escuchar.js` — se queda corriendo, revisando cada 15s si el dueño tocó
-  "Enviar aviso de WhatsApp ahora" en Ventas Crédito (dentro de la app), y
-  lo manda al toque sin esperar al día siguiente. Ver "Envío manual" abajo.
+Son DOS scripts separados, ambos con el mismo formato: corren una vez,
+revisan, mandan lo que les toque, y terminan (nada se queda corriendo en
+segundo plano) — cada uno programado con una frecuencia distinta:
+- `index.js` — pensado para una vez al día.
+- `escuchar.js` — pensado para cada 2 minutos: revisa si el dueño tocó
+  "Enviar estado de cuenta por WhatsApp" en Ventas Crédito (dentro de la
+  app) y lo manda sin esperar al día siguiente. Ver "Envío manual" abajo.
 
 **No necesita login propio**: reusa la sesión de WhatsApp ya vinculada por
 `tool/reporte_whatsapp` (el número personal de Henry), así que no hay que
@@ -91,49 +92,45 @@ Editar `config.js`:
    el aviso de ese día sale a las 11am en vez de perderse — igual conviene
    activar lo mismo en las tareas de `reporte_whatsapp` si no está ya.
 
-## Envío manual ("Enviar aviso de WhatsApp ahora")
+## Envío manual ("Enviar estado de cuenta por WhatsApp")
 
 En Ventas Crédito, cualquier factura con saldo pendiente y teléfono cargado
-tiene "Enviar estado de cuenta por WhatsApp" en su menú (⋮). Al tocarla, la
-app solo marca el pedido en Firestore (`solicitudAvisoWhatsApp: true` en ese
-documento de `ventasCredito`) — **no manda nada por sí sola**. Para que de
-verdad se mande hace falta que `escuchar.js` esté corriendo en la PC
-principal:
+tiene esa opción en su menú (⋮). Al tocarla, la app solo marca el pedido en
+Firestore (`solicitudAvisoWhatsApp: true` en ese documento de
+`ventasCredito`) — **no manda nada por sí sola**. Para que de verdad se
+mande hace falta que la tarea programada de `escuchar.js` (ver abajo) esté
+activa y corriendo cada 2 minutos en la PC principal.
 
-**Cómo saber si está corriendo**: mientras está vivo, `escuchar.js` manda un
-latido a Firestore cada 15s (`presenciaAvisoWhatsapp/escuchador`). La app lo
-chequea justo antes de avisar "se manda en unos segundos" — si no hay latido
-reciente, avisa de inmediato con un mensaje rojo explicando que nadie tiene
-`escuchar.js` corriendo (el pedido igual queda guardado, así que se manda
-solo apenas alguien lo inicie). Si el envío falla por otro motivo (sesión de
-WhatsApp cerrada, número inválido, sin saldo pendiente ya, etc.), el motivo
-real queda guardado en `errorAvisoWhatsApp` de ese crédito y aparece en
-Ventas Crédito (ícono rojo junto al nombre en la tabla, o un aviso debajo de
-la tarjeta en móvil) — no hace falta abrir la consola de la PC para saber
-qué pasó.
+**Cómo saber si está funcionando**: cada vez que corre, `escuchar.js` manda
+un latido a Firestore (`presenciaAvisoWhatsapp/escuchador`). La app lo
+chequea antes de avisar "se manda en un par de minutos" — si el último
+latido tiene más de 4 minutos, avisa de inmediato con un mensaje rojo (el
+pedido igual queda guardado, se manda solo en la próxima corrida). Si el
+envío falla por otro motivo (sesión de WhatsApp cerrada, número inválido,
+sin saldo pendiente ya, etc.), el motivo real queda guardado en
+`errorAvisoWhatsApp` de ese crédito y aparece en Ventas Crédito (ícono rojo
+junto al nombre en la tabla, o un aviso debajo de la tarjeta en móvil) — no
+hace falta abrir la consola de la PC para saber qué pasó.
 
-```
-cd tool/aviso_creditos_whatsapp
-npm run escuchar
-```
-
-Se queda corriendo en esa ventana (Ctrl+C para pararlo), revisando cada 15
-segundos si hay algún pedido pendiente. Si querés que esto funcione siempre
-sin tener que abrir una ventana a mano, se puede dejar programado igual que
-la tarea diaria, pero con un desencadenador distinto:
+**Programar la tarea** (mismo tipo de tarea simple que ya usan las de
+`reporte_whatsapp` — nada de "al iniciar sesión" ni de tocar límites de
+tiempo, por eso no da los líos que sí daba dejar un proceso corriendo para
+siempre):
 
 1. Programador de tareas → Crear tarea básica.
-2. Nombre: `Escuchar Avisos Crédito WhatsApp Super Color`.
-3. Desencadenador: **Al iniciar sesión** (no diario — este proceso se queda
-   corriendo, no termina solo).
+2. Nombre: `Aviso Manual Credito WhatsApp Super Color`.
+3. Desencadenador: **Diario**, repetido cada 2 minutos — en el asistente
+   básico elegí "Diario" con cualquier hora de inicio, y en la pantalla
+   siguiente (o abriendo Propiedades → pestaña Desencadenadores → Editar
+   después de creada) activá "Repetir la tarea cada: 2 minutos" con
+   duración "Indefinidamente".
 4. Acción: Iniciar un programa.
-   - Programa/script: `node`
+   - Programa/script: `C:\Program Files\nodejs\node.exe`
    - Argumentos: `escuchar.js`
    - Iniciar en: `C:\Proyectos\sistema_ventas\tool\aviso_creditos_whatsapp`
-5. En "Configuración" de la tarea, desmarcar cualquier límite de tiempo de
-   ejecución (por defecto el Programador de Tareas corta las tareas después
-   de 3 días) — Propiedades → Configuración → "Detener la tarea si se
-   ejecuta durante más de" → desmarcar.
+5. No hace falta tocar nada en la pestaña Configuración — al ser una tarea
+   que corre y termina en segundos, el límite de tiempo por defecto (varias
+   horas) sobra de sobra.
 
 ## Si algo falla
 

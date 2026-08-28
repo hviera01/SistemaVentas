@@ -220,15 +220,16 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
 
   /// "Enviar aviso ahora": marca el pedido en el propio crédito (ver
   /// VentaCreditoRepository.solicitarAvisoWhatsApp) y avisa que va a tardar
-  /// unos segundos -el envío real lo hace tool/aviso_creditos_whatsapp/
-  /// escuchar.js corriendo en la PC principal, no esta app-.
+  /// un par de minutos -el envío real lo hace la tarea programada
+  /// tool/aviso_creditos_whatsapp/escuchar.js (corre cada 2 minutos en la PC
+  /// principal), no esta app-.
   Future<void> _enviarAvisoWhatsApp(VentaCreditoModel credito) async {
     // Chequeo de presencia PRIMERO (ver PresenciaAvisoWhatsappRepository,
-    // mismo patrón que la impresión en vivo): si nadie dejó `escuchar.js`
-    // corriendo en la PC principal, antes esto "funcionaba" (no tiraba
-    // error) pero no mandaba nada y no había forma de saber por qué -bug
-    // real reportado por el dueño-. Ahora se avisa de inmediato en vez de
-    // dejarlo esperando en silencio.
+    // mismo patrón que la impresión en vivo): si la tarea programada de
+    // esa PC está desactivada o dejó de correr, antes esto "funcionaba" (no
+    // tiraba error) pero no mandaba nada y no había forma de saber por qué
+    // -bug real reportado por el dueño-. Ahora se avisa de inmediato en vez
+    // de dejarlo esperando en silencio.
     final conectado = await ref.read(presenciaAvisoWhatsappRepositoryProvider).estaConectado();
     await ref.read(ventaCreditoRepositoryProvider).solicitarAvisoWhatsApp(credito.id);
     if (!mounted) return;
@@ -236,7 +237,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo enviar: el programa que despacha los WhatsApp ("escuchar.js") no está corriendo en la PC principal. Quedó pedido y se manda solo apenas alguien lo inicie ahí (ver tool/aviso_creditos_whatsapp/README.md).',
+            'No se pudo confirmar: la tarea programada que despacha los WhatsApp no dio señales de vida recientes en la PC principal. Quedó pedido igual, se manda apenas esa tarea vuelva a correr (ver tool/aviso_creditos_whatsapp/README.md).',
             style: GoogleFonts.poppins(fontSize: 12.5),
           ),
           backgroundColor: const Color(0xFFC62828),
@@ -247,7 +248,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Aviso solicitado: se manda por WhatsApp en unos segundos.', style: GoogleFonts.poppins(fontSize: 12.5))),
+      SnackBar(content: Text('Aviso solicitado: se manda por WhatsApp en un par de minutos.', style: GoogleFonts.poppins(fontSize: 12.5))),
     );
   }
 

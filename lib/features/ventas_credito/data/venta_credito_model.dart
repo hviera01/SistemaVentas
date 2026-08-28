@@ -44,9 +44,10 @@ class VentaCreditoModel {
   final String telefono;
 
   /// true mientras hay un pedido de "Enviar estado de cuenta por WhatsApp"
-  /// (ver VentaCreditoRepository.solicitarAvisoWhatsApp) esperando a que
-  /// `escuchar.js`, corriendo en la PC principal, lo despache. Se apaga solo
-  /// cuando ya se mandó (o se descartó por no tener teléfono/saldo).
+  /// (ver VentaCreditoRepository.solicitarAvisoWhatsApp) esperando a que la
+  /// tarea programada `escuchar.js` (corre cada 2 minutos en la PC
+  /// principal) lo despache. Se apaga solo cuando ya se mandó (o se
+  /// descartó por no tener teléfono/saldo).
   final bool solicitudAvisoWhatsApp;
 
   /// Motivo del último intento fallido de mandar el aviso de WhatsApp de

@@ -11,4 +11,11 @@ module.exports = {
   // la última vez que se le mandó aviso a ESE cliente, no desde la fecha de
   // vencimiento de cada factura.
   intervaloDiasRecordatorio: 3,
+  // Cuentas bancarias que se ofrecen en el mensaje de WhatsApp para pagar
+  // por transferencia (pedido explícito de Henry). Editar acá si cambian
+  // los números o el titular -no hace falta tocar mensaje.js-.
+  cuentasPago: [
+    { banco: 'BAC', numeroCuenta: '745760571', titular: 'Alison Paola Viera Carrasco' },
+    { banco: 'Banco Atlántida', numeroCuenta: '00002010076048', titular: 'Alison Paola Viera Carrasco' },
+  ],
 };

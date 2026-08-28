@@ -2,7 +2,15 @@
 // desde "Enviar aviso ahora" en VentasCreditoScreen) — mismo texto en los
 // dos casos.
 const { formatearMoneda } = require('./pdf');
-const { nombreNegocio } = require('./config');
+const { nombreNegocio, cuentasPago } = require('./config');
+
+// Líneas con las cuentas bancarias para pagar por transferencia (ver
+// cuentasPago en config.js) — se ofrecen siempre, esté vencido o no, porque
+// de todos modos sirve saber dónde pagar.
+function lineasCuentasPago() {
+  if (!cuentasPago || cuentasPago.length === 0) return [];
+  return ['', 'También podés pagar por transferencia a:', ...cuentasPago.map((c) => `${c.banco}: ${c.numeroCuenta} (${c.titular})`)];
+}
 
 // [vencidas] = true solo cuando TODAS las facturas del grupo están de
 // verdad vencidas (ver estadoCuenta.js) — la tanda diaria siempre manda
@@ -13,7 +21,7 @@ const { nombreNegocio } = require('./config');
 function armarCaption(nombreCliente, facturas, saldoTotal, vencidas) {
   const plural = facturas.length === 1 ? 'factura' : 'facturas';
   const lineaAviso = vencidas
-    ? `Hola ${nombreCliente}, te recordamos que tenés ${facturas.length} ${plural} de crédito vencida(s) con nosotros.`
+    ? `Hola ${nombreCliente}, te recordamos que tenés ${facturas.length} ${plural} de crédito vencida(s) con nosotros. Por favor, presentate a cancelar lo antes posible.`
     : `Hola ${nombreCliente}, te compartimos tu estado de cuenta de crédito con nosotros (${facturas.length} ${plural}).`;
   const lineaSaldo = vencidas ? `Saldo total vencido: ${formatearMoneda(saldoTotal)}` : `Saldo total: ${formatearMoneda(saldoTotal)}`;
   return [
@@ -23,6 +31,7 @@ function armarCaption(nombreCliente, facturas, saldoTotal, vencidas) {
     lineaSaldo,
     '',
     'Adjunto el detalle (estado de cuenta). Si ya realizaste el pago, hacé caso omiso a este mensaje.',
+    ...lineasCuentasPago(),
   ].join('\n');
 }
 
