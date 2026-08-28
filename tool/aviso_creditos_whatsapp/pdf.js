@@ -139,7 +139,7 @@ function generarPdfEstadoCuenta({ nombreCliente, cliente, telefono, facturas, sa
       .font('Helvetica')
       .fontSize(8.5)
       .fillColor(COLOR.grisClaro)
-      .text('Si ya realizaste el pago de alguna de estas facturas, hacé caso omiso a este aviso.', MARGEN, y, { width: ANCHO_UTIL, align: 'center' });
+      .text('Si ya realizó el pago de alguna de estas facturas, por favor haga caso omiso a este aviso.', MARGEN, y, { width: ANCHO_UTIL, align: 'center' });
     doc
       .fontSize(8)
       .text(`Generado automáticamente el ${formatearFechaHora(ahora)}`, MARGEN, y + 16, { width: ANCHO_UTIL, align: 'center' });

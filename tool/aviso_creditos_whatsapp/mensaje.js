@@ -9,9 +9,12 @@ const { nombreNegocio, cuentasPago } = require('./config');
 // de todos modos sirve saber dónde pagar.
 function lineasCuentasPago() {
   if (!cuentasPago || cuentasPago.length === 0) return [];
-  return ['', 'También podés pagar por transferencia a:', ...cuentasPago.map((c) => `${c.banco}: ${c.numeroCuenta} (${c.titular})`)];
+  return ['', 'También puede pagar por transferencia a:', ...cuentasPago.map((c) => `${c.banco}: ${c.numeroCuenta} (${c.titular})`)];
 }
 
+// Trato de "usted" en todo el mensaje -pedido explícito del dueño: más
+// formal y respetuoso hacia el cliente, en vez del "vos" que tenía antes-.
+//
 // [vencidas] = true solo cuando TODAS las facturas del grupo están de
 // verdad vencidas (ver estadoCuenta.js) — la tanda diaria siempre manda
 // true (ese script solo agrupa vencidos). El envío manual puede mandar
@@ -21,8 +24,8 @@ function lineasCuentasPago() {
 function armarCaption(nombreCliente, facturas, saldoTotal, vencidas) {
   const plural = facturas.length === 1 ? 'factura' : 'facturas';
   const lineaAviso = vencidas
-    ? `Hola ${nombreCliente}, te recordamos que tenés ${facturas.length} ${plural} de crédito vencida(s) con nosotros. Por favor, presentate a cancelar lo antes posible.`
-    : `Hola ${nombreCliente}, te compartimos tu estado de cuenta de crédito con nosotros (${facturas.length} ${plural}).`;
+    ? `Estimado(a) ${nombreCliente}, le recordamos que tiene ${facturas.length} ${plural} de crédito vencida(s) con nosotros. Le agradecemos presentarse a cancelar lo antes posible.`
+    : `Estimado(a) ${nombreCliente}, le compartimos su estado de cuenta de crédito con nosotros (${facturas.length} ${plural}).`;
   const lineaSaldo = vencidas ? `Saldo total vencido: ${formatearMoneda(saldoTotal)}` : `Saldo total: ${formatearMoneda(saldoTotal)}`;
   return [
     nombreNegocio,
@@ -30,7 +33,7 @@ function armarCaption(nombreCliente, facturas, saldoTotal, vencidas) {
     lineaAviso,
     lineaSaldo,
     '',
-    'Adjunto el detalle (estado de cuenta). Si ya realizaste el pago, hacé caso omiso a este mensaje.',
+    'Adjunto el detalle (estado de cuenta). Si ya realizó el pago, por favor haga caso omiso a este mensaje.',
     ...lineasCuentasPago(),
   ].join('\n');
 }

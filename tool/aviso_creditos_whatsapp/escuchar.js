@@ -38,6 +38,20 @@ async function procesarPendientes() {
   console.log(`${pendientes.length} solicitud(es) de aviso manual pendiente(s).`);
 
   for (const solicitud of pendientes) {
+    // "Reclama" el pedido YA, antes de generar el PDF y mandar -no después-:
+    // bug real reportado por el dueño, un aviso llegó DUPLICADO porque una
+    // corrida manual ("Ejecutar" desde el Programador de Tareas, mientras se
+    // armaba esto) y la corrida programada agarraron la misma solicitud casi
+    // al mismo tiempo y las dos la mandaron antes de que ninguna alcanzara a
+    // apagar la bandera. Bajando esto al principio, el hueco de tiempo en el
+    // que dos corridas podrían pisarse se achica de "varios segundos
+    // generando PDF + conectando WhatsApp" a prácticamente nada. No es un
+    // lock perfecto (sigue sin ser una transacción atómica de Firestore),
+    // pero para el volumen real de esto (pedidos sueltos, no en ráfaga)
+    // alcanza. Si el envío falla después de esto, NO se reintenta solo en la
+    // próxima corrida -el dueño tiene que tocar "Enviar" de nuevo-, a
+    // propósito: es preferible eso a arriesgar otro duplicado.
+    await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false }).catch(() => {});
     try {
       // Se resuelve el grupo POR SOLICITUD (no una sola vez para todas, como
       // en index.js): a diferencia de la tanda diaria, acá se incluye
@@ -48,13 +62,13 @@ async function procesarPendientes() {
       if (!grupo) {
         const motivo = 'Ya no tiene saldo pendiente (¿se pagó, liquidó o eliminó?).';
         console.warn(`Crédito ${solicitud.id}: ${motivo} — se descarta la solicitud sin mandar nada.`);
-        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: motivo });
+        await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: motivo });
         continue;
       }
       if (!grupo.telefono) {
         const motivo = 'Sin teléfono cargado en este crédito — agregalo con "Editar teléfono" e intentá de nuevo.';
         console.warn(`Crédito ${solicitud.id} (${grupo.nombreCliente}): ${motivo}`);
-        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: motivo });
+        await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: motivo });
         continue;
       }
 
@@ -74,15 +88,11 @@ async function procesarPendientes() {
       // Limpia `errorAvisoWhatsApp` acá también -por si un intento anterior
       // de ESTE mismo crédito había fallado y quedó ese mensaje viejo
       // pegado en pantalla-.
-      await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: null });
+      await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: null });
       console.log('Enviado.');
     } catch (err) {
       const motivo = err.message || String(err);
       console.error(`Falló el aviso manual del crédito ${solicitud.id}:`, err);
-      // OJO: no se limpia `solicitudAvisoWhatsApp` acá -queda en true a
-      // propósito, para reintentarlo solo en la próxima corrida (2 minutos
-      // después), ej. si falló por un corte de internet momentáneo-, pero SÍ
-      // se deja guardado el motivo para que VentasCreditoScreen lo muestre.
       await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: motivo }).catch(() => {});
     }
   }
