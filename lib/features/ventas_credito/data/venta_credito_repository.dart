@@ -104,7 +104,10 @@ class VentaCreditoRepository {
   /// ni reglas nuevas. `escuchar.js`, corriendo en la PC, lo detecta en unos
   /// segundos, arma el estado de cuenta y lo manda.
   Future<void> solicitarAvisoWhatsApp(String idCredito) async {
-    await _col.doc(idCredito).update({'solicitudAvisoWhatsApp': true});
+    // Limpia el error del intento anterior (si lo hubo): así, si este nuevo
+    // intento también falla, `errorAvisoWhatsApp` que muestra la pantalla
+    // siempre es del pedido actual, no uno viejo que ya se resolvió.
+    await _col.doc(idCredito).update({'solicitudAvisoWhatsApp': true, 'errorAvisoWhatsApp': FieldValue.delete()});
   }
 
   Future<void> registrarAbono({

@@ -43,6 +43,18 @@ class VentaCreditoModel {
   /// WhatsApp (tool/aviso_creditos_whatsapp).
   final String telefono;
 
+  /// true mientras hay un pedido de "Enviar estado de cuenta por WhatsApp"
+  /// (ver VentaCreditoRepository.solicitarAvisoWhatsApp) esperando a que
+  /// `escuchar.js`, corriendo en la PC principal, lo despache. Se apaga solo
+  /// cuando ya se mandó (o se descartó por no tener teléfono/saldo).
+  final bool solicitudAvisoWhatsApp;
+
+  /// Motivo del último intento fallido de mandar el aviso de WhatsApp de
+  /// este crédito (ver escuchar.js) — null si nunca falló o si el último
+  /// intento sí funcionó. Se muestra en VentasCreditoScreen para que el
+  /// dueño vea por qué no llegó sin tener que revisar la consola de la PC.
+  final String? errorAvisoWhatsApp;
+
   /// true cuando este crédito no tiene un documento de venta real asociado
   /// (se creó a mano, se importó desde Excel, o nació de unir facturas) —
   /// en esos casos no existe un `ventas/{id}` que mostrar en "Ver detalle
@@ -68,6 +80,8 @@ class VentaCreditoModel {
     this.sinVentaOrigen = false,
     this.facturasOrigen = const [],
     this.telefono = '',
+    this.solicitudAvisoWhatsApp = false,
+    this.errorAvisoWhatsApp,
   });
 
   bool get liquidada => saldoPendiente <= 0;
@@ -93,6 +107,8 @@ class VentaCreditoModel {
           .map((f) => FacturaOrigenModel.fromMap(Map<String, dynamic>.from(f as Map)))
           .toList(),
       telefono: data['telefono'] ?? '',
+      solicitudAvisoWhatsApp: data['solicitudAvisoWhatsApp'] ?? false,
+      errorAvisoWhatsApp: data['errorAvisoWhatsApp'] as String?,
     );
   }
 

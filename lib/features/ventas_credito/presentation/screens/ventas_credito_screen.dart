@@ -223,10 +223,31 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
   /// unos segundos -el envío real lo hace tool/aviso_creditos_whatsapp/
   /// escuchar.js corriendo en la PC principal, no esta app-.
   Future<void> _enviarAvisoWhatsApp(VentaCreditoModel credito) async {
+    // Chequeo de presencia PRIMERO (ver PresenciaAvisoWhatsappRepository,
+    // mismo patrón que la impresión en vivo): si nadie dejó `escuchar.js`
+    // corriendo en la PC principal, antes esto "funcionaba" (no tiraba
+    // error) pero no mandaba nada y no había forma de saber por qué -bug
+    // real reportado por el dueño-. Ahora se avisa de inmediato en vez de
+    // dejarlo esperando en silencio.
+    final conectado = await ref.read(presenciaAvisoWhatsappRepositoryProvider).estaConectado();
     await ref.read(ventaCreditoRepositoryProvider).solicitarAvisoWhatsApp(credito.id);
     if (!mounted) return;
+    if (!conectado) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo enviar: el programa que despacha los WhatsApp ("escuchar.js") no está corriendo en la PC principal. Quedó pedido y se manda solo apenas alguien lo inicie ahí (ver tool/aviso_creditos_whatsapp/README.md).',
+            style: GoogleFonts.poppins(fontSize: 12.5),
+          ),
+          backgroundColor: const Color(0xFFC62828),
+          duration: const Duration(seconds: 10),
+          showCloseIcon: true,
+        ),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Aviso solicitado: se manda por WhatsApp en unos segundos (necesita que el "escuchar.js" esté corriendo en la PC principal).', style: GoogleFonts.poppins(fontSize: 12.5))),
+      SnackBar(content: Text('Aviso solicitado: se manda por WhatsApp en unos segundos.', style: GoogleFonts.poppins(fontSize: 12.5))),
     );
   }
 
@@ -703,7 +724,17 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(credito.nombreCliente, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(credito.nombreCliente, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)))),
+                if (credito.errorAvisoWhatsApp != null)
+                  Tooltip(
+                    message: 'Aviso de WhatsApp falló: ${credito.errorAvisoWhatsApp}',
+                    child: const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.error_outline, size: 14, color: Color(0xFFB91C1C))),
+                  ),
+              ],
+            ),
             InkWell(
               onTap: () => _editarTelefono(credito),
               child: Text(
@@ -805,11 +836,34 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                     _chipEstado(credito),
                   ],
                 ),
+                if (credito.errorAvisoWhatsApp != null) ...[
+                  const SizedBox(height: 8),
+                  _avisoErrorWhatsApp(credito.errorAvisoWhatsApp!),
+                ],
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  /// Motivo del último intento fallido de "Enviar estado de cuenta por
+  /// WhatsApp" (ver VentaCreditoModel.errorAvisoWhatsApp / escuchar.js) —
+  /// visible en la pantalla para que el dueño sepa qué falló sin tener que
+  /// abrir la consola de la PC.
+  Widget _avisoErrorWhatsApp(String error) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(color: const Color(0xFFFCEAEA), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFB91C1C).withOpacity(0.3))),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, size: 15, color: Color(0xFFB91C1C)),
+          const SizedBox(width: 6),
+          Expanded(child: Text('Aviso de WhatsApp falló: $error', style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB91C1C)))),
+        ],
+      ),
     );
   }
 

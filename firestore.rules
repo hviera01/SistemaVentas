@@ -124,6 +124,15 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Latido de presencia de tool/aviso_creditos_whatsapp/escuchar.js (ver
+    // PresenciaAvisoWhatsappRepository): mismo patrón que presenciaImpresion
+    // de arriba, pero para saber si ese proceso Node está corriendo antes de
+    // avisar en VentasCreditoScreen que "Enviar estado de cuenta por
+    // WhatsApp" se va a mandar de verdad.
+    match /presenciaAvisoWhatsapp/{idDocumento} {
+      allow read, write: if true;
+    }
+
     match /cierresCaja/{idCierre} {
       allow read, write: if true;
     }

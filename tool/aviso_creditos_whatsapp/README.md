@@ -93,11 +93,24 @@ Editar `config.js`:
 
 ## Envío manual ("Enviar aviso de WhatsApp ahora")
 
-En Ventas Crédito, cualquier factura vencida con teléfono cargado tiene esa
-opción en su menú (⋮). Al tocarla, la app solo marca el pedido en
-Firestore (`solicitudAvisoWhatsApp: true` en ese documento de
-`ventasCredito`) — **no manda nada por sí sola**. Para que de verdad se
-mande hace falta que `escuchar.js` esté corriendo en la PC principal:
+En Ventas Crédito, cualquier factura con saldo pendiente y teléfono cargado
+tiene "Enviar estado de cuenta por WhatsApp" en su menú (⋮). Al tocarla, la
+app solo marca el pedido en Firestore (`solicitudAvisoWhatsApp: true` en ese
+documento de `ventasCredito`) — **no manda nada por sí sola**. Para que de
+verdad se mande hace falta que `escuchar.js` esté corriendo en la PC
+principal:
+
+**Cómo saber si está corriendo**: mientras está vivo, `escuchar.js` manda un
+latido a Firestore cada 15s (`presenciaAvisoWhatsapp/escuchador`). La app lo
+chequea justo antes de avisar "se manda en unos segundos" — si no hay latido
+reciente, avisa de inmediato con un mensaje rojo explicando que nadie tiene
+`escuchar.js` corriendo (el pedido igual queda guardado, así que se manda
+solo apenas alguien lo inicie). Si el envío falla por otro motivo (sesión de
+WhatsApp cerrada, número inválido, sin saldo pendiente ya, etc.), el motivo
+real queda guardado en `errorAvisoWhatsApp` de ese crédito y aparece en
+Ventas Crédito (ícono rojo junto al nombre en la tabla, o un aviso debajo de
+la tarjeta en móvil) — no hace falta abrir la consola de la PC para saber
+qué pasó.
 
 ```
 cd tool/aviso_creditos_whatsapp

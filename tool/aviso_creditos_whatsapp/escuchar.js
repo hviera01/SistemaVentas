@@ -13,6 +13,21 @@ const { armarCaption, nombreArchivoPdf } = require('./mensaje');
 
 const INTERVALO_MS = 15000;
 
+// Latido de presencia (mismo patrón que `presenciaImpresion` en la app
+// Flutter, ver PresenciaImpresionRepository): sin esto, si nadie deja este
+// proceso corriendo, el botón "Enviar estado de cuenta por WhatsApp" quedaba
+// marcando el pedido en silencio y nunca se enteraba nadie de que no había
+// quién lo despachara -bug real reportado por el dueño-. La app chequea
+// `presenciaAvisoWhatsapp/escuchador` (PresenciaAvisoWhatsappRepository)
+// antes de avisar que "se manda en unos segundos".
+async function enviarLatido() {
+  try {
+    await actualizarCampos('presenciaAvisoWhatsapp', 'escuchador', { ultimoLatido: new Date() });
+  } catch (err) {
+    console.error('No se pudo mandar el latido de presencia:', err.message || err);
+  }
+}
+
 async function procesarPendientes() {
   const pendientes = await consultarCampoIgualA({ coleccion: 'ventasCredito', campo: 'solicitudAvisoWhatsApp', valor: true });
   if (pendientes.length === 0) return;
@@ -27,13 +42,15 @@ async function procesarPendientes() {
       // más fresco posible.
       const grupo = await obtenerGrupoDeCredito(solicitud.id);
       if (!grupo) {
-        console.warn(`Crédito ${solicitud.id}: ya no tiene saldo pendiente (¿se pagó o eliminó?) — se descarta la solicitud sin mandar nada.`);
-        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false });
+        const motivo = 'Ya no tiene saldo pendiente (¿se pagó, liquidó o eliminó?).';
+        console.warn(`Crédito ${solicitud.id}: ${motivo} — se descarta la solicitud sin mandar nada.`);
+        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: motivo });
         continue;
       }
       if (!grupo.telefono) {
-        console.warn(`Crédito ${solicitud.id} (${grupo.nombreCliente}): sin teléfono válido — se descarta la solicitud.`);
-        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false });
+        const motivo = 'Sin teléfono cargado en este crédito — agregalo con "Editar teléfono" e intentá de nuevo.';
+        console.warn(`Crédito ${solicitud.id} (${grupo.nombreCliente}): ${motivo}`);
+        await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: motivo });
         continue;
       }
 
@@ -50,21 +67,30 @@ async function procesarPendientes() {
       const nombreArchivo = nombreArchivoPdf(grupo.cliente, grupo.nombreCliente);
       await enviarDocumentoWhatsApp({ numero: grupo.telefono, buffer: pdfBuffer, nombreArchivo, caption });
       await marcarAvisoEnviado(grupo.facturas);
-      await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false });
+      // Limpia `errorAvisoWhatsApp` acá también -por si un intento anterior
+      // de ESTE mismo crédito había fallado y quedó ese mensaje viejo
+      // pegado en pantalla-.
+      await actualizarCampos('ventasCredito', solicitud.id, { solicitudAvisoWhatsApp: false, errorAvisoWhatsApp: null });
       console.log('Enviado.');
     } catch (err) {
+      const motivo = err.message || String(err);
       console.error(`Falló el aviso manual del crédito ${solicitud.id}:`, err);
       // OJO: no se limpia `solicitudAvisoWhatsApp` acá -queda en true a
       // propósito, para reintentarlo solo en el próximo ciclo (ej. si
-      // falló por un corte de internet momentáneo).
+      // falló por un corte de internet momentáneo)-, pero SÍ se deja
+      // guardado el motivo para que VentasCreditoScreen lo muestre.
+      await actualizarCampos('ventasCredito', solicitud.id, { errorAvisoWhatsApp: motivo }).catch(() => {});
     }
   }
 }
 
 async function main() {
   console.log(`Escuchando pedidos de aviso manual de crédito vencido (cada ${INTERVALO_MS / 1000}s). Ctrl+C para salir.`);
-  const ciclo = () => procesarPendientes().catch((err) => console.error('Error revisando solicitudes:', err));
-  await ciclo();
+  const ciclo = () => {
+    enviarLatido();
+    procesarPendientes().catch((err) => console.error('Error revisando solicitudes:', err));
+  };
+  ciclo();
   setInterval(ciclo, INTERVALO_MS);
 }
 
