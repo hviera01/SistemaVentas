@@ -98,8 +98,8 @@ En Ventas Crédito, cualquier factura con saldo pendiente y teléfono cargado
 tiene esa opción en su menú (⋮). Al tocarla, la app solo marca el pedido en
 Firestore (`solicitudAvisoWhatsApp: true` en ese documento de
 `ventasCredito`) — **no manda nada por sí sola**. Para que de verdad se
-mande hace falta que la tarea programada de `escuchar.js` (ver abajo) esté
-activa y corriendo cada 2 minutos en la PC principal.
+mande hace falta que algo esté corriendo `escuchar.js` cada 2 minutos en la
+PC principal (ver "Cómo dejarlo corriendo" abajo).
 
 **Cómo saber si está funcionando**: cada vez que corre, `escuchar.js` manda
 un latido a Firestore (`presenciaAvisoWhatsapp/escuchador`). La app lo
@@ -112,25 +112,34 @@ sin saldo pendiente ya, etc.), el motivo real queda guardado en
 junto al nombre en la tabla, o un aviso debajo de la tarjeta en móvil) — no
 hace falta abrir la consola de la PC para saber qué pasó.
 
-**Programar la tarea** (mismo tipo de tarea simple que ya usan las de
-`reporte_whatsapp` — nada de "al iniciar sesión" ni de tocar límites de
-tiempo, por eso no da los líos que sí daba dejar un proceso corriendo para
-siempre):
+**Cómo dejarlo corriendo — carpeta de Inicio de Windows (recomendado):**
 
-1. Programador de tareas → Crear tarea básica.
-2. Nombre: `Aviso Manual Credito WhatsApp Super Color`.
-3. Desencadenador: **Diario**, repetido cada 2 minutos — en el asistente
-   básico elegí "Diario" con cualquier hora de inicio, y en la pantalla
-   siguiente (o abriendo Propiedades → pestaña Desencadenadores → Editar
-   después de creada) activá "Repetir la tarea cada: 2 minutos" con
-   duración "Indefinidamente".
-4. Acción: Iniciar un programa.
-   - Programa/script: `C:\Program Files\nodejs\node.exe`
-   - Argumentos: `escuchar.js`
-   - Iniciar en: `C:\Proyectos\sistema_ventas\tool\aviso_creditos_whatsapp`
-5. No hace falta tocar nada en la pestaña Configuración — al ser una tarea
-   que corre y termina en segundos, el límite de tiempo por defecto (varias
-   horas) sobra de sobra.
+El Programador de Tareas de Windows resultó poco confiable en la PC del
+dueño con el disparador "repetir cada N minutos" (quedaba mostrándose
+"Habilitado" y bien configurado, pero dejaba de dispararse solo después de
+un rato — pasó dos veces, con configuraciones distintas). En vez de pelear
+con eso, `escuchar_loop.vbs` hace lo mismo por su cuenta, sin depender del
+Programador de Tareas para nada: corre en bucle infinito (esperando 2
+minutos entre corrida y corrida) y se lanza solo poniéndolo en la carpeta
+de Inicio de Windows.
+
+1. `Windows + R` → escribir `shell:startup` → Enter (abre la carpeta de
+   Inicio del usuario actual).
+2. Copiar ahí `tool/aviso_creditos_whatsapp/escuchar_loop.vbs`.
+3. Doble clic sobre esa copia para arrancarlo ya mismo (no hace falta
+   cerrar sesión) — no debería abrir ninguna ventana, eso es buena señal.
+
+Con esto, cada inicio de sesión en esa PC lo vuelve a arrancar solo, y se
+queda corriendo para siempre sin ningún límite de tiempo que configurar ni
+nada que se pueda "revertir solo" como pasaba con el Programador de Tareas.
+
+**Alternativa (Programador de Tareas, por si se prefiere)**: se puede
+programar `node.exe escuchar.js` (sin el bucle, ese script corre una vez y
+termina) con `/SC MINUTE /MO 2` desde una consola de **Administrador**
+(`schtasks /Create /TN "..." /TR "..." /SC MINUTE /MO 2 /F` — NO uses el
+asistente gráfico "Crear tarea básica", ahí es donde daba error), pero en
+la práctica el bucle en la carpeta de Inicio resultó más confiable en esta
+PC.
 
 ## Si algo falla
 
