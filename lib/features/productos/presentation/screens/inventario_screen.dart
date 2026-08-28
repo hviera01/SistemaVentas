@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -204,6 +205,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     _busquedaController.dispose();
     _focusNode.dispose();
     _scrollControllerTabla.dispose();
+    _timerRepeticionTeclado?.cancel();
     super.dispose();
   }
 
@@ -631,6 +633,55 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     setState(() => _filaSeleccionada = id);
   }
 
+  // --- Detección manual de doble toque en una fila ---
+  // Bug real reportado por el dueño: con `onTap` Y `onDoubleTap` juntos en
+  // el mismo InkWell (como estaba antes), Flutter tiene que esperar la
+  // ventana de doble-tap (~300ms) antes de disparar el toque simple, para
+  // poder distinguir "un toque" de "el primero de dos" -por ESO tocar una
+  // fila se sentía con retraso, mientras que tocar el ícono de acciones (⋮,
+  // sin doble-tap) era instantáneo, dando la falsa impresión de que el
+  // problema era de rendimiento en vez de este gesto-. Acá se detecta el
+  // doble toque a mano (dos toques a la MISMA fila dentro de
+  // `_ventanaDobleTap`) usando solo `onTap`, así la selección siempre
+  // responde al toque, sin esperar a ver si viene un segundo.
+  static const _ventanaDobleTap = Duration(milliseconds: 300);
+  DateTime? _ultimoTapFilaEn;
+  String? _ultimoTapFilaId;
+
+  void _tocarFila(
+    ProductoModel producto,
+    Map<String, String> mapaCategorias,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    final ahora = DateTime.now();
+    final esDobleTap =
+        _ultimoTapFilaId == producto.id &&
+        _ultimoTapFilaEn != null &&
+        ahora.difference(_ultimoTapFilaEn!) < _ventanaDobleTap;
+    _ultimoTapFilaEn = ahora;
+    _ultimoTapFilaId = producto.id;
+
+    _tomarFoco();
+    if (esDobleTap) {
+      // El primer toque de este par ya seleccionó la fila (alternando, ver
+      // abajo); el segundo NO debe volver a alternar -si no, el doble toque
+      // terminaría dejándola deseleccionada justo al abrir su detalle-.
+      _ultimoTapFilaEn = null; // no encadenar un tercer toque como otro "doble"
+      setState(() => _filaSeleccionada = producto.id);
+      _verDetalle(producto, mapaCategorias, mapaProductos);
+    } else {
+      // A diferencia de _seleccionarFila (que solo selecciona, usada desde
+      // el ícono de foto/acciones), tocar la fila misma alterna: tocar la
+      // que ya está seleccionada la deselecciona -comportamiento que ya
+      // tenía esta pantalla antes de este arreglo, se mantiene igual-.
+      setState(
+        () => _filaSeleccionada = _filaSeleccionada == producto.id
+            ? null
+            : producto.id,
+      );
+    }
+  }
+
   void _moverSeleccion(int delta) {
     if (_listaActual.isEmpty) return;
     final indiceActual = _filaSeleccionada == null
@@ -662,18 +713,54 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     }
   }
 
+  // --- Repetición al mantener presionada una flecha ---
+  // Pedido explícito del dueño: si se mantiene apretada ↑/↓, la selección
+  // tiene que seguir bajando/subiendo rápido, como el tecleo normal (ej. en
+  // un campo de texto). Flutter no manda repeticiones automáticas a
+  // `onKeyEvent` de un `Focus` -solo UN `KeyDownEvent` por toque físico de
+  // tecla, sin importar cuánto se mantenga apretada-, así que hay que
+  // simular la repetición a mano con un `Timer`: un primer movimiento
+  // inmediato al bajar la tecla, y si sigue apretada más de
+  // `_esperaAntesDeRepetir`, un movimiento repetido cada `_intervaloRepeticion`
+  // hasta soltar la tecla (`KeyUpEvent`).
+  static const _esperaAntesDeRepetir = Duration(milliseconds: 350);
+  static const _intervaloRepeticion = Duration(milliseconds: 45);
+  Timer? _timerRepeticionTeclado;
+
+  void _iniciarRepeticionFlecha(int delta) {
+    _timerRepeticionTeclado?.cancel();
+    _moverSeleccion(delta);
+    _timerRepeticionTeclado = Timer(_esperaAntesDeRepetir, () {
+      _timerRepeticionTeclado = Timer.periodic(
+        _intervaloRepeticion,
+        (_) => _moverSeleccion(delta),
+      );
+    });
+  }
+
+  void _detenerRepeticionFlecha() {
+    _timerRepeticionTeclado?.cancel();
+    _timerRepeticionTeclado = null;
+  }
+
   KeyEventResult _manejarTeclado(FocusNode node, KeyEvent event) {
+    final esFlecha =
+        event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.arrowUp;
+    if (!esFlecha) return KeyEventResult.ignored;
     if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-        _moverSeleccion(1);
-        return KeyEventResult.handled;
-      }
-      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-        _moverSeleccion(-1);
-        return KeyEventResult.handled;
-      }
+      _iniciarRepeticionFlecha(
+        event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+      );
+      return KeyEventResult.handled;
     }
-    return KeyEventResult.ignored;
+    if (event is KeyUpEvent) {
+      _detenerRepeticionFlecha();
+      return KeyEventResult.handled;
+    }
+    // KeyRepeatEvent (si la plataforma llega a mandarlo): ya lo cubre
+    // nuestro propio Timer, se ignora para no repetir el doble de rápido.
+    return KeyEventResult.handled;
   }
 
   void _tomarFoco() {
@@ -1071,16 +1158,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                   final seleccionada = _filaSeleccionada == producto.id;
 
                   return InkWell(
-                    onTap: () {
-                      _tomarFoco();
-                      setState(
-                        () => _filaSeleccionada = seleccionada
-                            ? null
-                            : producto.id,
-                      );
-                    },
-                    onDoubleTap: () =>
-                        _verDetalle(producto, mapaCategorias, mapaProductos),
+                    // Un solo onTap -sin onDoubleTap acá- a propósito: ver
+                    // el comentario grande junto a _tocarFila.
+                    onTap: () =>
+                        _tocarFila(producto, mapaCategorias, mapaProductos),
                     child: Container(
                       color: seleccionada
                           ? const Color(0xFFFBEAEA)
@@ -1295,14 +1376,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               final seleccionada = _filaSeleccionada == p.id;
               return InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  _tomarFoco();
-                  setState(
-                    () => _filaSeleccionada = seleccionada ? null : p.id,
-                  );
-                },
-                onDoubleTap: () =>
-                    _verDetalle(p, mapaCategorias, mapaProductos),
+                // Un solo onTap -sin onDoubleTap acá- a propósito: ver el
+                // comentario grande junto a _tocarFila.
+                onTap: () => _tocarFila(p, mapaCategorias, mapaProductos),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
