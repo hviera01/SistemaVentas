@@ -67,6 +67,7 @@ class VentaCreditoRepository {
     required double montoTotal,
     required double saldoPendiente,
     required DateTime fechaVencimiento,
+    String telefono = '',
   }) async {
     await _col.add({
       'documentoCliente': documentoCliente.isEmpty ? 'N/A' : documentoCliente,
@@ -78,7 +79,32 @@ class VentaCreditoRepository {
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
       'sinVentaOrigen': true,
+      'telefono': telefono.trim(),
     });
+  }
+
+  /// Cambia (o agrega) el teléfono de contacto de ESTE crédito puntual, sin
+  /// tocar el registro de 'clientes' aunque esté vinculado -pedido explícito
+  /// del dueño-. Pensado para la acción "Editar teléfono" de
+  /// VentasCreditoScreen, sobre todo en créditos viejos/manuales/importados
+  /// que nunca tuvieron cliente vinculado y por eso no reciben el aviso
+  /// automático de crédito vencido (ver tool/aviso_creditos_whatsapp).
+  Future<void> actualizarTelefono(String id, String telefono) async {
+    await _col.doc(id).update({'telefono': telefono.trim()});
+  }
+
+  /// Pide que se mande YA el aviso de WhatsApp de crédito vencido para
+  /// [idCredito] -botón "Enviar aviso ahora" en VentasCreditoScreen-, sin
+  /// esperar a la tarea diaria (ver tool/aviso_creditos_whatsapp/README.md).
+  /// El envío real lo hace ese script Node aparte (tiene la sesión de
+  /// WhatsApp, la app Flutter no) — acá solo se deja marcado el pedido en el
+  /// propio documento del crédito, mismo patrón ya probado que
+  /// `solicitudImpresionGuiaEnvio` (ver VentaRepository) para pedirle algo a
+  /// la PC principal desde cualquier dispositivo sin necesitar una colección
+  /// ni reglas nuevas. `escuchar.js`, corriendo en la PC, lo detecta en unos
+  /// segundos, arma el estado de cuenta y lo manda.
+  Future<void> solicitarAvisoWhatsApp(String idCredito) async {
+    await _col.doc(idCredito).update({'solicitudAvisoWhatsApp': true});
   }
 
   Future<void> registrarAbono({

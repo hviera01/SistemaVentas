@@ -32,6 +32,17 @@ class VentaCreditoModel {
   final DateTime? fechaVencimiento;
   final bool fusionada;
 
+  /// Teléfono de contacto de ESTE crédito — independiente del `telefono` del
+  /// registro de 'clientes' (a propósito: pedido explícito del dueño de que
+  /// editarlo acá no le pise el teléfono principal del cliente). Se precarga
+  /// con el del cliente vinculado al registrar la venta (ver
+  /// RegistrarVentaScreen), pero después se puede cambiar o completar solo
+  /// para este crédito (ver VentasCreditoScreen "Editar teléfono") — sobre
+  /// todo para créditos viejos/manuales/importados que nunca tuvieron
+  /// cliente vinculado. Lo usa el aviso automático de créditos vencidos por
+  /// WhatsApp (tool/aviso_creditos_whatsapp).
+  final String telefono;
+
   /// true cuando este crédito no tiene un documento de venta real asociado
   /// (se creó a mano, se importó desde Excel, o nació de unir facturas) —
   /// en esos casos no existe un `ventas/{id}` que mostrar en "Ver detalle
@@ -56,6 +67,7 @@ class VentaCreditoModel {
     this.fusionada = false,
     this.sinVentaOrigen = false,
     this.facturasOrigen = const [],
+    this.telefono = '',
   });
 
   bool get liquidada => saldoPendiente <= 0;
@@ -80,6 +92,7 @@ class VentaCreditoModel {
       facturasOrigen: ((data['facturasOrigen'] as List<dynamic>?) ?? [])
           .map((f) => FacturaOrigenModel.fromMap(Map<String, dynamic>.from(f as Map)))
           .toList(),
+      telefono: data['telefono'] ?? '',
     );
   }
 

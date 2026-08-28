@@ -1,0 +1,17 @@
+{
+  "name": "aviso-creditos-whatsapp-supercolor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Avisa por WhatsApp a los clientes de Super Color con crédito vencido, con su estado de cuenta en PDF.",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "avisar": "node index.js",
+    "escuchar": "node escuchar.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "pdfkit": "^0.15.0",
+    "pino": "^9.3.2"
+  }
+}

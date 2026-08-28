@@ -164,10 +164,70 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       case 'origenFusion':
         _abrirFacturasOrigen(credito);
         break;
+      case 'telefono':
+        _editarTelefono(credito);
+        break;
+      case 'enviarAviso':
+        _enviarAvisoWhatsApp(credito);
+        break;
       case 'eliminar':
         _eliminar(credito);
         break;
     }
+  }
+
+  /// Cambia (o agrega) el teléfono de contacto de este crédito puntual -a
+  /// propósito NO toca el registro de 'clientes' aunque esté vinculado, ver
+  /// VentaCreditoRepository.actualizarTelefono-. Es el número que usa el
+  /// aviso automático de crédito vencido por WhatsApp
+  /// (tool/aviso_creditos_whatsapp), así que sirve sobre todo para completar
+  /// créditos viejos/manuales/importados que nunca tuvieron uno.
+  Future<void> _editarTelefono(VentaCreditoModel credito) async {
+    final controller = TextEditingController(text: credito.telefono);
+    final nuevo = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(credito.telefono.isEmpty ? 'Agregar teléfono' : 'Editar teléfono', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: SizedBox(
+          width: 320,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [mayusculasInputFormatter],
+            decoration: InputDecoration(
+              labelText: 'Teléfono',
+              hintText: 'Ej: 9999-9999',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text('Guardar', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (nuevo == null || !mounted) return;
+    await ref.read(ventaCreditoRepositoryProvider).actualizarTelefono(credito.id, nuevo);
+  }
+
+  /// "Enviar aviso ahora": marca el pedido en el propio crédito (ver
+  /// VentaCreditoRepository.solicitarAvisoWhatsApp) y avisa que va a tardar
+  /// unos segundos -el envío real lo hace tool/aviso_creditos_whatsapp/
+  /// escuchar.js corriendo en la PC principal, no esta app-.
+  Future<void> _enviarAvisoWhatsApp(VentaCreditoModel credito) async {
+    await ref.read(ventaCreditoRepositoryProvider).solicitarAvisoWhatsApp(credito.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Aviso solicitado: se manda por WhatsApp en unos segundos (necesita que el "escuchar.js" esté corriendo en la PC principal).', style: GoogleFonts.poppins(fontSize: 12.5))),
+    );
   }
 
   /// Los créditos importados desde el Excel del sistema anterior (ver
@@ -237,6 +297,12 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       _opcionMenu(valor: 'historial', icono: Icons.history, texto: 'Ver historial de abonos'),
       if (!credito.sinVentaOrigen) _opcionMenu(valor: 'detalle', icono: Icons.receipt_long_outlined, texto: 'Ver detalle de venta'),
       if (credito.esFusion) _opcionMenu(valor: 'origenFusion', icono: Icons.call_merge_outlined, texto: 'Ver facturas unidas'),
+      _opcionMenu(valor: 'telefono', icono: Icons.phone_outlined, texto: credito.telefono.isEmpty ? 'Agregar teléfono' : 'Editar teléfono'),
+      // No exige que ya esté vencida -pedido explícito del dueño: poder
+      // mandar el estado de cuenta aunque la factura todavía no llegue a su
+      // fecha-. Solo hace falta que tenga saldo pendiente y teléfono.
+      if (!credito.liquidada && credito.telefono.isNotEmpty)
+        _opcionMenu(valor: 'enviarAviso', icono: Icons.send_outlined, texto: 'Enviar estado de cuenta por WhatsApp'),
       const PopupMenuDivider(),
       _opcionMenu(valor: 'eliminar', icono: Icons.delete_outline, texto: 'Eliminar'),
     ];
@@ -598,7 +664,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                         ),
                         if (mostrarFechaRegistro) _celda(2, credito.fechaRegistro != null ? formatoFecha.format(credito.fechaRegistro!) : '-', gris: true),
                         _celda(2, credito.numeroDocumento, peso: FontWeight.w600),
-                        _celda(3, credito.nombreCliente),
+                        _celdaCliente(3, credito),
                         if (mostrarMontoTotal) _celda(2, formatearMoneda(credito.montoTotal), gris: true),
                         _celda(2, formatearMoneda(credito.saldoPendiente), peso: FontWeight.w700),
                         _celda(2, credito.fechaVencimiento != null ? formatoFecha.format(credito.fechaVencimiento!) : '-', gris: true),
@@ -620,6 +686,36 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     return Expanded(
       flex: flex,
       child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF666A72), letterSpacing: 0.3)),
+    );
+  }
+
+  /// Igual que _celda, pero para la columna CLIENTE: agrega el teléfono de
+  /// este crédito como subtítulo chico (tocable, atajo directo a "Editar
+  /// teléfono"), resaltado en rojo cuando falta -mismo criterio que
+  /// _chipTelefono en la vista de tarjetas-.
+  Widget _celdaCliente(int flex, VentaCreditoModel credito) {
+    final sinTelefono = credito.telefono.isEmpty;
+    return Expanded(
+      flex: flex,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(credito.nombreCliente, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+            InkWell(
+              onTap: () => _editarTelefono(credito),
+              child: Text(
+                sinTelefono ? 'Sin teléfono' : credito.telefono,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(fontSize: 10.5, color: sinTelefono ? const Color(0xFFB91C1C) : Colors.grey.shade500),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -705,6 +801,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                     _chipInfo('Monto total', formatearMoneda(credito.montoTotal)),
                     _chipInfo('Saldo pendiente', formatearMoneda(credito.saldoPendiente)),
                     _chipInfo('Vence', credito.fechaVencimiento != null ? formatoFecha.format(credito.fechaVencimiento!) : '-'),
+                    _chipTelefono(credito),
                     _chipEstado(credito),
                   ],
                 ),
@@ -713,6 +810,36 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Igual que _chipInfo, pero tocable (atajo directo a "Editar teléfono"
+  /// sin pasar por el menú) y resaltado en rojo cuando falta -para que se
+  /// note de un vistazo cuáles créditos no van a recibir el aviso automático
+  /// de crédito vencido por WhatsApp (tool/aviso_creditos_whatsapp).
+  Widget _chipTelefono(VentaCreditoModel credito) {
+    final sinTelefono = credito.telefono.isEmpty;
+    return InkWell(
+      onTap: () => _editarTelefono(credito),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: sinTelefono ? const Color(0xFFFCEAEA) : const Color(0xFFE8EAF0),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.phone_outlined, size: 13, color: sinTelefono ? const Color(0xFFB91C1C) : const Color(0xFF3F434A)),
+            const SizedBox(width: 5),
+            Text(
+              sinTelefono ? 'Sin teléfono' : credito.telefono,
+              style: GoogleFonts.poppins(fontSize: 11.5, color: sinTelefono ? const Color(0xFFB91C1C) : const Color(0xFF3F434A)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

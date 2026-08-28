@@ -50,6 +50,10 @@ class CarritoVentaState {
   final String? idCliente;
   final DateTime fecha;
   final DateTime? fechaVencimiento;
+  // Teléfono de contacto propio de este crédito (ver VentaCreditoModel.
+  // telefono) — solo relevante cuando condicion == 'Credito'. Se precarga
+  // con el del cliente vinculado, pero es independiente y editable.
+  final String telefonoCredito;
   final String oc;
   final String regExonerado;
   final String regSag;
@@ -72,6 +76,7 @@ class CarritoVentaState {
     this.idCliente,
     DateTime? fecha,
     this.fechaVencimiento,
+    this.telefonoCredito = '',
     this.oc = '',
     this.regExonerado = '',
     this.regSag = '',
@@ -128,6 +133,7 @@ class CarritoVentaState {
     Object? idCliente = _sinCambio,
     DateTime? fecha,
     Object? fechaVencimiento = _sinCambio,
+    String? telefonoCredito,
     String? oc,
     String? regExonerado,
     String? regSag,
@@ -148,6 +154,7 @@ class CarritoVentaState {
       idCliente: idCliente == _sinCambio ? this.idCliente : idCliente as String?,
       fecha: fecha ?? this.fecha,
       fechaVencimiento: fechaVencimiento == _sinCambio ? this.fechaVencimiento : fechaVencimiento as DateTime?,
+      telefonoCredito: telefonoCredito ?? this.telefonoCredito,
       oc: oc ?? this.oc,
       regExonerado: regExonerado ?? this.regExonerado,
       regSag: regSag ?? this.regSag,
@@ -394,6 +401,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   void establecerNombreClienteManual(String v) => state = state.copyWith(nombreCliente: v, idCliente: null);
   void establecerFecha(DateTime v) => state = state.copyWith(fecha: v);
   void establecerFechaVencimiento(DateTime v) => state = state.copyWith(fechaVencimiento: v);
+  void establecerTelefonoCredito(String v) => state = state.copyWith(telefonoCredito: v);
   void establecerOc(String v) => state = state.copyWith(oc: v);
   void establecerRegExonerado(String v) => state = state.copyWith(regExonerado: v);
   void establecerRegSag(String v) => state = state.copyWith(regSag: v);
