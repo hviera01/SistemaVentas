@@ -1193,6 +1193,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           fusionarSiYaExiste: fusionarSiYaExiste,
         );
     if (!mounted) return;
+    // Cuando fusiona con una fila que YA existía, esa fila reusa el mismo
+    // TextEditingController de cantidad de antes (ver _ctrlCantidad,
+    // poblado con `putIfAbsent` -no se actualiza solo si el índice ya tenía
+    // controller-). Sin este refresco manual, el total de abajo sí sumaba
+    // bien la cantidad nueva pero el campo de cantidad de esa fila se
+    // quedaba mostrando el valor viejo hasta tocarlo a mano -bug real
+    // reportado por el dueño agregando un accesorio repetido desde el
+    // buscador-. En una fila recién creada este índice todavía no tiene
+    // controller, así que esto no hace nada (se crea ya con el valor
+    // correcto al construirse la fila).
+    _ctrlCantidad[indiceNuevo]?.text = _formatoCantidad(ref.read(carritoVentaProvider).items[indiceNuevo].cantidad);
 
     final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion, metodoPago: metodoPago);
     if (promoPrecio != null) {
