@@ -26,6 +26,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/widgets/imagen_zoom_dialog.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -57,6 +58,35 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // poder ponerlo" si hace falta acotar la búsqueda a un campo puntual.
   String _campoFiltro = 'todo';
 
+  // --- Cache de la lista filtrada/ordenada y de los totales del título ---
+  // Sin esto, cada `setState` -incluido tocar una fila solo para
+  // seleccionarla- reconstruye TODO build(), y eso repetía el filtrado +
+  // orden (este último con lookups de stock de combos, O(n log n)) y los
+  // `fold` de valor de inventario sobre TODA la lista, aunque nada de lo
+  // que de verdad afecta esos cálculos hubiera cambiado -pedido explícito
+  // del dueño: esta pantalla se sentía más lenta que Ventas Crédito al
+  // tocar una fila, con inventarios grandes-. Riverpod reusa la misma
+  // referencia de `productos`/`categoriasLista` entre rebuilds mientras el
+  // stream no emita datos nuevos, así que comparar por identidad (`==` de
+  // List/Map, que en Dart es identidad de objeto salvo que se sobrecargue)
+  // alcanza para saber si hace falta recalcular.
+  List<ProductoModel>? _cacheProductosOrigen;
+  Map<String, String>? _cacheMapaCategoriasOrigen;
+  Map<String, ProductoModel> _cacheMapaProductos = const {};
+  List<ProductoModel> _cacheListaFiltrada = const [];
+  String? _cacheVista;
+  String? _cacheFiltroEstadoUsado;
+  String? _cacheBusquedaUsada;
+  bool? _cacheBusquedaPorCodigoBarrasUsada;
+  String? _cacheColumnaOrdenUsada;
+  bool? _cacheOrdenAscendenteUsado;
+  String? _cacheCampoFiltroUsado;
+
+  List<ProductoModel>? _cacheValoresProductosOrigen;
+  bool? _cacheValoresPrecioConIsv;
+  double _cacheValorCompra = 0;
+  double _cacheValorVenta = 0;
+
   static const _opcionesCampoFiltro = [
     ('todo', 'Todo'),
     ('codigo', 'Código'),
@@ -82,6 +112,59 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   /// precio guardado en el producto siempre incluye ISV.
   double _precioMostrado(ProductoModel p) =>
       _precioConIsv ? p.precioVenta : redondearMoneda(p.precioVenta / 1.15);
+
+  /// Filtra (vista/estado/búsqueda) y ordena la lista de productos, con
+  /// cache -ver comentario junto a los campos `_cache*` arriba-. Devuelve
+  /// también `mapaProductos` porque se calcula como parte del mismo trabajo
+  /// y lo necesitan tanto el filtro "bajo stock" (combos) como `_ordenarLista`.
+  ({List<ProductoModel> lista, Map<String, ProductoModel> mapaProductos}) _filtrarYOrdenar({
+    required List<ProductoModel> productos,
+    required Map<String, String> mapaCategorias,
+    required String vista,
+    required String busqueda,
+  }) {
+    final sinCambios = identical(_cacheProductosOrigen, productos) &&
+        identical(_cacheMapaCategoriasOrigen, mapaCategorias) &&
+        _cacheVista == vista &&
+        _cacheFiltroEstadoUsado == _filtroEstado &&
+        _cacheBusquedaUsada == busqueda &&
+        _cacheBusquedaPorCodigoBarrasUsada == _busquedaPorCodigoBarras &&
+        _cacheColumnaOrdenUsada == _columnaOrden &&
+        _cacheOrdenAscendenteUsado == _ordenAscendente &&
+        _cacheCampoFiltroUsado == _campoFiltro;
+    if (sinCambios) {
+      return (lista: _cacheListaFiltrada, mapaProductos: _cacheMapaProductos);
+    }
+
+    final mapaProductos = {for (final p in productos) p.id: p};
+    var lista = productos;
+    if (vista == 'bajo') {
+      lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
+    }
+    lista = lista.where((p) => _filtroEstado == 'activos' ? p.estado : !p.estado).toList();
+    if (busqueda.isNotEmpty) {
+      lista = _busquedaPorCodigoBarras
+          ? lista.where((p) => p.codigoBarras.trim() == busqueda || p.codigo.trim() == busqueda).toList()
+          : lista.where((p) => _coincideBusqueda(p, busqueda, mapaCategorias)).toList();
+    } else if (vista == 'filtrados') {
+      lista = [];
+    }
+    lista = _ordenarLista(lista, mapaProductos);
+
+    _cacheProductosOrigen = productos;
+    _cacheMapaCategoriasOrigen = mapaCategorias;
+    _cacheVista = vista;
+    _cacheFiltroEstadoUsado = _filtroEstado;
+    _cacheBusquedaUsada = busqueda;
+    _cacheBusquedaPorCodigoBarrasUsada = _busquedaPorCodigoBarras;
+    _cacheColumnaOrdenUsada = _columnaOrden;
+    _cacheOrdenAscendenteUsado = _ordenAscendente;
+    _cacheCampoFiltroUsado = _campoFiltro;
+    _cacheMapaProductos = mapaProductos;
+    _cacheListaFiltrada = lista;
+
+    return (lista: lista, mapaProductos: mapaProductos);
+  }
 
   @override
   void dispose() {
@@ -664,30 +747,14 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 ),
                 child: productosAsync.when(
                   data: (productos) {
-                    final mapaProductos = {for (final p in productos) p.id: p};
-                    var lista = productos;
-                    if (vista == 'bajo') {
-                      lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
-                    }
-                    lista = lista.where((p) => _filtroEstado == 'activos' ? p.estado : !p.estado).toList();
-                    if (busqueda.isNotEmpty) {
-                      lista = _busquedaPorCodigoBarras
-                          ? lista
-                                .where(
-                                  (p) =>
-                                      p.codigoBarras.trim() == busqueda ||
-                                      p.codigo.trim() == busqueda,
-                                )
-                                .toList()
-                          : lista
-                                .where(
-                                  (p) => _coincideBusqueda(p, busqueda, mapaCategorias),
-                                )
-                                .toList();
-                    } else if (vista == 'filtrados') {
-                      lista = [];
-                    }
-                    lista = _ordenarLista(lista, mapaProductos);
+                    final resultado = _filtrarYOrdenar(
+                      productos: productos,
+                      mapaCategorias: mapaCategorias,
+                      vista: vista,
+                      busqueda: busqueda,
+                    );
+                    final mapaProductos = resultado.mapaProductos;
+                    final lista = resultado.lista;
                     _listaActual = lista;
 
                     if (lista.isEmpty) {
@@ -1312,7 +1379,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   Widget _celdaHeaderAcciones() {
     return Container(
-      width: 76,
+      width: 116,
       height: double.infinity,
       alignment: Alignment.center,
       child: Text(
@@ -1342,56 +1409,97 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _celdaAcciones(ProductoModel producto) {
-    return Container(
-      width: 76,
-      height: double.infinity,
-      alignment: Alignment.center,
-      child: PopupMenuButton<String>(
-        tooltip: 'Más acciones',
-        padding: EdgeInsets.zero,
-        icon: Container(
-          width: 34,
-          height: 34,
+  /// Pedido explícito del dueño: ver la foto sin tener que abrir "Editar" —
+  /// mismo diálogo (ImagenZoomDialog) que ya usa Buscar Producto.
+  void _verFoto(ProductoModel producto) {
+    showDialog(context: context, builder: (context) => ImagenZoomDialog(url: producto.imagenUrl));
+  }
+
+  Widget _botonVerFoto(ProductoModel producto, {required double lado, required double tamanoIcono}) {
+    if (producto.imagenUrl.isEmpty) return SizedBox(width: lado);
+    return Tooltip(
+      message: 'Ver foto',
+      child: InkWell(
+        onTap: () => _verFoto(producto),
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          width: lado,
+          height: lado,
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(9),
             border: Border.all(color: const Color(0xFFDFE1E6)),
           ),
-          child: const Icon(
-            Icons.more_vert,
-            size: 21,
-            color: Color(0xFF454950),
-          ),
+          child: Icon(Icons.photo_outlined, size: tamanoIcono, color: const Color(0xFFC62828)),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 8,
-        position: PopupMenuPosition.under,
-        onSelected: (valor) => _manejarAccion(valor, producto),
-        itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
+      ),
+    );
+  }
+
+  Widget _celdaAcciones(ProductoModel producto) {
+    return Container(
+      width: 116,
+      height: double.infinity,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _botonVerFoto(producto, lado: 34, tamanoIcono: 19),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Más acciones',
+            padding: EdgeInsets.zero,
+            icon: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: const Color(0xFFDFE1E6)),
+              ),
+              child: const Icon(
+                Icons.more_vert,
+                size: 21,
+                color: Color(0xFF454950),
+              ),
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 8,
+            position: PopupMenuPosition.under,
+            onSelected: (valor) => _manejarAccion(valor, producto),
+            itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
+          ),
+        ],
       ),
     );
   }
 
   Widget _celdaAccionesMovil(ProductoModel producto) {
-    return PopupMenuButton<String>(
-      tooltip: 'Más acciones',
-      padding: EdgeInsets.zero,
-      icon: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: const Color(0xFFDFE1E6)),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _botonVerFoto(producto, lado: 32, tamanoIcono: 17),
+        const SizedBox(width: 6),
+        PopupMenuButton<String>(
+          tooltip: 'Más acciones',
+          padding: EdgeInsets.zero,
+          icon: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(color: const Color(0xFFDFE1E6)),
+            ),
+            child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 8,
+          position: PopupMenuPosition.under,
+          onSelected: (valor) => _manejarAccion(valor, producto),
+          itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
         ),
-        child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 8,
-      position: PopupMenuPosition.under,
-      onSelected: (valor) => _manejarAccion(valor, producto),
-      itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
+      ],
     );
   }
 
@@ -1537,8 +1645,18 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         ),
         productosAsync.when(
           data: (productos) {
-            final valorCompra = productos.fold<double>(0, (s, p) => s + (p.stock * p.precioCompra));
-            final valorVenta = productos.fold<double>(0, (s, p) => s + (p.stock * _precioMostrado(p)));
+            // Cache: estos dos `fold` recorren TODA la lista (no la
+            // filtrada) — sin esto se repetían en cada build(), incluida
+            // una selección de fila que no cambia nada de esto (ver
+            // comentario junto a los campos `_cache*`).
+            if (!identical(_cacheValoresProductosOrigen, productos) || _cacheValoresPrecioConIsv != _precioConIsv) {
+              _cacheValorCompra = productos.fold<double>(0, (s, p) => s + (p.stock * p.precioCompra));
+              _cacheValorVenta = productos.fold<double>(0, (s, p) => s + (p.stock * _precioMostrado(p)));
+              _cacheValoresProductosOrigen = productos;
+              _cacheValoresPrecioConIsv = _precioConIsv;
+            }
+            final valorCompra = _cacheValorCompra;
+            final valorVenta = _cacheValorVenta;
             return Wrap(
               spacing: 8,
               runSpacing: 8,
