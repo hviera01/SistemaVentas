@@ -61,8 +61,8 @@ import '../widgets/teclado_numerico_dialog.dart';
 import '../widgets/escanear_remoto_dialog.dart';
 import '../widgets/ticket_escpos_preview.dart';
 import '../widgets/datos_envio_dialog.dart';
+import 'ver_facturas_screen.dart';
 import '../../data/tipos_documento.dart';
-import 'detalle_venta_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
@@ -92,6 +92,13 @@ class RegistrarVentaScreen extends ConsumerStatefulWidget {
 class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _nombreClienteController = TextEditingController();
   final _documentoClienteController = TextEditingController();
+  // Teléfono de contacto de ESTE crédito (VentaCreditoModel.telefono), solo
+  // visible/usado cuando carrito.esCredito. Se precarga con el teléfono del
+  // cliente vinculado al elegirlo (ver _buscarCliente/_seleccionarCliente
+  // Sugerido/_completarDatosCliente), pero queda editable a mano y NO se
+  // sincroniza de vuelta con el registro de 'clientes' -pedido explícito
+  // del dueño-.
+  final _telefonoCreditoController = TextEditingController();
   final _ocController = TextEditingController();
   final _regExoneradoController = TextEditingController();
   final _regSagController = TextEditingController();
@@ -485,6 +492,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     _focusNombreCliente.dispose();
     _nombreClienteController.dispose();
     _documentoClienteController.dispose();
+    _telefonoCreditoController.dispose();
     _ocController.dispose();
     _regExoneradoController.dispose();
     _regSagController.dispose();
@@ -550,12 +558,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     setState(() {
       _nombreClienteController.text = nombre;
       _documentoClienteController.text = documento;
+      _telefonoCreditoController.text = cliente.telefono;
       _clienteVinculado = cliente;
     });
     // idCliente: cliente.id es el vínculo real que antes se descartaba -ver
     // CRM de clientes-: sin esto, ninguna venta quedaba conectada de verdad
     // al registro de Clientes aunque se hubiera elegido uno con el buscador.
     ref.read(carritoVentaProvider.notifier).establecerCliente(documento: documento, nombre: nombre, idCliente: cliente.id);
+    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(cliente.telefono);
   }
 
   /// Arma (o refresca, si ya está abierto) el mini listado de clientes
@@ -661,9 +671,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     setState(() {
       _nombreClienteController.text = cliente.nombreCompleto;
       _documentoClienteController.text = cliente.dni;
+      _telefonoCreditoController.text = cliente.telefono;
       _clienteVinculado = cliente;
     });
     ref.read(carritoVentaProvider.notifier).establecerCliente(documento: cliente.dni, nombre: cliente.nombreCompleto, idCliente: cliente.id);
+    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(cliente.telefono);
     _focusNombreCliente.unfocus();
   }
 
@@ -764,8 +776,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _clienteVinculado = actualizado;
       _nombreClienteController.text = actualizado.nombreCompleto;
       _documentoClienteController.text = actualizado.dni;
+      _telefonoCreditoController.text = actualizado.telefono;
     });
     ref.read(carritoVentaProvider.notifier).establecerCliente(documento: actualizado.dni, nombre: actualizado.nombreCompleto, idCliente: actualizado.id);
+    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(actualizado.telefono);
   }
 
   /// Se llama en cada cambio del carrito (ver ref.listen en build): revisa si
@@ -1777,12 +1791,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       items: carrito.items,
     );
 
-    if (carrito.idEnEspera != null) {
-      await repo.actualizarVentaEnEspera(carrito.idEnEspera!, sesion);
-      _mostrarMensaje('Venta en espera actualizada.');
-    } else {
-      await repo.guardarVentaEnEspera(sesion);
-      _mostrarMensaje('Venta guardada en espera.');
+    final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    final categorias = ref.read(categoriasStreamProvider).value ?? [];
+    final categoriasSinControlStock = categorias.where((c) => !c.controlaStock).map((c) => c.id).toSet();
+    try {
+      // "Guardar en Espera" a mano SIEMPRE reserva stock -pedido explícito
+      // del dueño-, sin importar si ya era una espera manual o si se está
+      // reclamando acá una "perdida" (autoguardado) que el cajero decidió
+      // sí dejar en espera de verdad -ver guardarVentaEnEsperaManual.
+      await repo.guardarVentaEnEsperaManual(sesion, usuario: usuario, categoriasSinControlStock: categoriasSinControlStock);
+      _mostrarMensaje(carrito.idEnEspera != null ? 'Venta en espera actualizada.' : 'Venta guardada en espera.');
+    } catch (e) {
+      _mostrarMensaje('No se pudo guardar en espera: $e');
+      return;
     }
     _limpiarTodo();
   }
@@ -1827,10 +1848,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       items: carrito.items,
     );
     try {
-      if (carrito.idEnEspera != null) {
-        await repo.actualizarVentaEnEspera(carrito.idEnEspera!, sesion);
-      } else {
-        final id = await repo.guardarVentaEnEspera(sesion);
+      final id = await repo.guardarVentaEnEsperaAutomatica(sesion);
+      if (carrito.idEnEspera == null) {
         if (!mounted) return;
         ref.read(carritoVentaProvider.notifier).establecerIdEnEspera(id);
       }
@@ -1840,8 +1859,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
   }
 
-  Future<void> _verEnEspera() async {
-    final sesion = await showDialog<VentaEnEsperaModel>(context: context, builder: (context) => const VentasEnEsperaDialog());
+  Future<void> _verEnEspera() => _abrirVentasEnEsperaOPerdidas(perdidas: false);
+
+  /// "Ver Perdidas" -pedido explícito del dueño: separado de "Ver en
+  /// Espera"- son autoguardados de un carrito que quedó a medias (ver
+  /// VentaEnEsperaModel/OrigenVentaEnEspera). Tocar una fila la recupera
+  /// acá igual que una espera manual; a diferencia de esa, nunca tenía
+  /// stock reservado, así que recuperarla tampoco lo toca.
+  Future<void> _verPerdidas() => _abrirVentasEnEsperaOPerdidas(perdidas: true);
+
+  Future<void> _abrirVentasEnEsperaOPerdidas({required bool perdidas}) async {
+    final sesion = await showDialog<VentaEnEsperaModel>(context: context, builder: (context) => VentasEnEsperaDialog(perdidas: perdidas));
     if (sesion == null || !mounted) return;
     // OJO con el orden: setState de acá abajo ANTES de cargarSesion().
     // Asignarle .text a los controladores de nombre/documento dispara su
@@ -1872,6 +1900,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     ref.read(carritoVentaProvider.notifier).limpiar();
     _nombreClienteController.clear();
     _documentoClienteController.clear();
+    _telefonoCreditoController.clear();
     _ocController.clear();
     _regExoneradoController.clear();
     _regSagController.clear();
@@ -1989,7 +2018,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
     _debounceEnEspera?.cancel();
     if (carrito.idEnEspera != null) {
-      unawaited(ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(carrito.idEnEspera!));
+      final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
+      unawaited(ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(carrito.idEnEspera!, usuario: usuario));
     }
     _limpiarTodo();
   }
@@ -2078,6 +2108,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // Hay que capturar esto ANTES de _limpiarTodo(): ese método vacía el
     // controlador de texto, así que leerlo después ya daría vacío.
     final nombreCliente = _nombreClienteController.text.trim().isEmpty ? 'CONSUMIDOR FINAL' : _nombreClienteController.text.trim();
+    final telefonoCredito = _telefonoCreditoController.text.trim();
     // Mismo motivo: _limpiarTodo() también resetea los datos de envío.
     final esEnvio = _esEnvio;
     final envioNombre = _envioNombre;
@@ -2105,6 +2136,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       esCotizacion: esCotizacion,
       esFacturable: esFacturable,
       nombreCliente: nombreCliente,
+      telefonoCredito: telefonoCredito,
       montoPago: montoPago,
       montoCambio: montoCambio,
       pagosMixtos: pagosMixtos,
@@ -2126,6 +2158,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     required bool esCotizacion,
     required bool esFacturable,
     required String nombreCliente,
+    String telefonoCredito = '',
     required double montoPago,
     required double montoCambio,
     List<PagoDetalle> pagosMixtos = const [],
@@ -2149,6 +2182,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             idCliente: carrito.idCliente,
             fechaRegistro: carrito.fecha,
             fechaVencimiento: (!esCotizacion && carrito.condicion == 'Credito') ? carrito.fechaVencimiento : null,
+            telefonoCredito: (!esCotizacion && carrito.condicion == 'Credito') ? telefonoCredito : null,
             oc: carrito.oc,
             regExonerado: carrito.regExonerado,
             regSag: carrito.regSag,
@@ -2170,7 +2204,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           );
 
       if (carrito.idEnEspera != null) {
-        unawaited(ventaRepo.eliminarVentaEnEspera(carrito.idEnEspera!));
+        unawaited(ventaRepo.eliminarVentaEnEspera(carrito.idEnEspera!, usuario: usuario));
       }
 
       if (!esCotizacion && esEnvio && imprimirGuiaAlConfirmar) {
@@ -2207,6 +2241,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               esCotizacion: esCotizacion,
               esFacturable: esFacturable,
               nombreCliente: nombreCliente,
+              telefonoCredito: telefonoCredito,
               montoPago: montoPago,
               montoCambio: montoCambio,
               pagosMixtos: pagosMixtos,
@@ -2705,9 +2740,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: _estiloBotonSecundario(),
         ),
         OutlinedButton.icon(
-          onPressed: _verDetalleVenta,
+          onPressed: _verPerdidas,
+          icon: const Icon(Icons.find_in_page_outlined, size: 18),
+          label: Text('Ver Perdidas', style: GoogleFonts.poppins(fontSize: 13)),
+          style: _estiloBotonSecundario(),
+        ),
+        OutlinedButton.icon(
+          onPressed: _verFacturas,
           icon: const Icon(Icons.receipt_long_outlined, size: 18),
-          label: Text('Ver Detalle', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text('Ver Facturas', style: GoogleFonts.poppins(fontSize: 13)),
           style: _estiloBotonSecundario(),
         ),
         Badge(
@@ -2789,9 +2830,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   int get _cantidadPendientesImpresion => ref.watch(ventasPendientesImpresionStreamProvider).value?.length ?? 0;
 
-  void _verDetalleVenta() {
+  void _verFacturas() {
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const DetalleVentaScreen()),
+      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const VerFacturasScreen()),
     );
   }
 
@@ -3096,6 +3137,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ),
+                              ),
+                            if (carrito.esCredito && !carrito.esCotizacion)
+                              SizedBox(
+                                width: esMovil ? double.infinity : 200,
+                                child: CampoTecladoCompacto(
+                                  controller: _telefonoCreditoController,
+                                  numerico: false,
+                                  child: TextField(
+                                    controller: _telefonoCreditoController,
+                                    keyboardType: TextInputType.phone,
+                                    style: GoogleFonts.poppins(fontSize: 13),
+                                    decoration: _decoracion('Teléfono para avisos de crédito'),
+                                    onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(v),
                                   ),
                                 ),
                               ),

@@ -4,18 +4,35 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/venta_en_espera_model.dart';
 import '../../providers/ventas_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 
+/// Mismo diálogo sirve para las dos pantallas -pedido explícito del dueño:
+/// separar "Ver en Espera" (lo que el cajero pone en espera A PROPÓSITO,
+/// con el stock reservado mientras tanto) de "Ver Perdidas" (autoguardados
+/// silenciosos de un carrito que quedó a medias -se cerró la pestaña/la app
+/// antes de confirmar o descartar-, nunca reservan stock). [perdidas]
+/// decide de cuál de las dos colecciones filtradas lee (ver
+/// VentaRepository.obtenerVentasEnEspera/obtenerVentasPerdidas) y los
+/// textos; el resto del comportamiento (tocar una fila la recupera al
+/// carrito, el ícono de basura la elimina -soltando la reserva de stock si
+/// la tenía-) es idéntico para las dos.
 class VentasEnEsperaDialog extends ConsumerWidget {
-  const VentasEnEsperaDialog({super.key});
+  final bool perdidas;
+  const VentasEnEsperaDialog({super.key, this.perdidas = false});
 
   Future<void> _eliminar(BuildContext context, WidgetRef ref, VentaEnEsperaModel sesion) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar venta en espera', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar esta venta guardada?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(perdidas ? 'Eliminar venta perdida' : 'Eliminar venta en espera', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          sesion.stockReservado
+              ? '¿Seguro que querés eliminar esta venta guardada? El stock que tenía reservado se va a devolver al inventario.'
+              : '¿Seguro que querés eliminar esta venta guardada?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
           FilledButton(
@@ -26,14 +43,14 @@ class VentasEnEsperaDialog extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmar == true) {
-      await ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(sesion.id);
-    }
+    if (confirmar != true) return;
+    final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    await ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(sesion.id, usuario: usuario);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ventasAsync = ref.watch(ventasEnEsperaStreamProvider);
+    final ventasAsync = ref.watch(perdidas ? ventasPerdidasStreamProvider : ventasEnEsperaStreamProvider);
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 560;
@@ -53,10 +70,17 @@ class VentasEnEsperaDialog extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('Ventas en Espera', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
+                Expanded(child: Text(perdidas ? 'Facturas Perdidas' : 'Ventas en Espera', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
                 IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
               ],
             ),
+            if (perdidas) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Ventas que quedaron a medias (se cerró antes de confirmarlas o descartarlas). No tienen stock reservado.',
+                style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+              ),
+            ],
             const SizedBox(height: 14),
             Expanded(
               child: ventasAsync.when(
@@ -66,9 +90,9 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.pause_circle_outline, size: 48, color: Colors.grey.shade300),
+                          Icon(perdidas ? Icons.find_in_page_outlined : Icons.pause_circle_outline, size: 48, color: Colors.grey.shade300),
                           const SizedBox(height: 10),
-                          Text('No hay ventas en espera', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          Text(perdidas ? 'No hay facturas perdidas' : 'No hay ventas en espera', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
                         ],
                       ),
                     );
@@ -96,12 +120,26 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${sesion.tipoDocumento} · ${sesion.items.length} producto(s) · ${formatearMoneda(sesion.total)}',
+                                      // totalFinal (con ISV y descuento global, lo que de verdad
+                                      // pagaría el cliente) -pedido explícito del dueño: antes
+                                      // salía el subtotal sin impuesto-.
+                                      '${sesion.tipoDocumento} · ${sesion.items.length} producto(s) · ${formatearMoneda(sesion.totalFinal)}',
                                       style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
                                     ),
                                     if (sesion.fecha != null) ...[
                                       const SizedBox(height: 2),
                                       Text(formatoFecha.format(sesion.fecha!), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+                                    ],
+                                    if (sesion.stockReservado) ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.lock_outline, size: 12, color: Color(0xFF1565C0)),
+                                          const SizedBox(width: 4),
+                                          Text('Stock reservado', style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF1565C0), fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
                                     ],
                                   ],
                                 ),

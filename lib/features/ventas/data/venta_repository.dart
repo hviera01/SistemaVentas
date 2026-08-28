@@ -275,6 +275,9 @@ class VentaRepository {
     String? idCliente,
     required DateTime fechaRegistro,
     required DateTime? fechaVencimiento,
+    // Teléfono de contacto de este crédito puntual (ver VentaCreditoModel.
+    // telefono) — solo se usa/guarda cuando condicion == 'Credito'.
+    String? telefonoCredito,
     required String oc,
     required String regExonerado,
     required String regSag,
@@ -525,6 +528,7 @@ class VentaRepository {
           'saldoPendiente': totalAPagar,
           'fechaRegistro': Timestamp.fromDate(fechaRegistro),
           'fechaVencimiento': Timestamp.fromDate(fechaVencimiento ?? fechaRegistro),
+          'telefono': telefonoCredito?.trim() ?? '',
         });
       }
 
@@ -954,12 +958,6 @@ class VentaRepository {
     }, timeout: const Duration(seconds: 12));
   }
 
-  Stream<List<VentaEnEsperaModel>> obtenerVentasEnEspera() {
-    return _colEspera.orderBy('fecha', descending: true).snapshots().map((snap) {
-      return snap.docs.map((d) => VentaEnEsperaModel.fromMap(d.id, d.data())).toList();
-    });
-  }
-
   /// Ventas guardadas pero sin imprimir (típicamente hechas desde el
   /// celular sin la impresora a mano). Sin `orderBy` a propósito -filtrar
   /// por `pendienteImpresion` y además ordenar por fecha pediría un índice
@@ -972,16 +970,195 @@ class VentaRepository {
     });
   }
 
-  Future<String> guardarVentaEnEspera(VentaEnEsperaModel sesion) async {
-    final ref = await _colEspera.add(sesion.toMap());
+  /// Autoguardado silencioso de un carrito en curso (ver
+  /// RegistrarVentaScreen._guardarEnEsperaAutomatico) -pedido explícito del
+  /// dueño: separar esto de "Ver en Espera" de verdad, va a "Ver Perdidas"-.
+  /// NUNCA toca stock. Al crear (sesion.id vacío) marca origen 'automatico'
+  /// -entra a "Ver Perdidas"-; al actualizar, a propósito NO toca los
+  /// campos origen/stockReservado -si esta espera ya fue "reclamada" a mano
+  /// (ver guardarVentaEnEsperaManual, la sube a origen manual con su
+  /// reserva), el autoguardado de fondo mientras se le sigue editando no
+  /// debe bajarla de rango ni tocar su reserva-.
+  Future<String> guardarVentaEnEsperaAutomatica(VentaEnEsperaModel sesion) async {
+    if (sesion.id.isEmpty) {
+      final datos = sesion.toMap()
+        ..['origen'] = OrigenVentaEnEspera.automatico
+        ..['stockReservado'] = false;
+      final ref = await _colEspera.add(datos);
+      return ref.id;
+    }
+    final datos = sesion.toMap()
+      ..remove('origen')
+      ..remove('stockReservado')
+      ..remove('cantidadesReservadas');
+    await _colEspera.doc(sesion.id).update(datos);
+    return sesion.id;
+  }
+
+  /// Mismos ítems que registrarVenta terminaría descontando de verdad si
+  /// esta espera se confirmara ahora -combos expandidos, reembasados y
+  /// categorías sin control de stock excluidos, tintes agrupados por
+  /// producto (ver _expandirComponentes/_agregarTintesParaDescuento)-,
+  /// sumados por idProducto: es lo único que hace falta para reservar o
+  /// devolver stock (a diferencia de una venta real, acá no importa el
+  /// costo, solo la cantidad).
+  Map<String, double> _cantidadesAReservar(List<ItemVentaModel> items, Set<String> categoriasSinControlStock) {
+    final itemsAReservar = [
+      ..._expandirComponentes(items).where((i) => !i.reembasado && !categoriasSinControlStock.contains(i.idCategoria)),
+      ..._agregarTintesParaDescuento(items),
+    ];
+    final cantidades = <String, double>{};
+    for (final item in itemsAReservar) {
+      if (item.idProducto.isEmpty) continue;
+      cantidades[item.idProducto] = (cantidades[item.idProducto] ?? 0) + item.cantidad;
+    }
+    return cantidades;
+  }
+
+  /// Guarda (crea o actualiza) una venta en espera puesta A MANO por el
+  /// cajero -pedido explícito del dueño: "que el stock se baje mientras
+  /// está en espera, como un stock reservado, hasta que se realice o se
+  /// elimine de ahí"-. Reserva (descuenta) el stock de [sesion.items] igual
+  /// que si fuera una venta real, PERO sin tocar lotes/FIFO ni costear nada
+  /// -es solo "aparta esta cantidad", el costo real se calcula recién
+  /// cuando la venta se confirme de verdad (ver registrarVenta)-.
+  ///
+  /// Si [sesion.id] ya existía y esa espera ya tenía una reserva activa, se
+  /// SUELTA esa reserva vieja primero (con los ítems que tenía guardados
+  /// antes de este guardado, no los nuevos) y recién después se arma la
+  /// reserva nueva -para que editar y volver a guardar una espera manual no
+  /// vaya acumulando reservas de más-. Si no tenía reserva activa (por
+  /// ejemplo, una "perdida" que el cajero reclama guardándola de nuevo como
+  /// espera a mano), solo se arma la reserva nueva.
+  Future<String> guardarVentaEnEsperaManual(VentaEnEsperaModel sesion, {required String usuario, Set<String> categoriasSinControlStock = const {}}) async {
+    final esNueva = sesion.id.isEmpty;
+    final ref = esNueva ? _colEspera.doc() : _colEspera.doc(sesion.id);
+    final cantidadesNuevas = _cantidadesAReservar(sesion.items, categoriasSinControlStock);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      var cantidadesALiberar = const <String, double>{};
+      if (!esNueva) {
+        final snapVieja = await transaction.get(ref);
+        if (snapVieja.exists && (snapVieja.data()?['stockReservado'] ?? false) == true) {
+          // De la FOTO guardada la última vez (ver VentaEnEsperaModel.
+          // cantidadesReservadas), NO recalculado del [items] viejo: items
+          // pudo haber cambiado desde entonces sin que la reserva se
+          // ajustara (autoguardado de fondo no toca stock), así que
+          // recalcular acá devolvería una cantidad distinta a la que en
+          // verdad está descontada.
+          final viejaSesion = VentaEnEsperaModel.fromMap(ref.id, snapVieja.data()!);
+          cantidadesALiberar = viejaSesion.cantidadesReservadas;
+        }
+      }
+
+      // Todas las lecturas de producto ANTES que cualquier escritura (regla
+      // dura de Firestore): se juntan los ids de ambos lados primero.
+      final idsProducto = {...cantidadesALiberar.keys, ...cantidadesNuevas.keys}.toList();
+      final refsProducto = {for (final id in idsProducto) id: _db.collection('productos').doc(id)};
+      final snapsProducto = await Future.wait(idsProducto.map((id) => transaction.get(refsProducto[id]!)));
+
+      for (var i = 0; i < idsProducto.length; i++) {
+        final idProducto = idsProducto[i];
+        final snap = snapsProducto[i];
+        if (!snap.exists) continue; // producto borrado desde que se guardó la espera: nada que reservar/soltar
+        final liberar = cantidadesALiberar[idProducto] ?? 0;
+        final reservar = cantidadesNuevas[idProducto] ?? 0;
+        final neto = reservar - liberar; // positivo: hay que bajar más stock. negativo: devolver.
+        if (neto == 0) continue;
+        final stockActual = ((snap.data()?['stock'] ?? 0) as num).toDouble();
+        final stockNuevo = stockActual - neto;
+        transaction.update(refsProducto[idProducto]!, {'stock': stockNuevo});
+        final historialRef = refsProducto[idProducto]!.collection('historial').doc();
+        transaction.set(historialRef, {
+          'stockAnterior': stockActual,
+          'stockNuevo': stockNuevo,
+          'usuario': usuario,
+          'motivo': neto > 0 ? 'Reservado para venta en espera' : 'Ajuste de reserva de venta en espera',
+          'fecha': FieldValue.serverTimestamp(),
+        });
+      }
+
+      final datos = sesion.toMap()
+        ..['origen'] = OrigenVentaEnEspera.manual
+        ..['stockReservado'] = true
+        ..['cantidadesReservadas'] = cantidadesNuevas;
+      transaction.set(ref, datos, SetOptions(merge: !esNueva));
+    }, timeout: const Duration(seconds: 12));
+
     return ref.id;
   }
 
-  Future<void> actualizarVentaEnEspera(String id, VentaEnEsperaModel sesion) async {
-    await _colEspera.doc(id).update(sesion.toMap());
+  // Un solo stream de la colección entera (filtrar EN MEMORIA, no con un
+  // `where('origen', ...)` de Firestore): un query `!=` excluye los
+  // documentos donde el campo directamente no existe -las esperas viejas,
+  // de antes de que existiera `origen`, quedarían invisibles en las DOS
+  // pantallas nuevas si se filtrara del lado del servidor-. La colección es
+  // chica (ventas en curso o recién perdidas, no un historial que crezca
+  // para siempre), así que traerla completa y filtrar acá es barato.
+  Stream<List<VentaEnEsperaModel>> _obtenerTodasVentasEnEsperaOPerdidas() {
+    return _colEspera.snapshots().map((snap) {
+      final lista = snap.docs.map((d) => VentaEnEsperaModel.fromMap(d.id, d.data())).toList();
+      lista.sort((a, b) => (b.fecha ?? DateTime(0)).compareTo(a.fecha ?? DateTime(0)));
+      return lista;
+    });
   }
 
-  Future<void> eliminarVentaEnEspera(String id) async {
-    await _colEspera.doc(id).delete();
+  /// Ventas puestas en espera A MANO por el cajero (ver
+  /// guardarVentaEnEsperaManual) -pedido explícito del dueño: separadas de
+  /// las "perdidas" (autoguardados de un carrito que quedó a medias).
+  Stream<List<VentaEnEsperaModel>> obtenerVentasEnEspera() {
+    return _obtenerTodasVentasEnEsperaOPerdidas().map((lista) => lista.where((v) => v.origen == OrigenVentaEnEspera.manual).toList());
+  }
+
+  /// Ventas "perdidas": autoguardados silenciosos de un carrito que quedó a
+  /// medias (se cerró la pestaña/la app antes de confirmar o descartar la
+  /// venta) -ver guardarVentaEnEsperaAutomatica-. Entradas viejas (de antes
+  /// de que existiera el campo `origen`) también caen acá: fromMap ya las
+  /// default a `automatico`.
+  Stream<List<VentaEnEsperaModel>> obtenerVentasPerdidas() {
+    return _obtenerTodasVentasEnEsperaOPerdidas().map((lista) => lista.where((v) => v.origen != OrigenVentaEnEspera.manual).toList());
+  }
+
+  /// Elimina una venta en espera (manual o perdida). Si tenía una reserva de
+  /// stock activa (ver guardarVentaEnEsperaManual), la suelta primero -mismo
+  /// criterio que restaurar stock al anular una venta-. [usuario] es quién
+  /// hizo la acción que dispara este borrado (eliminar a mano desde "Ver en
+  /// Espera"/"Ver Perdidas", o limpiar el carrito, o confirmar la venta de
+  /// verdad) -queda en el historial del producto si hubo que soltar stock.
+  Future<void> eliminarVentaEnEspera(String id, {String usuario = ''}) async {
+    final ref = _colEspera.doc(id);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+      if (!snap.exists) return;
+      final sesion = VentaEnEsperaModel.fromMap(id, snap.data()!);
+      if (sesion.stockReservado) {
+        // De la foto guardada (ver VentaEnEsperaModel.cantidadesReservadas),
+        // NO recalculado de items -mismo motivo que en
+        // guardarVentaEnEsperaManual, ver el comentario grande ahí-.
+        final cantidades = sesion.cantidadesReservadas;
+        final idsProducto = cantidades.keys.toList();
+        final refsProducto = {for (final pid in idsProducto) pid: _db.collection('productos').doc(pid)};
+        final snapsProducto = await Future.wait(idsProducto.map((pid) => transaction.get(refsProducto[pid]!)));
+        for (var i = 0; i < idsProducto.length; i++) {
+          final idProducto = idsProducto[i];
+          final snapProducto = snapsProducto[i];
+          if (!snapProducto.exists) continue;
+          final cantidad = cantidades[idProducto] ?? 0;
+          if (cantidad == 0) continue;
+          final stockActual = ((snapProducto.data()?['stock'] ?? 0) as num).toDouble();
+          final stockNuevo = stockActual + cantidad;
+          transaction.update(refsProducto[idProducto]!, {'stock': stockNuevo});
+          final historialRef = refsProducto[idProducto]!.collection('historial').doc();
+          transaction.set(historialRef, {
+            'stockAnterior': stockActual,
+            'stockNuevo': stockNuevo,
+            'usuario': usuario,
+            'motivo': 'Liberado de venta en espera',
+            'fecha': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      transaction.delete(ref);
+    }, timeout: const Duration(seconds: 12));
   }
 }

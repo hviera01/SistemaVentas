@@ -12,6 +12,10 @@ final ventasEnEsperaStreamProvider = StreamProvider<List<VentaEnEsperaModel>>((r
   return ref.watch(ventaRepositoryProvider).obtenerVentasEnEspera();
 });
 
+final ventasPerdidasStreamProvider = StreamProvider<List<VentaEnEsperaModel>>((ref) {
+  return ref.watch(ventaRepositoryProvider).obtenerVentasPerdidas();
+});
+
 final ventasPendientesImpresionStreamProvider = StreamProvider<List<VentaModel>>((ref) {
   return ref.watch(ventaRepositoryProvider).obtenerVentasPendientesImpresion();
 });
