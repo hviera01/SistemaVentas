@@ -38,6 +38,15 @@ class InventarioScreen extends ConsumerStatefulWidget {
 class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   final _busquedaController = TextEditingController();
   final _focusNode = FocusNode();
+  // Sigue la selección con las flechas del teclado -pedido explícito del
+  // dueño-: solo se usa en la tabla de escritorio (_tabla), donde cada fila
+  // mide siempre lo mismo (ver _alturaFila), así que se puede calcular el
+  // scroll exacto sin tener que medir nada. En la vista de tarjetas
+  // (móvil, alto variable) no se usa.
+  final _scrollControllerTabla = ScrollController();
+  static const _alturaFila = 84.0;
+  static const _alturaDivisorFila = 1.0;
+  static const _alturaItemLista = _alturaFila + _alturaDivisorFila;
   final _servicioExport = ProductoExportService();
   String? _filaSeleccionada;
   String? _columnaOrden;
@@ -70,6 +79,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // stream no emita datos nuevos, así que comparar por identidad (`==` de
   // List/Map, que en Dart es identidad de objeto salvo que se sobrecargue)
   // alcanza para saber si hace falta recalcular.
+  List<dynamic>? _cacheCategoriasListaOrigen;
+  Map<String, String> _cacheMapaCategorias = const {};
   List<ProductoModel>? _cacheProductosOrigen;
   Map<String, String>? _cacheMapaCategoriasOrigen;
   Map<String, ProductoModel> _cacheMapaProductos = const {};
@@ -96,7 +107,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     ('categoria', 'Categoría'),
   ];
 
-  bool _coincideBusqueda(ProductoModel p, String busqueda, Map<String, String> mapaCategorias) {
+  bool _coincideBusqueda(
+    ProductoModel p,
+    String busqueda,
+    Map<String, String> mapaCategorias,
+  ) {
     final texto = switch (_campoFiltro) {
       'codigo' => p.codigo,
       'codigoBarras' => p.codigoBarras,
@@ -117,13 +132,15 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   /// cache -ver comentario junto a los campos `_cache*` arriba-. Devuelve
   /// también `mapaProductos` porque se calcula como parte del mismo trabajo
   /// y lo necesitan tanto el filtro "bajo stock" (combos) como `_ordenarLista`.
-  ({List<ProductoModel> lista, Map<String, ProductoModel> mapaProductos}) _filtrarYOrdenar({
+  ({List<ProductoModel> lista, Map<String, ProductoModel> mapaProductos})
+  _filtrarYOrdenar({
     required List<ProductoModel> productos,
     required Map<String, String> mapaCategorias,
     required String vista,
     required String busqueda,
   }) {
-    final sinCambios = identical(_cacheProductosOrigen, productos) &&
+    final sinCambios =
+        identical(_cacheProductosOrigen, productos) &&
         identical(_cacheMapaCategoriasOrigen, mapaCategorias) &&
         _cacheVista == vista &&
         _cacheFiltroEstadoUsado == _filtroEstado &&
@@ -139,13 +156,29 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     final mapaProductos = {for (final p in productos) p.id: p};
     var lista = productos;
     if (vista == 'bajo') {
-      lista = lista.where((p) => (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) < 3).toList();
+      lista = lista
+          .where(
+            (p) =>
+                (p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock) <
+                3,
+          )
+          .toList();
     }
-    lista = lista.where((p) => _filtroEstado == 'activos' ? p.estado : !p.estado).toList();
+    lista = lista
+        .where((p) => _filtroEstado == 'activos' ? p.estado : !p.estado)
+        .toList();
     if (busqueda.isNotEmpty) {
       lista = _busquedaPorCodigoBarras
-          ? lista.where((p) => p.codigoBarras.trim() == busqueda || p.codigo.trim() == busqueda).toList()
-          : lista.where((p) => _coincideBusqueda(p, busqueda, mapaCategorias)).toList();
+          ? lista
+                .where(
+                  (p) =>
+                      p.codigoBarras.trim() == busqueda ||
+                      p.codigo.trim() == busqueda,
+                )
+                .toList()
+          : lista
+                .where((p) => _coincideBusqueda(p, busqueda, mapaCategorias))
+                .toList();
     } else if (vista == 'filtrados') {
       lista = [];
     }
@@ -170,6 +203,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   void dispose() {
     _busquedaController.dispose();
     _focusNode.dispose();
+    _scrollControllerTabla.dispose();
     super.dispose();
   }
 
@@ -217,7 +251,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // Doble tap/doble clic en un producto (tabla o tarjeta): una card de solo
   // lectura con toda su info, para consultar rápido -por ejemplo, un precio
   // o el código de barras- sin tener que abrir el formulario de edición.
-  void _verDetalle(ProductoModel producto, Map<String, String> mapaCategorias, Map<String, ProductoModel> mapaProductos) {
+  void _verDetalle(
+    ProductoModel producto,
+    Map<String, String> mapaCategorias,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
     showDialog(
       context: context,
       builder: (context) => DetalleProductoDialog(
@@ -282,32 +320,52 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // Antes de exportar (Excel o PDF), deja elegir qué productos de la lista
   // actual van al archivo y qué columnas incluir -pedido explícito del
   // dueño-. Null si se cancela.
-  Future<ExportarInventarioOpciones?> _elegirOpcionesExport(Map<String, String> mapaCategorias, String titulo) {
+  Future<ExportarInventarioOpciones?> _elegirOpcionesExport(
+    Map<String, String> mapaCategorias,
+    String titulo,
+  ) {
     return showDialog<ExportarInventarioOpciones>(
       context: context,
-      builder: (context) => ExportarInventarioOpcionesDialog(productos: _listaActual, mapaCategorias: mapaCategorias, titulo: titulo),
+      builder: (context) => ExportarInventarioOpcionesDialog(
+        productos: _listaActual,
+        mapaCategorias: mapaCategorias,
+        titulo: titulo,
+      ),
     );
   }
 
   Future<void> _exportarExcel(Map<String, String> mapaCategorias) async {
     if (_listaActual.isEmpty) return;
-    final opciones = await _elegirOpcionesExport(mapaCategorias, 'Exportar a Excel');
+    final opciones = await _elegirOpcionesExport(
+      mapaCategorias,
+      'Exportar a Excel',
+    );
     if (opciones == null || !mounted) return;
-    final bytes = _servicioExport.generarExcel(opciones.productos, mapaCategorias, columnas: opciones.columnas);
+    final bytes = _servicioExport.generarExcel(
+      opciones.productos,
+      mapaCategorias,
+      columnas: opciones.columnas,
+    );
     await guardarOCompartirArchivo(bytes, 'inventario.xlsx');
   }
 
   Future<void> _exportarPdf(Map<String, String> mapaCategorias) async {
     if (_listaActual.isEmpty) return;
-    final opciones = await _elegirOpcionesExport(mapaCategorias, 'Exportar a PDF');
+    final opciones = await _elegirOpcionesExport(
+      mapaCategorias,
+      'Exportar a PDF',
+    );
     if (opciones == null || !mounted) return;
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Inventario',
         nombreArchivo: 'inventario.pdf',
-        generarPdf: () =>
-            _servicioExport.generarPdfInventario(opciones.productos, mapaCategorias, columnas: opciones.columnas),
+        generarPdf: () => _servicioExport.generarPdfInventario(
+          opciones.productos,
+          mapaCategorias,
+          columnas: opciones.columnas,
+        ),
       ),
     );
   }
@@ -353,15 +411,23 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         .read(negocioRepositoryProvider)
         .obtenerNegocioActual();
     if (!mounted) return;
-    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasUrl : negocio.impresoraTermicaUrl;
-    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasNombre : negocio.impresoraTermicaNombre;
-    final impresora = urlImpresora.isEmpty ? null : Printer(url: urlImpresora, name: nombreImpresora);
+    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty
+        ? negocio.impresoraEtiquetasUrl
+        : negocio.impresoraTermicaUrl;
+    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty
+        ? negocio.impresoraEtiquetasNombre
+        : negocio.impresoraTermicaNombre;
+    final impresora = urlImpresora.isEmpty
+        ? null
+        : Printer(url: urlImpresora, name: nombreImpresora);
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Etiquetas · ${producto.nombre} (x$cantidad)',
         nombreArchivo: 'etiquetas_${producto.codigo}.pdf',
-        generarPdf: () => _servicioExport.generarPdfEtiquetasGrid(List.generate(cantidad, (_) => producto)),
+        generarPdf: () => _servicioExport.generarPdfEtiquetasGrid(
+          List.generate(cantidad, (_) => producto),
+        ),
         impresora: impresora,
       ),
     );
@@ -377,16 +443,27 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Imprimir etiquetas', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Imprimir etiquetas',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           '¿Etiquetas de todos los productos de la lista actual, o solo de los que no tienen código de barras?',
           style: GoogleFonts.poppins(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
-          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: Text('Todos', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Todos', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Solo sin código', style: GoogleFonts.poppins()),
           ),
@@ -394,16 +471,32 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       ),
     );
     if (soloSinCodigo == null || !mounted) return;
-    final productos = soloSinCodigo ? _listaActual.where((p) => p.codigoBarras.isEmpty).toList() : _listaActual;
+    final productos = soloSinCodigo
+        ? _listaActual.where((p) => p.codigoBarras.isEmpty).toList()
+        : _listaActual;
     if (productos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay productos sin código de barras en la lista actual')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No hay productos sin código de barras en la lista actual',
+          ),
+        ),
+      );
       return;
     }
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
-    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasUrl : negocio.impresoraTermicaUrl;
-    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty ? negocio.impresoraEtiquetasNombre : negocio.impresoraTermicaNombre;
-    final impresora = urlImpresora.isEmpty ? null : Printer(url: urlImpresora, name: nombreImpresora);
+    final urlImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty
+        ? negocio.impresoraEtiquetasUrl
+        : negocio.impresoraTermicaUrl;
+    final nombreImpresora = negocio.impresoraEtiquetasUrl.isNotEmpty
+        ? negocio.impresoraEtiquetasNombre
+        : negocio.impresoraTermicaNombre;
+    final impresora = urlImpresora.isEmpty
+        ? null
+        : Printer(url: urlImpresora, name: nombreImpresora);
     showDialog(
       context: context,
       builder: (context) => PdfPreviewDialog(
@@ -421,41 +514,61 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Imprimir etiquetas', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Imprimir etiquetas',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(producto.nombre, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+            Text(
+              producto.nombre,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
+            ),
             const SizedBox(height: 14),
             CampoTecladoCompacto(
               controller: controller,
               numerico: true,
               titulo: 'Cantidad de etiquetas',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: controller,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.poppins(fontSize: 14),
-              decoration: InputDecoration(
-                labelText: 'Cantidad de etiquetas',
-                labelStyle: GoogleFonts.poppins(fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFFE8EAF0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Cantidad de etiquetas',
+                  labelStyle: GoogleFonts.poppins(fontSize: 13),
+                  filled: true,
+                  fillColor: const Color(0xFFE8EAF0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
-            ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
-            onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim()) ?? 0),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
+            onPressed: () => Navigator.pop(
+              context,
+              int.tryParse(controller.text.trim()) ?? 0,
+            ),
             child: Text('Imprimir', style: GoogleFonts.poppins()),
           ),
         ],
@@ -474,10 +587,14 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     });
   }
 
-  List<ProductoModel> _ordenarLista(List<ProductoModel> lista, Map<String, ProductoModel> mapaProductos) {
+  List<ProductoModel> _ordenarLista(
+    List<ProductoModel> lista,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
     if (_columnaOrden == null) return lista;
     final copia = [...lista];
-    double existencia(ProductoModel p) => p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+    double existencia(ProductoModel p) =>
+        p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
     copia.sort((a, b) {
       int comparacion;
       switch (_columnaOrden) {
@@ -504,6 +621,16 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     return copia;
   }
 
+  /// Selecciona una fila por id -pedido explícito del dueño: tocar el
+  /// ícono de foto o el de acciones (⋮) de una fila mueve la iluminación a
+  /// ESA fila de inmediato, en vez de dejarla en la que estaba seleccionada
+  /// antes-. No hace nada si ya era la seleccionada (evita un `setState`
+  /// de más).
+  void _seleccionarFila(String id) {
+    if (_filaSeleccionada == id) return;
+    setState(() => _filaSeleccionada = id);
+  }
+
   void _moverSeleccion(int delta) {
     if (_listaActual.isEmpty) return;
     final indiceActual = _filaSeleccionada == null
@@ -514,6 +641,25 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     if (nuevoIndice >= _listaActual.length)
       nuevoIndice = _listaActual.length - 1;
     setState(() => _filaSeleccionada = _listaActual[nuevoIndice].id);
+    _asegurarFilaVisible(nuevoIndice);
+  }
+
+  /// Desplaza `_scrollControllerTabla` lo mínimo necesario para que la fila
+  /// [indice] quede visible -pedido explícito del dueño: que el scroll siga
+  /// a la selección al moverse con las flechas del teclado-. Cada fila mide
+  /// siempre lo mismo (`_alturaItemLista`), así que no hace falta medir
+  /// nada, solo calcular. No hace nada si la tabla no está montada en este
+  /// momento (ej. vista de tarjetas en móvil, sin este controller).
+  void _asegurarFilaVisible(int indice) {
+    if (!_scrollControllerTabla.hasClients) return;
+    final posicion = _scrollControllerTabla.position;
+    final topeArriba = indice * _alturaItemLista;
+    final topeAbajo = topeArriba + _alturaFila;
+    if (topeArriba < posicion.pixels) {
+      _scrollControllerTabla.jumpTo(topeArriba);
+    } else if (topeAbajo > posicion.pixels + posicion.viewportDimension) {
+      _scrollControllerTabla.jumpTo(topeAbajo - posicion.viewportDimension);
+    }
   }
 
   KeyEventResult _manejarTeclado(FocusNode node, KeyEvent event) {
@@ -541,9 +687,22 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     final busqueda = ref.watch(inventarioBusquedaProvider);
     final vista = ref.watch(inventarioVistaProvider);
     final categoriasLista = categoriasAsync.value ?? <dynamic>[];
-    final Map<String, String> mapaCategorias = {
-      for (final c in categoriasLista) c.id as String: c.descripcion as String,
-    };
+    // Cache: OJO, esto era el bug real de por qué el cache de
+    // `_filtrarYOrdenar` de abajo nunca se activaba -comparaba por identidad
+    // contra este Map, pero acá se creaba uno NUEVO en cada build() aunque
+    // `categoriasLista` (la fuente real) no hubiera cambiado, así que la
+    // comparación de "¿cambió algo?" daba que sí siempre-. Ahora se reusa el
+    // mismo Map mientras `categoriasLista` sea la misma referencia (Riverpod
+    // reusa esa lista entre rebuilds mientras el stream no emita datos
+    // nuevos).
+    if (!identical(_cacheCategoriasListaOrigen, categoriasLista)) {
+      _cacheMapaCategorias = {
+        for (final c in categoriasLista)
+          c.id as String: c.descripcion as String,
+      };
+      _cacheCategoriasListaOrigen = categoriasLista;
+    }
+    final mapaCategorias = _cacheMapaCategorias;
 
     return Container(
       color: const Color(0xFFF2F3F7),
@@ -563,7 +722,15 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                       // Selectores chicos, arriba en la esquina -pedido
                       // explícito: antes ocupaban una fila entera abajo en
                       // la barra de herramientas.
-                      Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.end, children: [_selectorPrecioIsvChico(), _selectorEstadoChico()]),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        alignment: WrapAlignment.end,
+                        children: [
+                          _selectorPrecioIsvChico(),
+                          _selectorEstadoChico(),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -826,7 +993,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _tabla(List<ProductoModel> lista, Map<String, String> mapaCategorias, Map<String, ProductoModel> mapaProductos) {
+  Widget _tabla(
+    List<ProductoModel> lista,
+    Map<String, String> mapaCategorias,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final ancho = constraints.maxWidth;
@@ -884,6 +1055,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             ),
             Expanded(
               child: ListView.separated(
+                controller: _scrollControllerTabla,
                 itemCount: lista.length,
                 separatorBuilder: (context, index) => Divider(
                   height: 1,
@@ -892,7 +1064,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final producto = lista[index];
-                  final existencia = producto.esCombo ? producto.stockDisponibleCombo(mapaProductos) : producto.stock;
+                  final existencia = producto.esCombo
+                      ? producto.stockDisponibleCombo(mapaProductos)
+                      : producto.stock;
                   final bajoStock = existencia < 3;
                   final seleccionada = _filaSeleccionada == producto.id;
 
@@ -905,7 +1079,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                             : producto.id,
                       );
                     },
-                    onDoubleTap: () => _verDetalle(producto, mapaCategorias, mapaProductos),
+                    onDoubleTap: () =>
+                        _verDetalle(producto, mapaCategorias, mapaProductos),
                     child: Container(
                       color: seleccionada
                           ? const Color(0xFFFBEAEA)
@@ -941,11 +1116,21 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                 if (producto.esCombo)
                                   Container(
                                     margin: const EdgeInsets.only(bottom: 3),
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                    decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(6)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1.5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEDE7F6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
                                     child: Text(
                                       'COMBO',
-                                      style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF6A1B9A)),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF6A1B9A),
+                                      ),
                                     ),
                                   ),
                                 Text(
@@ -1005,7 +1190,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2),
+                                  existencia.toStringAsFixed(
+                                    existencia == existencia.roundToDouble()
+                                        ? 0
+                                        : 2,
+                                  ),
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
@@ -1099,7 +1288,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final p = lista[index];
-              final existencia = p.esCombo ? p.stockDisponibleCombo(mapaProductos) : p.stock;
+              final existencia = p.esCombo
+                  ? p.stockDisponibleCombo(mapaProductos)
+                  : p.stock;
               final bajoStock = existencia < 3;
               final seleccionada = _filaSeleccionada == p.id;
               return InkWell(
@@ -1110,7 +1301,8 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     () => _filaSeleccionada = seleccionada ? null : p.id,
                   );
                 },
-                onDoubleTap: () => _verDetalle(p, mapaCategorias, mapaProductos),
+                onDoubleTap: () =>
+                    _verDetalle(p, mapaCategorias, mapaProductos),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -1137,11 +1329,21 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                 if (p.esCombo)
                                   Container(
                                     margin: const EdgeInsets.only(bottom: 3),
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                    decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(6)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1.5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEDE7F6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
                                     child: Text(
                                       'COMBO',
-                                      style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF6A1B9A)),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF6A1B9A),
+                                      ),
                                     ),
                                   ),
                                 Text(
@@ -1412,10 +1614,17 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   /// Pedido explícito del dueño: ver la foto sin tener que abrir "Editar" —
   /// mismo diálogo (ImagenZoomDialog) que ya usa Buscar Producto.
   void _verFoto(ProductoModel producto) {
-    showDialog(context: context, builder: (context) => ImagenZoomDialog(url: producto.imagenUrl));
+    showDialog(
+      context: context,
+      builder: (context) => ImagenZoomDialog(url: producto.imagenUrl),
+    );
   }
 
-  Widget _botonVerFoto(ProductoModel producto, {required double lado, required double tamanoIcono}) {
+  Widget _botonVerFoto(
+    ProductoModel producto, {
+    required double lado,
+    required double tamanoIcono,
+  }) {
     if (producto.imagenUrl.isEmpty) return SizedBox(width: lado);
     return Tooltip(
       message: 'Ver foto',
@@ -1430,7 +1639,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             borderRadius: BorderRadius.circular(9),
             border: Border.all(color: const Color(0xFFDFE1E6)),
           ),
-          child: Icon(Icons.photo_outlined, size: tamanoIcono, color: const Color(0xFFC62828)),
+          child: Icon(
+            Icons.photo_outlined,
+            size: tamanoIcono,
+            color: const Color(0xFFC62828),
+          ),
         ),
       ),
     );
@@ -1441,17 +1654,65 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       width: 116,
       height: double.infinity,
       alignment: Alignment.center,
+      // Listener (no GestureDetector/InkWell) a propósito: solo OBSERVA que
+      // se tocó acá, sin competir por el gesto con el PopupMenuButton ni
+      // con el InkWell del ícono de foto -pedido explícito del dueño: tocar
+      // la foto o el "⋮" de una fila distinta a la seleccionada tiene que
+      // mover la iluminación a esa fila de inmediato, no dejarla en la de
+      // antes-.
+      child: Listener(
+        onPointerDown: (_) => _seleccionarFila(producto.id),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _botonVerFoto(producto, lado: 34, tamanoIcono: 19),
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              tooltip: 'Más acciones',
+              padding: EdgeInsets.zero,
+              icon: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: const Color(0xFFDFE1E6)),
+                ),
+                child: const Icon(
+                  Icons.more_vert,
+                  size: 21,
+                  color: Color(0xFF454950),
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 8,
+              position: PopupMenuPosition.under,
+              onSelected: (valor) => _manejarAccion(valor, producto),
+              itemBuilder: (context) =>
+                  _opcionesMenu(esCombo: producto.esCombo),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _celdaAccionesMovil(ProductoModel producto) {
+    return Listener(
+      onPointerDown: (_) => _seleccionarFila(producto.id),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _botonVerFoto(producto, lado: 34, tamanoIcono: 19),
-          const SizedBox(width: 8),
+          _botonVerFoto(producto, lado: 32, tamanoIcono: 17),
+          const SizedBox(width: 6),
           PopupMenuButton<String>(
             tooltip: 'Más acciones',
             padding: EdgeInsets.zero,
             icon: Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(9),
@@ -1459,11 +1720,13 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               ),
               child: const Icon(
                 Icons.more_vert,
-                size: 21,
+                size: 19,
                 color: Color(0xFF454950),
               ),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             elevation: 8,
             position: PopupMenuPosition.under,
             onSelected: (valor) => _manejarAccion(valor, producto),
@@ -1471,35 +1734,6 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _celdaAccionesMovil(ProductoModel producto) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _botonVerFoto(producto, lado: 32, tamanoIcono: 17),
-        const SizedBox(width: 6),
-        PopupMenuButton<String>(
-          tooltip: 'Más acciones',
-          padding: EdgeInsets.zero,
-          icon: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: const Color(0xFFDFE1E6)),
-            ),
-            child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 8,
-          position: PopupMenuPosition.under,
-          onSelected: (valor) => _manejarAccion(valor, producto),
-          itemBuilder: (context) => _opcionesMenu(esCombo: producto.esCombo),
-        ),
-      ],
     );
   }
 
@@ -1633,7 +1867,10 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
   }
 
-  Widget _tituloYBadges(bool esMovil, AsyncValue<List<ProductoModel>> productosAsync) {
+  Widget _tituloYBadges(
+    bool esMovil,
+    AsyncValue<List<ProductoModel>> productosAsync,
+  ) {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 12,
@@ -1641,7 +1878,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       children: [
         Text(
           'Inventario',
-          style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(
+            fontSize: esMovil ? 19 : 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
         ),
         productosAsync.when(
           data: (productos) {
@@ -1649,9 +1890,16 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             // filtrada) — sin esto se repetían en cada build(), incluida
             // una selección de fila que no cambia nada de esto (ver
             // comentario junto a los campos `_cache*`).
-            if (!identical(_cacheValoresProductosOrigen, productos) || _cacheValoresPrecioConIsv != _precioConIsv) {
-              _cacheValorCompra = productos.fold<double>(0, (s, p) => s + (p.stock * p.precioCompra));
-              _cacheValorVenta = productos.fold<double>(0, (s, p) => s + (p.stock * _precioMostrado(p)));
+            if (!identical(_cacheValoresProductosOrigen, productos) ||
+                _cacheValoresPrecioConIsv != _precioConIsv) {
+              _cacheValorCompra = productos.fold<double>(
+                0,
+                (s, p) => s + (p.stock * p.precioCompra),
+              );
+              _cacheValorVenta = productos.fold<double>(
+                0,
+                (s, p) => s + (p.stock * _precioMostrado(p)),
+              );
               _cacheValoresProductosOrigen = productos;
               _cacheValoresPrecioConIsv = _precioConIsv;
             }
@@ -1661,9 +1909,18 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _badgeInfo('${productos.length} productos', const Color(0xFFC62828)),
-                _badgeInfo('Valor compra ${formatearMoneda(valorCompra)}', const Color(0xFF3B82F6)),
-                _badgeInfo('Valor venta (${_precioConIsv ? 'con' : 'sin'} ISV) ${formatearMoneda(valorVenta)}', const Color(0xFF16A34A)),
+                _badgeInfo(
+                  '${productos.length} productos',
+                  const Color(0xFFC62828),
+                ),
+                _badgeInfo(
+                  'Valor compra ${formatearMoneda(valorCompra)}',
+                  const Color(0xFF3B82F6),
+                ),
+                _badgeInfo(
+                  'Valor venta (${_precioConIsv ? 'con' : 'sin'} ISV) ${formatearMoneda(valorVenta)}',
+                  const Color(0xFF16A34A),
+                ),
               ],
             );
           },
@@ -1677,7 +1934,12 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   // Versión chica del selector-pill -pedido explícito del dueño: el
   // original (46 de alto, 14/11 de padding, 13 de letra) ocupaba demasiado
   // espacio para vivir arriba en una esquina junto al título.
-  Widget _pildoraChica<T>(T valor, T valorActual, ValueChanged<T> onTap, List<(String, T)> opciones) {
+  Widget _pildoraChica<T>(
+    T valor,
+    T valorActual,
+    ValueChanged<T> onTap,
+    List<(String, T)> opciones,
+  ) {
     return Container(
       height: 28,
       padding: const EdgeInsets.all(2),
@@ -1697,7 +1959,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: valorActual == v ? const Color(0xFFC62828) : Colors.transparent,
+                  color: valorActual == v
+                      ? const Color(0xFFC62828)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1705,7 +1969,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: valorActual == v ? Colors.white : const Color(0xFF666A72),
+                    color: valorActual == v
+                        ? Colors.white
+                        : const Color(0xFF666A72),
                   ),
                 ),
               ),
@@ -1716,11 +1982,21 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   }
 
   Widget _selectorPrecioIsvChico() {
-    return _pildoraChica<bool>(_precioConIsv, _precioConIsv, (v) => setState(() => _precioConIsv = v), const [('Con ISV', true), ('Sin ISV', false)]);
+    return _pildoraChica<bool>(
+      _precioConIsv,
+      _precioConIsv,
+      (v) => setState(() => _precioConIsv = v),
+      const [('Con ISV', true), ('Sin ISV', false)],
+    );
   }
 
   Widget _selectorEstadoChico() {
-    return _pildoraChica<String>(_filtroEstado, _filtroEstado, (v) => setState(() => _filtroEstado = v), const [('Activos', 'activos'), ('Inactivos', 'inactivos')]);
+    return _pildoraChica<String>(
+      _filtroEstado,
+      _filtroEstado,
+      (v) => setState(() => _filtroEstado = v),
+      const [('Activos', 'activos'), ('Inactivos', 'inactivos')],
+    );
   }
 
   Widget _selectorCampoFiltro() {
@@ -1736,10 +2012,16 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         child: DropdownButton<String>(
           value: _campoFiltro,
           isExpanded: true,
-          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: const Color(0xFF1A1A1A),
+          ),
           items: [
             for (final (valor, etiqueta) in _opcionesCampoFiltro)
-              DropdownMenuItem(value: valor, child: Text('Filtrar por: $etiqueta')),
+              DropdownMenuItem(
+                value: valor,
+                child: Text('Filtrar por: $etiqueta'),
+              ),
           ],
           onChanged: (v) {
             if (v == null) return;
@@ -1770,23 +2052,23 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               onSubmitted: (_) => _buscar(),
               titulo: 'Buscar o escanear código de barras...',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _busquedaController,
-              autofocus: true,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Buscar o escanear código de barras...',
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade400,
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _busquedaController,
+                autofocus: true,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Buscar o escanear código de barras...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade400,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
                 ),
-                border: InputBorder.none,
-                isDense: true,
+                onSubmitted: (_) => _buscar(),
               ),
-              onSubmitted: (_) => _buscar(),
-            ),
             ),
           ),
           if (busqueda.isNotEmpty)
