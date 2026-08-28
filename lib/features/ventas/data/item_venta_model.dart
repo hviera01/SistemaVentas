@@ -179,15 +179,28 @@ class ItemVentaModel {
   /// Fila de `detalle_venta` del histórico (Worker `/historico/detalle` o
   /// `/historico/detalle-rango`). No trae idCategoria ni combos — el sistema
   /// anterior no guardaba esos datos por línea.
+  ///
+  /// OJO: `DETALLE_VENTA.PrecioCompraUsado` en el sistema viejo (SQL Server)
+  /// guardaba el costo YA MULTIPLICADO por la cantidad de la línea -igual
+  /// que `subtotal`-, no por unidad. En cambio `precioCompraUsado` en TODO
+  /// el resto de esta app (incluyendo cómo lo consume
+  /// ReporteFinancieroRepository: `precioCompraUsado * cantidad`) es SIEMPRE
+  /// por unidad. Sin dividir acá, el costo de cualquier línea histórica con
+  /// cantidad > 1 se duplicaba por esa cantidad -confirmado comparando
+  /// abril/2026 contra el sistema viejo: el reporte de Utilidad daba
+  /// L.342,986 de costo cuando el real (y el que ya calculaba bien la
+  /// pestaña de Comparación Mensual, que no re-multiplica) era L.153,542-.
   factory ItemVentaModel.fromHistoricoMap(Map<String, dynamic> data) {
+    final cantidad = ((data['cantidad'] as num?) ?? 0).toDouble();
+    final costoLineaTotal = ((data['precio_compra_usado'] as num?) ?? 0).toDouble();
     return ItemVentaModel(
       idProducto: '${data['id_producto']}',
       idCategoria: '',
       nombreProducto: (data['nombre_producto'] as String?) ?? '',
       precioVenta: ((data['precio_venta'] as num?) ?? 0).toDouble(),
-      cantidad: ((data['cantidad'] as num?) ?? 0).toDouble(),
+      cantidad: cantidad,
       subtotal: ((data['subtotal'] as num?) ?? 0).toDouble(),
-      precioCompraUsado: ((data['precio_compra_usado'] as num?) ?? 0).toDouble(),
+      precioCompraUsado: cantidad == 0 ? 0 : costoLineaTotal / cantidad,
     );
   }
 

@@ -22,12 +22,29 @@ class HistoricoVentaService {
 
   bool _tocaHistorico(DateTime inicio, DateTime finInclusive) => inicio.toUtc().isBefore(corteHistorico);
 
+  /// El export del sistema viejo (`export_historico.ps1`) copia el
+  /// `datetime` local (Honduras) de SQL Server tal cual y solo le pega un
+  /// sufijo "Z" -no es una conversión real a UTC-. O sea que en la base D1
+  /// del Worker, "hora local del negocio" y "hora marcada como UTC" son el
+  /// mismo número. Si acá se llama `.toUtc()` sobre una fecha local de
+  /// verdad (como las que arma la pantalla de reportes a partir de lo que
+  /// elige el usuario), Dart le resta el offset de Honduras y el límite de
+  /// la consulta queda corrido ~6 horas -de un rango como "01/04 al 30/04"
+  /// se comen ventas de la madrugada del día 1 y se cuelan ventas de la
+  /// madrugada del día 1 de mayo-. Por eso acá NO se convierte a UTC de
+  /// verdad: se arma un DateTime.utc con los mismos números de la hora
+  /// local, para que el string quede en el mismo "idioma" que ya usa el
+  /// dato guardado en D1 -confirmado comparando abril/2026 contra el total
+  /// real del sistema viejo, coincide al centavo solo así-.
+  DateTime _comoLocalEtiquetadoUtc(DateTime fecha) =>
+      DateTime.utc(fecha.year, fecha.month, fecha.day, fecha.hour, fecha.minute, fecha.second, fecha.millisecond);
+
   Future<List<ReporteVentaModel>> obtenerVentas(DateTime inicio, DateTime finInclusive) async {
     if (!_tocaHistorico(inicio, finInclusive)) return const [];
-    final hasta = finInclusive.toUtc().isBefore(corteHistorico) ? finInclusive.toUtc() : corteHistorico.subtract(const Duration(milliseconds: 1));
+    final hasta = finInclusive.toUtc().isBefore(corteHistorico) ? _comoLocalEtiquetadoUtc(finInclusive) : corteHistorico.subtract(const Duration(milliseconds: 1));
     try {
       final uri = Uri.parse('$_baseUrl/historico/ventas').replace(queryParameters: {
-        'desde': inicio.toUtc().toIso8601String(),
+        'desde': _comoLocalEtiquetadoUtc(inicio).toIso8601String(),
         'hasta': hasta.toIso8601String(),
       });
       final res = await http.get(uri).timeout(_timeout);
@@ -44,10 +61,10 @@ class HistoricoVentaService {
   /// Una sola llamada HTTP en vez de una por venta.
   Future<Map<String, List<ItemVentaModel>>> obtenerDetallePorRango(DateTime inicio, DateTime finInclusive) async {
     if (!_tocaHistorico(inicio, finInclusive)) return const {};
-    final hasta = finInclusive.toUtc().isBefore(corteHistorico) ? finInclusive.toUtc() : corteHistorico.subtract(const Duration(milliseconds: 1));
+    final hasta = finInclusive.toUtc().isBefore(corteHistorico) ? _comoLocalEtiquetadoUtc(finInclusive) : corteHistorico.subtract(const Duration(milliseconds: 1));
     try {
       final uri = Uri.parse('$_baseUrl/historico/detalle-rango').replace(queryParameters: {
-        'desde': inicio.toUtc().toIso8601String(),
+        'desde': _comoLocalEtiquetadoUtc(inicio).toIso8601String(),
         'hasta': hasta.toIso8601String(),
       });
       final res = await http.get(uri).timeout(_timeout);
