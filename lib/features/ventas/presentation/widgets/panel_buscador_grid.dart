@@ -194,7 +194,11 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                         size: 32,
                       ),
                     )
-                  : ImagenProductoNetwork(url: p.imagenUrl, fit: BoxFit.cover),
+                  : ImagenProductoNetwork(
+                      url: p.imagenUrl,
+                      fit: BoxFit.cover,
+                      width: 160,
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -213,35 +217,41 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        precio == null ? 'Sin precio' : formatearMoneda(precio),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFC62828),
-                        ),
-                      ),
-                      if (bajoStock)
-                        const Icon(
-                          Icons.error_outline,
-                          size: 13,
-                          color: Color(0xFFC62828),
-                        )
-                      else if (!p.esCombo)
-                        Text(
-                          p.stock.toStringAsFixed(
-                            p.stock == p.stock.roundToDouble() ? 0 : 2,
-                          ),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10.5,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                    ],
+                  Text(
+                    precio == null ? 'Sin precio' : formatearMoneda(precio),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFC62828),
+                    ),
                   ),
+                  if (!p.esCombo) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (bajoStock)
+                          const Icon(
+                            Icons.error_outline,
+                            size: 12,
+                            color: Color(0xFFC62828),
+                          ),
+                        if (bajoStock) const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            'Existencia: ${p.stock.toStringAsFixed(p.stock == p.stock.roundToDouble() ? 0 : 2)}',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: bajoStock
+                                  ? const Color(0xFFC62828)
+                                  : Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

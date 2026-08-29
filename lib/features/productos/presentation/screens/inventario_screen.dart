@@ -1586,7 +1586,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                   ),
                   Divider(height: 1, color: Colors.grey.shade200),
                   _filaDatoTarjeta(
-                    'STOCK',
+                    'EXISTENCIA',
                     Text(
                       '$textoExistencia Unidades',
                       style: GoogleFonts.poppins(

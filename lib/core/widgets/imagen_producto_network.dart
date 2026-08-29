@@ -83,6 +83,7 @@ class ImagenProductoNetwork extends StatefulWidget {
 
 class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
   late Future<Uint8List> _future;
+  late String _urlEfectiva;
   Timer? _reintentoAutomatico;
   int _intentosAutomaticos = 0;
   // Guarda el error real (SocketException, TimeoutException, HTTP xxx, etc.)
@@ -94,20 +95,47 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
   @override
   void initState() {
     super.initState();
+    _urlEfectiva = _calcularUrlEfectiva();
     _future = _obtenerFuture();
   }
 
   @override
   void didUpdateWidget(covariant ImagenProductoNetwork oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url) setState(() => _future = _obtenerFuture());
+    final nuevaUrl = _calcularUrlEfectiva();
+    if (nuevaUrl != _urlEfectiva) {
+      _urlEfectiva = nuevaUrl;
+      setState(() => _future = _obtenerFuture());
+    }
+  }
+
+  // Si el widget pide un tamaño chico (miniaturas de grilla/tarjeta) y la
+  // foto vive en Cloudinary, pide directamente una versión reducida en vez
+  // de bajar la foto original completa -pedido explícito del dueño: la
+  // grilla de la vista "dividida" de Registrar Venta se sentía lenta al
+  // buscar, porque cada tarjeta de ~150px bajaba la foto a resolución
+  // completa-. El zoom a pantalla completa (ImagenZoomDialog) no pasa
+  // `width`, así que sigue pidiendo la foto original sin recortar.
+  String _calcularUrlEfectiva() {
+    final ancho = widget.width;
+    if (ancho == null) return widget.url;
+    const marcador = '/upload/';
+    final idx = widget.url.indexOf(marcador);
+    if (idx == -1 || !widget.url.contains('res.cloudinary.com')) {
+      return widget.url;
+    }
+    final anchoPixeles = (ancho * 2).clamp(50, 800).round();
+    final inicio = idx + marcador.length;
+    return '${widget.url.substring(0, inicio)}'
+        'w_$anchoPixeles,c_limit,q_auto,f_auto/'
+        '${widget.url.substring(inicio)}';
   }
 
   // Si esta URL ya se descargó antes (por esta pantalla o cualquier otra:
   // el caché es global), la devuelve al toque sin tocar la red. Si no,
   // recién ahí sale a bajarla.
   Future<Uint8List> _obtenerFuture() {
-    final cacheado = ImagenProductoNetwork._cache[widget.url];
+    final cacheado = ImagenProductoNetwork._cache[_urlEfectiva];
     if (cacheado != null) return Future.value(cacheado);
     return _cargarConReintentoDeFondo();
   }
@@ -126,10 +154,10 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
     for (var intento = 1; intento <= intentos; intento++) {
       try {
         final res = await ImagenProductoNetwork._client
-            .get(Uri.parse(widget.url))
+            .get(Uri.parse(_urlEfectiva))
             .timeout(const Duration(seconds: 15));
         if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
-        ImagenProductoNetwork._cache[widget.url] = res.bodyBytes;
+        ImagenProductoNetwork._cache[_urlEfectiva] = res.bodyBytes;
         return res.bodyBytes;
       } catch (e) {
         _ultimoError = _describirError(e);

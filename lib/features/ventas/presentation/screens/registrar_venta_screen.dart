@@ -3641,10 +3641,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _barraSuperiorCompacta(carrito, esMovil),
-          const SizedBox(height: 8),
-          _barraAccionesCarritoCompacta(),
-          const SizedBox(height: 8),
+          _barraSuperiorDynamics(carrito, esMovil),
+          const SizedBox(height: 6),
           Offstage(offstage: true, child: _campoCodigoBarras()),
           // La tabla es la protagonista de esta vista -pedido explícito del
           // dueño: "esa tabla grande no tiene nada, quitá/reubicá todo lo de
@@ -3725,6 +3723,64 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         mapaProductos,
         carrito.items.length,
       ),
+    );
+  }
+
+  // --- Barra ultra-compacta de Tabla grande (Dynamics) ---
+  // Pedido explícito del dueño: hacer la tabla todavía más grande achicando
+  // más la fila de buscar producto y "Datos y acciones", en un solo
+  // renglón que no ocupe casi nada de espacio. Junta en una sola fila lo
+  // que en las otras vistas son dos barras separadas (_barraSuperiorCompacta
+  // + _barraAccionesCarritoCompacta): el chip de cliente/"Datos y acciones"
+  // queda sin texto de botón (solo ícono) y la fila de acciones usa íconos
+  // de 28px en vez de los IconButton de 48px por defecto. Si en una pantalla
+  // muy angosta no entran todos los íconos, el scroll horizontal propio los
+  // deja alcanzables sin desbordar -nunca se pierden, solo se deslizan-.
+  Widget _barraSuperiorDynamics(CarritoVentaState carrito, bool esMovil) {
+    final nombreCliente = _nombreClienteController.text.trim().isEmpty
+        ? 'Consumidor final'
+        : _nombreClienteController.text.trim();
+    return Row(
+      children: [
+        InkWell(
+          onTap: () => _abrirDatosVentaModal(esMovil),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDFE1E6)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune, size: 13, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    nombreCliente,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: _barraAccionesCarritoCompacta(compacta: true),
+          ),
+        ),
+      ],
     );
   }
 
@@ -3869,68 +3925,151 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // Vista Dividida -ahí siempre se busca desde PanelBuscadorGrid, al lado,
   // así que el botón que abre el buscador modal de siempre sería
   // redundante-.
-  Widget _barraAccionesCarritoCompacta({bool mostrarAgregarProducto = true}) {
+  // [compacta] (Tabla grande/Dynamics -pedido explícito del dueño: "los
+  // controles de buscar producto... aún más pequeño"-) cambia el botón
+  // "Agregar Producto" de FilledButton con texto a un ícono chico igual a
+  // los demás, y pasa de `Wrap` (baja de línea si no entra) a `Row` fijo de
+  // un solo renglón -el padre la mete en un scroll horizontal propio, así
+  // nunca desborda aunque no entren todos los íconos de una vez-.
+  Widget _barraAccionesCarritoCompacta({
+    bool mostrarAgregarProducto = true,
+    bool compacta = false,
+  }) {
+    final botones = <Widget>[
+      if (mostrarAgregarProducto)
+        compacta
+            ? _botonAccionChico(
+                icono: Icons.add_circle,
+                tooltip: 'Agregar Producto',
+                onPressed: _agregarProductoDesdeBusqueda,
+                color: const Color(0xFFC62828),
+              )
+            : FilledButton.icon(
+                onPressed: _agregarProductoDesdeBusqueda,
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'Agregar Producto',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+      if (_esPlataformaMovil)
+        compacta
+            ? _botonAccionChico(
+                icono: Icons.qr_code_scanner,
+                tooltip: 'Escanear con cámara',
+                onPressed: _escanearConCamara,
+              )
+            : IconButton(
+                tooltip: 'Escanear con cámara',
+                onPressed: _escanearConCamara,
+                icon: Icon(Icons.qr_code_scanner, color: Colors.grey.shade600),
+              ),
+      compacta
+          ? _botonAccionChico(
+              icono: _escaneoRemotoConectado
+                  ? Icons.wifi_tethering
+                  : Icons.qr_code_scanner,
+              tooltip: _escaneoRemotoConectado
+                  ? 'Escaneo activo'
+                  : 'Escanear con celular',
+              onPressed: _abrirEscaneoRemoto,
+              color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
+            )
+          : IconButton(
+              tooltip: _escaneoRemotoConectado
+                  ? 'Escaneo activo'
+                  : 'Escanear con celular',
+              onPressed: _abrirEscaneoRemoto,
+              icon: Icon(
+                _escaneoRemotoConectado
+                    ? Icons.wifi_tethering
+                    : Icons.qr_code_scanner,
+                color: _escaneoRemotoConectado
+                    ? Colors.green.shade600
+                    : Colors.grey.shade600,
+              ),
+            ),
+      compacta
+          ? _botonAccionChico(
+              icono: Icons.local_offer_outlined,
+              tooltip: 'Ver promociones vigentes',
+              onPressed: _abrirPromocionesVigentes,
+            )
+          : IconButton(
+              tooltip: 'Ver promociones vigentes',
+              onPressed: _abrirPromocionesVigentes,
+              icon: Icon(
+                Icons.local_offer_outlined,
+                color: Colors.grey.shade600,
+              ),
+            ),
+      compacta
+          ? _botonAccionChico(
+              icono: Icons.calculate_outlined,
+              tooltip: 'Consultar costo de un color',
+              onPressed: _abrirConsultarCosto,
+            )
+          : IconButton(
+              tooltip: 'Consultar costo de un color',
+              onPressed: _abrirConsultarCosto,
+              icon: Icon(Icons.calculate_outlined, color: Colors.grey.shade600),
+            ),
+      compacta
+          ? _botonAccionChico(
+              icono: Icons.straighten,
+              tooltip: 'Calculadora de pintura',
+              onPressed: () => _calculadoraRendimiento.abrir(context),
+            )
+          : IconButton(
+              tooltip: 'Calculadora de pintura',
+              onPressed: () => _calculadoraRendimiento.abrir(context),
+              icon: Icon(Icons.straighten, color: Colors.grey.shade600),
+            ),
+      _selectorPrecioIsvCarrito(compacto: true),
+    ];
+    if (compacta) {
+      return Row(mainAxisSize: MainAxisSize.min, children: botones);
+    }
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        if (mostrarAgregarProducto)
-          FilledButton.icon(
-            onPressed: _agregarProductoDesdeBusqueda,
-            icon: const Icon(Icons.add, size: 18),
-            label: Text(
-              'Agregar Producto',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFC62828),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        if (_esPlataformaMovil)
-          IconButton(
-            tooltip: 'Escanear con cámara',
-            onPressed: _escanearConCamara,
-            icon: Icon(Icons.qr_code_scanner, color: Colors.grey.shade600),
-          ),
-        IconButton(
-          tooltip: _escaneoRemotoConectado
-              ? 'Escaneo activo'
-              : 'Escanear con celular',
-          onPressed: _abrirEscaneoRemoto,
-          icon: Icon(
-            _escaneoRemotoConectado
-                ? Icons.wifi_tethering
-                : Icons.qr_code_scanner,
-            color: _escaneoRemotoConectado
-                ? Colors.green.shade600
-                : Colors.grey.shade600,
-          ),
-        ),
-        IconButton(
-          tooltip: 'Ver promociones vigentes',
-          onPressed: _abrirPromocionesVigentes,
-          icon: Icon(Icons.local_offer_outlined, color: Colors.grey.shade600),
-        ),
-        IconButton(
-          tooltip: 'Consultar costo de un color',
-          onPressed: _abrirConsultarCosto,
-          icon: Icon(Icons.calculate_outlined, color: Colors.grey.shade600),
-        ),
-        IconButton(
-          tooltip: 'Calculadora de pintura',
-          onPressed: () => _calculadoraRendimiento.abrir(context),
-          icon: Icon(Icons.straighten, color: Colors.grey.shade600),
-        ),
-        _selectorPrecioIsvCarrito(compacto: true),
-      ],
+      children: botones,
+    );
+  }
+
+  // Ícono chico (28x28) para la fila de acciones ultra-compacta de Tabla
+  // grande -el IconButton normal (48x48 por defecto) es de lo que más
+  // espacio vertical le quitaba a la tabla-.
+  Widget _botonAccionChico({
+    required IconData icono,
+    required String tooltip,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icono, size: 16, color: color ?? Colors.grey.shade600),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        visualDensity: VisualDensity.compact,
+        splashRadius: 16,
+      ),
     );
   }
 
