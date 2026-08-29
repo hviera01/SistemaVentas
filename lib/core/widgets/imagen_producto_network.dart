@@ -58,8 +58,24 @@ class ImagenProductoNetwork extends StatefulWidget {
   // se puede agotar el tiempo de espera antes de completarse — para cuando
   // el usuario realmente abre una foto, la conexión ya debería estar lista.
   static void precalentar() {
-    _client.get(Uri.parse('https://res.cloudinary.com/')).timeout(const Duration(seconds: 20)).catchError((_) => http.Response('', 0));
+    _client
+        .get(Uri.parse('https://res.cloudinary.com/'))
+        .timeout(const Duration(seconds: 20))
+        .catchError((_) => http.Response('', 0));
   }
+
+  // Caché en memoria de fotos ya descargadas, compartido por TODA la app
+  // (igual que _client) -pedido explícito del dueño: el scroll rápido en
+  // listas con fotos (Inventario, buscador, etc.) se sentía lento-. Sin
+  // esto, cada vez que una tarjeta con foto sale del rango visible de un
+  // ListView y vuelve a entrar (subir y bajar el scroll), Flutter descarta
+  // y vuelve a crear el widget desde cero, y sin caché eso disparaba una
+  // descarga nueva por red de la MISMA foto cada vez. Guarda los bytes ya
+  // decodificados de red (no el `Image` ya renderizado) -alcanza para
+  // evitar el viaje de red, que es la parte lenta; el costo de decodificar
+  // esos bytes en pantalla ya lo maneja el caché de imágenes propio de
+  // Flutter por su cuenta.
+  static final Map<String, Uint8List> _cache = {};
 
   @override
   State<ImagenProductoNetwork> createState() => _ImagenProductoNetworkState();
@@ -78,13 +94,22 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
   @override
   void initState() {
     super.initState();
-    _future = _cargarConReintentoDeFondo();
+    _future = _obtenerFuture();
   }
 
   @override
   void didUpdateWidget(covariant ImagenProductoNetwork oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url) _reintentar();
+    if (oldWidget.url != widget.url) setState(() => _future = _obtenerFuture());
+  }
+
+  // Si esta URL ya se descargó antes (por esta pantalla o cualquier otra:
+  // el caché es global), la devuelve al toque sin tocar la red. Si no,
+  // recién ahí sale a bajarla.
+  Future<Uint8List> _obtenerFuture() {
+    final cacheado = ImagenProductoNetwork._cache[widget.url];
+    if (cacheado != null) return Future.value(cacheado);
+    return _cargarConReintentoDeFondo();
   }
 
   @override
@@ -100,8 +125,11 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
     const intentos = 4;
     for (var intento = 1; intento <= intentos; intento++) {
       try {
-        final res = await ImagenProductoNetwork._client.get(Uri.parse(widget.url)).timeout(const Duration(seconds: 15));
+        final res = await ImagenProductoNetwork._client
+            .get(Uri.parse(widget.url))
+            .timeout(const Duration(seconds: 15));
         if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
+        ImagenProductoNetwork._cache[widget.url] = res.bodyBytes;
         return res.bodyBytes;
       } catch (e) {
         _ultimoError = _describirError(e);
@@ -117,8 +145,13 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
   // ya dice mucho de la causa real, más que el genérico "Reintentar".
   String _describirError(Object e) {
     final tipo = e.runtimeType.toString();
-    final detalle = e.toString().replaceFirst('$tipo: ', '').replaceFirst('Exception: ', '');
-    return detalle.length > 140 ? '$tipo: ${detalle.substring(0, 140)}…' : '$tipo: $detalle';
+    final detalle = e
+        .toString()
+        .replaceFirst('$tipo: ', '')
+        .replaceFirst('Exception: ', '');
+    return detalle.length > 140
+        ? '$tipo: ${detalle.substring(0, 140)}…'
+        : '$tipo: $detalle';
   }
 
   // Si los 4 intentos de _cargar() fallan, sigue reintentando solo en
@@ -127,13 +160,16 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
   // debe terminar apareciendo sola apenas la red se recupere.
   Future<Uint8List> _cargarConReintentoDeFondo() {
     final future = _cargar();
-    future.then((_) {}, onError: (_) {
-      if (!mounted || _intentosAutomaticos >= 15) return;
-      _intentosAutomaticos++;
-      _reintentoAutomatico = Timer(const Duration(seconds: 8), () {
-        if (mounted) setState(() => _future = _cargarConReintentoDeFondo());
-      });
-    });
+    future.then(
+      (_) {},
+      onError: (_) {
+        if (!mounted || _intentosAutomaticos >= 15) return;
+        _intentosAutomaticos++;
+        _reintentoAutomatico = Timer(const Duration(seconds: 8), () {
+          if (mounted) setState(() => _future = _cargarConReintentoDeFondo());
+        });
+      },
+    );
     return future;
   }
 
@@ -152,7 +188,16 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
           return SizedBox(
             width: widget.width,
             height: widget.height,
-            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2, color: widget.loadingColor))),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: widget.loadingColor,
+                ),
+              ),
+            ),
           );
         }
         if (snapshot.hasError) {
@@ -169,9 +214,19 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.refresh, color: widget.iconColor, size: widget.iconSize),
+                    Icon(
+                      Icons.refresh,
+                      color: widget.iconColor,
+                      size: widget.iconSize,
+                    ),
                     const SizedBox(height: 2),
-                    Text('Reintentar', style: TextStyle(fontSize: widget.textSize, color: widget.textColor)),
+                    Text(
+                      'Reintentar',
+                      style: TextStyle(
+                        fontSize: widget.textSize,
+                        color: widget.textColor,
+                      ),
+                    ),
                     if (mostrarDetalle && _ultimoError != null) ...[
                       const SizedBox(height: 2),
                       Padding(
@@ -181,7 +236,10 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: (widget.textSize - 1).clamp(7, 20), color: widget.textColor.withValues(alpha: 0.8)),
+                          style: TextStyle(
+                            fontSize: (widget.textSize - 1).clamp(7, 20),
+                            color: widget.textColor.withValues(alpha: 0.8),
+                          ),
                         ),
                       ),
                     ],
@@ -191,7 +249,12 @@ class _ImagenProductoNetworkState extends State<ImagenProductoNetwork> {
             ),
           );
         }
-        return Image.memory(snapshot.data!, width: widget.width, height: widget.height, fit: widget.fit);
+        return Image.memory(
+          snapshot.data!,
+          width: widget.width,
+          height: widget.height,
+          fit: widget.fit,
+        );
       },
     );
   }

@@ -1459,225 +1459,235 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             ),
           ],
         ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 4, color: const Color(0xFFC62828)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: p.imagenUrl.isEmpty
-                                ? Container(
-                                    width: 52,
-                                    height: 52,
-                                    color: const Color(0xFFF3F4F6),
-                                    child: Icon(
-                                      Icons.image_outlined,
-                                      color: Colors.grey.shade400,
-                                      size: 24,
-                                    ),
-                                  )
-                                : ImagenProductoNetwork(
-                                    url: p.imagenUrl,
-                                    width: 52,
-                                    height: 52,
-                                    fit: BoxFit.cover,
+        // Stack (no IntrinsicHeight) para la franja roja a la izquierda: con
+        // muchas tarjetas en pantalla durante un scroll rápido,
+        // IntrinsicHeight le agrega una pasada de layout extra a CADA
+        // tarjeta (mide el alto intrínseco antes de poder acomodar todo) —
+        // un Stack no la necesita, la franja simplemente se estira al alto
+        // que termine ocupando el contenido de al lado, sin ese paso de más.
+        child: Stack(
+          children: [
+            const Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4,
+              child: ColoredBox(color: Color(0xFFC62828)),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: p.imagenUrl.isEmpty
+                              ? Container(
+                                  width: 52,
+                                  height: 52,
+                                  color: const Color(0xFFF3F4F6),
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.grey.shade400,
+                                    size: 24,
                                   ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (p.esCombo)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 3),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 1.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEDE7F6),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'COMBO',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF6A1B9A),
-                                      ),
-                                    ),
-                                  ),
-                                Text(
-                                  p.nombre,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1A1A1A),
-                                  ),
+                                )
+                              : ImagenProductoNetwork(
+                                  url: p.imagenUrl,
+                                  width: 52,
+                                  height: 52,
+                                  fit: BoxFit.cover,
                                 ),
-                                if (p.descripcion.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    p.descripcion,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade500,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          _celdaAccionesMovil(p),
-                        ],
-                      ),
-                    ),
-                    Divider(height: 1, color: Colors.grey.shade200),
-                    _filaDatoTarjeta(
-                      'CODIGO',
-                      Text(
-                        p.codigo,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1A1A),
                         ),
-                      ),
-                    ),
-                    Divider(height: 1, color: Colors.grey.shade200),
-                    _filaDatoTarjeta(
-                      'CATEGORIA',
-                      Text(
-                        categoria,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ),
-                    Divider(height: 1, color: Colors.grey.shade200),
-                    _filaDatoTarjeta(
-                      'STOCK',
-                      Text(
-                        '$textoExistencia Unidades',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: bajoStock
-                              ? const Color(0xFFC62828)
-                              : const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ),
-                    Divider(height: 1, color: Colors.grey.shade200),
-                    _filaDatoTarjeta(
-                      'ESTADO',
-                      Text(
-                        p.estado ? 'Activo' : 'Inactivo',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: p.estado
-                              ? const Color(0xFF16A34A)
-                              : Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      color: const Color(0xFFF7F7F9),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'COSTO',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade500,
-                                  letterSpacing: 0.3,
+                              if (p.esCombo)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEDE7F6),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'COMBO',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF6A1B9A),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
                               Text(
-                                formatearMoneda(p.precioCompra),
+                                p.nombre,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 13.5,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF1A1A1A),
                                 ),
                               ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'PRECIO VENTA',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade500,
-                                  letterSpacing: 0.3,
+                              if (p.descripcion.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  p.descripcion,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade500,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    formatearMoneda(_precioMostrado(p)),
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFFC62828),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    _precioConIsv ? 'c/ISV' : 's/ISV',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9.5,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ],
                           ),
-                        ],
+                        ),
+                        _celdaAccionesMovil(p),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  _filaDatoTarjeta(
+                    'CODIGO',
+                    Text(
+                      p.codigo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1A1A1A),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  _filaDatoTarjeta(
+                    'CATEGORIA',
+                    Text(
+                      categoria,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  _filaDatoTarjeta(
+                    'STOCK',
+                    Text(
+                      '$textoExistencia Unidades',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: bajoStock
+                            ? const Color(0xFFC62828)
+                            : const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  _filaDatoTarjeta(
+                    'ESTADO',
+                    Text(
+                      p.estado ? 'Activo' : 'Inactivo',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: p.estado
+                            ? const Color(0xFF16A34A)
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    color: const Color(0xFFF7F7F9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'COSTO',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              formatearMoneda(p.precioCompra),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'PRECIO VENTA',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  formatearMoneda(_precioMostrado(p)),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFFC62828),
+                                  ),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _precioConIsv ? 'c/ISV' : 's/ISV',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 9.5,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
