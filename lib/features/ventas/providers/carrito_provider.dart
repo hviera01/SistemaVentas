@@ -3,6 +3,7 @@ import '../data/item_venta_model.dart';
 import '../data/pago_detalle_model.dart';
 import '../data/venta_en_espera_model.dart';
 import '../data/venta_model.dart';
+import '../data/registrar_venta_vista_storage.dart';
 import '../../productos/data/producto_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 
@@ -25,14 +26,24 @@ class VentaParaCargarNotifier extends Notifier<DatosVentaParaCargar?> {
   @override
   DatosVentaParaCargar? build() => null;
 
-  void establecer(VentaModel venta, {bool forzarFactura = false}) => state = DatosVentaParaCargar(venta: venta, forzarFactura: forzarFactura);
+  void establecer(VentaModel venta, {bool forzarFactura = false}) =>
+      state = DatosVentaParaCargar(venta: venta, forzarFactura: forzarFactura);
   void limpiar() => state = null;
 }
 
-final ventaParaCargarProvider = NotifierProvider<VentaParaCargarNotifier, DatosVentaParaCargar?>(VentaParaCargarNotifier.new);
+final ventaParaCargarProvider =
+    NotifierProvider<VentaParaCargarNotifier, DatosVentaParaCargar?>(
+      VentaParaCargarNotifier.new,
+    );
 
-double _subtotalLinea(double precioVenta, double cantidad, double descuentoPorcentaje) {
-  return redondearMoneda(precioVenta * cantidad * (1 - descuentoPorcentaje / 100));
+double _subtotalLinea(
+  double precioVenta,
+  double cantidad,
+  double descuentoPorcentaje,
+) {
+  return redondearMoneda(
+    precioVenta * cantidad * (1 - descuentoPorcentaje / 100),
+  );
 }
 
 class CarritoVentaState {
@@ -92,9 +103,12 @@ class CarritoVentaState {
   bool get esCredito => condicion == 'Credito';
   bool get esPagoMixto => metodoPago == 'Mixto';
 
-  double get _subtotalLineasSinDescuentoGlobal => items.fold<double>(0, (s, i) => s + i.subtotal);
+  double get _subtotalLineasSinDescuentoGlobal =>
+      items.fold<double>(0, (s, i) => s + i.subtotal);
 
-  double get subtotal => redondearMoneda(_subtotalLineasSinDescuentoGlobal * (1 - descuentoGlobalPorcentaje / 100));
+  double get subtotal => redondearMoneda(
+    _subtotalLineasSinDescuentoGlobal * (1 - descuentoGlobalPorcentaje / 100),
+  );
 
   double get _totalConImpuestoBase {
     var total = 0.0;
@@ -120,7 +134,8 @@ class CarritoVentaState {
     return resto >= 0.90 ? base + 1 : base;
   }
 
-  double get cantidadTotalProductos => items.fold<double>(0, (s, i) => s + i.cantidad);
+  double get cantidadTotalProductos =>
+      items.fold<double>(0, (s, i) => s + i.cantidad);
 
   CarritoVentaState copyWith({
     Object? idEnEspera = _sinCambio,
@@ -144,16 +159,22 @@ class CarritoVentaState {
     List<PagoDetalle>? pagosMixtos,
   }) {
     return CarritoVentaState(
-      idEnEspera: idEnEspera == _sinCambio ? this.idEnEspera : idEnEspera as String?,
+      idEnEspera: idEnEspera == _sinCambio
+          ? this.idEnEspera
+          : idEnEspera as String?,
       items: items ?? this.items,
       tipoDocumento: tipoDocumento ?? this.tipoDocumento,
       condicion: condicion ?? this.condicion,
       metodoPago: metodoPago ?? this.metodoPago,
       documentoCliente: documentoCliente ?? this.documentoCliente,
       nombreCliente: nombreCliente ?? this.nombreCliente,
-      idCliente: idCliente == _sinCambio ? this.idCliente : idCliente as String?,
+      idCliente: idCliente == _sinCambio
+          ? this.idCliente
+          : idCliente as String?,
       fecha: fecha ?? this.fecha,
-      fechaVencimiento: fechaVencimiento == _sinCambio ? this.fechaVencimiento : fechaVencimiento as DateTime?,
+      fechaVencimiento: fechaVencimiento == _sinCambio
+          ? this.fechaVencimiento
+          : fechaVencimiento as DateTime?,
       telefonoCredito: telefonoCredito ?? this.telefonoCredito,
       oc: oc ?? this.oc,
       regExonerado: regExonerado ?? this.regExonerado,
@@ -161,7 +182,8 @@ class CarritoVentaState {
       observaciones: observaciones ?? this.observaciones,
       pagoCon: pagoCon ?? this.pagoCon,
       cambio: cambio ?? this.cambio,
-      descuentoGlobalPorcentaje: descuentoGlobalPorcentaje ?? this.descuentoGlobalPorcentaje,
+      descuentoGlobalPorcentaje:
+          descuentoGlobalPorcentaje ?? this.descuentoGlobalPorcentaje,
       pagosMixtos: pagosMixtos ?? this.pagosMixtos,
     );
   }
@@ -181,7 +203,12 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// de búsqueda), con cantidad 1 y sin descuento por defecto. Si el cajero
   /// eligió un nivel de precio distinto al principal, [precioSeleccionado]
   /// trae ese precio (con ISV, tal como se muestra en el buscador).
-  void agregarProductoDirecto(ProductoModel producto, {double? precioSeleccionado, double precioCompraUsado = 0, bool reembasado = false}) {
+  void agregarProductoDirecto(
+    ProductoModel producto, {
+    double? precioSeleccionado,
+    double precioCompraUsado = 0,
+    bool reembasado = false,
+  }) {
     final precioConIsv = precioSeleccionado ?? producto.precioVenta;
     // Sin redondear a centavos acá: precioVenta (sin ISV) no siempre es un
     // número "limpio" de 2 decimales -por ejemplo 100/1.15- y redondearlo
@@ -197,7 +224,9 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       precioVenta: precioSinIsv,
       cantidad: 1,
       subtotal: _subtotalLinea(precioSinIsv, 1, 0),
-      precioCompraUsado: precioCompraUsado > 0 ? precioCompraUsado : producto.precioCompra,
+      precioCompraUsado: precioCompraUsado > 0
+          ? precioCompraUsado
+          : producto.precioCompra,
       reembasado: reembasado,
     );
     state = state.copyWith(items: [...state.items, item]);
@@ -227,13 +256,20 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
     bool fusionarSiYaExiste = false,
   }) {
     if (fusionarSiYaExiste) {
-      final idx = state.items.indexWhere((i) => i.idProducto == producto.id && !i.esCombo);
+      final idx = state.items.indexWhere(
+        (i) => i.idProducto == producto.id && !i.esCombo,
+      );
       if (idx != -1) {
         actualizarLinea(idx, cantidad: state.items[idx].cantidad + 1);
         return idx;
       }
     }
-    agregarProductoDirecto(producto, precioSeleccionado: precioSeleccionado, precioCompraUsado: precioCompraUsado, reembasado: reembasado);
+    agregarProductoDirecto(
+      producto,
+      precioSeleccionado: precioSeleccionado,
+      precioCompraUsado: precioCompraUsado,
+      reembasado: reembasado,
+    );
     return state.items.length - 1;
   }
 
@@ -241,7 +277,11 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// línea. La receta de componentes se congela (snapshot) en el momento de
   /// agregarlo -no se resuelve de nuevo después- para que anular la venta
   /// más adelante siga sabiendo qué reponer aunque el combo se edite.
-  void agregarComboDirecto(ProductoModel combo, {required Map<String, ProductoModel> mapaProductos, double? precioSeleccionado}) {
+  void agregarComboDirecto(
+    ProductoModel combo, {
+    required Map<String, ProductoModel> mapaProductos,
+    double? precioSeleccionado,
+  }) {
     final precioConIsv = precioSeleccionado ?? combo.precioVenta;
     final precioSinIsv = precioConIsv / 1.15;
     final componentesSnapshot = combo.componentes.map((c) {
@@ -290,12 +330,20 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
 
   /// Actualiza cantidad, precio (con ISV, tal como lo ve el cajero) y/o
   /// descuento de línea directamente desde la tabla, recalculando el subtotal.
-  void actualizarLinea(int index, {double? cantidad, double? precioConIsv, double? descuentoPorcentaje, bool? reembasado}) {
+  void actualizarLinea(
+    int index, {
+    double? cantidad,
+    double? precioConIsv,
+    double? descuentoPorcentaje,
+    bool? reembasado,
+  }) {
     final actual = state.items[index];
     final nuevaCantidad = cantidad ?? actual.cantidad;
     // Ver el comentario en agregarProductoDirecto: no se redondea acá para
     // no perder precisión antes de multiplicar de nuevo por 1.15.
-    final nuevoPrecio = precioConIsv != null ? precioConIsv / 1.15 : actual.precioVenta;
+    final nuevoPrecio = precioConIsv != null
+        ? precioConIsv / 1.15
+        : actual.precioVenta;
     final nuevoDescuento = descuentoPorcentaje ?? actual.descuentoPorcentaje;
     final nuevos = [...state.items];
     nuevos[index] = ItemVentaModel(
@@ -358,63 +406,91 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   /// la línea (ver TinteConsumidoSnapshot, CodigosColorDialog) -costo
   /// estimado en este punto, VentaRepository.registrarVenta lo recalcula
   /// con el costo FIFO real al confirmar la venta.
-  void actualizarTintesConsumidos(int index, List<TinteConsumidoSnapshot> nuevosTintes) {
+  void actualizarTintesConsumidos(
+    int index,
+    List<TinteConsumidoSnapshot> nuevosTintes,
+  ) {
     final nuevos = [...state.items];
     nuevos[index] = nuevos[index].copyWith(tintesConsumidos: nuevosTintes);
     state = state.copyWith(items: nuevos);
   }
 
-  void establecerDescuentoGlobal(double v) => state = state.copyWith(descuentoGlobalPorcentaje: v);
+  void establecerDescuentoGlobal(double v) =>
+      state = state.copyWith(descuentoGlobalPorcentaje: v);
 
-  void establecerTipoDocumento(String v) => state = state.copyWith(tipoDocumento: v);
+  void establecerTipoDocumento(String v) =>
+      state = state.copyWith(tipoDocumento: v);
 
   void establecerCondicion(String v) {
     state = state.copyWith(
       condicion: v,
       metodoPago: v == 'Credito' ? '' : 'Efectivo',
-      fechaVencimiento: v == 'Credito' ? (state.fechaVencimiento ?? DateTime.now().add(const Duration(days: 30))) : null,
+      fechaVencimiento: v == 'Credito'
+          ? (state.fechaVencimiento ??
+                DateTime.now().add(const Duration(days: 30)))
+          : null,
       pagosMixtos: const [],
     );
   }
 
-  void establecerMetodoPago(String v) => state = state.copyWith(metodoPago: v, pagosMixtos: v == 'Mixto' ? state.pagosMixtos : const []);
+  void establecerMetodoPago(String v) => state = state.copyWith(
+    metodoPago: v,
+    pagosMixtos: v == 'Mixto' ? state.pagosMixtos : const [],
+  );
 
   /// Guarda el desglose confirmado en PagoMixtoDialog. No cambia metodoPago:
   /// eso ya se hizo al elegir "Mixto" en el dropdown.
-  void establecerPagosMixtos(List<PagoDetalle> pagos) => state = state.copyWith(pagosMixtos: pagos);
+  void establecerPagosMixtos(List<PagoDetalle> pagos) =>
+      state = state.copyWith(pagosMixtos: pagos);
 
   /// [idCliente] es el vínculo real al registro de 'clientes' (viene de
   /// BuscarClienteDialog). Al no pasarlo (o pasar null explícito) se limpia
   /// -es lo correcto para un nombre/documento tipeado a mano sin cliente
   /// elegido-.
-  void establecerCliente({required String documento, required String nombre, String? idCliente}) {
-    state = state.copyWith(documentoCliente: documento, nombreCliente: nombre, idCliente: idCliente);
+  void establecerCliente({
+    required String documento,
+    required String nombre,
+    String? idCliente,
+  }) {
+    state = state.copyWith(
+      documentoCliente: documento,
+      nombreCliente: nombre,
+      idCliente: idCliente,
+    );
   }
 
   /// El cajero tipeó el documento a mano: si antes había un cliente elegido
   /// por el buscador, ese vínculo ya no es confiable (pudo cambiar el RTN a
   /// mano sin que sea el mismo cliente), así que se limpia.
-  void establecerDocumentoCliente(String v) => state = state.copyWith(documentoCliente: v, idCliente: null);
+  void establecerDocumentoCliente(String v) =>
+      state = state.copyWith(documentoCliente: v, idCliente: null);
 
   /// Igual que establecerDocumentoCliente pero para el campo de nombre
   /// (RegistrarVentaScreen lo conecta al onChanged del campo "Cliente").
-  void establecerNombreClienteManual(String v) => state = state.copyWith(nombreCliente: v, idCliente: null);
+  void establecerNombreClienteManual(String v) =>
+      state = state.copyWith(nombreCliente: v, idCliente: null);
   void establecerFecha(DateTime v) => state = state.copyWith(fecha: v);
-  void establecerFechaVencimiento(DateTime v) => state = state.copyWith(fechaVencimiento: v);
-  void establecerTelefonoCredito(String v) => state = state.copyWith(telefonoCredito: v);
+  void establecerFechaVencimiento(DateTime v) =>
+      state = state.copyWith(fechaVencimiento: v);
+  void establecerTelefonoCredito(String v) =>
+      state = state.copyWith(telefonoCredito: v);
   void establecerOc(String v) => state = state.copyWith(oc: v);
-  void establecerRegExonerado(String v) => state = state.copyWith(regExonerado: v);
+  void establecerRegExonerado(String v) =>
+      state = state.copyWith(regExonerado: v);
   void establecerRegSag(String v) => state = state.copyWith(regSag: v);
-  void establecerObservaciones(String v) => state = state.copyWith(observaciones: v);
+  void establecerObservaciones(String v) =>
+      state = state.copyWith(observaciones: v);
   void establecerPago({required double pagoCon, required double cambio}) {
     state = state.copyWith(pagoCon: pagoCon, cambio: cambio);
   }
+
   /// Registra el id del documento de 'ventasEnEspera' que quedó respaldando
   /// esta venta en curso tras el primer autoguardado (ver
   /// RegistrarVentaScreen). Distinto de _guardarEnEspera (botón manual, que
   /// además limpia el carrito): esto solo deja la referencia para que el
   /// próximo autoguardado actualice el mismo documento en vez de crear otro.
-  void establecerIdEnEspera(String id) => state = state.copyWith(idEnEspera: id);
+  void establecerIdEnEspera(String id) =>
+      state = state.copyWith(idEnEspera: id);
 
   void cargarSesion(VentaEnEsperaModel sesion) {
     state = CarritoVentaState(
@@ -453,30 +529,38 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       // existencia, se pregunta por reembasado de nuevo en vez de asumir
       // que ya está resuelto.
       items: venta.detalle
-          .map((item) => ItemVentaModel(
-                idProducto: item.idProducto,
-                idCategoria: item.idCategoria,
-                nombreProducto: item.nombreProducto,
-                precioVenta: item.precioVenta,
-                cantidad: item.cantidad,
-                subtotal: item.subtotal,
-                precioCompraUsado: item.precioCompraUsado,
-                descuentoPorcentaje: item.descuentoPorcentaje,
-                componentes: item.componentes,
-                codigosColor: item.codigosColor,
-                tintesConsumidos: item.tintesConsumidos,
-              ))
+          .map(
+            (item) => ItemVentaModel(
+              idProducto: item.idProducto,
+              idCategoria: item.idCategoria,
+              nombreProducto: item.nombreProducto,
+              precioVenta: item.precioVenta,
+              cantidad: item.cantidad,
+              subtotal: item.subtotal,
+              precioCompraUsado: item.precioCompraUsado,
+              descuentoPorcentaje: item.descuentoPorcentaje,
+              componentes: item.componentes,
+              codigosColor: item.codigosColor,
+              tintesConsumidos: item.tintesConsumidos,
+            ),
+          )
           .toList(),
-      tipoDocumento: (forzarFactura && venta.tipoDocumento == 'Cotizacion') ? 'Factura' : venta.tipoDocumento,
+      tipoDocumento: (forzarFactura && venta.tipoDocumento == 'Cotizacion')
+          ? 'Factura'
+          : venta.tipoDocumento,
       condicion: venta.condicion,
-      metodoPago: venta.condicion == 'Credito' ? '' : (venta.metodoPago.isEmpty ? 'Efectivo' : venta.metodoPago),
+      metodoPago: venta.condicion == 'Credito'
+          ? ''
+          : (venta.metodoPago.isEmpty ? 'Efectivo' : venta.metodoPago),
       documentoCliente: venta.documentoCliente,
       nombreCliente: venta.nombreCliente,
       // La venta original ya tiene un vínculo real a 'clientes' (o no lo
       // tiene, si es de antes de este campo): se copia tal cual, no hay
       // ambigüedad -es el mismo cliente, solo se está duplicando la venta-.
       idCliente: venta.idCliente,
-      fechaVencimiento: venta.condicion == 'Credito' ? DateTime.now().add(const Duration(days: 30)) : null,
+      fechaVencimiento: venta.condicion == 'Credito'
+          ? DateTime.now().add(const Duration(days: 30))
+          : null,
       oc: venta.oc,
       regExonerado: venta.regExonerado,
       regSag: venta.regSag,
@@ -490,4 +574,33 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
   }
 }
 
-final carritoVentaProvider = NotifierProvider<CarritoVentaNotifier, CarritoVentaState>(CarritoVentaNotifier.new);
+final carritoVentaProvider =
+    NotifierProvider<CarritoVentaNotifier, CarritoVentaState>(
+      CarritoVentaNotifier.new,
+    );
+
+/// Qué diseño de Registrar Venta eligió el usuario -pedido explícito del
+/// dueño: 'clasica' (la de siempre), 'dividida' (buscador con fotos +
+/// carrito lado a lado) o 'dynamics' (tabla del carrito ocupando casi toda
+/// la pantalla)-. `build()` arranca en 'clasica' (SharedPreferences no es
+/// síncrono la primera vez, mismo motivo que _cargarCredencialFaceId en
+/// LoginScreen) y se actualiza sola apenas resuelve la lectura guardada.
+class RegistrarVentaVistaNotifier extends Notifier<String> {
+  @override
+  String build() {
+    obtenerVistaGuardada().then((valor) {
+      if (ref.mounted && valor != state) state = valor;
+    });
+    return registrarVentaVistaClasica;
+  }
+
+  void elegir(String valor) {
+    state = valor;
+    guardarVista(valor);
+  }
+}
+
+final registrarVentaVistaProvider =
+    NotifierProvider<RegistrarVentaVistaNotifier, String>(
+      RegistrarVentaVistaNotifier.new,
+    );

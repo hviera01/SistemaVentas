@@ -167,6 +167,8 @@ class TicketEscPosPreview extends StatelessWidget {
               linea('Pago con tarjeta: ${formatearMoneda(venta.totalAPagar)}')
             else if (venta.metodoPago == 'Transferencia')
               linea('Transferencia')
+            else if (venta.metodoPago == 'Cheque')
+              linea('Pago con cheque: ${formatearMoneda(venta.totalAPagar)}')
             else if (venta.metodoPago == 'Mixto')
               for (final pago in venta.pagosMixtos) linea('${pago.metodoPago}: ${formatearMoneda(pago.monto)}'),
           ],

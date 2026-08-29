@@ -570,6 +570,8 @@ class VentaExportService {
                 pw.Text('Pago con tarjeta: ${formatearMoneda(venta.totalAPagar)}', style: const pw.TextStyle(fontSize: fNormal))
               else if (venta.metodoPago == 'Transferencia')
                 pw.Text('Transferencia', style: const pw.TextStyle(fontSize: fNormal))
+              else if (venta.metodoPago == 'Cheque')
+                pw.Text('Pago con cheque: ${formatearMoneda(venta.totalAPagar)}', style: const pw.TextStyle(fontSize: fNormal))
               else if (venta.metodoPago == 'Mixto')
                 for (final pago in venta.pagosMixtos)
                   pw.Text('${pago.metodoPago}: ${formatearMoneda(pago.monto)}', style: const pw.TextStyle(fontSize: fNormal)),

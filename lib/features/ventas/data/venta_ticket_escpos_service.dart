@@ -409,6 +409,8 @@ class VentaTicketEscPosService {
         bytes += _texto(generador, 'Pago con tarjeta: ${formatearMoneda(venta.totalAPagar)}');
       } else if (venta.metodoPago == 'Transferencia') {
         bytes += _texto(generador, 'Transferencia');
+      } else if (venta.metodoPago == 'Cheque') {
+        bytes += _texto(generador, 'Pago con cheque: ${formatearMoneda(venta.totalAPagar)}');
       } else if (venta.metodoPago == 'Mixto') {
         for (final pago in venta.pagosMixtos) {
           bytes += _texto(generador, '${pago.metodoPago}: ${formatearMoneda(pago.monto)}');

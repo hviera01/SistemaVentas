@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +45,8 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/exito_transaccion_overlay.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
+import '../widgets/panel_buscador_grid.dart';
+import '../../data/registrar_venta_vista_storage.dart';
 import '../widgets/buscar_cliente_dialog.dart';
 import '../widgets/codigos_color_dialog.dart';
 import '../widgets/campo_cantidad_tinte.dart';
@@ -67,7 +70,13 @@ import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 
-const _metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
+const _metodosPago = [
+  'Efectivo',
+  'Tarjeta',
+  'Transferencia',
+  'Cheque',
+  'Mixto',
+];
 
 class RegistrarVentaScreen extends ConsumerStatefulWidget {
   // Id de la pestaña donde vive esta pantalla (ver pantalla_builder.dart):
@@ -83,10 +92,15 @@ class RegistrarVentaScreen extends ConsumerStatefulWidget {
   // diálogo de búsqueda directo, como si ya lo hubiera tocado.
   final bool autoAbrirBusqueda;
 
-  const RegistrarVentaScreen({super.key, this.tabId, this.autoAbrirBusqueda = false});
+  const RegistrarVentaScreen({
+    super.key,
+    this.tabId,
+    this.autoAbrirBusqueda = false,
+  });
 
   @override
-  ConsumerState<RegistrarVentaScreen> createState() => _RegistrarVentaScreenState();
+  ConsumerState<RegistrarVentaScreen> createState() =>
+      _RegistrarVentaScreenState();
 }
 
 class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
@@ -105,6 +119,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _observacionesController = TextEditingController();
   final _descuentoGlobalController = TextEditingController();
   bool _datosExpandidos = false;
+  // Solo se usa en la Vista "dividida" (ver registrarVentaVistaProvider) en
+  // pantalla angosta: qué mitad se muestra -pedido explícito del dueño: que
+  // las 3 vistas se adapten bien también a celular, en vez de forzar dos
+  // columnas angostas ilegibles-.
+  String _panelMovilDividida = 'buscar';
   bool _precioCarritoConIsv = true;
   // Cliente elegido por BuscarClienteDialog (o cargado de una venta
   // duplicada): permite abrir "Completar datos del cliente" sin tener que
@@ -209,7 +228,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // "Escanear con celular" (QR) o un lector físico, que funciona en
   // cualquier momento sin necesitar un campo visible-, así que solo se
   // muestra en el celular (APK o navegador móvil).
-  bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _esPlataformaMovil =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   // Específicamente el navegador de un celular (no la app APK, no
   // escritorio): usado para el teclado numérico en pantalla de
@@ -246,7 +267,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _escaneoRemoto = EscaneoRemotoRepository();
   String? _codigoEscaneoRemoto;
   bool _escaneoRemotoConectado = false;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _suscripcionEscaneoRemoto;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+  _suscripcionEscaneoRemoto;
   StreamSubscription<bool>? _suscripcionConectadoEscaneo;
 
   // Controladores para la edición inline (cantidad / precio / descuento) de
@@ -303,7 +325,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // diálogo (Buscar Producto) muy rápido después de entrar a esta
       // pantalla. Pidiéndolo acá, después del primer frame, con el mismo
       // método que usa el resto, el comportamiento es idéntico siempre.
-      WidgetsBinding.instance.addPostFrameCallback((_) => _alCambiarFocoGlobal());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _alCambiarFocoGlobal(),
+      );
     }
 
     // Si esta pestaña se abrió desde "Duplicar venta" o "Convertir a venta"
@@ -313,14 +337,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (datosOrigen != null) {
       ref.read(ventaParaCargarProvider.notifier).limpiar();
       final ventaOrigen = datosOrigen.venta;
-      ref.read(carritoVentaProvider.notifier).cargarDesdeVenta(ventaOrigen, forzarFactura: datosOrigen.forzarFactura);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .cargarDesdeVenta(
+            ventaOrigen,
+            forzarFactura: datosOrigen.forzarFactura,
+          );
       _nombreClienteController.text = ventaOrigen.nombreCliente;
       _documentoClienteController.text = ventaOrigen.documentoCliente;
       _ocController.text = ventaOrigen.oc;
       _regExoneradoController.text = ventaOrigen.regExonerado;
       _regSagController.text = ventaOrigen.regSag;
       _observacionesController.text = ventaOrigen.observaciones;
-      _descuentoGlobalController.text = ventaOrigen.descuentoGlobal == 0 ? '' : _formatoCantidad(ventaOrigen.descuentoGlobal);
+      _descuentoGlobalController.text = ventaOrigen.descuentoGlobal == 0
+          ? ''
+          : _formatoCantidad(ventaOrigen.descuentoGlobal);
     }
 
     if (widget.autoAbrirBusqueda) {
@@ -347,9 +378,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _alScrollearMovil() {
     if (!mounted || !_scrollControllerMovil.hasClients) return;
     final posicion = _scrollControllerMovil.position;
-    final cercaDelFinal = posicion.maxScrollExtent <= 0 || (posicion.maxScrollExtent - posicion.pixels) < 220;
+    final cercaDelFinal =
+        posicion.maxScrollExtent <= 0 ||
+        (posicion.maxScrollExtent - posicion.pixels) < 220;
     final debeMostrarse = !cercaDelFinal;
-    if (debeMostrarse != _mostrarBarraFlotante) setState(() => _mostrarBarraFlotante = debeMostrarse);
+    if (debeMostrarse != _mostrarBarraFlotante)
+      setState(() => _mostrarBarraFlotante = debeMostrarse);
   }
 
   void _alCambiarFocoGlobal() {
@@ -382,8 +416,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // el lado nativo (ver FlutterWindow::MessageHandler en
     // windows/runner/flutter_window.cpp), sin afectar en nada el manejo de
     // esta tecla acá.
-    if (event.logicalKey == LogicalKeyboardKey.f10 || event.logicalKey == LogicalKeyboardKey.f12) {
-      if (event is KeyDownEvent && mounted && !_guardando && _esPestanaActiva() && !_pausarLectorFisico) {
+    if (event.logicalKey == LogicalKeyboardKey.f10 ||
+        event.logicalKey == LogicalKeyboardKey.f12) {
+      if (event is KeyDownEvent &&
+          mounted &&
+          !_guardando &&
+          _esPestanaActiva() &&
+          !_pausarLectorFisico) {
         if (event.logicalKey == LogicalKeyboardKey.f10) {
           _agregarProductoDesdeBusqueda();
         } else {
@@ -429,10 +468,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   bool _detectarEscaneoFisico(KeyEvent event) {
     final ahora = DateTime.now();
     final ultimaTecla = _ultimaTeclaEscanerFisico;
-    final llegoRapido = ultimaTecla != null && ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
+    final llegoRapido =
+        ultimaTecla != null &&
+        ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
     _ultimaTeclaEscanerFisico = ahora;
 
-    if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
       final codigo = _bufferEscanerFisico.toString();
       _bufferEscanerFisico.clear();
       if (llegoRapido && codigo.length >= 3) {
@@ -463,7 +505,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final tabId = widget.tabId;
     if (tabId == null) return true;
     final tabsState = ref.read(tabsProvider);
-    if (tabsState.indiceActivo < 0 || tabsState.indiceActivo >= tabsState.tabs.length) return false;
+    if (tabsState.indiceActivo < 0 ||
+        tabsState.indiceActivo >= tabsState.tabs.length)
+      return false;
     return tabsState.tabs[tabsState.indiceActivo].id == tabId;
   }
 
@@ -521,7 +565,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje), showCloseIcon: true));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje), showCloseIcon: true));
   }
 
   Future<bool> _confirmarDialogo(String titulo, String mensaje) async {
@@ -529,12 +575,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(titulo, style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          titulo,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(mensaje, style: GoogleFonts.poppins(fontSize: 13)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('No', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('No', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Sí', style: GoogleFonts.poppins()),
           ),
@@ -547,7 +601,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // ---------- Cliente ----------
 
   Future<void> _buscarCliente() async {
-    final cliente = await showDialog<ClienteModel>(context: context, builder: (context) => const BuscarClienteDialog());
+    final cliente = await showDialog<ClienteModel>(
+      context: context,
+      builder: (context) => const BuscarClienteDialog(),
+    );
     if (cliente == null) return;
     final documento = cliente.dni;
     final nombre = cliente.nombreCompleto;
@@ -564,8 +621,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // idCliente: cliente.id es el vínculo real que antes se descartaba -ver
     // CRM de clientes-: sin esto, ninguna venta quedaba conectada de verdad
     // al registro de Clientes aunque se hubiera elegido uno con el buscador.
-    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: documento, nombre: nombre, idCliente: cliente.id);
-    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(cliente.telefono);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerCliente(
+          documento: documento,
+          nombre: nombre,
+          idCliente: cliente.id,
+        );
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerTelefonoCredito(cliente.telefono);
   }
 
   /// Arma (o refresca, si ya está abierto) el mini listado de clientes
@@ -578,17 +643,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _ocultarSugerenciasCliente();
       return;
     }
-    final todos = ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
+    final todos =
+        ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
     final consultaNorm = normalizarTexto(consulta);
-    final coincidencias = todos.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, consulta)).toList()
-      ..sort((a, b) => _rangoCoincidenciaCliente(a, consultaNorm).compareTo(_rangoCoincidenciaCliente(b, consultaNorm)));
+    final coincidencias =
+        todos
+            .where((c) => c.estado && coincideFuzzy(c.textoBusqueda, consulta))
+            .toList()
+          ..sort(
+            (a, b) => _rangoCoincidenciaCliente(
+              a,
+              consultaNorm,
+            ).compareTo(_rangoCoincidenciaCliente(b, consultaNorm)),
+          );
     final top = coincidencias.take(5).toList();
     if (top.isEmpty) {
       _ocultarSugerenciasCliente();
       return;
     }
     if (_overlaySugerenciasCliente == null) {
-      _overlaySugerenciasCliente = OverlayEntry(builder: (context) => _sugerenciasClienteOverlay(top));
+      _overlaySugerenciasCliente = OverlayEntry(
+        builder: (context) => _sugerenciasClienteOverlay(top),
+      );
       Overlay.of(context).insert(_overlaySugerenciasCliente!);
     } else {
       _sugerenciasClienteActuales = top;
@@ -609,7 +685,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   int _rangoCoincidenciaCliente(ClienteModel c, String consultaNorm) {
     final nombreNorm = normalizarTexto(c.nombreCompleto);
     if (nombreNorm.startsWith(consultaNorm)) return 0;
-    if (nombreNorm.split(RegExp(r'\s+')).any((p) => p.startsWith(consultaNorm))) return 1;
+    if (nombreNorm.split(RegExp(r'\s+')).any((p) => p.startsWith(consultaNorm)))
+      return 1;
     if (nombreNorm.contains(consultaNorm)) return 2;
     return 3;
   }
@@ -641,18 +718,35 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 shrinkWrap: true,
                 itemCount: _sugerenciasClienteActuales.length,
-                separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade200),
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: Colors.grey.shade200),
                 itemBuilder: (context, i) {
                   final c = _sugerenciasClienteActuales[i];
                   return InkWell(
                     onTap: () => _seleccionarClienteSugerido(c),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                          if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                          Text(
+                            c.nombreCompleto,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (c.dni.isNotEmpty)
+                            Text(
+                              'DNI: ${c.dni}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -674,8 +768,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _telefonoCreditoController.text = cliente.telefono;
       _clienteVinculado = cliente;
     });
-    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: cliente.dni, nombre: cliente.nombreCompleto, idCliente: cliente.id);
-    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(cliente.telefono);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerCliente(
+          documento: cliente.dni,
+          nombre: cliente.nombreCompleto,
+          idCliente: cliente.id,
+        );
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerTelefonoCredito(cliente.telefono);
     _focusNombreCliente.unfocus();
   }
 
@@ -702,22 +804,36 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFE8F8EE),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF16A34A).withOpacity(0.45)),
+            border: Border.all(
+              color: const Color(0xFF16A34A).withOpacity(0.45),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+              const Icon(
+                Icons.check_circle,
+                size: 16,
+                color: Color(0xFF16A34A),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   nombre.isEmpty ? 'Cliente' : nombre,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF14532D)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF14532D),
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(Icons.close, size: 16, color: const Color(0xFF14532D).withOpacity(0.7)),
+              Icon(
+                Icons.close,
+                size: 16,
+                color: const Color(0xFF14532D).withOpacity(0.7),
+              ),
             ],
           ),
         ),
@@ -731,7 +847,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _desvincularClienteDelCampo() {
     _ocultarSugerenciasCliente();
     setState(() => _clienteVinculado = null);
-    ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(_nombreClienteController.text);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerNombreClienteManual(_nombreClienteController.text);
     // Después del frame en que el chip se reemplaza por el TextField real
     // (recién ahí existe el FocusNode que puede pedir foco): así el cajero
     // puede seguir tipeando directo, sin tener que tocar el campo de nuevo.
@@ -749,7 +867,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   Future<ClienteModel?> _resolverClienteVinculado(String idCliente) async {
     final actual = _clienteVinculado;
     if (actual != null && actual.id == idCliente) return actual;
-    final lista = ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
+    final lista =
+        ref.read(clientesStreamProvider).value ?? const <ClienteModel>[];
     for (final c in lista) {
       if (c.id == idCliente) return c;
     }
@@ -765,12 +884,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _mostrarMensaje('No se encontró el cliente vinculado a esta venta.');
       return;
     }
-    await showDialog(context: context, builder: (context) => ClienteFormDialog(cliente: cliente));
+    await showDialog(
+      context: context,
+      builder: (context) => ClienteFormDialog(cliente: cliente),
+    );
     if (!mounted) return;
     // El formulario pudo haber cambiado nombre/dni: se refresca el cliente
     // en memoria y los campos visibles de la venta para que no queden
     // desactualizados sin salir de esta pantalla.
-    final actualizado = await ref.read(clienteRepositoryProvider).obtenerPorId(idCliente);
+    final actualizado = await ref
+        .read(clienteRepositoryProvider)
+        .obtenerPorId(idCliente);
     if (!mounted || actualizado == null) return;
     setState(() {
       _clienteVinculado = actualizado;
@@ -778,8 +902,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _documentoClienteController.text = actualizado.dni;
       _telefonoCreditoController.text = actualizado.telefono;
     });
-    ref.read(carritoVentaProvider.notifier).establecerCliente(documento: actualizado.dni, nombre: actualizado.nombreCompleto, idCliente: actualizado.id);
-    ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(actualizado.telefono);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerCliente(
+          documento: actualizado.dni,
+          nombre: actualizado.nombreCompleto,
+          idCliente: actualizado.id,
+        );
+    ref
+        .read(carritoVentaProvider.notifier)
+        .establecerTelefonoCredito(actualizado.telefono);
   }
 
   /// Se llama en cada cambio del carrito (ver ref.listen en build): revisa si
@@ -794,19 +926,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   Future<void> _verificarCreditoVencido(CarritoVentaState carrito) async {
     final idCliente = carrito.idCliente;
     final documento = carrito.documentoCliente.trim();
-    if ((idCliente == null || idCliente.isEmpty) && (documento.isEmpty || documento == 'N/A')) {
+    if ((idCliente == null || idCliente.isEmpty) &&
+        (documento.isEmpty || documento == 'N/A')) {
       _claveUltimaVerificacionCredito = null;
-      if (_saldoVencidoCliente != null && mounted) setState(() => _saldoVencidoCliente = null);
+      if (_saldoVencidoCliente != null && mounted)
+        setState(() => _saldoVencidoCliente = null);
       return;
     }
     final clave = idCliente ?? documento;
     if (_claveUltimaVerificacionCredito == clave) return;
     _claveUltimaVerificacionCredito = clave;
     try {
-      final creditos = await ref.read(ventaCreditoRepositoryProvider).obtenerCreditosDeCliente(idCliente: idCliente, documentoCliente: documento);
-      final totalVencido = creditos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
+      final creditos = await ref
+          .read(ventaCreditoRepositoryProvider)
+          .obtenerCreditosDeCliente(
+            idCliente: idCliente,
+            documentoCliente: documento,
+          );
+      final totalVencido = creditos
+          .where((c) => c.vencida)
+          .fold<double>(0, (s, c) => s + c.saldoPendiente);
       if (!mounted) return;
-      setState(() => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null);
+      setState(
+        () => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null,
+      );
     } catch (_) {
       // Sin internet u otro error transitorio: no se muestra el aviso esta
       // vez, no bloquea la venta.
@@ -828,12 +971,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, size: 20, color: Colors.orange.shade800),
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 20,
+            color: Colors.orange.shade800,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Este cliente tiene un crédito vencido de ${formatearMoneda(saldoVencido)} — revisá antes de continuar.',
-              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.orange.shade900),
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.orange.shade900,
+              ),
             ),
           ),
         ],
@@ -868,7 +1019,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final coincidencias = categorias.where((c) => c.id == idCategoria);
     if (coincidencias.isEmpty) return false;
     final descripcion = coincidencias.first.descripcion.toUpperCase();
-    return descripcion.startsWith('PINTURA') || descripcion.contains('IMPERMEABILIZANTE') || descripcion.contains('SELLADOR');
+    return descripcion.startsWith('PINTURA') ||
+        descripcion.contains('IMPERMEABILIZANTE') ||
+        descripcion.contains('SELLADOR');
   }
 
   /// true si la línea es un tinte vendido SUELTO (categoría TINTES, ver
@@ -879,13 +1032,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// muestran/editan en esa unidad -SOLO en pantalla, cantidad/precioVenta
   /// siguen guardados en cuartos como siempre, ver _campoCantidadTintaInline y
   /// los helpers _precioUnitarioMostrado/_precioPorCuartoDesdeMostrado-.
-  bool _esLineaTinte(dynamic item) => (item.idCategoria as String) == idCategoriaTintes;
+  bool _esLineaTinte(dynamic item) =>
+      (item.idCategoria as String) == idCategoriaTintes;
 
   /// Convierte un precio "por cuarto" (la unidad real en la que se guarda
   /// item.precioVenta) al que corresponde mostrar en el campo de precio de
   /// la fila -por onza si es una línea de tinte suelto, tal cual si no.
   double _precioUnitarioMostrado(dynamic item, double precioPorCuarto) {
-    return _esLineaTinte(item) ? redondearMoneda(precioPorCuarto / CostoTinteService.onzasPorCuarto) : precioPorCuarto;
+    return _esLineaTinte(item)
+        ? redondearMoneda(precioPorCuarto / CostoTinteService.onzasPorCuarto)
+        : precioPorCuarto;
   }
 
   /// Inversa de [_precioUnitarioMostrado]: lo que el cajero escribió en el
@@ -893,26 +1049,43 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// vuelta a "por cuarto", la unidad real que espera _actualizarPrecio/
   /// _actualizarPrecioSinIsv.
   double _precioPorCuartoDesdeMostrado(dynamic item, double valorMostrado) {
-    return _esLineaTinte(item) ? valorMostrado * CostoTinteService.onzasPorCuarto : valorMostrado;
+    return _esLineaTinte(item)
+        ? valorMostrado * CostoTinteService.onzasPorCuarto
+        : valorMostrado;
   }
 
   /// Calcula, para un tipo de reembasado y una cantidad a vender, cuánto hay
   /// que descontar del producto base y la cantidad final que queda en la
   /// línea de venta. Compartido entre "agregar producto sin existencia" y
   /// "aumentar cantidad sin existencia suficiente".
-  ({double cantidadReembasar, double cantidadFinal})? _calcularReembase(String tipo, double nuevaCantidad) {
+  ({double cantidadReembasar, double cantidadFinal})? _calcularReembase(
+    String tipo,
+    double nuevaCantidad,
+  ) {
     switch (tipo) {
       case 'GalonACuarto':
-        return (cantidadReembasar: 0.25 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+        return (
+          cantidadReembasar: 0.25 * nuevaCantidad,
+          cantidadFinal: nuevaCantidad,
+        );
       case 'CubetaACuarto':
-        return (cantidadReembasar: 0.05 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+        return (
+          cantidadReembasar: 0.05 * nuevaCantidad,
+          cantidadFinal: nuevaCantidad,
+        );
       case 'CubetaAGalon':
-        return (cantidadReembasar: 0.2 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+        return (
+          cantidadReembasar: 0.2 * nuevaCantidad,
+          cantidadFinal: nuevaCantidad,
+        );
       case 'GalonAMedioCuarto':
         if (nuevaCantidad == 0.5) {
           return (cantidadReembasar: 0.125, cantidadFinal: 1);
         }
-        return (cantidadReembasar: 0.125 * nuevaCantidad, cantidadFinal: nuevaCantidad);
+        return (
+          cantidadReembasar: 0.125 * nuevaCantidad,
+          cantidadFinal: nuevaCantidad,
+        );
       default:
         return null;
     }
@@ -929,7 +1102,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     try {
       final carritoActual = ref.read(carritoVentaProvider);
       final resultado = await Navigator.of(context).push<ProductoConPrecio>(
-        MaterialPageRoute(fullscreenDialog: true, builder: (context) => BuscarProductoDialog(condicion: carritoActual.condicion, metodoPago: carritoActual.metodoPago)),
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => BuscarProductoDialog(
+            condicion: carritoActual.condicion,
+            metodoPago: carritoActual.metodoPago,
+          ),
+        ),
       );
       if (resultado == null || !mounted) return;
       await _procesarProductoSeleccionado(resultado);
@@ -967,24 +1146,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // porque la fusión de líneas repetidas del mismo producto se decide
   // distinto según de dónde vino (ver agregarOFusionarProductoDirecto y
   // _agregarProductoConPromos).
-  Future<void> _procesarProductoSeleccionado(ProductoConPrecio resultado, {bool esEscaneo = false}) async {
+  Future<void> _procesarProductoSeleccionado(
+    ProductoConPrecio resultado, {
+    bool esEscaneo = false,
+  }) async {
     final producto = resultado.producto;
     // Un combo/kit siempre tiene stock == 0 por diseño (no tiene existencia
     // propia, se arma de otros productos) — sin este branch, cada venta de
     // combo entraría al flujo de "sin existencia" y ofrecería Reembasado por
     // error. Se agrega directo, con la receta de componentes ya resuelta.
     if (producto.esCombo) {
-      final mapaProductos = {for (final p in ref.read(productosStreamProvider).value ?? const <ProductoModel>[]) p.id: p};
-      ref.read(carritoVentaProvider.notifier).agregarComboDirecto(producto, mapaProductos: mapaProductos, precioSeleccionado: resultado.precio);
+      final mapaProductos = {
+        for (final p
+            in ref.read(productosStreamProvider).value ??
+                const <ProductoModel>[])
+          p.id: p,
+      };
+      ref
+          .read(carritoVentaProvider.notifier)
+          .agregarComboDirecto(
+            producto,
+            mapaProductos: mapaProductos,
+            precioSeleccionado: resultado.precio,
+          );
       return;
     }
     final carrito = ref.read(carritoVentaProvider);
-    final sinExistencia = producto.stock <= 0 && _categoriaControlaStock(producto.idCategoria);
+    final sinExistencia =
+        producto.stock <= 0 && _categoriaControlaStock(producto.idCategoria);
 
     if (sinExistencia && carrito.esCotizacion) {
-      _mostrarMensaje('Advertencia: "${producto.nombre}" no tiene existencia disponible, pero se agregará a la cotización.');
+      _mostrarMensaje(
+        'Advertencia: "${producto.nombre}" no tiene existencia disponible, pero se agregará a la cotización.',
+      );
     } else if (sinExistencia) {
-      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasVenderSinStock);
+      final autorizado = await verificarAccesoEspecial(
+        context,
+        ref,
+        PermisosEspeciales.ventasVenderSinStock,
+      );
       if (!mounted) return;
       if (!autorizado) return;
 
@@ -994,7 +1194,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       );
       if (!mounted) return;
       if (quiereReembasar) {
-        final resultadoReembase = await showDialog<ReembaseResultado>(context: context, builder: (context) => const ReembaseDialog());
+        final resultadoReembase = await showDialog<ReembaseResultado>(
+          context: context,
+          builder: (context) => const ReembaseDialog(),
+        );
         if (resultadoReembase == null || !mounted) return;
 
         final calculo = _calcularReembase(resultadoReembase.tipo, 1);
@@ -1003,7 +1206,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           return;
         }
         final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-        final ok = await ref.read(productoRepositoryProvider).descontarStock(
+        final ok = await ref
+            .read(productoRepositoryProvider)
+            .descontarStock(
               id: resultadoReembase.productoBase.id,
               cantidad: calculo.cantidadReembasar,
               usuario: usuario,
@@ -1014,14 +1219,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           _mostrarMensaje('No se pudo descontar el stock del producto base');
           return;
         }
-        await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, reembasado: true, esEscaneo: esEscaneo);
+        await _agregarProductoConPromos(
+          producto,
+          precioSeleccionado: resultado.precio,
+          reembasado: true,
+          esEscaneo: esEscaneo,
+        );
         return;
       }
       // Si dice que no, se ignora la falta de existencia y se agrega igual
       // (sin marcar reembasado): al vender no baja de 0 (ver venta_repository).
     }
     if (!mounted) return;
-    await _agregarProductoConPromos(producto, precioSeleccionado: resultado.precio, esEscaneo: esEscaneo);
+    await _agregarProductoConPromos(
+      producto,
+      precioSeleccionado: resultado.precio,
+      esEscaneo: esEscaneo,
+    );
     if (!mounted || producto.idCategoria != idCategoriaTintes) return;
     await _ofrecerConversionOnzas(producto);
   }
@@ -1052,9 +1266,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // promedio ponderado de los lotes consumidos hasta ese punto (ver
     // LoteCostoRepository.consumir)-.
     final colorante = producto.nombre.replaceFirst('COLORANTE ', '').trim();
-    final costeo = await CostoTinteService().calcular([UsoTinte(colorante: colorante, onzas: CostoTinteService.onzasPorCuarto, productoConocido: producto)]);
+    final costeo = await CostoTinteService().calcular([
+      UsoTinte(
+        colorante: colorante,
+        onzas: CostoTinteService.onzasPorCuarto,
+        productoConocido: producto,
+      ),
+    ]);
     if (!mounted) return;
-    final costoPorOnza = costeo.isNotEmpty && costeo.first.resuelto ? costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto : 0.0;
+    final costoPorOnza = costeo.isNotEmpty && costeo.first.resuelto
+        ? costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto
+        : 0.0;
 
     bool modoExacto = true;
     double onzas = 0;
@@ -1075,15 +1297,33 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(8)),
-                child: Text(texto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72))),
+                decoration: BoxDecoration(
+                  color: activo ? const Color(0xFFC62828) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  texto,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: activo ? Colors.white : const Color(0xFF666A72),
+                  ),
+                ),
               ),
             );
           }
 
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text('¿Cuánto tinte se vende?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              '¿Cuánto tinte se vende?',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1091,17 +1331,34 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
-                    child: Row(children: [Expanded(child: opcion('Cantidad exacta', true)), Expanded(child: opcion('Cuarto completo', false))]),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F3F7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(child: opcion('Cantidad exacta', true)),
+                        Expanded(child: opcion('Cuarto completo', false)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 14),
                   if (modoExacto) ...[
-                    CampoCantidadTinte(onChanged: (v) => setStateDialog(() => onzas = v)),
+                    CampoCantidadTinte(
+                      onChanged: (v) => setStateDialog(() => onzas = v),
+                    ),
                     if (onzas > 0 && costoPorOnza > 0) ...[
                       const SizedBox(height: 16),
                       Divider(height: 1, color: Colors.grey.shade300),
                       const SizedBox(height: 12),
-                      Text('¿A cuánto se vende la onza?', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                      Text(
+                        '¿A cuánto se vende la onza?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
@@ -1112,17 +1369,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   ] else
                     Text(
                       'Se agrega el cuarto completo a su precio normal, sin conversión a onzas.',
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancelar', style: GoogleFonts.poppins()),
+              ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
-                child: Text('Confirmar', style: GoogleFonts.poppins(color: Colors.white)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                ),
+                child: Text(
+                  'Confirmar',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
               ),
             ],
           );
@@ -1130,7 +1398,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       ),
     );
     if (confirmado != true || !mounted) return;
-    if (!modoExacto || onzas <= 0) return; // cuarto completo, o cantidad exacta vacía: la línea se queda como ya quedó (1 cuarto, precio normal).
+    if (!modoExacto || onzas <= 0)
+      return; // cuarto completo, o cantidad exacta vacía: la línea se queda como ya quedó (1 cuarto, precio normal).
     final items = ref.read(carritoVentaProvider).items;
     final idx = items.lastIndexWhere((i) => i.idProducto == producto.id);
     if (idx == -1) return;
@@ -1139,18 +1408,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // doc) -antes acá se usaba un "/ 32" suelto sin relación con esa
     // constante, lo que hacía que la cantidad real guardada en la línea no
     // coincidiera con el costo/stock que sí se calculaba con 33.
-    ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, cantidad: onzas / CostoTinteService.onzasPorCuarto);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .actualizarLinea(
+          idx,
+          cantidad: onzas / CostoTinteService.onzasPorCuarto,
+        );
     // El precio por onza solo se aplica si el cajero de verdad tocó el
     // calculador (ver CampoMargenPrecioVenta.onPrecioVentaCambiado, que
     // solo dispara al confirmar un campo) -si nunca lo tocó, la línea se
     // queda con el precio normal del producto, no con "costo + 0% margen"
     // por defecto.
     if (precioPorOnzaElegido != null) {
-      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasCambiarPrecio);
+      final autorizado = await verificarAccesoEspecial(
+        context,
+        ref,
+        PermisosEspeciales.ventasCambiarPrecio,
+      );
       if (!mounted) return;
       if (autorizado) {
-        final precioPorCuartoConIsv = redondearMoneda(precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto);
-        ref.read(carritoVentaProvider.notifier).actualizarLinea(idx, precioConIsv: precioPorCuartoConIsv);
+        final precioPorCuartoConIsv = redondearMoneda(
+          precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto,
+        );
+        ref
+            .read(carritoVentaProvider.notifier)
+            .actualizarLinea(idx, precioConIsv: precioPorCuartoConIsv);
       }
     }
   }
@@ -1170,12 +1452,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// ya se ofreció un combo por cantidad/regalo con este agregado, no se
   /// ofrece además un combo multiproducto encima (nunca dos diálogos
   /// apilados por la misma acción).
-  Future<void> _agregarProductoConPromos(ProductoModel producto, {required double precioSeleccionado, bool reembasado = false, bool esEscaneo = false}) async {
+  Future<void> _agregarProductoConPromos(
+    ProductoModel producto, {
+    required double precioSeleccionado,
+    bool reembasado = false,
+    bool esEscaneo = false,
+  }) async {
     final carritoAntes = ref.read(carritoVentaProvider);
     final condicion = carritoAntes.condicion;
     final metodoPago = carritoAntes.metodoPago;
-    final cantidadAntes = carritoAntes.items.where((i) => i.idProducto == producto.id).fold<double>(0, (s, i) => s + i.cantidad);
-    final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
+    final cantidadAntes = carritoAntes.items
+        .where((i) => i.idProducto == producto.id)
+        .fold<double>(0, (s, i) => s + i.cantidad);
+    final promociones =
+        ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
 
     // Escanear un código de barras SIEMPRE fusiona con la línea existente
     // del mismo producto, sin importar la categoría -pedido explícito del
@@ -1185,8 +1475,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // vender, por ejemplo, "2 galones de la misma pintura base" como dos
     // líneas separadas, cada una teñida a un color distinto -ver
     // agregarOFusionarProductoDirecto-.
-    final fusionarSiYaExiste = esEscaneo || !_esCategoriaPintura(producto.idCategoria);
-    final indiceNuevo = ref.read(carritoVentaProvider.notifier).agregarOFusionarProductoDirecto(
+    final fusionarSiYaExiste =
+        esEscaneo || !_esCategoriaPintura(producto.idCategoria);
+    final indiceNuevo = ref
+        .read(carritoVentaProvider.notifier)
+        .agregarOFusionarProductoDirecto(
           producto,
           precioSeleccionado: precioSeleccionado,
           reembasado: reembasado,
@@ -1203,17 +1496,35 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // buscador-. En una fila recién creada este índice todavía no tiene
     // controller, así que esto no hace nada (se crea ya con el valor
     // correcto al construirse la fila).
-    _ctrlCantidad[indiceNuevo]?.text = _formatoCantidad(ref.read(carritoVentaProvider).items[indiceNuevo].cantidad);
+    _ctrlCantidad[indiceNuevo]?.text = _formatoCantidad(
+      ref.read(carritoVentaProvider).items[indiceNuevo].cantidad,
+    );
 
-    final promoPrecio = mejorPromoPrecio(promociones: promociones, idProducto: producto.id, precioActual: precioSeleccionado, condicion: condicion, metodoPago: metodoPago);
+    final promoPrecio = mejorPromoPrecio(
+      promociones: promociones,
+      idProducto: producto.id,
+      precioActual: precioSeleccionado,
+      condicion: condicion,
+      metodoPago: metodoPago,
+    );
     if (promoPrecio != null) {
-      final aceptar = await showDialog<bool>(context: context, builder: (context) => PromocionDetectadaDialog(promocion: promoPrecio));
+      final aceptar = await showDialog<bool>(
+        context: context,
+        builder: (context) => PromocionDetectadaDialog(promocion: promoPrecio),
+      );
       if (!mounted) return;
       if (aceptar == true) {
         if (promoPrecio.tipo == TipoPromocion.porcentaje) {
-          ref.read(carritoVentaProvider.notifier).actualizarLinea(indiceNuevo, descuentoPorcentaje: promoPrecio.valor);
+          ref
+              .read(carritoVentaProvider.notifier)
+              .actualizarLinea(
+                indiceNuevo,
+                descuentoPorcentaje: promoPrecio.valor,
+              );
         } else {
-          ref.read(carritoVentaProvider.notifier).actualizarLinea(indiceNuevo, precioConIsv: promoPrecio.valor);
+          ref
+              .read(carritoVentaProvider.notifier)
+              .actualizarLinea(indiceNuevo, precioConIsv: promoPrecio.valor);
         }
         _mostrarMensaje('Promoción "${promoPrecio.nombre}" aplicada.');
         // No se ofrece combo/regalo además en la misma unidad: solo se
@@ -1225,9 +1536,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     final cantidadDespues = cantidadAntes + 1;
-    final promoCombo = promoComboORegaloAplicable(promociones: promociones, idProducto: producto.id, cantidadEnCarrito: cantidadDespues, condicion: condicion, metodoPago: metodoPago);
+    final promoCombo = promoComboORegaloAplicable(
+      promociones: promociones,
+      idProducto: producto.id,
+      cantidadEnCarrito: cantidadDespues,
+      condicion: condicion,
+      metodoPago: metodoPago,
+    );
     if (promoCombo != null && cantidadAntes < promoCombo.cantidadRequerida) {
-      await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioSeleccionado);
+      await _ofrecerComboORegalo(
+        promoCombo,
+        precioUnitarioBase: precioSeleccionado,
+      );
       return;
     }
 
@@ -1238,7 +1558,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // unidad de un producto que ya completaba el combo).
     final cantidadesAntes = <String, double>{};
     for (final item in carritoAntes.items) {
-      cantidadesAntes[item.idProducto] = (cantidadesAntes[item.idProducto] ?? 0) + item.cantidad;
+      cantidadesAntes[item.idProducto] =
+          (cantidadesAntes[item.idProducto] ?? 0) + item.cantidad;
     }
     final cantidadesDespues = Map<String, double>.from(cantidadesAntes);
     cantidadesDespues[producto.id] = (cantidadesDespues[producto.id] ?? 0) + 1;
@@ -1251,24 +1572,43 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       metodoPago: metodoPago,
     );
     if (promoComboMulti == null) return;
-    final yaEstabaCompleto = promoComboMulti.idsProductosCombo.every((id) => (cantidadesAntes[id] ?? 0) >= 1);
+    final yaEstabaCompleto = promoComboMulti.idsProductosCombo.every(
+      (id) => (cantidadesAntes[id] ?? 0) >= 1,
+    );
     if (yaEstabaCompleto) return;
 
     // Precio normal (con ISV) de la "canasta" del combo: 1 unidad de cada
     // producto, al precio con el que ya está esa línea en el carrito (o el
     // precio recién elegido para el producto que se acaba de agregar).
-    final precioNormalCombo = promoComboMulti.idsProductosCombo.fold<double>(0, (s, id) {
-      if (id == producto.id) return s + redondearMoneda(precioSeleccionado);
-      final itemExistente = carritoAntes.items.where((i) => i.idProducto == id);
-      if (itemExistente.isEmpty) return s;
-      return s + redondearMoneda(itemExistente.first.precioVenta * 1.15);
-    });
-    await _ofrecerComboORegalo(promoComboMulti, precioUnitarioBase: precioNormalCombo);
+    final precioNormalCombo = promoComboMulti.idsProductosCombo.fold<double>(
+      0,
+      (s, id) {
+        if (id == producto.id) return s + redondearMoneda(precioSeleccionado);
+        final itemExistente = carritoAntes.items.where(
+          (i) => i.idProducto == id,
+        );
+        if (itemExistente.isEmpty) return s;
+        return s + redondearMoneda(itemExistente.first.precioVenta * 1.15);
+      },
+    );
+    await _ofrecerComboORegalo(
+      promoComboMulti,
+      precioUnitarioBase: precioNormalCombo,
+    );
   }
 
-  Future<void> _ofrecerComboORegalo(PromocionModel promo, {required double precioUnitarioBase}) async {
+  Future<void> _ofrecerComboORegalo(
+    PromocionModel promo, {
+    required double precioUnitarioBase,
+  }) async {
     if (!mounted) return;
-    final aceptar = await showDialog<bool>(context: context, builder: (context) => PromocionDetectadaDialog(promocion: promo, precioUnitarioBase: precioUnitarioBase));
+    final aceptar = await showDialog<bool>(
+      context: context,
+      builder: (context) => PromocionDetectadaDialog(
+        promocion: promo,
+        precioUnitarioBase: precioUnitarioBase,
+      ),
+    );
     if (!mounted || aceptar != true) return;
     _aplicarComboORegalo(promo);
     _mostrarMensaje('Promoción "${promo.nombre}" aplicada.');
@@ -1282,19 +1622,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// combo multiproducto no se revisa acá: se completa agregando un
   /// producto nuevo al carrito (ver _agregarProductoConPromos), cambiar la
   /// cantidad de un producto que ya estaba no suma otro producto distinto.
-  Future<void> _revisarPromoComboTrasCambioCantidad(int index, double cantidadAnteriorLinea, double cantidadNuevaLinea) async {
+  Future<void> _revisarPromoComboTrasCambioCantidad(
+    int index,
+    double cantidadAnteriorLinea,
+    double cantidadNuevaLinea,
+  ) async {
     final carrito = ref.read(carritoVentaProvider);
     if (index >= carrito.items.length) return;
     final idProducto = carrito.items[index].idProducto;
     final totalOtrasLineas = [
       for (var i = 0; i < carrito.items.length; i++)
-        if (i != index && carrito.items[i].idProducto == idProducto) carrito.items[i].cantidad,
+        if (i != index && carrito.items[i].idProducto == idProducto)
+          carrito.items[i].cantidad,
     ].fold<double>(0, (s, c) => s + c);
     final cantidadAntes = totalOtrasLineas + cantidadAnteriorLinea;
     final cantidadDespues = totalOtrasLineas + cantidadNuevaLinea;
     if (cantidadDespues <= cantidadAntes) return;
 
-    final promociones = ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
+    final promociones =
+        ref.read(promocionesStreamProvider).value ?? const <PromocionModel>[];
     final promoCombo = promoComboORegaloAplicable(
       promociones: promociones,
       idProducto: idProducto,
@@ -1302,7 +1648,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       condicion: carrito.condicion,
       metodoPago: carrito.metodoPago,
     );
-    if (promoCombo == null || cantidadAntes >= promoCombo.cantidadRequerida) return;
+    if (promoCombo == null || cantidadAntes >= promoCombo.cantidadRequerida)
+      return;
     final precioUnit = redondearMoneda(carrito.items[index].precioVenta * 1.15);
     await _ofrecerComboORegalo(promoCombo, precioUnitarioBase: precioUnit);
   }
@@ -1323,29 +1670,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final notifier = ref.read(carritoVentaProvider.notifier);
     if (promo.tipo == TipoPromocion.comboCantidad) {
       final carrito = ref.read(carritoVentaProvider);
-      final indices = [for (var i = 0; i < carrito.items.length; i++) if (carrito.items[i].idProducto == promo.idProductoBase) i];
+      final indices = [
+        for (var i = 0; i < carrito.items.length; i++)
+          if (carrito.items[i].idProducto == promo.idProductoBase) i,
+      ];
       if (indices.isEmpty) return;
-      final cantidadTotal = indices.fold<double>(0, (s, i) => s + carrito.items[i].cantidad);
+      final cantidadTotal = indices.fold<double>(
+        0,
+        (s, i) => s + carrito.items[i].cantidad,
+      );
       final totalNormalConIsv = indices.fold<double>(0, (s, i) {
         final item = carrito.items[i];
         return s + redondearMoneda(item.precioVenta * 1.15) * item.cantidad;
       });
       if (totalNormalConIsv <= 0) return;
-      final extra = (cantidadTotal - promo.cantidadRequerida).clamp(0, double.infinity);
+      final extra = (cantidadTotal - promo.cantidadRequerida).clamp(
+        0,
+        double.infinity,
+      );
       final precioPromedioNormal = totalNormalConIsv / cantidadTotal;
       final objetivo = promo.precioCombo + extra * precioPromedioNormal;
-      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100).clamp(0, 100).toDouble();
+      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100)
+          .clamp(0, 100)
+          .toDouble();
       for (final i in indices) {
         notifier.actualizarLinea(i, descuentoPorcentaje: descuentoPct);
       }
     } else if (promo.tipo == TipoPromocion.comboMultiproducto) {
       final carrito = ref.read(carritoVentaProvider);
-      final indices = [for (var i = 0; i < carrito.items.length; i++) if (promo.idsProductosCombo.contains(carrito.items[i].idProducto)) i];
+      final indices = [
+        for (var i = 0; i < carrito.items.length; i++)
+          if (promo.idsProductosCombo.contains(carrito.items[i].idProducto)) i,
+      ];
       if (indices.isEmpty) return;
       // Si falta algún producto del combo (se quitó de la tabla entre que
       // se ofreció y se aceptó), no se aplica nada: cada línea se queda a
       // precio normal.
-      final idsPresentes = indices.map((i) => carrito.items[i].idProducto).toSet();
+      final idsPresentes = indices
+          .map((i) => carrito.items[i].idProducto)
+          .toSet();
       if (!promo.idsProductosCombo.every(idsPresentes.contains)) return;
 
       final totalNormalConIsv = indices.fold<double>(0, (s, i) {
@@ -1359,46 +1722,70 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // normal promedio de ese producto.
       var extraNormalValue = 0.0;
       for (final idProd in promo.idsProductosCombo) {
-        final indicesProd = indices.where((i) => carrito.items[i].idProducto == idProd).toList();
+        final indicesProd = indices
+            .where((i) => carrito.items[i].idProducto == idProd)
+            .toList();
         if (indicesProd.isEmpty) continue;
-        final cantidadProd = indicesProd.fold<double>(0, (s, i) => s + carrito.items[i].cantidad);
+        final cantidadProd = indicesProd.fold<double>(
+          0,
+          (s, i) => s + carrito.items[i].cantidad,
+        );
         final normalProd = indicesProd.fold<double>(0, (s, i) {
           final item = carrito.items[i];
           return s + redondearMoneda(item.precioVenta * 1.15) * item.cantidad;
         });
         final extraCantidad = (cantidadProd - 1).clamp(0, double.infinity);
-        if (cantidadProd > 0) extraNormalValue += extraCantidad * (normalProd / cantidadProd);
+        if (cantidadProd > 0)
+          extraNormalValue += extraCantidad * (normalProd / cantidadProd);
       }
 
       final objetivo = promo.precioCombo + extraNormalValue;
-      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100).clamp(0, 100).toDouble();
+      final descuentoPct = ((1 - objetivo / totalNormalConIsv) * 100)
+          .clamp(0, 100)
+          .toDouble();
       for (final i in indices) {
         notifier.actualizarLinea(i, descuentoPorcentaje: descuentoPct);
       }
     } else {
-      final productos = ref.read(productosStreamProvider).value ?? const <ProductoModel>[];
+      final productos =
+          ref.read(productosStreamProvider).value ?? const <ProductoModel>[];
       for (var i = 0; i < promo.idsProductosRegalo.length; i++) {
         final idRegalo = promo.idsProductosRegalo[i];
-        final nombreFallback = i < promo.nombresProductosRegalo.length ? promo.nombresProductosRegalo[i] : '';
+        final nombreFallback = i < promo.nombresProductosRegalo.length
+            ? promo.nombresProductosRegalo[i]
+            : '';
         final coincidencias = productos.where((p) => p.id == idRegalo).toList();
-        final precioRegaloConIsv = coincidencias.isNotEmpty ? coincidencias.first.precioVenta : 0.0;
-        final nombreRegalo = coincidencias.isNotEmpty ? coincidencias.first.nombre : nombreFallback;
-        notifier.agregarItem(ItemVentaModel(
-          idProducto: idRegalo,
-          idCategoria: coincidencias.isNotEmpty ? coincidencias.first.idCategoria : '',
-          nombreProducto: '$nombreRegalo (regalo · ${promo.nombre})',
-          precioVenta: precioRegaloConIsv > 0 ? precioRegaloConIsv / 1.15 : 0,
-          cantidad: promo.cantidadRegalo.toDouble(),
-          subtotal: 0,
-          precioCompraUsado: coincidencias.isNotEmpty ? coincidencias.first.precioCompra : 0,
-          descuentoPorcentaje: 100,
-        ));
+        final precioRegaloConIsv = coincidencias.isNotEmpty
+            ? coincidencias.first.precioVenta
+            : 0.0;
+        final nombreRegalo = coincidencias.isNotEmpty
+            ? coincidencias.first.nombre
+            : nombreFallback;
+        notifier.agregarItem(
+          ItemVentaModel(
+            idProducto: idRegalo,
+            idCategoria: coincidencias.isNotEmpty
+                ? coincidencias.first.idCategoria
+                : '',
+            nombreProducto: '$nombreRegalo (regalo · ${promo.nombre})',
+            precioVenta: precioRegaloConIsv > 0 ? precioRegaloConIsv / 1.15 : 0,
+            cantidad: promo.cantidadRegalo.toDouble(),
+            subtotal: 0,
+            precioCompraUsado: coincidencias.isNotEmpty
+                ? coincidencias.first.precioCompra
+                : 0,
+            descuentoPorcentaje: 100,
+          ),
+        );
       }
     }
   }
 
   Future<void> _abrirPromocionesVigentes() async {
-    await showDialog(context: context, builder: (context) => const PromocionesVigentesDialog());
+    await showDialog(
+      context: context,
+      builder: (context) => const PromocionesVigentesDialog(),
+    );
   }
 
   /// Atajo a la consulta de costo de un color (hasta ahora solo alcanzable
@@ -1443,7 +1830,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       if (!mounted) return;
     }
     final productos = ref.read(productosStreamProvider).value ?? [];
-    bool coincide(ProductoModel p, String t) => p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
+    bool coincide(ProductoModel p, String t) =>
+        p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
     var coincidencias = productos.where((p) => coincide(p, texto)).toList();
     if (coincidencias.isEmpty) {
       // Ver variantesCodigoBarras: corrige tanto el código leído al revés
@@ -1464,7 +1852,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _mostrarMensaje('"${producto.nombre}" no tiene un precio configurado');
       return;
     }
-    await _procesarProductoSeleccionado(ProductoConPrecio(producto: producto, precio: precio, nivelPrecio: 1), esEscaneo: true);
+    await _procesarProductoSeleccionado(
+      ProductoConPrecio(producto: producto, precio: precio, nivelPrecio: 1),
+      esEscaneo: true,
+    );
   }
 
   double? _primerPrecioDisponible(ProductoModel p) {
@@ -1487,7 +1878,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     await _escaneoRemoto.crearSesion(codigo);
     _codigoEscaneoRemoto = codigo;
     _escaneoRemotoConectado = false;
-    _suscripcionEscaneoRemoto = _escaneoRemoto.escucharEventos(codigo).listen((snap) {
+    _suscripcionEscaneoRemoto = _escaneoRemoto.escucharEventos(codigo).listen((
+      snap,
+    ) {
       for (final cambio in snap.docChanges) {
         if (cambio.type != DocumentChangeType.added) continue;
         final codigoEscaneado = cambio.doc.data()?['codigo'] as String?;
@@ -1500,9 +1893,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // EscaneoRemotoScreen): con esto la pantalla sabe en vivo si ya hay
     // alguien escaneando, para decidir qué mostrar al tocar el botón de
     // nuevo (el QR otra vez, o el menú de "escaneo activo").
-    _suscripcionConectadoEscaneo = _escaneoRemoto.escucharConectado(codigo).listen((conectado) {
-      if (mounted) setState(() => _escaneoRemotoConectado = conectado);
-    });
+    _suscripcionConectadoEscaneo = _escaneoRemoto
+        .escucharConectado(codigo)
+        .listen((conectado) {
+          if (mounted) setState(() => _escaneoRemotoConectado = conectado);
+        });
     return codigo;
   }
 
@@ -1562,7 +1957,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   void _alternarPendienteCompra(int index) {
     final item = ref.read(carritoVentaProvider).items[index];
-    ref.read(carritoVentaProvider.notifier).marcarPendienteCompra(index, !item.pendienteCompra);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .marcarPendienteCompra(index, !item.pendienteCompra);
   }
 
   /// "Venta anticipada": se vendió sin saber todavía qué producto exacto la
@@ -1574,8 +1971,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return SizedBox(
         width: 32,
         child: Tooltip(
-          message: 'No aplica a combos (su existencia depende de sus componentes)',
-          child: Icon(Icons.hourglass_bottom, size: 18, color: Colors.grey.shade200),
+          message:
+              'No aplica a combos (su existencia depende de sus componentes)',
+          child: Icon(
+            Icons.hourglass_bottom,
+            size: 18,
+            color: Colors.grey.shade200,
+          ),
         ),
       );
     }
@@ -1586,7 +1988,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         tooltip: activo
             ? 'Venta anticipada: se vendió sin saber todavía qué compra la va a reponer. La próxima compra de este producto la completa sola y corrige el costo. Tocá para desmarcar.'
             : 'Marcar como venta anticipada: se vende sin tener (o sin saber exactamente cuál) producto real en existencia. La próxima compra de este producto la empareja sola y corrige el costo.',
-        icon: Icon(Icons.hourglass_bottom, size: 18, color: activo ? const Color(0xFFF59E0B) : Colors.grey.shade400),
+        icon: Icon(
+          Icons.hourglass_bottom,
+          size: 18,
+          color: activo ? const Color(0xFFF59E0B) : Colors.grey.shade400,
+        ),
         onPressed: () => _alternarPendienteCompra(index),
       ),
     );
@@ -1608,7 +2014,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        child: Icon(icono, size: 16, color: onPressed == null ? Colors.grey.shade300 : Colors.grey.shade700),
+        child: Icon(
+          icono,
+          size: 16,
+          color: onPressed == null
+              ? Colors.grey.shade300
+              : Colors.grey.shade700,
+        ),
       ),
     );
   }
@@ -1617,8 +2029,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _botonOrdenIcono(Icons.keyboard_arrow_up, index == 0 ? null : () => _moverItem(index, index - 1)),
-        _botonOrdenIcono(Icons.keyboard_arrow_down, index == total - 1 ? null : () => _moverItem(index, index + 1)),
+        _botonOrdenIcono(
+          Icons.keyboard_arrow_up,
+          index == 0 ? null : () => _moverItem(index, index - 1),
+        ),
+        _botonOrdenIcono(
+          Icons.keyboard_arrow_down,
+          index == total - 1 ? null : () => _moverItem(index, index + 1),
+        ),
       ],
     );
   }
@@ -1630,7 +2048,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _revertirCantidad(int index) {
     final carrito = ref.read(carritoVentaProvider);
     if (index >= carrito.items.length) return;
-    _ctrlCantidad[index]?.text = _formatoCantidad(carrito.items[index].cantidad);
+    _ctrlCantidad[index]?.text = _formatoCantidad(
+      carrito.items[index].cantidad,
+    );
   }
 
   Future<void> _actualizarCantidad(int index, double nuevaCantidad) async {
@@ -1645,17 +2065,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final cantidadAnterior = item.cantidad;
 
     if (!_categoriaControlaStock(item.idCategoria)) {
-      ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
-      await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .actualizarLinea(index, cantidad: nuevaCantidad);
+      await _revisarPromoComboTrasCambioCantidad(
+        index,
+        cantidadAnterior,
+        nuevaCantidad,
+      );
       return;
     }
 
     final productos = ref.read(productosStreamProvider).value ?? [];
-    final coincidencias = productos.where((p) => p.id == item.idProducto).toList();
-    final stockDisponible = coincidencias.isNotEmpty ? coincidencias.first.stock : 0.0;
+    final coincidencias = productos
+        .where((p) => p.id == item.idProducto)
+        .toList();
+    final stockDisponible = coincidencias.isNotEmpty
+        ? coincidencias.first.stock
+        : 0.0;
 
     if (stockDisponible < nuevaCantidad && !carrito.esCotizacion) {
-      final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasVenderSinStock);
+      final autorizado = await verificarAccesoEspecial(
+        context,
+        ref,
+        PermisosEspeciales.ventasVenderSinStock,
+      );
       if (!mounted) return;
       if (!autorizado) {
         _revertirCantidad(index);
@@ -1671,12 +2105,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         // A diferencia de un valor inválido, acá el usuario decidió a
         // propósito seguir sin reembasar: se deja la cantidad tal como la
         // puso (al vender no baja de 0, ver venta_repository).
-        ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
-        await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
+        ref
+            .read(carritoVentaProvider.notifier)
+            .actualizarLinea(index, cantidad: nuevaCantidad);
+        await _revisarPromoComboTrasCambioCantidad(
+          index,
+          cantidadAnterior,
+          nuevaCantidad,
+        );
         return;
       }
 
-      final resultado = await showDialog<ReembaseResultado>(context: context, builder: (context) => const ReembaseDialog());
+      final resultado = await showDialog<ReembaseResultado>(
+        context: context,
+        builder: (context) => const ReembaseDialog(),
+      );
       if (resultado == null) {
         _revertirCantidad(index);
         return;
@@ -1690,7 +2133,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       }
 
       final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-      final ok = await ref.read(productoRepositoryProvider).descontarStock(
+      final ok = await ref
+          .read(productoRepositoryProvider)
+          .descontarStock(
             id: resultado.productoBase.id,
             cantidad: calculo.cantidadReembasar,
             usuario: usuario,
@@ -1701,15 +2146,33 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         _revertirCantidad(index);
         return;
       }
-      ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: calculo.cantidadFinal, reembasado: true);
-      await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, calculo.cantidadFinal);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .actualizarLinea(
+            index,
+            cantidad: calculo.cantidadFinal,
+            reembasado: true,
+          );
+      await _revisarPromoComboTrasCambioCantidad(
+        index,
+        cantidadAnterior,
+        calculo.cantidadFinal,
+      );
       return;
     } else if (stockDisponible < nuevaCantidad && carrito.esCotizacion) {
-      _mostrarMensaje('Advertencia: "${item.nombreProducto}" no tiene stock suficiente, pero se actualizará en la cotización.');
+      _mostrarMensaje(
+        'Advertencia: "${item.nombreProducto}" no tiene stock suficiente, pero se actualizará en la cotización.',
+      );
     }
 
-    ref.read(carritoVentaProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
-    await _revisarPromoComboTrasCambioCantidad(index, cantidadAnterior, nuevaCantidad);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .actualizarLinea(index, cantidad: nuevaCantidad);
+    await _revisarPromoComboTrasCambioCantidad(
+      index,
+      cantidadAnterior,
+      nuevaCantidad,
+    );
   }
 
   Future<void> _actualizarPrecio(int index, double nuevoPrecioConIsv) async {
@@ -1717,7 +2180,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _mostrarMensaje('Precio inválido');
       return;
     }
-    final autorizado = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasCambiarPrecio);
+    final autorizado = await verificarAccesoEspecial(
+      context,
+      ref,
+      PermisosEspeciales.ventasCambiarPrecio,
+    );
     if (!mounted) return;
     if (!autorizado) {
       // Revierte el campo al precio actual (en la unidad que se esté
@@ -1727,12 +2194,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       if (index < carrito.items.length) {
         final item = carrito.items[index];
         final precioBase = item.precioVenta;
-        final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioBase * 1.15) : precioBase;
-        _ctrlPrecio[index]?.text = _precioUnitarioMostrado(item, precioPorCuartoMostrado).toStringAsFixed(2);
+        final precioPorCuartoMostrado = _precioCarritoConIsv
+            ? redondearMoneda(precioBase * 1.15)
+            : precioBase;
+        _ctrlPrecio[index]?.text = _precioUnitarioMostrado(
+          item,
+          precioPorCuartoMostrado,
+        ).toStringAsFixed(2);
       }
       return;
     }
-    ref.read(carritoVentaProvider.notifier).actualizarLinea(index, precioConIsv: nuevoPrecioConIsv);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .actualizarLinea(index, precioConIsv: nuevoPrecioConIsv);
   }
 
   Future<void> _actualizarPrecioSinIsv(int index, double nuevoPrecioSinIsv) {
@@ -1749,7 +2223,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         final item = carrito.items[i];
         final base = item.precioVenta;
         final precioPorCuarto = conIsv ? redondearMoneda(base * 1.15) : base;
-        ctrl.text = _precioUnitarioMostrado(item, precioPorCuarto).toStringAsFixed(2);
+        ctrl.text = _precioUnitarioMostrado(
+          item,
+          precioPorCuarto,
+        ).toStringAsFixed(2);
       }
     });
   }
@@ -1759,19 +2236,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _mostrarMensaje('El descuento debe estar entre 0 y 100');
       return;
     }
-    ref.read(carritoVentaProvider.notifier).actualizarLinea(index, descuentoPorcentaje: descuento);
+    ref
+        .read(carritoVentaProvider.notifier)
+        .actualizarLinea(index, descuentoPorcentaje: descuento);
   }
 
   double _subtotalConIsv(dynamic item) {
     final precioConIsv = redondearMoneda(item.precioVenta * 1.15);
-    return redondearMoneda(precioConIsv * item.cantidad * (1 - item.descuentoPorcentaje / 100));
+    return redondearMoneda(
+      precioConIsv * item.cantidad * (1 - item.descuentoPorcentaje / 100),
+    );
   }
 
   double _subtotalSinIsv(dynamic item) {
-    return redondearMoneda((item.precioVenta as double) * item.cantidad * (1 - item.descuentoPorcentaje / 100));
+    return redondearMoneda(
+      (item.precioVenta as double) *
+          item.cantidad *
+          (1 - item.descuentoPorcentaje / 100),
+    );
   }
 
-  double _importeMostrado(dynamic item) => _precioCarritoConIsv ? _subtotalConIsv(item) : _subtotalSinIsv(item);
+  double _importeMostrado(dynamic item) =>
+      _precioCarritoConIsv ? _subtotalConIsv(item) : _subtotalSinIsv(item);
 
   // ---------- Ventas en espera ----------
 
@@ -1802,16 +2288,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       items: carrito.items,
     );
 
-    final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    final usuario =
+        ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ??
+        ref.read(authProvider).usuario?.nombreCompleto ??
+        '';
     final categorias = ref.read(categoriasStreamProvider).value ?? [];
-    final categoriasSinControlStock = categorias.where((c) => !c.controlaStock).map((c) => c.id).toSet();
+    final categoriasSinControlStock = categorias
+        .where((c) => !c.controlaStock)
+        .map((c) => c.id)
+        .toSet();
     try {
       // "Guardar en Espera" a mano SIEMPRE reserva stock -pedido explícito
       // del dueño-, sin importar si ya era una espera manual o si se está
       // reclamando acá una "perdida" (autoguardado) que el cajero decidió
       // sí dejar en espera de verdad -ver guardarVentaEnEsperaManual.
-      await repo.guardarVentaEnEsperaManual(sesion, usuario: usuario, categoriasSinControlStock: categoriasSinControlStock);
-      _mostrarMensaje(carrito.idEnEspera != null ? 'Venta en espera actualizada.' : 'Venta guardada en espera.');
+      await repo.guardarVentaEnEsperaManual(
+        sesion,
+        usuario: usuario,
+        categoriasSinControlStock: categoriasSinControlStock,
+      );
+      _mostrarMensaje(
+        carrito.idEnEspera != null
+            ? 'Venta en espera actualizada.'
+            : 'Venta guardada en espera.',
+      );
     } catch (e) {
       _mostrarMensaje('No se pudo guardar en espera: $e');
       return;
@@ -1820,7 +2320,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   void _verPendientesImpresion() {
-    showDialog(context: context, builder: (context) => const VentasPendientesImpresionDialog());
+    showDialog(
+      context: context,
+      builder: (context) => const VentasPendientesImpresionDialog(),
+    );
   }
 
   /// Se llama en cada cambio del carrito (ver ref.listen en build): reinicia
@@ -1831,7 +2334,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _programarAutoguardadoEnEspera(CarritoVentaState carrito) {
     _debounceEnEspera?.cancel();
     if (carrito.items.isEmpty) return;
-    _debounceEnEspera = Timer(const Duration(seconds: 2), _guardarEnEsperaAutomatico);
+    _debounceEnEspera = Timer(
+      const Duration(seconds: 2),
+      _guardarEnEsperaAutomatico,
+    );
   }
 
   Future<void> _guardarEnEsperaAutomatico() async {
@@ -1880,7 +2386,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   Future<void> _verPerdidas() => _abrirVentasEnEsperaOPerdidas(perdidas: true);
 
   Future<void> _abrirVentasEnEsperaOPerdidas({required bool perdidas}) async {
-    final sesion = await showDialog<VentaEnEsperaModel>(context: context, builder: (context) => VentasEnEsperaDialog(perdidas: perdidas));
+    final sesion = await showDialog<VentaEnEsperaModel>(
+      context: context,
+      builder: (context) => VentasEnEsperaDialog(perdidas: perdidas),
+    );
     if (sesion == null || !mounted) return;
     // OJO con el orden: setState de acá abajo ANTES de cargarSesion().
     // Asignarle .text a los controladores de nombre/documento dispara su
@@ -1898,7 +2407,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       _regExoneradoController.text = sesion.regExonerado;
       _regSagController.text = sesion.regSag;
       _observacionesController.text = sesion.observaciones;
-      _descuentoGlobalController.text = sesion.descuentoGlobal == 0 ? '' : _formatoCantidad(sesion.descuentoGlobal);
+      _descuentoGlobalController.text = sesion.descuentoGlobal == 0
+          ? ''
+          : _formatoCantidad(sesion.descuentoGlobal);
       // No se tiene el ClienteModel completo acá, solo el id -se resuelve
       // on-demand si se toca "Completar datos del cliente" (ver
       // _resolverClienteVinculado)-.
@@ -1964,9 +2475,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final resultado = await showDialog<DatosEnvioResultado>(
       context: context,
       builder: (context) => DatosEnvioDialog(
-        nombreInicial: _envioNombre.isNotEmpty ? _envioNombre : _nombreClienteController.text.trim(),
-        direccionInicial: _envioDireccion.isNotEmpty ? _envioDireccion : (_clienteVinculado?.direccion ?? ''),
-        telefonoInicial: _envioTelefono.isNotEmpty ? _envioTelefono : (_clienteVinculado?.telefono ?? ''),
+        nombreInicial: _envioNombre.isNotEmpty
+            ? _envioNombre
+            : _nombreClienteController.text.trim(),
+        direccionInicial: _envioDireccion.isNotEmpty
+            ? _envioDireccion
+            : (_clienteVinculado?.direccion ?? ''),
+        telefonoInicial: _envioTelefono.isNotEmpty
+            ? _envioTelefono
+            : (_clienteVinculado?.telefono ?? ''),
       ),
     );
     if (resultado == null || !mounted) return;
@@ -1995,13 +2512,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return OutlinedButton.icon(
         onPressed: _abrirDatosEnvio,
         icon: const Icon(Icons.local_shipping_outlined, size: 16),
-        label: Text('Es envío', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1565C0), side: const BorderSide(color: Color(0xFF1565C0)), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+        label: Text(
+          'Es envío',
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF1565C0),
+          side: const BorderSide(color: Color(0xFF1565C0)),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: const Color(0xFF1565C0).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1565C0))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1565C0).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF1565C0)),
+      ),
       child: Row(
         children: [
           const Icon(Icons.local_shipping, size: 17, color: Color(0xFF1565C0)),
@@ -2009,12 +2543,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           Expanded(
             child: Text(
               'Envío a $_envioNombre${_imprimirGuiaAlConfirmar ? ' · se imprime guía al confirmar' : ''}',
-              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1565C0)),
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1565C0),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          TextButton(onPressed: _abrirDatosEnvio, child: Text('Editar', style: GoogleFonts.poppins(fontSize: 12))),
-          TextButton(onPressed: _quitarEnvio, child: Text('Quitar', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)))),
+          TextButton(
+            onPressed: _abrirDatosEnvio,
+            child: Text('Editar', style: GoogleFonts.poppins(fontSize: 12)),
+          ),
+          TextButton(
+            onPressed: _quitarEnvio,
+            child: Text(
+              'Quitar',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: const Color(0xFFC62828),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2022,15 +2572,27 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   Future<void> _confirmarLimpiar() async {
     final carrito = ref.read(carritoVentaProvider);
-    final hayAlgoQuePerder = carrito.items.isNotEmpty || _nombreClienteController.text.trim().isNotEmpty;
+    final hayAlgoQuePerder =
+        carrito.items.isNotEmpty ||
+        _nombreClienteController.text.trim().isNotEmpty;
     if (hayAlgoQuePerder) {
-      final continuar = await _confirmarDialogo('Limpiar venta', '¿Seguro que querés borrar todos los productos y datos ingresados en esta venta?');
+      final continuar = await _confirmarDialogo(
+        'Limpiar venta',
+        '¿Seguro que querés borrar todos los productos y datos ingresados en esta venta?',
+      );
       if (!continuar) return;
     }
     _debounceEnEspera?.cancel();
     if (carrito.idEnEspera != null) {
-      final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
-      unawaited(ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(carrito.idEnEspera!, usuario: usuario));
+      final usuario =
+          ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ??
+          ref.read(authProvider).usuario?.nombreCompleto ??
+          '';
+      unawaited(
+        ref
+            .read(ventaRepositoryProvider)
+            .eliminarVentaEnEspera(carrito.idEnEspera!, usuario: usuario),
+      );
     }
     _limpiarTodo();
   }
@@ -2079,21 +2641,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           montoPago = 0;
           montoCambio = 0;
         } else if (carrito.metodoPago == 'Efectivo') {
-          final resultado = await showDialog<CobrarResultado>(context: context, builder: (context) => CobrarDialog(total: carrito.totalAPagar));
+          final resultado = await showDialog<CobrarResultado>(
+            context: context,
+            builder: (context) => CobrarDialog(total: carrito.totalAPagar),
+          );
           if (resultado == null) return;
           montoPago = resultado.pagoCon;
           montoCambio = resultado.cambio;
         } else if (carrito.metodoPago == 'Mixto') {
-          final resultado = await showDialog<List<PagoDetalle>>(context: context, builder: (context) => PagoMixtoDialog(total: carrito.totalAPagar));
+          final resultado = await showDialog<List<PagoDetalle>>(
+            context: context,
+            builder: (context) => PagoMixtoDialog(total: carrito.totalAPagar),
+          );
           if (resultado == null) return;
           pagosMixtos = resultado;
           montoPago = resultado.fold<double>(0, (s, p) => s + p.monto);
           montoCambio = 0;
         }
 
-        negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+        negocio = await ref
+            .read(negocioRepositoryProvider)
+            .obtenerNegocioActual();
         if (!mounted) return;
-        if (carrito.tipoDocumento == 'Factura' || carrito.tipoDocumento == 'Boleta') {
+        if (carrito.tipoDocumento == 'Factura' ||
+            carrito.tipoDocumento == 'Boleta') {
           final continuar = await _validarFechaLimite(negocio);
           if (!continuar) return;
         }
@@ -2111,14 +2682,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // la anulación (detalle_venta_screen) siguen usando el de la sesión a
     // propósito: son auditoría de quién movió el stock/anuló, no atribución
     // de venta.
-    final usuario = ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ?? ref.read(authProvider).usuario?.nombreCompleto ?? '';
+    final usuario =
+        ref.read(usuarioVentaOverrideProvider)?.nombreCompleto ??
+        ref.read(authProvider).usuario?.nombreCompleto ??
+        '';
     final categorias = ref.read(categoriasStreamProvider).value ?? [];
-    final categoriasSinControlStock = categorias.where((c) => !c.controlaStock).map((c) => c.id).toSet();
-    final esFacturable = carrito.tipoDocumento == 'Factura' || carrito.tipoDocumento == 'Boleta';
+    final categoriasSinControlStock = categorias
+        .where((c) => !c.controlaStock)
+        .map((c) => c.id)
+        .toSet();
+    final esFacturable =
+        carrito.tipoDocumento == 'Factura' || carrito.tipoDocumento == 'Boleta';
     final negocioFinal = negocio;
     // Hay que capturar esto ANTES de _limpiarTodo(): ese método vacía el
     // controlador de texto, así que leerlo después ya daría vacío.
-    final nombreCliente = _nombreClienteController.text.trim().isEmpty ? 'CONSUMIDOR FINAL' : _nombreClienteController.text.trim();
+    final nombreCliente = _nombreClienteController.text.trim().isEmpty
+        ? 'CONSUMIDOR FINAL'
+        : _nombreClienteController.text.trim();
     final telefonoCredito = _telefonoCreditoController.text.trim();
     // Mismo motivo: _limpiarTodo() también resetea los datos de envío.
     final esEnvio = _esEnvio;
@@ -2141,26 +2721,28 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // cobra ni mueve stock).
     if (!esCotizacion && mounted) mostrarExitoTransaccion(context);
 
-    unawaited(_guardarVentaEnSegundoPlano(
-      ventaRepo: ventaRepo,
-      carrito: carrito,
-      esCotizacion: esCotizacion,
-      esFacturable: esFacturable,
-      nombreCliente: nombreCliente,
-      telefonoCredito: telefonoCredito,
-      montoPago: montoPago,
-      montoCambio: montoCambio,
-      pagosMixtos: pagosMixtos,
-      usuario: usuario,
-      categoriasSinControlStock: categoriasSinControlStock,
-      negocio: negocioFinal,
-      esEnvio: esEnvio,
-      envioNombre: envioNombre,
-      envioDireccion: envioDireccion,
-      envioTelefono: envioTelefono,
-      imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
-      formatoGuiaGrande: formatoGuiaGrande,
-    ));
+    unawaited(
+      _guardarVentaEnSegundoPlano(
+        ventaRepo: ventaRepo,
+        carrito: carrito,
+        esCotizacion: esCotizacion,
+        esFacturable: esFacturable,
+        nombreCliente: nombreCliente,
+        telefonoCredito: telefonoCredito,
+        montoPago: montoPago,
+        montoCambio: montoCambio,
+        pagosMixtos: pagosMixtos,
+        usuario: usuario,
+        categoriasSinControlStock: categoriasSinControlStock,
+        negocio: negocioFinal,
+        esEnvio: esEnvio,
+        envioNombre: envioNombre,
+        envioDireccion: envioDireccion,
+        envioTelefono: envioTelefono,
+        imprimirGuiaAlConfirmar: imprimirGuiaAlConfirmar,
+        formatoGuiaGrande: formatoGuiaGrande,
+      ),
+    );
   }
 
   Future<void> _guardarVentaEnSegundoPlano({
@@ -2185,37 +2767,50 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }) async {
     try {
       final venta = await ventaRepo.registrarVenta(
-            tipoDocumento: carrito.tipoDocumento,
-            condicion: esCotizacion ? 'Contado' : carrito.condicion,
-            metodoPago: esCotizacion ? 'N/A' : (carrito.condicion == 'Credito' ? 'N/A' : carrito.metodoPago),
-            documentoCliente: carrito.documentoCliente.trim().isEmpty ? 'N/A' : carrito.documentoCliente.trim(),
-            nombreCliente: nombreCliente,
-            idCliente: carrito.idCliente,
-            fechaRegistro: carrito.fecha,
-            fechaVencimiento: (!esCotizacion && carrito.condicion == 'Credito') ? carrito.fechaVencimiento : null,
-            telefonoCredito: (!esCotizacion && carrito.condicion == 'Credito') ? telefonoCredito : null,
-            oc: carrito.oc,
-            regExonerado: carrito.regExonerado,
-            regSag: carrito.regSag,
-            observaciones: carrito.observaciones,
-            descuentoGlobal: carrito.descuentoGlobalPorcentaje,
-            items: carrito.items,
-            montoPago: montoPago,
-            montoCambio: montoCambio,
-            pagosMixtos: esCotizacion ? const [] : pagosMixtos,
-            subtotal: carrito.subtotal,
-            impuesto: carrito.impuesto,
-            totalAPagar: carrito.totalAPagar,
-            usuario: usuario,
-            categoriasSinControlStock: categoriasSinControlStock,
-            esEnvio: esEnvio,
-            envioNombre: envioNombre,
-            envioDireccion: envioDireccion,
-            envioTelefono: envioTelefono,
-          );
+        tipoDocumento: carrito.tipoDocumento,
+        condicion: esCotizacion ? 'Contado' : carrito.condicion,
+        metodoPago: esCotizacion
+            ? 'N/A'
+            : (carrito.condicion == 'Credito' ? 'N/A' : carrito.metodoPago),
+        documentoCliente: carrito.documentoCliente.trim().isEmpty
+            ? 'N/A'
+            : carrito.documentoCliente.trim(),
+        nombreCliente: nombreCliente,
+        idCliente: carrito.idCliente,
+        fechaRegistro: carrito.fecha,
+        fechaVencimiento: (!esCotizacion && carrito.condicion == 'Credito')
+            ? carrito.fechaVencimiento
+            : null,
+        telefonoCredito: (!esCotizacion && carrito.condicion == 'Credito')
+            ? telefonoCredito
+            : null,
+        oc: carrito.oc,
+        regExonerado: carrito.regExonerado,
+        regSag: carrito.regSag,
+        observaciones: carrito.observaciones,
+        descuentoGlobal: carrito.descuentoGlobalPorcentaje,
+        items: carrito.items,
+        montoPago: montoPago,
+        montoCambio: montoCambio,
+        pagosMixtos: esCotizacion ? const [] : pagosMixtos,
+        subtotal: carrito.subtotal,
+        impuesto: carrito.impuesto,
+        totalAPagar: carrito.totalAPagar,
+        usuario: usuario,
+        categoriasSinControlStock: categoriasSinControlStock,
+        esEnvio: esEnvio,
+        envioNombre: envioNombre,
+        envioDireccion: envioDireccion,
+        envioTelefono: envioTelefono,
+      );
 
       if (carrito.idEnEspera != null) {
-        unawaited(ventaRepo.eliminarVentaEnEspera(carrito.idEnEspera!, usuario: usuario));
+        unawaited(
+          ventaRepo.eliminarVentaEnEspera(
+            carrito.idEnEspera!,
+            usuario: usuario,
+          ),
+        );
       }
 
       if (!esCotizacion && esEnvio && imprimirGuiaAlConfirmar) {
@@ -2226,7 +2821,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         unawaited(_imprimirEnSegundoPlano(venta));
         if (negocio != null) _avisarSiRangoSuperado(negocio, venta);
       } else {
-        _mostrarMensaje('${tiposDocumento[venta.tipoDocumento]} generada: ${venta.numeroDocumento}');
+        _mostrarMensaje(
+          '${tiposDocumento[venta.tipoDocumento]} generada: ${venta.numeroDocumento}',
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -2238,7 +2835,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // tener que volver a cargar todo.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('⚠ $mensaje', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          content: Text(
+            '⚠ $mensaje',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
           backgroundColor: const Color(0xFFC62828),
           duration: const Duration(seconds: 12),
           showCloseIcon: true,
@@ -2278,7 +2878,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // precarga al iniciar sesión) y resuelve casi al instante, pero por las
   // dudas tampoco se espera desde _confirmarVenta.
   Future<void> _imprimirEnSegundoPlano(VentaModel venta) async {
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
     await _manejarImpresion(venta, negocio);
   }
@@ -2310,7 +2912,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     if (negocio.modoImpresion != ModoImpresion.directo) {
-      final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+      final impresora = negocio.impresoraTermicaUrl.isEmpty
+          ? null
+          : Printer(
+              url: negocio.impresoraTermicaUrl,
+              name: negocio.impresoraTermicaNombre,
+            );
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
       showDialog(
@@ -2319,11 +2926,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           titulo: 'Vista previa · ${venta.numeroDocumento}',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
-          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato),
+          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(
+            venta,
+            negocio,
+            formatoImpresora: formato,
+          ),
           impresora: impresora,
-          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio),
+          generarTicketEscPos: () =>
+              _servicioTicketEscPos.generarTicket(venta, negocio),
           nombreImpresoraWindows: negocio.impresoraTermicaNombre,
-          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: false),
+          vistaPreviaTicket: () => TicketEscPosPreview(
+            venta: venta,
+            negocio: negocio,
+            esCopia: false,
+          ),
         ),
       );
       return;
@@ -2333,7 +2949,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // no sirve de nada) sí detecta el sistema operativo real del equipo
     // aunque se esté usando desde el navegador: hace falta para distinguir
     // "celular entrando por el navegador" de "PC entrando por el navegador".
-    final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+    final esMovil =
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
 
     if (kIsWeb && esMovil) {
       // Desde el navegador del celular no hay forma de mandar el ticket a
@@ -2351,13 +2969,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // esperando a la otra) para que, si hay que pedirle a la PC que
       // imprima, esa orden salga lo antes posible.
       final ventaRepoLocal = ref.read(ventaRepositoryProvider);
-      final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(venta.id, true);
-      final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+      final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(
+        venta.id,
+        true,
+      );
+      final pcConectada = await ref
+          .read(presenciaImpresionRepositoryProvider)
+          .estaConectada();
       if (pcConectada) {
         await ventaRepoLocal.marcarSolicitudImpresionEnVivo(venta.id, true);
         _mostrarMensaje('Se envió la orden de impresión a la caja principal');
       } else {
-        _mostrarMensaje('No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión');
+        _mostrarMensaje(
+          'No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión',
+        );
       }
       await futurePendiente;
       return;
@@ -2372,15 +2997,24 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? preparando;
       if (mounted) {
         preparando = ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preparando impresión…'), duration: Duration(seconds: 30)),
+          const SnackBar(
+            content: Text('Preparando impresión…'),
+            duration: Duration(seconds: 30),
+          ),
         );
       }
       try {
-        await Printing.layoutPdf(onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio), name: 'venta_${venta.numeroDocumento}.pdf');
+        await Printing.layoutPdf(
+          onLayout: (formato) =>
+              _servicioExport.generarPdfFactura(venta, negocio),
+          name: 'venta_${venta.numeroDocumento}.pdf',
+        );
         preparando?.close();
       } catch (_) {
         preparando?.close();
-        _mostrarMensaje('No se pudo imprimir. La venta se guardó de todas formas.');
+        _mostrarMensaje(
+          'No se pudo imprimir. La venta se guardó de todas formas.',
+        );
       }
       return;
     }
@@ -2392,7 +3026,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     // Desktop (Windows/macOS/Linux).
     if (negocio.impresoraTermicaUrl.isEmpty) {
-      _mostrarMensaje('No hay impresora configurada, la venta se guardó sin imprimir');
+      _mostrarMensaje(
+        'No hay impresora configurada, la venta se guardó sin imprimir',
+      );
       return;
     }
     // En Windows se manda el ticket como ESC/POS crudo por USB en vez de
@@ -2404,16 +3040,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (!kIsWeb && Platform.isWindows) {
       try {
         final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
-        if (!ok) _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+        final ok = ImpresoraUsbWindowsService().imprimir(
+          nombreImpresora: negocio.impresoraTermicaNombre,
+          bytes: bytes,
+        );
+        if (!ok)
+          _mostrarMensaje('No se pudo imprimir en la impresora configurada');
       } catch (_) {
         _mostrarMensaje('No se pudo imprimir en la impresora configurada');
       }
       return;
     }
     try {
-      final impresora = Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
-      await Printing.directPrintPdf(printer: impresora, onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato));
+      final impresora = Printer(
+        url: negocio.impresoraTermicaUrl,
+        name: negocio.impresoraTermicaNombre,
+      );
+      await Printing.directPrintPdf(
+        printer: impresora,
+        onLayout: (formato) => _servicioExport.generarPdfFactura(
+          venta,
+          negocio,
+          formatoImpresora: formato,
+        ),
+      );
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir en la impresora configurada');
     }
@@ -2439,8 +3089,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// en cuanto la detecte (mismo mecanismo que la impresión en vivo del
   /// recibo, ver AppShell/marcarSolicitudImpresionGuiaEnvio) -pedido
   /// explícito del dueño: "que funcione en remoto, así como toda impresión".
-  Future<void> _imprimirGuiaEnvio(VentaModel venta, {bool grande = false}) async {
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+  Future<void> _imprimirGuiaEnvio(
+    VentaModel venta, {
+    bool grande = false,
+  }) async {
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
 
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
@@ -2449,30 +3104,57 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     try {
-      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio, grande: grande);
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(
+        venta,
+        negocio,
+        grande: grande,
+      );
       if (!kIsWeb && Platform.isWindows) {
         if (negocio.impresoraTermicaNombre.isEmpty) {
-          _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+          _mostrarMensaje(
+            'No hay impresora configurada, no se pudo imprimir la guía de envío',
+          );
           return;
         }
-        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        final ok = ImpresoraUsbWindowsService().imprimir(
+          nombreImpresora: negocio.impresoraTermicaNombre,
+          bytes: bytes,
+        );
         if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
       } else if (negocio.impresoraRedIp.isNotEmpty) {
-        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        final ok = await _servicioImpresoraRed.imprimir(
+          ip: negocio.impresoraRedIp,
+          puerto: negocio.impresoraRedPuerto,
+          bytes: bytes,
+        );
         if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
       } else {
-        _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+        _mostrarMensaje(
+          'No hay impresora configurada, no se pudo imprimir la guía de envío',
+        );
       }
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir la guía de envío');
     }
   }
 
-  Future<void> _imprimirGuiaEscPosRedOPendiente(VentaModel venta, NegocioModel negocio, bool grande) async {
+  Future<void> _imprimirGuiaEscPosRedOPendiente(
+    VentaModel venta,
+    NegocioModel negocio,
+    bool grande,
+  ) async {
     if (negocio.impresoraRedIp.isNotEmpty) {
       try {
-        final bytes = await _servicioTicketEscPos.generarGuiaEnvio(venta, negocio, grande: grande);
-        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        final bytes = await _servicioTicketEscPos.generarGuiaEnvio(
+          venta,
+          negocio,
+          grande: grande,
+        );
+        final ok = await _servicioImpresoraRed.imprimir(
+          ip: negocio.impresoraRedIp,
+          puerto: negocio.impresoraRedPuerto,
+          bytes: bytes,
+        );
         if (ok) {
           _mostrarMensaje('Guía de envío impresa');
           return;
@@ -2483,14 +3165,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
     if (!mounted) return;
     try {
-      await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionGuiaEnvio(venta.id, true, grande: grande);
+      await ref
+          .read(ventaRepositoryProvider)
+          .marcarSolicitudImpresionGuiaEnvio(venta.id, true, grande: grande);
     } catch (_) {}
-    final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+    final pcConectada = await ref
+        .read(presenciaImpresionRepositoryProvider)
+        .estaConectada();
     if (!mounted) return;
     if (pcConectada) {
-      _mostrarMensaje('Se envió la orden de impresión de la guía a la caja principal');
+      _mostrarMensaje(
+        'Se envió la orden de impresión de la guía a la caja principal',
+      );
     } else {
-      _mostrarMensaje('No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal');
+      _mostrarMensaje(
+        'No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal',
+      );
     }
   }
 
@@ -2499,22 +3189,33 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // una impresora fija conectada). En vez de intentar imprimir a ciegas por
   // red y fallar en silencio, o abrir la vista previa completa del PDF, se
   // pregunta rápido con un diálogo simple de dos botones.
-  Future<void> _manejarImpresionAndroid(VentaModel venta, NegocioModel negocio) async {
+  Future<void> _manejarImpresionAndroid(
+    VentaModel venta,
+    NegocioModel negocio,
+  ) async {
     if (!mounted) return;
     final opcion = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Venta ${venta.numeroDocumento} registrada', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
-        content: Text('¿Qué querés hacer con el ticket?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Venta ${venta.numeroDocumento} registrada',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: Text(
+          '¿Qué querés hacer con el ticket?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, 'pendiente'),
             child: Text('Dejar pendiente', style: GoogleFonts.poppins()),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, 'imprimir'),
             child: Text('Imprimir', style: GoogleFonts.poppins()),
           ),
@@ -2525,7 +3226,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (opcion == 'imprimir') {
       await _imprimirEscPosRed(venta, negocio);
     } else {
-      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, true);
+      await ref
+          .read(ventaRepositoryProvider)
+          .marcarPendienteImpresion(venta.id, true);
     }
   }
 
@@ -2537,20 +3240,34 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // _manejarImpresion, rama kIsWeb && esMovil): en el celular casi nunca se
   // va a poder llegar de verdad hasta la impresora física, así que este
   // respaldo es el camino más común, no la excepción.
-  Future<void> _imprimirEscPosRed(VentaModel venta, NegocioModel negocio) async {
+  Future<void> _imprimirEscPosRed(
+    VentaModel venta,
+    NegocioModel negocio,
+  ) async {
     if (negocio.impresoraRedIp.isNotEmpty) {
       final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-      final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+      final ok = await _servicioImpresoraRed.imprimir(
+        ip: negocio.impresoraRedIp,
+        puerto: negocio.impresoraRedPuerto,
+        bytes: bytes,
+      );
       if (ok) return;
     }
     final ventaRepoLocal = ref.read(ventaRepositoryProvider);
-    final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(venta.id, true);
-    final pcConectada = await ref.read(presenciaImpresionRepositoryProvider).estaConectada();
+    final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(
+      venta.id,
+      true,
+    );
+    final pcConectada = await ref
+        .read(presenciaImpresionRepositoryProvider)
+        .estaConectada();
     if (pcConectada) {
       await ventaRepoLocal.marcarSolicitudImpresionEnVivo(venta.id, true);
       _mostrarMensaje('Se envió la orden de impresión a la caja principal');
     } else {
-      _mostrarMensaje('No se pudo imprimir: la venta quedó pendiente de impresión');
+      _mostrarMensaje(
+        'No se pudo imprimir: la venta quedó pendiente de impresión',
+      );
     }
     await futurePendiente;
   }
@@ -2583,7 +3300,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (rangoHasta <= 0) return;
     final numero = int.tryParse(venta.numeroDocumento) ?? 0;
     if (numero > rangoHasta) {
-      _mostrarMensaje('Atención: se superó el rango autorizado para facturas (No. ${venta.numeroDocumento})');
+      _mostrarMensaje(
+        'Atención: se superó el rango autorizado para facturas (No. ${venta.numeroDocumento})',
+      );
     }
   }
 
@@ -2610,7 +3329,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // se vuelva a pintar con los datos ya leídos por este `ref` (el
     // correcto para esta pestaña) cada vez que el carrito cambia — ver
     // _expandirTablaProductos para el porqué no puede leerlo por su cuenta.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refrescarDialogoExpandido?.call(() {}));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refrescarDialogoExpandido?.call(() {}),
+    );
     // Recalcula la visibilidad de la barra flotante de totales (ver
     // _alScrollearMovil) en cada cambio del carrito, no solo cuando el
     // usuario mueve el scroll a mano: agregar un producto sin haber
@@ -2619,6 +3340,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (_esWebMovil) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _alScrollearMovil());
     }
+    // Ver el comentario de _sincronizarControladoresItems: corre acá, una
+    // sola vez, ANTES de decidir qué vista dibujar -las 3 comparten estos
+    // controllers-.
+    _sincronizarControladoresItems(carrito);
+    final vista = ref.watch(registrarVentaVistaProvider);
 
     // Ver _focusAnclaMovil: este Focus envuelve toda la pantalla para que
     // ese nodo (usado solo en web móvil) siempre tenga dónde vivir, sin
@@ -2628,49 +3354,518 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       canRequestFocus: true,
       skipTraversal: true,
       child: Container(
-      color: const Color(0xFFF2F3F7),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final esMovil = constraints.maxWidth < 900;
-          // Techo para la tabla de productos en escritorio real (ver
-          // _tablaConScrollPropio y _tarjetaCarritoGrande): con pocos
-          // productos la tarjeta se achica a su contenido, no reserva este
-          // alto de entrada -antes lo hacía siempre, aunque el carrito
-          // tuviera un solo producto, ocupando espacio de pantalla de más-;
-          // recién a partir de este alto la lista pasa a scrollear sola.
-          final altoMaximoTabla = (constraints.maxHeight * 0.72).clamp(420.0, 1400.0);
-          final contenido = SingleChildScrollView(
-            controller: _esWebMovil ? _scrollControllerMovil : null,
-            padding: EdgeInsets.all(esMovil ? 14 : 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        color: const Color(0xFFF2F3F7),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final esMovil = constraints.maxWidth < 900;
+            // Techo para la tabla de productos en escritorio real (ver
+            // _tablaConScrollPropio y _tarjetaCarritoGrande): con pocos
+            // productos la tarjeta se achica a su contenido, no reserva este
+            // alto de entrada -antes lo hacía siempre, aunque el carrito
+            // tuviera un solo producto, ocupando espacio de pantalla de más-;
+            // recién a partir de este alto la lista pasa a scrollear sola.
+            final altoMaximoTabla = (constraints.maxHeight * 0.72).clamp(
+              420.0,
+              1400.0,
+            );
+            final productos =
+                ref.watch(productosStreamProvider).value ??
+                const <ProductoModel>[];
+            final mapaProductos = {for (final p in productos) p.id: p};
+
+            // Pedido explícito del dueño: 3 diseños posibles de esta pantalla,
+            // elegibles con el ícono flotante (_botonSelectorVista) y
+            // recordados entre sesiones (ver registrarVentaVistaProvider). Las
+            // 3 comparten el mismo `carrito`/controllers/lógica de negocio -
+            // solo cambia cómo se acomodan en pantalla (ver el plan: Vista
+            // "dividida" y "dynamics" reusan _tarjetaDatosVenta,
+            // _encabezadoTablaCarrito, _filaCarritoTabla/_filaCarritoMovil y
+            // _barraTotalesCompacta tal cual, el mismo combo que ya usaba
+            // _expandirTablaProductos).
+            final Widget contenido = switch (vista) {
+              registrarVentaVistaDividida => _layoutDividido(
+                carrito,
+                esMovil,
+                mapaProductos,
+              ),
+              registrarVentaVistaDynamics => _layoutDynamics(
+                carrito,
+                esMovil,
+                mapaProductos,
+              ),
+              _ => _layoutClasico(carrito, esMovil, altoMaximoTabla),
+            };
+
+            // La barra flotante de totales (web móvil) es redundante en
+            // dividida/dynamics: esas dos ya dejan una barra de totales fija
+            // siempre visible como parte del layout, no hace falta duplicarla.
+            final Widget pantalla =
+                (_esWebMovil && vista == registrarVentaVistaClasica)
+                ? Stack(children: [contenido, _barraFlotanteTotales(carrito)])
+                : contenido;
+
+            return Stack(
               children: [
-                _encabezado(esMovil),
-                const SizedBox(height: 14),
-                _tarjetaDatosVenta(carrito, esMovil),
-                const SizedBox(height: 14),
-                _tarjetaCarritoGrande(carrito, esMovil, altoMaximoTabla: altoMaximoTabla),
-                const SizedBox(height: 14),
-                _tarjetaTotales(carrito, esMovil),
+                pantalla,
+                Positioned(top: 0, right: 0, child: _botonSelectorVista(vista)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // --- Vista "clásica" (la de siempre) ---
+  Widget _layoutClasico(
+    CarritoVentaState carrito,
+    bool esMovil,
+    double altoMaximoTabla,
+  ) {
+    return SingleChildScrollView(
+      controller: _esWebMovil ? _scrollControllerMovil : null,
+      padding: EdgeInsets.all(esMovil ? 14 : 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _encabezado(esMovil),
+          const SizedBox(height: 14),
+          _tarjetaDatosVenta(carrito, esMovil),
+          const SizedBox(height: 14),
+          _tarjetaCarritoGrande(
+            carrito,
+            esMovil,
+            altoMaximoTabla: altoMaximoTabla,
+          ),
+          const SizedBox(height: 14),
+          _tarjetaTotales(carrito, esMovil),
+        ],
+      ),
+    );
+  }
+
+  // --- Vista "dividida": buscador con fotos a un lado, carrito al otro ---
+  Widget _layoutDividido(
+    CarritoVentaState carrito,
+    bool esMovil,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    if (esMovil) return _layoutDivididoMovil(carrito, mapaProductos);
+    return Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _encabezado(esMovil),
+          const SizedBox(height: 12),
+          _tarjetaDatosVenta(carrito, esMovil),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _tarjeta(
+                    child: PanelBuscadorGrid(
+                      onProductoElegido: (p) =>
+                          _procesarProductoSeleccionado(p),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 6,
+                  child: _tarjeta(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _barraAccionesCarritoCompacta(),
+                        Offstage(offstage: true, child: _campoCodigoBarras()),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: _bloqueTablaCarrito(carrito, mapaProductos),
+                        ),
+                        const SizedBox(height: 10),
+                        _barraTotalesCompacta(carrito),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
-          );
-
-          if (!_esWebMovil) return contenido;
-
-          // En web móvil, con varios productos cargados, la tarjeta de
-          // totales real queda lejos abajo: esta barra flotante (ver
-          // _barraFlotanteTotales) deja el total y "Crear Venta" siempre a
-          // mano mientras se scrollea la tabla, sin duplicarse cuando la
-          // real ya está a la vista (ver _alScrollearMovil).
-          return Stack(
-            children: [
-              contenido,
-              _barraFlotanteTotales(carrito),
-            ],
-          );
-        },
+          ),
+        ],
       ),
+    );
+  }
+
+  // Angosto (celular): dos mitades lado a lado quedarían ilegibles -pedido
+  // explícito del dueño de que las 3 vistas se vean bien también en
+  // celular-, así que acá se usa un segmentado de 2 opciones ("Buscar" /
+  // "Carrito") que ocupan el ancho completo una a la vez, en vez de forzar
+  // columnas angostas.
+  Widget _layoutDivididoMovil(
+    CarritoVentaState carrito,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _encabezado(true),
+              const SizedBox(height: 10),
+              _tarjetaDatosVenta(carrito, true),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: _segmentoDividida('buscar', 'Buscar', Icons.search),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _segmentoDividida(
+                  'carrito',
+                  'Carrito (${carrito.items.length})',
+                  Icons.shopping_cart_outlined,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Offstage(offstage: true, child: _campoCodigoBarras()),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: _panelMovilDividida == 'buscar'
+                ? _tarjeta(
+                    child: PanelBuscadorGrid(
+                      onProductoElegido: (p) =>
+                          _procesarProductoSeleccionado(p),
+                    ),
+                  )
+                : _tarjeta(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _barraAccionesCarritoCompacta(),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: _bloqueTablaCarritoMovil(
+                            carrito,
+                            mapaProductos,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _barraTotalesCompacta(carrito),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _segmentoDividida(String valor, String texto, IconData icono) {
+    final activo = _panelMovilDividida == valor;
+    return InkWell(
+      onTap: () => setState(() => _panelMovilDividida = valor),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: activo ? const Color(0xFFC62828) : const Color(0xFFE8EAF0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icono,
+              size: 16,
+              color: activo ? Colors.white : const Color(0xFF4B4F58),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                texto,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: activo ? Colors.white : const Color(0xFF25272B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Vista "tipo Dynamics": la tabla del carrito ocupa casi toda la
+  // pantalla, controles compactos arriba, totales chicos abajo ---
+  Widget _layoutDynamics(
+    CarritoVentaState carrito,
+    bool esMovil,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    return Padding(
+      padding: EdgeInsets.all(esMovil ? 12 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _encabezado(esMovil),
+          const SizedBox(height: 10),
+          _tarjetaDatosVenta(carrito, esMovil),
+          const SizedBox(height: 10),
+          _barraAccionesCarritoCompacta(),
+          const SizedBox(height: 8),
+          Offstage(offstage: true, child: _campoCodigoBarras()),
+          Expanded(
+            child: _tarjeta(
+              child: esMovil
+                  ? _bloqueTablaCarritoMovil(carrito, mapaProductos)
+                  : _bloqueTablaCarrito(carrito, mapaProductos),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _barraTotalesCompacta(carrito),
+        ],
+      ),
+    );
+  }
+
+  // Mensaje de "sin productos" reusado entre _bloqueTablaCarrito y
+  // _bloqueTablaCarritoMovil, mismo texto que ya usa _tarjetaCarritoGrande.
+  Widget _sinProductosEnCarrito() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          'Todavía no agregaste productos.\nUsá "Agregar Producto" para buscar del inventario.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(color: Colors.grey.shade500),
+        ),
+      ),
+    );
+  }
+
+  // Mismo combo (encabezado + filas + scroll propio) que ya arma
+  // _expandirTablaProductos hoy dentro de un Dialog -acá se usa como body
+  // principal en las vistas dividida/dynamics en vez de un modal-.
+  Widget _bloqueTablaCarrito(
+    CarritoVentaState carrito,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _encabezadoTablaCarrito(),
+        Divider(height: 18, color: Colors.grey.shade300),
+        Expanded(
+          child: carrito.items.isEmpty
+              ? _sinProductosEnCarrito()
+              : ListView.separated(
+                  itemCount: carrito.items.length,
+                  separatorBuilder: (context, i) =>
+                      Divider(height: 1, color: Colors.grey.shade200),
+                  itemBuilder: (context, i) => _filaCarritoTabla(
+                    i,
+                    carrito.items[i],
+                    mapaProductos,
+                    carrito.items.length,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bloqueTablaCarritoMovil(
+    CarritoVentaState carrito,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    if (carrito.items.isEmpty) return _sinProductosEnCarrito();
+    return ListView.separated(
+      itemCount: carrito.items.length,
+      separatorBuilder: (context, i) =>
+          Divider(height: 1, color: Colors.grey.shade200),
+      itemBuilder: (context, i) => _filaCarritoMovil(
+        i,
+        carrito.items[i],
+        mapaProductos,
+        carrito.items.length,
+      ),
+    );
+  }
+
+  // Fila compacta de botones/íconos para agregar productos -pedido
+  // explícito del dueño: "controles sin que estorben"-, reusada por las
+  // vistas dividida y dynamics. `Wrap` (no `Row`) a propósito: si no entran
+  // todos en una línea (panel angosto), bajan de línea solos en vez de
+  // desbordar horizontalmente.
+  Widget _barraAccionesCarritoCompacta() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: _agregarProductoDesdeBusqueda,
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(
+            'Agregar Producto',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFC62828),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        if (_esPlataformaMovil)
+          IconButton(
+            tooltip: 'Escanear con cámara',
+            onPressed: _escanearConCamara,
+            icon: Icon(Icons.qr_code_scanner, color: Colors.grey.shade600),
+          ),
+        IconButton(
+          tooltip: _escaneoRemotoConectado
+              ? 'Escaneo activo'
+              : 'Escanear con celular',
+          onPressed: _abrirEscaneoRemoto,
+          icon: Icon(
+            _escaneoRemotoConectado
+                ? Icons.wifi_tethering
+                : Icons.qr_code_scanner,
+            color: _escaneoRemotoConectado
+                ? Colors.green.shade600
+                : Colors.grey.shade600,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Ver promociones vigentes',
+          onPressed: _abrirPromocionesVigentes,
+          icon: Icon(Icons.local_offer_outlined, color: Colors.grey.shade600),
+        ),
+        IconButton(
+          tooltip: 'Consultar costo de un color',
+          onPressed: _abrirConsultarCosto,
+          icon: Icon(Icons.calculate_outlined, color: Colors.grey.shade600),
+        ),
+        IconButton(
+          tooltip: 'Calculadora de pintura',
+          onPressed: () => _calculadoraRendimiento.abrir(context),
+          icon: Icon(Icons.straighten, color: Colors.grey.shade600),
+        ),
+        _selectorPrecioIsvCarrito(compacto: true),
+      ],
+    );
+  }
+
+  // --- Selector de vista: ícono flotante fijo en una esquina (pedido
+  // explícito del dueño) ---
+  Widget _botonSelectorVista(String vistaActual) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, right: 10),
+      child: PopupMenuButton<String>(
+        tooltip: 'Vista de la pantalla',
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        icon: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFDFE1E6)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.dashboard_customize_outlined,
+            size: 19,
+            color: Color(0xFF4B4F58),
+          ),
+        ),
+        onSelected: (valor) =>
+            ref.read(registrarVentaVistaProvider.notifier).elegir(valor),
+        itemBuilder: (context) => [
+          _opcionVista(
+            registrarVentaVistaClasica,
+            'Clásica',
+            Icons.view_agenda_outlined,
+            vistaActual,
+          ),
+          _opcionVista(
+            registrarVentaVistaDividida,
+            'Dividida',
+            Icons.vertical_split_outlined,
+            vistaActual,
+          ),
+          _opcionVista(
+            registrarVentaVistaDynamics,
+            'Tabla grande',
+            Icons.table_rows_outlined,
+            vistaActual,
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _opcionVista(
+    String valor,
+    String texto,
+    IconData icono,
+    String vistaActual,
+  ) {
+    final activo = vistaActual == valor;
+    return PopupMenuItem<String>(
+      value: valor,
+      child: Row(
+        children: [
+          Icon(
+            icono,
+            size: 18,
+            color: activo ? const Color(0xFFC62828) : const Color(0xFF4B4F58),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            texto,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: activo ? FontWeight.w700 : FontWeight.w400,
+              color: activo ? const Color(0xFFC62828) : const Color(0xFF25272B),
+            ),
+          ),
+          if (activo) ...[
+            const SizedBox(width: 8),
+            const Icon(Icons.check, size: 16, color: Color(0xFFC62828)),
+          ],
+        ],
       ),
     );
   }
@@ -2702,18 +3897,53 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.4)),
-                        Text(formatearMoneda(carrito.totalAPagar), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                        Text(
+                          'TOTAL A PAGAR',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white70,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        Text(
+                          formatearMoneda(carrito.totalAPagar),
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
                   _guardando
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.2,
+                          ),
+                        )
                       : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(12)),
-                          child: Text(_textoBoton, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC62828),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _textoBoton,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                 ],
               ),
@@ -2730,24 +3960,40 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       spacing: 12,
       runSpacing: 10,
       children: [
-        Text('Registrar Venta', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          'Registrar Venta',
+          style: GoogleFonts.poppins(
+            fontSize: esMovil ? 19 : 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
         _chipUsuarioVenta(),
         OutlinedButton.icon(
           onPressed: _confirmarLimpiar,
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-          label: Text('Limpiar Venta', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text(
+            'Limpiar Venta',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           style: _estiloBotonSecundario(),
         ),
         OutlinedButton.icon(
           onPressed: _guardarEnEspera,
           icon: const Icon(Icons.pause_circle_outline, size: 18),
-          label: Text('Guardar en Espera', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text(
+            'Guardar en Espera',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           style: _estiloBotonSecundario(),
         ),
         OutlinedButton.icon(
           onPressed: _verEnEspera,
           icon: const Icon(Icons.list_alt_outlined, size: 18),
-          label: Text('Ver en Espera', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text(
+            'Ver en Espera',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           style: _estiloBotonSecundario(),
         ),
         OutlinedButton.icon(
@@ -2769,7 +4015,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           child: OutlinedButton.icon(
             onPressed: _verPendientesImpresion,
             icon: const Icon(Icons.print_disabled_outlined, size: 18),
-            label: Text('Pendientes de Impresión', style: GoogleFonts.poppins(fontSize: 13)),
+            label: Text(
+              'Pendientes de Impresión',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
             style: _estiloBotonSecundario(),
           ),
         ),
@@ -2798,11 +4047,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person_outline, size: 18, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+          Icon(
+            Icons.person_outline,
+            size: 18,
+            color: esOverride
+                ? const Color(0xFF9A6A00)
+                : const Color(0xFF1A1A1A),
+          ),
           const SizedBox(width: 6),
           Text(
             'Vendiendo como: ${actual?.nombreCompleto ?? '-'}',
-            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: esOverride
+                  ? const Color(0xFF9A6A00)
+                  : const Color(0xFF1A1A1A),
+            ),
           ),
           if (esOverride) ...[
             const SizedBox(width: 6),
@@ -2821,7 +4082,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.all(4),
-              child: Icon(Icons.swap_horiz, size: 16, color: esOverride ? const Color(0xFF9A6A00) : const Color(0xFF1A1A1A)),
+              child: Icon(
+                Icons.swap_horiz,
+                size: 16,
+                color: esOverride
+                    ? const Color(0xFF9A6A00)
+                    : const Color(0xFF1A1A1A),
+              ),
             ),
           ),
         ],
@@ -2839,11 +4106,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     ref.read(usuarioVentaOverrideProvider.notifier).quitar();
   }
 
-  int get _cantidadPendientesImpresion => ref.watch(ventasPendientesImpresionStreamProvider).value?.length ?? 0;
+  int get _cantidadPendientesImpresion =>
+      ref.watch(ventasPendientesImpresionStreamProvider).value?.length ?? 0;
 
   void _verFacturas() {
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const VerFacturasScreen()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const VerFacturasScreen(),
+      ),
     );
   }
 
@@ -2864,7 +4135,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: child,
     );
@@ -2876,7 +4153,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
@@ -2898,18 +4178,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 width: esMovil ? double.infinity : 160,
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(context: context, initialDate: carrito.fecha, firstDate: DateTime(2020), lastDate: DateTime(2100));
-                    if (fecha != null) ref.read(carritoVentaProvider.notifier).establecerFecha(fecha);
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: carrito.fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (fecha != null)
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerFecha(fecha);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(width: 10),
-                        Flexible(child: Text(formatoFecha.format(carrito.fecha), overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)))),
+                        Flexible(
+                          child: Text(
+                            formatoFecha.format(carrito.fecha),
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -2921,11 +4228,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   initialValue: carrito.tipoDocumento,
                   isExpanded: true,
                   decoration: _decoracion('Tipo de documento'),
-                  style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                  items: tiposDocumento.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                  items: tiposDocumento.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) {
                     if (v == null) return;
-                    ref.read(carritoVentaProvider.notifier).establecerTipoDocumento(v);
+                    ref
+                        .read(carritoVentaProvider.notifier)
+                        .establecerTipoDocumento(v);
                   },
                 ),
               ),
@@ -2966,7 +4285,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               // initState).
                               child: TapRegion(
                                 groupId: 'sugerencias-cliente',
-                                onTapOutside: (_) => _ocultarSugerenciasCliente(),
+                                onTapOutside: (_) =>
+                                    _ocultarSugerenciasCliente(),
                                 child: CampoTecladoCompacto(
                                   controller: _nombreClienteController,
                                   numerico: false,
@@ -2980,7 +4300,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                     style: GoogleFonts.poppins(fontSize: 13),
                                     decoration: _decoracion('Cliente').copyWith(
                                       hintText: 'Vacío = Consumidor Final',
-                                      hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
+                                      hintStyle: GoogleFonts.poppins(
+                                        fontSize: 11.5,
+                                        color: Colors.grey.shade400,
+                                      ),
                                     ),
                                     // Si el cajero tipea acá directo (no usó
                                     // el buscador), el vínculo real a un
@@ -2991,8 +4314,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                     // clientes ya registrados que coincidan
                                     // con lo tipeado.
                                     onChanged: (v) {
-                                      ref.read(carritoVentaProvider.notifier).establecerNombreClienteManual(v);
-                                      if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
+                                      ref
+                                          .read(carritoVentaProvider.notifier)
+                                          .establecerNombreClienteManual(v);
+                                      if (_clienteVinculado != null)
+                                        setState(
+                                          () => _clienteVinculado = null,
+                                        );
                                       _actualizarSugerenciasCliente(v);
                                     },
                                   ),
@@ -3004,7 +4332,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     IconButton(
                       onPressed: _buscarCliente,
                       icon: const Icon(Icons.search),
-                      style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFE8EAF0),
+                        padding: const EdgeInsets.all(14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                     // Visible con un cliente vinculado a esta venta (elegido
                     // por el buscador, o cargado de una venta duplicada):
@@ -3016,7 +4350,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         tooltip: 'Completar datos del cliente',
                         onPressed: _completarDatosCliente,
                         icon: const Icon(Icons.person_add_alt_1_outlined),
-                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFE8EAF0),
+                          padding: const EdgeInsets.all(14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -3028,17 +4368,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   controller: _documentoClienteController,
                   numerico: false,
                   child: TextField(
-                  inputFormatters: [mayusculasInputFormatter],
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  controller: _documentoClienteController,
-                  style: GoogleFonts.poppins(fontSize: 13),
-                  decoration: _decoracion('RTN / Documento'),
-                  onChanged: (v) {
-                    ref.read(carritoVentaProvider.notifier).establecerDocumentoCliente(v);
-                    if (_clienteVinculado != null) setState(() => _clienteVinculado = null);
-                  },
-                ),
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _documentoClienteController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('RTN / Documento'),
+                    onChanged: (v) {
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerDocumentoCliente(v);
+                      if (_clienteVinculado != null)
+                        setState(() => _clienteVinculado = null);
+                    },
+                  ),
                 ),
               ),
               SizedBox(
@@ -3047,7 +4390,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   initialValue: carrito.condicion,
                   isExpanded: true,
                   decoration: _decoracion('Condición'),
-                  style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
                     DropdownMenuItem(value: 'Credito', child: Text('Crédito')),
@@ -3056,7 +4402,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       ? null
                       : (v) {
                           if (v == null) return;
-                          ref.read(carritoVentaProvider.notifier).establecerCondicion(v);
+                          ref
+                              .read(carritoVentaProvider.notifier)
+                              .establecerCondicion(v);
                         },
                 ),
               ),
@@ -3064,30 +4412,53 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 SizedBox(
                   width: esMovil ? double.infinity : 160,
                   child: DropdownButtonFormField<String>(
-                    initialValue: _metodosPago.contains(carrito.metodoPago) ? carrito.metodoPago : null,
+                    initialValue: _metodosPago.contains(carrito.metodoPago)
+                        ? carrito.metodoPago
+                        : null,
                     isExpanded: true,
                     decoration: _decoracion('Método de pago'),
-                    style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                    items: _metodosPago.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                    items: _metodosPago
+                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .toList(),
                     onChanged: (v) {
                       if (v == null) return;
-                      ref.read(carritoVentaProvider.notifier).establecerMetodoPago(v);
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerMetodoPago(v);
                     },
                   ),
                 ),
               InkWell(
-                onTap: () => setState(() => _datosExpandidos = !_datosExpandidos),
+                onTap: () =>
+                    setState(() => _datosExpandidos = !_datosExpandidos),
                 borderRadius: BorderRadius.circular(10),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         _datosExpandidos ? 'Ver menos' : 'Más datos',
-                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFC62828),
+                        ),
                       ),
-                      Icon(_datosExpandidos ? Icons.expand_less : Icons.expand_more, size: 20, color: const Color(0xFFC62828)),
+                      Icon(
+                        _datosExpandidos
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        size: 20,
+                        color: const Color(0xFFC62828),
+                      ),
                     ],
                   ),
                 ),
@@ -3111,7 +4482,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       children: [
                         Divider(color: Colors.grey.shade200),
                         const SizedBox(height: 14),
-                        Text('Descuento y campos fiscales de uso poco frecuente', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(
+                          'Descuento y campos fiscales de uso poco frecuente',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 14,
@@ -3125,25 +4502,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                   onTap: () async {
                                     final fecha = await showDatePicker(
                                       context: context,
-                                      initialDate: carrito.fechaVencimiento ?? DateTime.now().add(const Duration(days: 30)),
+                                      initialDate:
+                                          carrito.fechaVencimiento ??
+                                          DateTime.now().add(
+                                            const Duration(days: 30),
+                                          ),
                                       firstDate: DateTime(2020),
                                       lastDate: DateTime(2100),
                                     );
-                                    if (fecha != null) ref.read(carritoVentaProvider.notifier).establecerFechaVencimiento(fecha);
+                                    if (fecha != null)
+                                      ref
+                                          .read(carritoVentaProvider.notifier)
+                                          .establecerFechaVencimiento(fecha);
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8EAF0),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     child: Row(
                                       children: [
-                                        Icon(Icons.event_outlined, size: 16, color: Colors.grey.shade500),
+                                        Icon(
+                                          Icons.event_outlined,
+                                          size: 16,
+                                          color: Colors.grey.shade500,
+                                        ),
                                         const SizedBox(width: 10),
                                         Flexible(
                                           child: Text(
                                             'Vence: ${carrito.fechaVencimiento != null ? formatoFecha.format(carrito.fechaVencimiento!) : 'Sin definir'}',
                                             overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              color: const Color(0xFF1A1A1A),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -3161,8 +4558,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                     controller: _telefonoCreditoController,
                                     keyboardType: TextInputType.phone,
                                     style: GoogleFonts.poppins(fontSize: 13),
-                                    decoration: _decoracion('Teléfono para avisos de crédito'),
-                                    onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerTelefonoCredito(v),
+                                    decoration: _decoracion(
+                                      'Teléfono para avisos de crédito',
+                                    ),
+                                    onChanged: (v) => ref
+                                        .read(carritoVentaProvider.notifier)
+                                        .establecerTelefonoCredito(v),
                                   ),
                                 ),
                               ),
@@ -3172,19 +4573,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 controller: _descuentoGlobalController,
                                 numerico: true,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _descuentoGlobalController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('Descuento global (%) sobre toda la venta'),
-                                onChanged: (v) {
-                                  final valor = double.tryParse(v.replaceAll(',', '').trim());
-                                  if (valor == null || valor < 0 || valor > 100) return;
-                                  ref.read(carritoVentaProvider.notifier).establecerDescuentoGlobal(valor);
-                                },
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _descuentoGlobalController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Descuento global (%) sobre toda la venta',
+                                  ),
+                                  onChanged: (v) {
+                                    final valor = double.tryParse(
+                                      v.replaceAll(',', '').trim(),
+                                    );
+                                    if (valor == null ||
+                                        valor < 0 ||
+                                        valor > 100)
+                                      return;
+                                    ref
+                                        .read(carritoVentaProvider.notifier)
+                                        .establecerDescuentoGlobal(valor);
+                                  },
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -3193,15 +4606,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 controller: _ocController,
                                 numerico: false,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                enabled: !carrito.esCotizacion,
-                                controller: _ocController,
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('No. O/C exenta'),
-                                onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerOc(v),
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _ocController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. O/C exenta'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerOc(v),
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -3210,15 +4625,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 controller: _regExoneradoController,
                                 numerico: false,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                enabled: !carrito.esCotizacion,
-                                controller: _regExoneradoController,
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('No. Reg. exonerado'),
-                                onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerRegExonerado(v),
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _regExoneradoController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. Reg. exonerado'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerRegExonerado(v),
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -3227,15 +4644,17 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 controller: _regSagController,
                                 numerico: false,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                enabled: !carrito.esCotizacion,
-                                controller: _regSagController,
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('No. Reg. SAG'),
-                                onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerRegSag(v),
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _regSagController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. Reg. SAG'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerRegSag(v),
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -3244,18 +4663,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 controller: _observacionesController,
                                 numerico: false,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _observacionesController,
-                                maxLines: 2,
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('Observaciones (se imprimen en la factura)'),
-                                onChanged: (v) => ref.read(carritoVentaProvider.notifier).establecerObservaciones(v),
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _observacionesController,
+                                  maxLines: 2,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Observaciones (se imprimen en la factura)',
+                                  ),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerObservaciones(v),
+                                ),
                               ),
                             ),
-                            SizedBox(width: double.infinity, child: _chipEnvio()),
+                            SizedBox(
+                              width: double.infinity,
+                              child: _chipEnvio(),
+                            ),
                           ],
                         ),
                       ],
@@ -3285,49 +4711,61 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       numerico: false,
       onSubmitted: (_) => _confirmarCodigoBarras(),
       child: TextField(
-      inputFormatters: [mayusculasInputFormatter],
-      autocorrect: false,
-      enableSuggestions: false,
-      controller: _ctrlCodigoBarras,
-      focusNode: _focusCodigoBarras,
-      onSubmitted: (_) => _confirmarCodigoBarras(),
-    ),
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
+        controller: _ctrlCodigoBarras,
+        focusNode: _focusCodigoBarras,
+        onSubmitted: (_) => _confirmarCodigoBarras(),
+      ),
     );
   }
 
-  Widget _tarjetaCarritoGrande(CarritoVentaState carrito, bool esMovil, {double? altoMaximoTabla}) {
+  // Descarta los TextEditingController/FocusNode por índice de fila (ver
+  // _ctrlCantidad/_ctrlPrecio/etc.) cuando cambia la cantidad de líneas del
+  // carrito -si no, un índice viejo terminaría reusando el controller de
+  // otra fila-. Se llama una sola vez por build() (ver build()), ANTES de
+  // decidir qué vista dibujar, porque las 3 vistas (clásica/dividida/
+  // dynamics) terminan mostrando filas del carrito con estos mismos
+  // controllers.
+  void _sincronizarControladoresItems(CarritoVentaState carrito) {
+    if (carrito.items.length == _conteoItemsControladores) return;
+    for (final c in _ctrlCantidad.values) {
+      c.dispose();
+    }
+    for (final c in _ctrlPrecio.values) {
+      c.dispose();
+    }
+    for (final c in _ctrlDescuento.values) {
+      c.dispose();
+    }
+    _ctrlCantidad.clear();
+    _ctrlPrecio.clear();
+    _ctrlDescuento.clear();
+    for (final c in _ctrlDescripcion.values) {
+      c.dispose();
+    }
+    _ctrlDescripcion.clear();
+    for (final f in _focusInline.values) {
+      f.dispose();
+    }
+    _focusInline.clear();
+    _confirmarInline.clear();
+    for (final f in _focusDescripcion.values) {
+      f.dispose();
+    }
+    _focusDescripcion.clear();
+    _confirmarDescripcion.clear();
+    _conteoItemsControladores = carrito.items.length;
+  }
+
+  Widget _tarjetaCarritoGrande(
+    CarritoVentaState carrito,
+    bool esMovil, {
+    double? altoMaximoTabla,
+  }) {
     final productos = ref.watch(productosStreamProvider).value ?? [];
     final mapaProductos = {for (final p in productos) p.id: p};
-
-    if (carrito.items.length != _conteoItemsControladores) {
-      for (final c in _ctrlCantidad.values) {
-        c.dispose();
-      }
-      for (final c in _ctrlPrecio.values) {
-        c.dispose();
-      }
-      for (final c in _ctrlDescuento.values) {
-        c.dispose();
-      }
-      _ctrlCantidad.clear();
-      _ctrlPrecio.clear();
-      _ctrlDescuento.clear();
-      for (final c in _ctrlDescripcion.values) {
-        c.dispose();
-      }
-      _ctrlDescripcion.clear();
-      for (final f in _focusInline.values) {
-        f.dispose();
-      }
-      _focusInline.clear();
-      _confirmarInline.clear();
-      for (final f in _focusDescripcion.values) {
-        f.dispose();
-      }
-      _focusDescripcion.clear();
-      _confirmarDescripcion.clear();
-      _conteoItemsControladores = carrito.items.length;
-    }
 
     return Container(
       width: double.infinity,
@@ -3336,7 +4774,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3345,7 +4789,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Productos en la venta',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -3362,12 +4812,26 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             // escritorio (más ancho, sin "Escanear" al lado)
                             // se deja el texto completo.
                             label: Text(
-                              _esPlataformaMovil ? 'Agregar' : 'Agregar Producto',
+                              _esPlataformaMovil
+                                  ? 'Agregar'
+                                  : 'Agregar Producto',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ),
                         if (_esPlataformaMovil) ...[
@@ -3375,12 +4839,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           OutlinedButton.icon(
                             onPressed: _escanearConCamara,
                             icon: const Icon(Icons.qr_code_scanner, size: 16),
-                            label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            label: Text(
+                              'Escanear',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1A1A1A),
                               side: const BorderSide(color: Color(0xFFB6BCC7)),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -3388,7 +4863,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         IconButton(
                           tooltip: 'Ver promociones vigentes',
                           onPressed: _abrirPromocionesVigentes,
-                          icon: const Icon(Icons.local_offer_outlined, size: 20),
+                          icon: const Icon(
+                            Icons.local_offer_outlined,
+                            size: 20,
+                          ),
                           color: Colors.grey.shade600,
                         ),
                         IconButton(
@@ -3399,7 +4877,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         ),
                         IconButton(
                           tooltip: 'Calculadora de pintura',
-                          onPressed: () => _calculadoraRendimiento.abrir(context),
+                          onPressed: () =>
+                              _calculadoraRendimiento.abrir(context),
                           icon: const Icon(Icons.straighten, size: 20),
                           color: Colors.grey.shade600,
                         ),
@@ -3409,7 +4888,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 )
               : Row(
                   children: [
-                    Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Productos en la venta',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(width: 14),
                     // En escritorio va acá, chico, en vez de en su propia
                     // fila abajo: con varios productos en la venta, esa
@@ -3454,36 +4939,87 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       OutlinedButton.icon(
                         onPressed: _escanearConCamara,
                         icon: const Icon(Icons.qr_code_scanner, size: 18),
-                        label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                        label: Text(
+                          'Escanear',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1A1A1A),
                           side: const BorderSide(color: Color(0xFFB6BCC7)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 13,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                     ],
                     OutlinedButton.icon(
                       onPressed: _abrirEscaneoRemoto,
-                      icon: Icon(_escaneoRemotoConectado ? Icons.wifi_tethering : Icons.qr_code_scanner, size: 18, color: _escaneoRemotoConectado ? Colors.green.shade600 : null),
+                      icon: Icon(
+                        _escaneoRemotoConectado
+                            ? Icons.wifi_tethering
+                            : Icons.qr_code_scanner,
+                        size: 18,
+                        color: _escaneoRemotoConectado
+                            ? Colors.green.shade600
+                            : null,
+                      ),
                       label: Text(
-                        _escaneoRemotoConectado ? 'Escaneo activo' : 'Escanear con celular',
-                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _escaneoRemotoConectado ? Colors.green.shade700 : null),
+                        _escaneoRemotoConectado
+                            ? 'Escaneo activo'
+                            : 'Escanear con celular',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _escaneoRemotoConectado
+                              ? Colors.green.shade700
+                              : null,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF1A1A1A),
-                        side: BorderSide(color: _escaneoRemotoConectado ? Colors.green.shade400 : const Color(0xFFB6BCC7)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(
+                          color: _escaneoRemotoConectado
+                              ? Colors.green.shade400
+                              : const Color(0xFFB6BCC7),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     FilledButton.icon(
                       onPressed: _agregarProductoDesdeBusqueda,
                       icon: const Icon(Icons.add, size: 18),
-                      label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      label: Text(
+                        'Agregar Producto',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -3495,7 +5031,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Text('Precio unitario:', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                Text(
+                  'Precio unitario:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
                 const SizedBox(width: 10),
                 _selectorPrecioIsvCarrito(),
               ],
@@ -3529,7 +5071,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-                  _filaCarritoMovil(i, carrito.items[i], mapaProductos, carrito.items.length),
+                  _filaCarritoMovil(
+                    i,
+                    carrito.items[i],
+                    mapaProductos,
+                    carrito.items.length,
+                  ),
                 ],
               ],
             )
@@ -3541,7 +5088,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
-                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                child: Text(
+                  'Viendo la tabla ampliada…',
+                  style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                ),
               ),
             )
           else if (_tablaConScrollPropio(esMovil))
@@ -3559,8 +5109,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: carrito.items.length,
-                separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                separatorBuilder: (context, i) =>
+                    Divider(height: 1, color: Colors.grey.shade200),
+                itemBuilder: (context, i) => _filaCarritoTabla(
+                  i,
+                  carrito.items[i],
+                  mapaProductos,
+                  carrito.items.length,
+                ),
               ),
             )
           else
@@ -3577,7 +5133,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-                  _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                  _filaCarritoTabla(
+                    i,
+                    carrito.items[i],
+                    mapaProductos,
+                    carrito.items.length,
+                  ),
                 ],
               ],
             ),
@@ -3590,7 +5151,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // diálogo aparte (ver _expandirTablaProductos): _alternarVistaPrecioCarrito
   // ya actualiza el estado real con su propio setState, pero eso no alcanza
   // para refrescar lo que ese diálogo ya dibujó, al ser una ruta aparte.
-  Widget _selectorPrecioIsvCarrito({bool compacto = false, VoidCallback? alCambiarExtra}) {
+  Widget _selectorPrecioIsvCarrito({
+    bool compacto = false,
+    VoidCallback? alCambiarExtra,
+  }) {
     Widget opcion(String texto, bool valor) {
       final activo = _precioCarritoConIsv == valor;
       return InkWell(
@@ -3601,14 +5165,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         borderRadius: BorderRadius.circular(9),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: EdgeInsets.symmetric(horizontal: compacto ? 8 : 12, vertical: compacto ? 5 : 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: compacto ? 8 : 12,
+            vertical: compacto ? 5 : 8,
+          ),
           decoration: BoxDecoration(
             color: activo ? const Color(0xFFC62828) : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
           ),
           child: Text(
             texto,
-            style: GoogleFonts.poppins(fontSize: compacto ? 10.5 : 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72)),
+            style: GoogleFonts.poppins(
+              fontSize: compacto ? 10.5 : 12,
+              fontWeight: FontWeight.w600,
+              color: activo ? Colors.white : const Color(0xFF666A72),
+            ),
           ),
         ),
       );
@@ -3616,13 +5187,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(11), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          opcion('Con ISV', true),
-          opcion('Sin ISV', false),
-        ],
+        children: [opcion('Con ISV', true), opcion('Sin ISV', false)],
       ),
     );
   }
@@ -3654,7 +5226,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             width: tamano.width - 16,
             height: tamano.height - 16,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: StatefulBuilder(
               builder: (context, setDialogState) {
                 // Se guarda para que el build() de esta pantalla (que sí
@@ -3670,9 +5245,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('Productos en la venta', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                        Text(
+                          'Productos en la venta',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(width: 14),
-                        _selectorPrecioIsvCarrito(compacto: true, alCambiarExtra: () => setDialogState(() {})),
+                        _selectorPrecioIsvCarrito(
+                          compacto: true,
+                          alCambiarExtra: () => setDialogState(() {}),
+                        ),
                         const SizedBox(width: 10),
                         // Sigue funcionando igual que en la pantalla normal:
                         // abre el mismo buscador, y lo que se elija ahí se
@@ -3684,16 +5268,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         OutlinedButton.icon(
                           onPressed: _agregarProductoDesdeBusqueda,
                           icon: const Icon(Icons.add, size: 18),
-                          label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          label: Text(
+                            'Agregar Producto',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF1A1A1A),
                             side: const BorderSide(color: Color(0xFFB6BCC7)),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                         const Spacer(),
-                        IconButton(tooltip: 'Cerrar', icon: const Icon(Icons.close), onPressed: () => Navigator.pop(dialogContext)),
+                        IconButton(
+                          tooltip: 'Cerrar',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(dialogContext),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -3702,12 +5301,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     Expanded(
                       child: carrito.items.isEmpty
                           ? Center(
-                              child: Text('Todavía no agregaste productos.', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                              child: Text(
+                                'Todavía no agregaste productos.',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
                             )
                           : ListView.separated(
                               itemCount: carrito.items.length,
-                              separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                              itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                              separatorBuilder: (context, i) => Divider(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+                              itemBuilder: (context, i) => _filaCarritoTabla(
+                                i,
+                                carrito.items[i],
+                                mapaProductos,
+                                carrito.items.length,
+                              ),
                             ),
                     ),
                     const SizedBox(height: 10),
@@ -3741,10 +5353,24 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+          Text(
+            etiqueta.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade500,
+              letterSpacing: 0.3,
+            ),
+          ),
           Text(
             formatearMoneda(valor),
-            style: GoogleFonts.poppins(fontSize: destacado ? 15 : 12.5, fontWeight: FontWeight.w800, color: destacado ? const Color(0xFFC62828) : const Color(0xFF1A1A1A)),
+            style: GoogleFonts.poppins(
+              fontSize: destacado ? 15 : 12.5,
+              fontWeight: FontWeight.w800,
+              color: destacado
+                  ? const Color(0xFFC62828)
+                  : const Color(0xFF1A1A1A),
+            ),
           ),
         ],
       );
@@ -3752,7 +5378,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F3F7),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           total('Subtotal', carrito.subtotal),
@@ -3765,10 +5394,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             height: 38,
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarVenta,
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               child: _guardando
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text(_textoBoton, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      _textoBoton,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -3777,17 +5426,45 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   Widget _encabezadoTablaCarrito() {
-    final estilo = GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estilo = GoogleFonts.poppins(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      color: Colors.grey.shade600,
+    );
     return Row(
       children: [
         const SizedBox(width: 28),
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 4, child: Text('Descripción', style: estilo)),
         Expanded(flex: 2, child: Text('Código Color', style: estilo)),
-        Expanded(flex: 2, child: Text('Cantidad', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text(_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text('Descuento %', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text(_precioCarritoConIsv ? 'Importe (c/ISV)' : 'Importe (s/ISV)', textAlign: TextAlign.right, style: estilo)),
+        Expanded(
+          flex: 2,
+          child: Text('Cantidad', textAlign: TextAlign.center, style: estilo),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            _precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Descuento %',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            _precioCarritoConIsv ? 'Importe (c/ISV)' : 'Importe (s/ISV)',
+            textAlign: TextAlign.right,
+            style: estilo,
+          ),
+        ),
         const SizedBox(width: 32),
         const SizedBox(width: 40),
       ],
@@ -3812,14 +5489,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // usa el [valorActual]/[alConfirmar] vigentes en vez de quedar atado a los
   // del primer build. La guarda de "no cambió respecto al ya aplicado" evita
   // volver a llamar a alConfirmar y así el problema original no vuelve.
-  Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
+  Widget _campoInlineNumero(
+    String claveFoco,
+    TextEditingController controlador,
+    double valorActual,
+    void Function(double) alConfirmar, {
+    String? sufijo,
+    String? prefijo,
+    bool dosDecimales = false,
+  }) {
     // Antes esto agrupaba "Android/iOS" sin importar si era la app (APK) o
     // el navegador del celular, y ambos se quedaban con el teclado nativo
     // del sistema. Ahora solo la app nativa lo conserva: el navegador del
     // celular (ver _esWebMovil) pasa a abrir el mismo teclado numérico en
     // pantalla que ya usa escritorio, para no depender del teclado nativo
     // del navegador (que tapa media pantalla y deja ver el cursor).
-    final esMovilNativo = !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+    final esMovilNativo =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
 
     final focusNode = _focusInline.putIfAbsent(claveFoco, () {
       final node = FocusNode();
@@ -3872,6 +5560,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         _focusCodigoBarras.requestFocus();
       }
     }
+
     _confirmarInline[claveFoco] = confirmar;
 
     Future<void> abrirTecladoNumerico() async {
@@ -3896,27 +5585,36 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       numerico: true,
       onSubmitted: (_) => confirmar(),
       child: TextField(
-      inputFormatters: [mayusculasInputFormatter],
-      autocorrect: false,
-      enableSuggestions: false,
-      controller: controlador,
-      focusNode: focusNode,
-      textAlign: TextAlign.center,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: GoogleFonts.poppins(fontSize: 13),
-      decoration: InputDecoration(
-        suffixText: sufijo,
-        prefixText: prefijo,
-        prefixStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
-        filled: true,
-        fillColor: const Color(0xFFE8EAF0),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
+        controller: controlador,
+        focusNode: focusNode,
+        textAlign: TextAlign.center,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: GoogleFonts.poppins(fontSize: 13),
+        decoration: InputDecoration(
+          suffixText: sufijo,
+          prefixText: prefijo,
+          prefixStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+          ),
+          filled: true,
+          fillColor: const Color(0xFFE8EAF0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
+          ),
+        ),
+        onSubmitted: (_) => confirmar(),
+        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       ),
-      onSubmitted: (_) => confirmar(),
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-    ),
     );
 
     if (esMovilNativo) return campo;
@@ -3939,13 +5637,33 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {bool dosDecimales = false, String? prefijo, String? sufijo}) {
+  Widget _campoInlineConEtiqueta(
+    String claveFoco,
+    String etiqueta,
+    TextEditingController controlador,
+    double valorActual,
+    void Function(double) alConfirmar, {
+    bool dosDecimales = false,
+    String? prefijo,
+    String? sufijo,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+        Text(
+          etiqueta,
+          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+        ),
         const SizedBox(height: 4),
-        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar, prefijo: prefijo, sufijo: sufijo, dosDecimales: dosDecimales),
+        _campoInlineNumero(
+          claveFoco,
+          controlador,
+          valorActual,
+          alConfirmar,
+          prefijo: prefijo,
+          sufijo: sufijo,
+          dosDecimales: dosDecimales,
+        ),
       ],
     );
   }
@@ -3956,7 +5674,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // especial antes de aplicar el cambio (y revierte el texto si la cancelan
   // o la clave es incorrecta).
   Widget _campoDescripcion(int index, dynamic item) {
-    final ctrl = _ctrlDescripcion.putIfAbsent(index, () => TextEditingController(text: item.nombreProducto as String));
+    final ctrl = _ctrlDescripcion.putIfAbsent(
+      index,
+      () => TextEditingController(text: item.nombreProducto as String),
+    );
 
     Future<void> confirmar() async {
       final nuevoTexto = ctrl.text.trim();
@@ -3966,17 +5687,26 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         return;
       }
       if (nuevoTexto == nombreActual) return;
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final negocio = await ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
       if (negocio.tienePermiso(PermisosEspeciales.ventasEditarDescripcion)) {
         if (!mounted) return;
-        final permitido = await verificarAccesoEspecial(context, ref, PermisosEspeciales.ventasEditarDescripcion);
+        final permitido = await verificarAccesoEspecial(
+          context,
+          ref,
+          PermisosEspeciales.ventasEditarDescripcion,
+        );
         if (!permitido) {
           ctrl.text = nombreActual;
           return;
         }
       }
-      ref.read(carritoVentaProvider.notifier).actualizarDescripcion(index, nuevoTexto);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .actualizarDescripcion(index, nuevoTexto);
     }
+
     _confirmarDescripcion[index] = confirmar;
 
     final focusNode = _focusDescripcion.putIfAbsent(index, () {
@@ -3995,36 +5725,64 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           controller: ctrl,
           numerico: false,
           child: TextField(
-          inputFormatters: [mayusculasInputFormatter],
-          autocorrect: false,
-          enableSuggestions: false,
-          controller: ctrl,
-          focusNode: focusNode,
-          // Sin límite de líneas: un nombre largo pasa a una segunda línea
-          // en vez de desplazarse fuera de vista dentro de un campo de una
-          // sola línea. Como contrapartida, Enter ya no confirma el cambio
-          // (inserta un salto de línea, como en cualquier campo multilínea);
-          // tocar fuera del campo lo sigue confirmando igual.
-          maxLines: null,
-          minLines: 1,
-          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-          decoration: const InputDecoration(isDense: true, border: InputBorder.none, contentPadding: EdgeInsets.zero),
-          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+            inputFormatters: [mayusculasInputFormatter],
+            autocorrect: false,
+            enableSuggestions: false,
+            controller: ctrl,
+            focusNode: focusNode,
+            // Sin límite de líneas: un nombre largo pasa a una segunda línea
+            // en vez de desplazarse fuera de vista dentro de un campo de una
+            // sola línea. Como contrapartida, Enter ya no confirma el cambio
+            // (inserta un salto de línea, como en cualquier campo multilínea);
+            // tocar fuera del campo lo sigue confirmando igual.
+            maxLines: null,
+            minLines: 1,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+          ),
         ),
-        ),
-        if (item.reembasado as bool) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+        if (item.reembasado as bool)
+          Text(
+            'Reembasado',
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              color: Colors.grey.shade400,
+            ),
+          ),
         // Para una línea de tinte suelto, se aclara acá "X onzas × L Y.YY/oz"
         // -pedido explícito del dueño: que la línea se lea en la unidad en
         // la que el cajero de verdad piensa (onzas), no en cuartos-. Es
         // puramente de lectura: cantidad/precioVenta reales de la línea
         // siguen en cuartos, no cambia nada de lo que se guarda.
         if (_esLineaTinte(item))
-          Builder(builder: (context) {
-            final onzas = (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
-            final precioPorCuarto = _precioCarritoConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : (item.precioVenta as double);
-            final precioPorOnza = _precioUnitarioMostrado(item, precioPorCuarto);
-            return Text('${_formatoCantidad(onzas)} oz × ${formatearMoneda(precioPorOnza)}/oz', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500));
-          }),
+          Builder(
+            builder: (context) {
+              final onzas =
+                  (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
+              final precioPorCuarto = _precioCarritoConIsv
+                  ? redondearMoneda((item.precioVenta as double) * 1.15)
+                  : (item.precioVenta as double);
+              final precioPorOnza = _precioUnitarioMostrado(
+                item,
+                precioPorCuarto,
+              );
+              return Text(
+                '${_formatoCantidad(onzas)} oz × ${formatearMoneda(precioPorOnza)}/oz',
+                style: GoogleFonts.poppins(
+                  fontSize: 10.5,
+                  color: Colors.grey.shade500,
+                ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -4059,12 +5817,18 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           // final", pedido explícito del dueño: item.precioVenta se
           // guarda sin ISV puertas adentro del carrito (ver
           // CodigosColorDialog.precioVentaProductoBase/precioConIsv).
-          precioVentaProductoBase: redondearMoneda((item.precioVenta as double) * 1.15),
+          precioVentaProductoBase: redondearMoneda(
+            (item.precioVenta as double) * 1.15,
+          ),
         ),
       );
       if (resultado == null) return;
-      ref.read(carritoVentaProvider.notifier).actualizarCodigosColor(index, resultado.codigos);
-      ref.read(carritoVentaProvider.notifier).actualizarTintesConsumidos(index, resultado.tintes);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .actualizarCodigosColor(index, resultado.codigos);
+      ref
+          .read(carritoVentaProvider.notifier)
+          .actualizarTintesConsumidos(index, resultado.tintes);
     }
 
     // El costo del tinte -antes se agregaba acá como "· L 45.00" pegado al
@@ -4074,7 +5838,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // sigue viéndose igual que siempre en el paso de SELECCIÓN, dentro de
     // CodigosColorDialog/SeleccionarFormulaDialog, antes de confirmar la
     // línea -eso no se tocó-.
-    final texto = codigos.isEmpty ? 'Color' : (codigos.length == 1 ? codigos.first : '${codigos.first} +${codigos.length - 1}');
+    final texto = codigos.isEmpty
+        ? 'Color'
+        : (codigos.length == 1
+              ? codigos.first
+              : '${codigos.first} +${codigos.length - 1}');
     final tieneAlgo = codigos.isNotEmpty || tintes.isNotEmpty;
 
     return InkWell(
@@ -4085,18 +5853,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         decoration: BoxDecoration(
           color: tieneAlgo ? const Color(0xFFFBEAEA) : const Color(0xFFE8EAF0),
           borderRadius: BorderRadius.circular(8),
-          border: tieneAlgo ? Border.all(color: const Color(0xFFC62828).withOpacity(0.35)) : null,
+          border: tieneAlgo
+              ? Border.all(color: const Color(0xFFC62828).withOpacity(0.35))
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.palette_outlined, size: 14, color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade500),
+            Icon(
+              Icons.palette_outlined,
+              size: 14,
+              color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade500,
+            ),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
                 texto,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade600),
+                style: GoogleFonts.poppins(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: tieneAlgo
+                      ? const Color(0xFFC62828)
+                      : Colors.grey.shade600,
+                ),
               ),
             ),
           ],
@@ -4112,16 +5892,29 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// producto por primera vez, más el mismo calculador de margen/precio por
   /// onza (cost basis: costo FIFO actual del propio tinte, igual que en
   /// _ofrecerConversionOnzas).
-  Widget _campoCantidadTintaInline(int index, dynamic item, ProductoModel? producto) {
-    final onzasActuales = (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
+  Widget _campoCantidadTintaInline(
+    int index,
+    dynamic item,
+    ProductoModel? producto,
+  ) {
+    final onzasActuales =
+        (item.cantidad as double) * CostoTinteService.onzasPorCuarto;
 
     Future<void> editar() async {
       var costoPorOnza = 0.0;
       if (producto != null) {
         final colorante = producto.nombre.replaceFirst('COLORANTE ', '').trim();
-        final costeo = await CostoTinteService().calcular([UsoTinte(colorante: colorante, onzas: CostoTinteService.onzasPorCuarto, productoConocido: producto)]);
+        final costeo = await CostoTinteService().calcular([
+          UsoTinte(
+            colorante: colorante,
+            onzas: CostoTinteService.onzasPorCuarto,
+            productoConocido: producto,
+          ),
+        ]);
         if (!mounted) return;
-        if (costeo.isNotEmpty && costeo.first.resuelto) costoPorOnza = costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto;
+        if (costeo.isNotEmpty && costeo.first.resuelto)
+          costoPorOnza =
+              costeo.first.costoUnitario / CostoTinteService.onzasPorCuarto;
       }
       if (!mounted) return;
 
@@ -4132,27 +5925,50 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // aplica más abajo como precioConIsv directo (ver
       // "precioPorCuartoConIsv" tras cerrar el diálogo), así que tiene que
       // estar en esa misma unidad de punta a punta.
-      final precioActualPorCuartoConIsv = redondearMoneda((item.precioVenta as double) * 1.15);
-      final precioPorOnzaActual = _precioUnitarioMostrado(item, precioActualPorCuartoConIsv);
+      final precioActualPorCuartoConIsv = redondearMoneda(
+        (item.precioVenta as double) * 1.15,
+      );
+      final precioPorOnzaActual = _precioUnitarioMostrado(
+        item,
+        precioActualPorCuartoConIsv,
+      );
 
       final confirmado = await showDialog<bool>(
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('¿Cuántas onzas?', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(
+                '¿Cuántas onzas?',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CampoCantidadTinte(valorInicial: onzasActuales, onChanged: (v) => setStateDialog(() => nuevasOnzas = v)),
+                    CampoCantidadTinte(
+                      valorInicial: onzasActuales,
+                      onChanged: (v) => setStateDialog(() => nuevasOnzas = v),
+                    ),
                     if (costoPorOnza > 0) ...[
                       const SizedBox(height: 16),
                       Divider(height: 1, color: Colors.grey.shade300),
                       const SizedBox(height: 12),
-                      Text('¿A cuánto se vende la onza?', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                      Text(
+                        '¿A cuánto se vende la onza?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       CampoMargenPrecioVenta(
                         costoBase: costoPorOnza,
@@ -4165,11 +5981,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text('Cancelar', style: GoogleFonts.poppins()),
+                ),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
-                  child: Text('Confirmar', style: GoogleFonts.poppins(color: Colors.white)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                  ),
+                  child: Text(
+                    'Confirmar',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
                 ),
               ],
             );
@@ -4181,7 +6005,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         _mostrarMensaje('La cantidad debe ser mayor a 0');
         return;
       }
-      await _actualizarCantidad(index, nuevasOnzas / CostoTinteService.onzasPorCuarto);
+      await _actualizarCantidad(
+        index,
+        nuevasOnzas / CostoTinteService.onzasPorCuarto,
+      );
       if (!mounted || precioPorOnzaElegido == null) return;
       // Optimista: si el permiso especial se niega, _actualizarPrecio ya
       // revierte este mismo campo al valor real (ver su comentario) -mismo
@@ -4189,9 +6016,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // calculador siempre trabaja en precio CON ISV (ver etiquetaPrecio
       // arriba); si en este momento la columna de precio está mostrando
       // SIN ISV, hay que convertir antes de escribirlo en el campo.
-      final precioPorOnzaMostrado = _precioCarritoConIsv ? precioPorOnzaElegido! : redondearMoneda(precioPorOnzaElegido! / 1.15);
+      final precioPorOnzaMostrado = _precioCarritoConIsv
+          ? precioPorOnzaElegido!
+          : redondearMoneda(precioPorOnzaElegido! / 1.15);
       _ctrlPrecio[index]?.text = precioPorOnzaMostrado.toStringAsFixed(2);
-      final precioPorCuartoConIsv = redondearMoneda(precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto);
+      final precioPorCuartoConIsv = redondearMoneda(
+        precioPorOnzaElegido! * CostoTinteService.onzasPorCuarto,
+      );
       await _actualizarPrecio(index, precioPorCuartoConIsv);
     }
 
@@ -4201,34 +6032,70 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10)),
-        child: Text('${_formatoCantidad(onzasActuales)} oz', style: GoogleFonts.poppins(fontSize: 13)),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8EAF0),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          '${_formatoCantidad(onzasActuales)} oz',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
       ),
     );
   }
 
-  Widget _campoCantidadTintaInlineConEtiqueta(int index, dynamic item, ProductoModel? producto) {
+  Widget _campoCantidadTintaInlineConEtiqueta(
+    int index,
+    dynamic item,
+    ProductoModel? producto,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Onzas', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+        Text(
+          'Onzas',
+          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+        ),
         const SizedBox(height: 4),
         _campoCantidadTintaInline(index, item, producto),
       ],
     );
   }
 
-  Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
+  Widget _filaCarritoTabla(
+    int index,
+    dynamic item,
+    Map<String, ProductoModel> mapaProductos,
+    int totalItems,
+  ) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
-    final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final precioPorCuartoMostrado = _precioCarritoConIsv
+        ? redondearMoneda(precioSinIsv * 1.15)
+        : precioSinIsv;
     final esTinte = _esLineaTinte(item);
-    final precioMostrado = _precioUnitarioMostrado(item, precioPorCuartoMostrado);
+    final precioMostrado = _precioUnitarioMostrado(
+      item,
+      precioPorCuartoMostrado,
+    );
     final importe = _importeMostrado(item);
 
-    final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
-    final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: precioMostrado.toStringAsFixed(2)));
-    final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final ctrlCantidad = _ctrlCantidad.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.cantidad as double),
+      ),
+    );
+    final ctrlPrecio = _ctrlPrecio.putIfAbsent(
+      index,
+      () => TextEditingController(text: precioMostrado.toStringAsFixed(2)),
+    );
+    final ctrlDescuento = _ctrlDescuento.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.descuentoPorcentaje as double),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -4236,19 +6103,41 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 28, child: _botonesOrden(index, totalItems)),
-          Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
+          Expanded(
+            flex: 2,
+            child: Text(
+              producto?.codigo ?? '-',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
           Expanded(flex: 4, child: _campoDescripcion(index, item)),
           Expanded(
             flex: 2,
             child: _esCategoriaPintura(item.idCategoria as String)
-                ? Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Align(alignment: Alignment.centerLeft, child: _botonCodigoColor(index, item)))
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: _botonCodigoColor(index, item),
+                    ),
+                  )
                 : const SizedBox.shrink(),
           ),
           Expanded(
             flex: 2,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: esTinte ? _campoCantidadTintaInline(index, item, producto) : _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)),
+              child: esTinte
+                  ? _campoCantidadTintaInline(index, item, producto)
+                  : _campoInlineNumero(
+                      'cantidad_$index',
+                      ctrlCantidad,
+                      item.cantidad as double,
+                      (v) => _actualizarCantidad(index, v),
+                    ),
             ),
           ),
           Expanded(
@@ -4273,34 +6162,90 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ),
             ),
           ),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
-          Expanded(flex: 2, child: Text(formatearMoneda(importe), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _campoInlineNumero(
+                'descuento_$index',
+                ctrlDescuento,
+                item.descuentoPorcentaje as double,
+                (v) => _actualizarDescuentoLinea(index, v),
+                sufijo: '%',
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              formatearMoneda(importe),
+              textAlign: TextAlign.right,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           _botonPendienteCompra(index, item as ItemVentaModel),
           SizedBox(
             width: 40,
-            child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+            child: IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: Color(0xFFC62828),
+              ),
+              onPressed: () => _quitarItem(index),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _filaCarritoMovil(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
+  Widget _filaCarritoMovil(
+    int index,
+    dynamic item,
+    Map<String, ProductoModel> mapaProductos,
+    int totalItems,
+  ) {
     final producto = mapaProductos[item.idProducto as String];
     final precioSinIsv = item.precioVenta as double;
-    final precioPorCuartoMostrado = _precioCarritoConIsv ? redondearMoneda(precioSinIsv * 1.15) : precioSinIsv;
+    final precioPorCuartoMostrado = _precioCarritoConIsv
+        ? redondearMoneda(precioSinIsv * 1.15)
+        : precioSinIsv;
     final esTinte = _esLineaTinte(item);
-    final precioMostrado = _precioUnitarioMostrado(item, precioPorCuartoMostrado);
+    final precioMostrado = _precioUnitarioMostrado(
+      item,
+      precioPorCuartoMostrado,
+    );
     final importe = _importeMostrado(item);
 
-    final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
-    final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: precioMostrado.toStringAsFixed(2)));
-    final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final ctrlCantidad = _ctrlCantidad.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.cantidad as double),
+      ),
+    );
+    final ctrlPrecio = _ctrlPrecio.putIfAbsent(
+      index,
+      () => TextEditingController(text: precioMostrado.toStringAsFixed(2)),
+    );
+    final ctrlDescuento = _ctrlDescuento.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.descuentoPorcentaje as double),
+      ),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -4313,7 +6258,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _campoDescripcion(index, item),
-                    Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    Text(
+                      producto?.codigo ?? '-',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                     if (_esCategoriaPintura(item.idCategoria as String)) ...[
                       const SizedBox(height: 6),
                       _botonCodigoColor(index, item),
@@ -4322,7 +6273,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ),
               ),
               _botonPendienteCompra(index, item as ItemVentaModel),
-              IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Color(0xFFC62828),
+                ),
+                onPressed: () => _quitarItem(index),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -4330,14 +6288,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             children: [
               Expanded(
                 child: esTinte
-                    ? _campoCantidadTintaInlineConEtiqueta(index, item, producto)
-                    : _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v)),
+                    ? _campoCantidadTintaInlineConEtiqueta(
+                        index,
+                        item,
+                        producto,
+                      )
+                    : _campoInlineConEtiqueta(
+                        'cantidad_$index',
+                        'Cantidad',
+                        ctrlCantidad,
+                        item.cantidad,
+                        (v) => _actualizarCantidad(index, v),
+                      ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _campoInlineConEtiqueta(
                   'precio_$index',
-                  (_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)') + (esTinte ? ' /oz' : ''),
+                  (_precioCarritoConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)') +
+                      (esTinte ? ' /oz' : ''),
                   ctrlPrecio,
                   precioMostrado,
                   (v) {
@@ -4353,13 +6322,27 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje, (v) => _actualizarDescuentoLinea(index, v))),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'descuento_$index',
+                  'Desc. %',
+                  ctrlDescuento,
+                  item.descuentoPorcentaje,
+                  (v) => _actualizarDescuentoLinea(index, v),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerRight,
-            child: Text('Importe (${_precioCarritoConIsv ? 'c/ISV' : 's/ISV'}): ${formatearMoneda(importe)}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Importe (${_precioCarritoConIsv ? 'c/ISV' : 's/ISV'}): ${formatearMoneda(importe)}',
+              style: GoogleFonts.poppins(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -4367,7 +6350,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }
 
   String _formatoCantidad(double cantidad) {
-    if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+    if (cantidad == cantidad.roundToDouble())
+      return cantidad.toInt().toString();
     return cantidad.toStringAsFixed(2);
   }
 
@@ -4382,8 +6366,15 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             children: [
               _filaTotalTexto('Subtotal', carrito.subtotal),
               _filaTotalTexto('ISV (15%)', carrito.impuesto),
-              if (carrito.descuentoGlobalPorcentaje > 0) _filaTotalTextoPorcentaje('Descuento global', carrito.descuentoGlobalPorcentaje),
-              if (!carrito.esCotizacion && carrito.condicion != 'Credito' && carrito.metodoPago == 'Efectivo' && carrito.pagoCon > 0) ...[
+              if (carrito.descuentoGlobalPorcentaje > 0)
+                _filaTotalTextoPorcentaje(
+                  'Descuento global',
+                  carrito.descuentoGlobalPorcentaje,
+                ),
+              if (!carrito.esCotizacion &&
+                  carrito.condicion != 'Credito' &&
+                  carrito.metodoPago == 'Efectivo' &&
+                  carrito.pagoCon > 0) ...[
                 _filaTotalTexto('Paga con', carrito.pagoCon),
                 _filaTotalTexto('Cambio', carrito.cambio),
               ],
@@ -4393,12 +6384,29 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                Text(formatearMoneda(carrito.totalAPagar), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(
+                  'TOTAL A PAGAR',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  formatearMoneda(carrito.totalAPagar),
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -4407,10 +6415,30 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarVenta,
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: _guardando
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                  : Text(_textoBoton, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : Text(
+                      _textoBoton,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -4422,8 +6450,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-        Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          etiqueta.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade500,
+            letterSpacing: 0.4,
+          ),
+        ),
+        Text(
+          formatearMoneda(valor),
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }
@@ -4432,8 +6475,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-        Text('${_formatoCantidad(porcentaje)}%', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          etiqueta.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade500,
+            letterSpacing: 0.4,
+          ),
+        ),
+        Text(
+          '${_formatoCantidad(porcentaje)}%',
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }

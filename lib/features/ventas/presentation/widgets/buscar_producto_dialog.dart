@@ -187,6 +187,27 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     if (!_focusNodeLista.hasFocus) _focusNodeLista.requestFocus();
   }
 
+  // Mismo arreglo que Inventario (ver InventarioScreen._tocarFila): antes
+  // esta fila tenía `onTap` Y `onDoubleTap` juntos en el mismo InkWell, y
+  // Flutter tiene que esperar la ventana de doble-tap (~300ms) antes de
+  // disparar el toque simple para poder distinguirlo de un doble toque -acá
+  // se detecta a mano (dos toques al mismo producto dentro de 300ms) usando
+  // solo `onTap`, para que seleccionar un producto responda de inmediato.
+  static const _ventanaDobleTap = Duration(milliseconds: 300);
+  DateTime? _ultimoTapProductoEn;
+  String? _ultimoTapProductoId;
+
+  void _tocarFilaProducto(ProductoModel p) {
+    final ahora = DateTime.now();
+    final esDobleTap = _ultimoTapProductoId == p.id && _ultimoTapProductoEn != null && ahora.difference(_ultimoTapProductoEn!) < _ventanaDobleTap;
+    _ultimoTapProductoEn = esDobleTap ? null : ahora; // no encadenar un tercer toque como otro "doble"
+    _ultimoTapProductoId = p.id;
+
+    _tomarFocoLista();
+    setState(() => _filaSeleccionada = p.id);
+    if (esDobleTap) _confirmarSeleccion(p);
+  }
+
   double? _precioNivel(ProductoModel p, int nivel) {
     final valor = switch (nivel) {
       2 => p.precioVenta2,
@@ -670,11 +691,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          _tomarFocoLista();
-          setState(() => _filaSeleccionada = p.id);
-        },
-        onDoubleTap: () => _confirmarSeleccion(p),
+        onTap: () => _tocarFilaProducto(p),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
@@ -766,11 +783,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          _tomarFocoLista();
-          setState(() => _filaSeleccionada = p.id);
-        },
-        onDoubleTap: () => _confirmarSeleccion(p),
+        onTap: () => _tocarFilaProducto(p),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
