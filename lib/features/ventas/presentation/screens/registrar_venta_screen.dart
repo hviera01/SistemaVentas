@@ -182,6 +182,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // leídos por el `ref` correcto de esta pantalla, cada vez que el carrito
   // cambie mientras está abierto. null cuando el diálogo no está abierto.
   void Function(void Function())? _refrescarDialogoExpandido;
+  // Mismo mecanismo que _refrescarDialogoExpandido (ver ahí el porqué: esta
+  // pantalla puede vivir en varias pestañas a la vez, cada una con su propio
+  // `carritoVentaProvider` scopeado -leer con `ref.watch` directo DENTRO de
+  // un showDialog podría terminar mostrando el carrito de la pestaña
+  // equivocada, porque el Dialog cuelga del Navigator raíz, no de esta
+  // pestaña-), para el modal de "Datos de la venta" (ver
+  // _abrirDatosVentaModal) usado por las vistas Dividida/Dynamics.
+  void Function(void Function())? _refrescarModalDatosVenta;
 
   final _servicioExport = VentaExportService();
   final _servicioTicketEscPos = VentaTicketEscPosService();
@@ -3332,6 +3340,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _refrescarDialogoExpandido?.call(() {}),
     );
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refrescarModalDatosVenta?.call(() {}),
+    );
     // Recalcula la visibilidad de la barra flotante de totales (ver
     // _alScrollearMovil) en cada cambio del carrito, no solo cuando el
     // usuario mueve el scroll a mano: agregar un producto sin haber
@@ -3452,14 +3463,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   ) {
     if (esMovil) return _layoutDivididoMovil(carrito, mapaProductos);
     return Padding(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _encabezado(esMovil),
-          const SizedBox(height: 12),
-          _tarjetaDatosVenta(carrito, esMovil),
-          const SizedBox(height: 12),
+          _barraSuperiorCompacta(carrito, esMovil),
+          const SizedBox(height: 10),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3480,11 +3489,22 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _barraAccionesCarritoCompacta(),
+                        _barraAccionesCarritoCompacta(
+                          mostrarAgregarProducto: false,
+                        ),
                         Offstage(offstage: true, child: _campoCodigoBarras()),
                         const SizedBox(height: 10),
+                        // Tarjetas (como en móvil), NO la tabla de columnas
+                        // fijas -pedido explícito del dueño: en esta mitad
+                        // (más angosta que la pantalla completa) las
+                        // columnas de precio/nombre se cortaban-. Las
+                        // tarjetas muestran cada dato en su propia línea,
+                        // sin importar cuánto mida este panel.
                         Expanded(
-                          child: _bloqueTablaCarrito(carrito, mapaProductos),
+                          child: _bloqueTablaCarritoMovil(
+                            carrito,
+                            mapaProductos,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         _barraTotalesCompacta(carrito),
@@ -3514,16 +3534,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _encabezado(true),
-              const SizedBox(height: 10),
-              _tarjetaDatosVenta(carrito, true),
-              const SizedBox(height: 10),
-            ],
-          ),
+          child: _barraSuperiorCompacta(carrito, true),
         ),
+        const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
@@ -3558,7 +3571,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _barraAccionesCarritoCompacta(),
+                        _barraAccionesCarritoCompacta(
+                          mostrarAgregarProducto: false,
+                        ),
                         const SizedBox(height: 10),
                         Expanded(
                           child: _bloqueTablaCarritoMovil(
@@ -3622,17 +3637,19 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     Map<String, ProductoModel> mapaProductos,
   ) {
     return Padding(
-      padding: EdgeInsets.all(esMovil ? 12 : 18),
+      padding: EdgeInsets.all(esMovil ? 10 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _encabezado(esMovil),
-          const SizedBox(height: 10),
-          _tarjetaDatosVenta(carrito, esMovil),
-          const SizedBox(height: 10),
+          _barraSuperiorCompacta(carrito, esMovil),
+          const SizedBox(height: 8),
           _barraAccionesCarritoCompacta(),
           const SizedBox(height: 8),
           Offstage(offstage: true, child: _campoCodigoBarras()),
+          // La tabla es la protagonista de esta vista -pedido explícito del
+          // dueño: "esa tabla grande no tiene nada, quitá/reubicá todo lo de
+          // arriba"-: con la barra superior y de acciones ya compactas,
+          // este Expanded se queda con casi toda la pantalla de verdad.
           Expanded(
             child: _tarjeta(
               child: esMovil
@@ -3640,7 +3657,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   : _bloqueTablaCarrito(carrito, mapaProductos),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _barraTotalesCompacta(carrito),
         ],
       ),
@@ -3711,35 +3728,172 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
+  // --- Barra superior compacta (Dividida/Dynamics) ---
+  // Reemplaza _encabezado + _tarjetaDatosVenta -pedido explícito del dueño:
+  // "el protagonista debe ser lo nuevo... todo el espacio debe ser de
+  // ahí"- por una sola fila chica con lo esencial de un vistazo (cliente,
+  // condición) + un botón que abre todo eso (más los botones de
+  // Limpiar/Espera/Facturas/etc.) en un modal aparte, sin ocupar espacio
+  // fijo en pantalla.
+  Widget _barraSuperiorCompacta(CarritoVentaState carrito, bool esMovil) {
+    final nombreCliente = _nombreClienteController.text.trim().isEmpty
+        ? 'Consumidor final'
+        : _nombreClienteController.text.trim();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDFE1E6)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.person_outline, size: 15, color: Colors.grey.shade500),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              nombreCliente,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _chipCompacto(
+            carrito.esCotizacion ? 'Cotización' : carrito.condicion,
+          ),
+          const SizedBox(width: 6),
+          TextButton.icon(
+            onPressed: () => _abrirDatosVentaModal(esMovil),
+            icon: const Icon(Icons.tune, size: 16),
+            label: Text(
+              esMovil ? '' : 'Datos y acciones',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              minimumSize: Size.zero,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipCompacto(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        texto,
+        style: GoogleFonts.poppins(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF3F434A),
+        ),
+      ),
+    );
+  }
+
+  // Igual que _expandirTablaProductos (ver ese comentario): se lee/escribe
+  // el carrito con ESTE `ref` (el scopeado a la pestaña correcta) y se
+  // empuja al modal vía _refrescarModalDatosVenta, en vez de que el modal
+  // -que cuelga del Navigator raíz, no de esta pestaña- intente leer el
+  // provider por su cuenta.
+  void _abrirDatosVentaModal(bool esMovil) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          insetPadding: const EdgeInsets.all(20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680, maxHeight: 700),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                _refrescarModalDatosVenta = setDialogState;
+                final carritoActual = ref.read(carritoVentaProvider);
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Datos de la venta',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(dialogContext),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      _encabezado(esMovil),
+                      const SizedBox(height: 14),
+                      _tarjetaDatosVenta(carritoActual, esMovil),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    ).then((_) => _refrescarModalDatosVenta = null);
+  }
+
   // Fila compacta de botones/íconos para agregar productos -pedido
   // explícito del dueño: "controles sin que estorben"-, reusada por las
   // vistas dividida y dynamics. `Wrap` (no `Row`) a propósito: si no entran
   // todos en una línea (panel angosto), bajan de línea solos en vez de
-  // desbordar horizontalmente.
-  Widget _barraAccionesCarritoCompacta() {
+  // desbordar horizontalmente. [mostrarAgregarProducto] se apaga en la
+  // Vista Dividida -ahí siempre se busca desde PanelBuscadorGrid, al lado,
+  // así que el botón que abre el buscador modal de siempre sería
+  // redundante-.
+  Widget _barraAccionesCarritoCompacta({bool mostrarAgregarProducto = true}) {
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilledButton.icon(
-          onPressed: _agregarProductoDesdeBusqueda,
-          icon: const Icon(Icons.add, size: 18),
-          label: Text(
-            'Agregar Producto',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+        if (mostrarAgregarProducto)
+          FilledButton.icon(
+            onPressed: _agregarProductoDesdeBusqueda,
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(
+              'Agregar Producto',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFC62828),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
         if (_esPlataformaMovil)
           IconButton(
             tooltip: 'Escanear con cámara',

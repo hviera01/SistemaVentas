@@ -86,9 +86,12 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
           child: TextField(
             controller: _busquedaController,
             autofocus: true,
+            // Busca al presionar Enter -pedido explícito del dueño-, no en
+            // vivo con cada tecla: `onSubmitted` en vez de `onChanged`.
+            textInputAction: TextInputAction.search,
             style: GoogleFonts.poppins(fontSize: 13.5),
             decoration: InputDecoration(
-              hintText: 'Buscar producto por nombre o código...',
+              hintText: 'Buscar producto y Enter...',
               hintStyle: GoogleFonts.poppins(
                 fontSize: 13,
                 color: Colors.grey.shade500,
@@ -114,7 +117,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: (v) => setState(() => _busqueda = v),
+            onSubmitted: (v) => setState(() => _busqueda = v),
           ),
         ),
         Expanded(
