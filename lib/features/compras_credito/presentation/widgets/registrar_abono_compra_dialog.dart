@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../data/compra_credito_model.dart';
 import '../../data/abono_compra_model.dart';
 import '../../providers/compras_credito_provider.dart';
@@ -23,6 +24,7 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
   final _interesController = TextEditingController(text: '0');
   final _numeroReciboController = TextEditingController();
   String _metodoPago = 'Efectivo';
+  DateTime _fecha = DateTime.now();
   bool _guardando = false;
   String? _error;
 
@@ -45,9 +47,25 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
     return saldo < 0 ? 0 : saldo;
   }
 
+  Future<void> _seleccionarFecha() async {
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: _fecha,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (fecha == null) return;
+    final ahora = DateTime.now();
+    setState(() => _fecha = DateTime(fecha.year, fecha.month, fecha.day, ahora.hour, ahora.minute, ahora.second));
+  }
+
   Future<void> _guardar() async {
     if (_montoAbonado <= 0) {
       setState(() => _error = 'Ingresá un monto de abono válido');
+      return;
+    }
+    if (_montoAbonado > widget.compra.saldoPendiente + _interes + 0.01) {
+      setState(() => _error = 'El abono no puede superar el saldo pendiente (${formatearMoneda(widget.compra.saldoPendiente + _interes)})');
       return;
     }
     setState(() {
@@ -68,6 +86,7 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
             metodoPago: _metodoPago,
             numeroRecibo: _numeroReciboController.text.trim(),
             usuario: usuario,
+            fecha: _fecha,
           );
       if (!mounted) return;
       Navigator.pop(
@@ -77,7 +96,7 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
           idCompra: widget.compra.id,
           idProveedor: widget.compra.idProveedor,
           nombreProveedor: widget.compra.nombreProveedor,
-          fecha: DateTime.now(),
+          fecha: _fecha,
           montoAbonado: _montoAbonado,
           saldoAnterior: saldoAnterior,
           interes: _interes,
@@ -124,13 +143,14 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
   Widget build(BuildContext context) {
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 500;
-    final anchoDialog = esMovil ? tamano.width - 48 : 440.0;
+    final anchoDialog = esMovil ? tamano.width - 32 : 480.0;
+    final altoMaximo = (tamano.height - 40).clamp(0, 780).toDouble();
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
+      insetPadding: const EdgeInsets.all(16),
       child: Container(
         width: anchoDialog,
-        constraints: const BoxConstraints(maxHeight: 660),
+        constraints: BoxConstraints(maxHeight: altoMaximo),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -204,6 +224,25 @@ class _RegistrarAbonoCompraDialogState extends ConsumerState<RegistrarAbonoCompr
                     ),
                     const SizedBox(height: 14),
                     _filaSoloLectura('Saldo pendiente', formatearMoneda(_saldoPendienteNuevo)),
+                    const SizedBox(height: 14),
+                    InkWell(
+                      onTap: _seleccionarFecha,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 10),
+                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+                            const Spacer(),
+                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(
                       initialValue: _metodoPago,

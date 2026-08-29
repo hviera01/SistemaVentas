@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'venta_credito_model.dart';
 import 'abono_model.dart';
 import 'venta_credito_import_service.dart';
+import '../../../core/utils/formato_moneda.dart';
 
 class VentaCreditoRepository {
   final _db = FirebaseFirestore.instance;
@@ -74,8 +75,8 @@ class VentaCreditoRepository {
       'nombreCliente': nombreCliente,
       'idCliente': idCliente,
       'numeroDocumento': numeroDocumento.isEmpty ? _generarNumeroDocumento() : numeroDocumento,
-      'montoTotal': montoTotal,
-      'saldoPendiente': saldoPendiente,
+      'montoTotal': redondearMoneda(montoTotal),
+      'saldoPendiente': redondearMoneda(saldoPendiente),
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
       'sinVentaOrigen': true,
@@ -118,16 +119,20 @@ class VentaCreditoRepository {
     required String metodoPago,
     required String numeroRecibo,
     required String usuario,
+    required DateTime fecha,
   }) async {
-    final nuevoSaldo = (saldoAnterior - montoAbonado + interes).clamp(0, double.infinity).toDouble();
+    if (montoAbonado > saldoAnterior + interes + 0.01) {
+      throw Exception('El abono (${formatearMoneda(montoAbonado)}) supera el saldo disponible en este crédito (${formatearMoneda(saldoAnterior + interes)})');
+    }
+    final nuevoSaldo = redondearMoneda((saldoAnterior - montoAbonado + interes).clamp(0, double.infinity).toDouble());
     final batch = _db.batch();
     batch.update(_col.doc(idCredito), {'saldoPendiente': nuevoSaldo});
     final abonoRef = _col.doc(idCredito).collection('abonos').doc();
     batch.set(abonoRef, {
-      'fecha': FieldValue.serverTimestamp(),
-      'montoAbonado': montoAbonado,
-      'saldoAnterior': saldoAnterior,
-      'interes': interes,
+      'fecha': Timestamp.fromDate(fecha),
+      'montoAbonado': redondearMoneda(montoAbonado),
+      'saldoAnterior': redondearMoneda(saldoAnterior),
+      'interes': redondearMoneda(interes),
       'saldoPendiente': nuevoSaldo,
       'metodoPago': metodoPago,
       'numeroRecibo': numeroRecibo,
@@ -136,13 +141,61 @@ class VentaCreditoRepository {
     await batch.commit();
   }
 
+  /// Ver comentario de `_recalcularCadenaAbonos` en CompraCreditoRepository:
+  /// mismo problema (cadena de abonos que depende cada uno del anterior) y
+  /// misma solución.
+  Future<void> _recalcularCadenaAbonos(String idCredito, double montoTotal) async {
+    final abonosSnap = await _col.doc(idCredito).collection('abonos').orderBy('fecha').get();
+    final batch = _db.batch();
+    var saldo = redondearMoneda(montoTotal);
+    for (final doc in abonosSnap.docs) {
+      final data = doc.data();
+      final montoAbonado = (data['montoAbonado'] ?? 0).toDouble();
+      final interes = (data['interes'] ?? 0).toDouble();
+      final saldoAnterior = saldo;
+      final crudo = saldoAnterior - montoAbonado + interes;
+      if (crudo < -0.01) {
+        throw Exception('El abono de ${formatearMoneda(montoAbonado)} superaría el saldo disponible en ese momento (${formatearMoneda(saldoAnterior + interes)})');
+      }
+      saldo = redondearMoneda(crudo.clamp(0, double.infinity).toDouble());
+      batch.update(doc.reference, {'saldoAnterior': redondearMoneda(saldoAnterior), 'saldoPendiente': saldo});
+    }
+    batch.update(_col.doc(idCredito), {'saldoPendiente': saldo});
+    await batch.commit();
+  }
+
+  Future<void> eliminarAbono({required String idCredito, required String idAbono, required double montoTotal}) async {
+    await _col.doc(idCredito).collection('abonos').doc(idAbono).delete();
+    await _recalcularCadenaAbonos(idCredito, montoTotal);
+  }
+
+  Future<void> editarAbono({
+    required String idCredito,
+    required String idAbono,
+    required double montoTotal,
+    required double montoAbonado,
+    required double interes,
+    required DateTime fecha,
+    required String metodoPago,
+    required String numeroRecibo,
+  }) async {
+    await _col.doc(idCredito).collection('abonos').doc(idAbono).update({
+      'montoAbonado': redondearMoneda(montoAbonado),
+      'interes': redondearMoneda(interes),
+      'fecha': Timestamp.fromDate(fecha),
+      'metodoPago': metodoPago,
+      'numeroRecibo': numeroRecibo,
+    });
+    await _recalcularCadenaAbonos(idCredito, montoTotal);
+  }
+
   Future<void> unirFacturas({
     required List<VentaCreditoModel> facturas,
     required String documentoCliente,
     required String nombreCliente,
     required DateTime fechaVencimiento,
   }) async {
-    final total = facturas.fold<double>(0, (s, f) => s + f.saldoPendiente);
+    final total = redondearMoneda(facturas.fold<double>(0, (s, f) => s + f.saldoPendiente));
     final batch = _db.batch();
     for (final factura in facturas) {
       batch.update(_col.doc(factura.id), {'saldoPendiente': 0, 'fusionada': true});

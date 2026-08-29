@@ -6,11 +6,63 @@ import '../../data/compra_credito_model.dart';
 import '../../data/abono_compra_model.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import 'editar_abono_compra_dialog.dart';
 
 class HistorialAbonosCompraDialog extends ConsumerWidget {
   final CompraCreditoModel compra;
 
   const HistorialAbonosCompraDialog({super.key, required this.compra});
+
+  Future<void> _editar(BuildContext context, WidgetRef ref, AbonoCompraModel abono) async {
+    await showDialog<bool>(context: context, builder: (context) => EditarAbonoCompraDialog(compra: compra, abono: abono));
+  }
+
+  Future<void> _eliminar(BuildContext context, WidgetRef ref, AbonoCompraModel abono) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Eliminar abono', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          '¿Seguro que querés eliminar el abono de ${formatearMoneda(abono.montoAbonado)}? El saldo de la factura se recalcula automáticamente. Esta acción no se puede deshacer.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Eliminar', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+    try {
+      await ref.read(compraCreditoRepositoryProvider).eliminarAbono(idCompra: compra.id, idAbono: abono.id, montoTotal: compra.montoTotal);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+      }
+    }
+  }
+
+  Widget _menuAcciones(BuildContext context, WidgetRef ref, AbonoCompraModel abono) {
+    return PopupMenuButton<String>(
+      tooltip: 'Más acciones',
+      padding: EdgeInsets.zero,
+      icon: Icon(Icons.more_vert, size: 19, color: Colors.grey.shade600),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (valor) {
+        if (valor == 'editar') _editar(context, ref, abono);
+        if (valor == 'eliminar') _eliminar(context, ref, abono);
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(value: 'editar', child: Row(children: [const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF4B4F58)), const SizedBox(width: 10), Text('Editar', style: GoogleFonts.poppins(fontSize: 12.5))])),
+        PopupMenuItem(value: 'eliminar', child: Row(children: [const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), const SizedBox(width: 10), Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5))])),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +102,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
                   if (abonos.isEmpty) {
                     return Center(child: Text('Todavía no hay abonos registrados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
                   }
-                  return esMovil ? _tarjetas(abonos) : _tabla(abonos);
+                  return esMovil ? _tarjetas(context, ref, abonos) : _tabla(context, ref, abonos);
                 },
               ),
             ),
@@ -60,7 +112,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
     );
   }
 
-  Widget _tabla(List<AbonoCompraModel> abonos) {
+  Widget _tabla(BuildContext context, WidgetRef ref, List<AbonoCompraModel> abonos) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
       decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
@@ -79,6 +131,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
                 _celdaHeader('MÉTODO DE PAGO', 2),
                 _celdaHeader('RECIBO', 2),
                 _celdaHeader('USUARIO', 2),
+                const SizedBox(width: 40),
               ],
             ),
           ),
@@ -100,6 +153,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
                       _celda(2, a.metodoPago),
                       _celda(2, a.numeroRecibo.isEmpty ? '-' : a.numeroRecibo),
                       _celda(2, a.usuario.isEmpty ? '-' : a.usuario),
+                      SizedBox(width: 40, child: _menuAcciones(context, ref, a)),
                     ],
                   ),
                 );
@@ -128,7 +182,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
     );
   }
 
-  Widget _tarjetas(List<AbonoCompraModel> abonos) {
+  Widget _tarjetas(BuildContext context, WidgetRef ref, List<AbonoCompraModel> abonos) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return ListView.separated(
       itemCount: abonos.length,
@@ -146,6 +200,7 @@ class HistorialAbonosCompraDialog extends ConsumerWidget {
                   Text(formatearMoneda(a.montoAbonado), style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: const Color(0xFF16A34A))),
                   const Spacer(),
                   Text(a.fecha != null ? formatoFecha.format(a.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                  _menuAcciones(context, ref, a),
                 ],
               ),
               const SizedBox(height: 6),

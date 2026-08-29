@@ -5,30 +5,41 @@ import 'package:intl/intl.dart';
 import '../../data/venta_credito_model.dart';
 import '../../data/abono_model.dart';
 import '../../providers/ventas_credito_provider.dart';
-import '../../../../core/utils/formato_moneda.dart';
-import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 
-class RegistrarAbonoDialog extends ConsumerStatefulWidget {
+/// Corrige un abono ya registrado (monto, interés, fecha, método, recibo) —
+/// ver comentario en EditarAbonoCompraDialog (mismo patrón, lado ventas).
+class EditarAbonoDialog extends ConsumerStatefulWidget {
   final VentaCreditoModel credito;
+  final AbonoModel abono;
 
-  const RegistrarAbonoDialog({super.key, required this.credito});
+  const EditarAbonoDialog({super.key, required this.credito, required this.abono});
 
   @override
-  ConsumerState<RegistrarAbonoDialog> createState() => _RegistrarAbonoDialogState();
+  ConsumerState<EditarAbonoDialog> createState() => _EditarAbonoDialogState();
 }
 
-class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
-  final _montoAbonadoController = TextEditingController();
-  final _interesController = TextEditingController(text: '0');
-  final _numeroReciboController = TextEditingController();
-  String _metodoPago = 'Efectivo';
-  DateTime _fecha = DateTime.now();
+class _EditarAbonoDialogState extends ConsumerState<EditarAbonoDialog> {
+  late final TextEditingController _montoAbonadoController;
+  late final TextEditingController _interesController;
+  late final TextEditingController _numeroReciboController;
+  late String _metodoPago;
+  late DateTime _fecha;
   bool _guardando = false;
   String? _error;
 
   static const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
+
+  @override
+  void initState() {
+    super.initState();
+    _montoAbonadoController = TextEditingController(text: widget.abono.montoAbonado.toStringAsFixed(2));
+    _interesController = TextEditingController(text: widget.abono.interes.toStringAsFixed(2));
+    _numeroReciboController = TextEditingController(text: widget.abono.numeroRecibo);
+    _metodoPago = _metodosPago.contains(widget.abono.metodoPago) ? widget.abono.metodoPago : 'Efectivo';
+    _fecha = widget.abono.fecha ?? DateTime.now();
+  }
 
   @override
   void dispose() {
@@ -42,10 +53,6 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
 
   double get _montoAbonado => _parseDouble(_montoAbonadoController.text);
   double get _interes => _parseDouble(_interesController.text);
-  double get _saldoPendienteNuevo {
-    final saldo = widget.credito.saldoPendiente - _montoAbonado + _interes;
-    return saldo < 0 ? 0 : saldo;
-  }
 
   Future<void> _seleccionarFecha() async {
     final fecha = await showDatePicker(
@@ -55,8 +62,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
       lastDate: DateTime.now(),
     );
     if (fecha == null) return;
-    final ahora = DateTime.now();
-    setState(() => _fecha = DateTime(fecha.year, fecha.month, fecha.day, ahora.hour, ahora.minute, ahora.second));
+    setState(() => _fecha = DateTime(fecha.year, fecha.month, fecha.day, _fecha.hour, _fecha.minute, _fecha.second));
   }
 
   Future<void> _guardar() async {
@@ -64,43 +70,22 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
       setState(() => _error = 'Ingresá un monto de abono válido');
       return;
     }
-    if (_montoAbonado > widget.credito.saldoPendiente + _interes + 0.01) {
-      setState(() => _error = 'El abono no puede superar el saldo pendiente (${formatearMoneda(widget.credito.saldoPendiente + _interes)})');
-      return;
-    }
     setState(() {
       _guardando = true;
       _error = null;
     });
     try {
-      final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-      final saldoAnterior = widget.credito.saldoPendiente;
-      final saldoPendiente = _saldoPendienteNuevo;
-      await ref.read(ventaCreditoRepositoryProvider).registrarAbono(
+      await ref.read(ventaCreditoRepositoryProvider).editarAbono(
             idCredito: widget.credito.id,
-            saldoAnterior: saldoAnterior,
+            idAbono: widget.abono.id,
+            montoTotal: widget.credito.montoTotal,
             montoAbonado: _montoAbonado,
             interes: _interes,
+            fecha: _fecha,
             metodoPago: _metodoPago,
             numeroRecibo: _numeroReciboController.text.trim(),
-            usuario: usuario,
-            fecha: _fecha,
           );
-      if (!mounted) return;
-      Navigator.pop(
-        context,
-        AbonoModel(
-          id: '',
-          fecha: _fecha,
-          montoAbonado: _montoAbonado,
-          saldoAnterior: saldoAnterior,
-          interes: _interes,
-          saldoPendiente: saldoPendiente,
-          metodoPago: _metodoPago,
-          numeroRecibo: _numeroReciboController.text.trim(),
-          usuario: usuario,
-        ),
-      );
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '');
@@ -116,21 +101,6 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-    );
-  }
-
-  Widget _filaSoloLectura(String etiqueta, String valor) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
-          const Spacer(),
-          Text(valor, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-        ],
-      ),
     );
   }
 
@@ -157,13 +127,13 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.payments_outlined, color: Color(0xFFC62828)),
+                    decoration: BoxDecoration(color: const Color(0xFFC62828).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.edit_outlined, color: Color(0xFFC62828)),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'Registrar Abono · ${widget.credito.numeroDocumento}',
+                      'Editar Abono · ${widget.credito.numeroDocumento}',
                       style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -189,36 +159,32 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                       controller: _montoAbonadoController,
                       numerico: true,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _montoAbonadoController,
-                      autofocus: true,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Monto abonado'),
-                      onChanged: (_) => setState(() {}),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _montoAbonadoController,
+                        autofocus: true,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Monto abonado'),
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ),
-                    ),
-                    const SizedBox(height: 14),
-                    _filaSoloLectura('Saldo anterior', formatearMoneda(widget.credito.saldoPendiente)),
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
                       controller: _interesController,
                       numerico: true,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _interesController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Interés (opcional)'),
-                      onChanged: (_) => setState(() {}),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _interesController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Interés (opcional)'),
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ),
-                    ),
-                    const SizedBox(height: 14),
-                    _filaSoloLectura('Saldo pendiente', formatearMoneda(_saldoPendienteNuevo)),
                     const SizedBox(height: 14),
                     InkWell(
                       onTap: _seleccionarFecha,
@@ -255,13 +221,13 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                         controller: _numeroReciboController,
                         numerico: false,
                         child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _numeroReciboController,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        decoration: _decoracion('No. de recibo (opcional)'),
-                      ),
+                          inputFormatters: [mayusculasInputFormatter],
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          controller: _numeroReciboController,
+                          style: GoogleFonts.poppins(fontSize: 14),
+                          decoration: _decoracion('No. de recibo (opcional)'),
+                        ),
                       ),
                     ],
                     if (_error != null) ...[
@@ -301,7 +267,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                     ),
                     child: _guardando
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                        : Text('Registrar Abono', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                        : Text('Guardar Cambios', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
                   ),
                 ],
               ),

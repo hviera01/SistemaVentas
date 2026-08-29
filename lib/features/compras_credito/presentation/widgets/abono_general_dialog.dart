@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../data/compra_credito_model.dart';
 import '../../data/compra_credito_repository.dart';
 import '../../providers/compras_credito_provider.dart';
@@ -31,6 +32,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
   final _numeroReciboController = TextEditingController();
   String? _idProveedorSeleccionado;
   String _metodoPago = 'Efectivo';
+  DateTime _fecha = DateTime.now();
   bool _guardando = false;
   String? _error;
 
@@ -71,6 +73,18 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
     return ref.read(compraCreditoRepositoryProvider).calcularDistribucion(_comprasDelProveedor, monto);
   }
 
+  Future<void> _seleccionarFecha() async {
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: _fecha,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (fecha == null) return;
+    final ahora = DateTime.now();
+    setState(() => _fecha = DateTime(fecha.year, fecha.month, fecha.day, ahora.hour, ahora.minute, ahora.second));
+  }
+
   Future<void> _confirmar() async {
     final monto = _parseDouble(_montoController.text);
     if (_idProveedorSeleccionado == null) {
@@ -96,6 +110,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
             distribucion: _distribucion,
             metodoPago: _metodoPago,
             usuario: usuario,
+            fecha: _fecha,
           );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -123,14 +138,15 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
     final distribucion = _distribucion;
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 560;
-    final anchoDialog = esMovil ? tamano.width - 48 : 500.0;
+    final anchoDialog = esMovil ? tamano.width - 32 : 540.0;
+    final altoMaximo = (tamano.height - 40).clamp(0, 820).toDouble();
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
+      insetPadding: const EdgeInsets.all(16),
       child: Container(
         width: anchoDialog,
-        constraints: const BoxConstraints(maxHeight: 720),
+        constraints: BoxConstraints(maxHeight: altoMaximo),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -192,6 +208,25 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                       decoration: _decoracion('Monto a abonar'),
                       onChanged: (_) => setState(() {}),
                     ),
+                    ),
+                    const SizedBox(height: 14),
+                    InkWell(
+                      onTap: _seleccionarFecha,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 10),
+                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+                            const Spacer(),
+                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(

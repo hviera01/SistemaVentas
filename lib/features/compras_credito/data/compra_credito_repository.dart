@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'compra_credito_model.dart';
 import 'abono_compra_model.dart';
 import 'compra_credito_import_service.dart';
+import '../../../core/utils/formato_moneda.dart';
 
 class DistribucionAbono {
   final CompraCreditoModel compra;
@@ -56,8 +57,8 @@ class CompraCreditoRepository {
       'nombreProveedor': nombreProveedor,
       'numeroDocumento': numeroDocumento.isEmpty ? _generarNumeroDocumento() : numeroDocumento,
       'noFactura': noFactura,
-      'montoTotal': montoTotal,
-      'saldoPendiente': saldoPendiente,
+      'montoTotal': redondearMoneda(montoTotal),
+      'saldoPendiente': redondearMoneda(saldoPendiente),
       'fechaRegistro': FieldValue.serverTimestamp(),
       'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
       'manual': true,
@@ -74,8 +75,18 @@ class CompraCreditoRepository {
     required String metodoPago,
     required String numeroRecibo,
     required String usuario,
+    required DateTime fecha,
   }) async {
-    final nuevoSaldo = (saldoAnterior - montoAbonado + interes).clamp(0, double.infinity).toDouble();
+    // Redondear a centavos antes de guardar: sin esto, restas sucesivas de
+    // `double` binario dejan saldos como 0.0000000000018 en vez de 0 exacto,
+    // que la app muestra como "L.0.00" pero que técnicamente sigue siendo
+    // > 0 -así una factura ya pagada queda marcada "Debe" para siempre hasta
+    // que alguien note el error visualmente y tenga que forzarla con un
+    // abono simbólico (caso real: proveedor Ventura, 2026-08-29)-.
+    if (montoAbonado > saldoAnterior + interes + 0.01) {
+      throw Exception('El abono (${formatearMoneda(montoAbonado)}) supera el saldo disponible en esa factura (${formatearMoneda(saldoAnterior + interes)})');
+    }
+    final nuevoSaldo = redondearMoneda((saldoAnterior - montoAbonado + interes).clamp(0, double.infinity).toDouble());
     final batch = _db.batch();
     batch.update(_col.doc(idCompra), {'saldoPendiente': nuevoSaldo});
     final abonoRef = _col.doc(idCompra).collection('abonosCompra').doc();
@@ -83,10 +94,10 @@ class CompraCreditoRepository {
       'idCompra': idCompra,
       'idProveedor': idProveedor,
       'nombreProveedor': nombreProveedor,
-      'fecha': FieldValue.serverTimestamp(),
-      'montoAbonado': montoAbonado,
-      'saldoAnterior': saldoAnterior,
-      'interes': interes,
+      'fecha': Timestamp.fromDate(fecha),
+      'montoAbonado': redondearMoneda(montoAbonado),
+      'saldoAnterior': redondearMoneda(saldoAnterior),
+      'interes': redondearMoneda(interes),
       'saldoPendiente': nuevoSaldo,
       'metodoPago': metodoPago,
       'numeroRecibo': numeroRecibo,
@@ -95,8 +106,71 @@ class CompraCreditoRepository {
     await batch.commit();
   }
 
+  /// Recalcula, en orden cronológico, el saldoAnterior/saldoPendiente de cada
+  /// abono restante de una compra y el saldoPendiente final de la compra —
+  /// se usa después de editar o eliminar un abono, porque cada abono depende
+  /// del resultado del anterior (una cadena), así que tocar uno de en medio
+  /// deja mal a todos los que vienen después si no se recorre de nuevo desde
+  /// el montoTotal. Lanza una excepción si algún paso da negativo antes de
+  /// redondear/limitar a 0 (significa que ese abono, con los datos nuevos,
+  /// pagaría más de lo que había pendiente en ese momento).
+  Future<void> _recalcularCadenaAbonos(String idCompra, double montoTotal) async {
+    final abonosSnap = await _col.doc(idCompra).collection('abonosCompra').orderBy('fecha').get();
+    final batch = _db.batch();
+    var saldo = redondearMoneda(montoTotal);
+    for (final doc in abonosSnap.docs) {
+      final data = doc.data();
+      final montoAbonado = (data['montoAbonado'] ?? 0).toDouble();
+      final interes = (data['interes'] ?? 0).toDouble();
+      final saldoAnterior = saldo;
+      final crudo = saldoAnterior - montoAbonado + interes;
+      if (crudo < -0.01) {
+        throw Exception('El abono de ${formatearMoneda(montoAbonado)} superaría el saldo disponible en ese momento (${formatearMoneda(saldoAnterior + interes)})');
+      }
+      saldo = redondearMoneda(crudo.clamp(0, double.infinity).toDouble());
+      batch.update(doc.reference, {'saldoAnterior': redondearMoneda(saldoAnterior), 'saldoPendiente': saldo});
+    }
+    batch.update(_col.doc(idCompra), {'saldoPendiente': saldo});
+    await batch.commit();
+  }
+
+  Future<void> eliminarAbono({required String idCompra, required String idAbono, required double montoTotal}) async {
+    await _col.doc(idCompra).collection('abonosCompra').doc(idAbono).delete();
+    await _recalcularCadenaAbonos(idCompra, montoTotal);
+  }
+
+  Future<void> editarAbono({
+    required String idCompra,
+    required String idAbono,
+    required double montoTotal,
+    required double montoAbonado,
+    required double interes,
+    required DateTime fecha,
+    required String metodoPago,
+    required String numeroRecibo,
+  }) async {
+    await _col.doc(idCompra).collection('abonosCompra').doc(idAbono).update({
+      'montoAbonado': redondearMoneda(montoAbonado),
+      'interes': redondearMoneda(interes),
+      'fecha': Timestamp.fromDate(fecha),
+      'metodoPago': metodoPago,
+      'numeroRecibo': numeroRecibo,
+    });
+    await _recalcularCadenaAbonos(idCompra, montoTotal);
+  }
+
   Future<void> eliminar(String id) async {
     await _col.doc(id).delete();
+  }
+
+  Future<List<CompraCreditoModel>> obtenerComprasPorProveedor(String idProveedor) async {
+    final snap = await _col.where('idProveedor', isEqualTo: idProveedor).get();
+    return snap.docs.map((d) => CompraCreditoModel.fromMap(d.id, d.data())).toList();
+  }
+
+  Future<List<AbonoCompraModel>> obtenerAbonosPorProveedor(String idProveedor) async {
+    final snap = await _db.collectionGroup('abonosCompra').where('idProveedor', isEqualTo: idProveedor).get();
+    return snap.docs.map((d) => AbonoCompraModel.fromMap(d.id, d.data())).toList();
   }
 
   /// Crea en lote los créditos de compra de una importación desde Excel.
@@ -177,13 +251,13 @@ class CompraCreditoRepository {
         return a.fechaVencimiento!.compareTo(b.fechaVencimiento!);
       });
 
-    var restante = monto;
+    var restante = redondearMoneda(monto);
     final resultado = <DistribucionAbono>[];
     for (final compra in pendientes) {
       if (restante <= 0) break;
       final aplicado = restante >= compra.saldoPendiente ? compra.saldoPendiente : restante;
-      resultado.add(DistribucionAbono(compra: compra, montoAplicado: aplicado, saldoResultante: compra.saldoPendiente - aplicado));
-      restante -= aplicado;
+      resultado.add(DistribucionAbono(compra: compra, montoAplicado: aplicado, saldoResultante: redondearMoneda(compra.saldoPendiente - aplicado)));
+      restante = redondearMoneda(restante - aplicado);
     }
     return resultado;
   }
@@ -192,7 +266,13 @@ class CompraCreditoRepository {
     required List<DistribucionAbono> distribucion,
     required String metodoPago,
     required String usuario,
+    required DateTime fecha,
   }) async {
+    for (final item in distribucion) {
+      if (item.montoAplicado > item.compra.saldoPendiente + 0.01) {
+        throw Exception('El monto asignado a la factura ${item.compra.noFactura} supera su saldo pendiente');
+      }
+    }
     final batch = _db.batch();
     for (final item in distribucion) {
       batch.update(_col.doc(item.compra.id), {'saldoPendiente': item.saldoResultante});
@@ -201,7 +281,7 @@ class CompraCreditoRepository {
         'idCompra': item.compra.id,
         'idProveedor': item.compra.idProveedor,
         'nombreProveedor': item.compra.nombreProveedor,
-        'fecha': FieldValue.serverTimestamp(),
+        'fecha': Timestamp.fromDate(fecha),
         'montoAbonado': item.montoAplicado,
         'saldoAnterior': item.compra.saldoPendiente,
         'interes': 0,

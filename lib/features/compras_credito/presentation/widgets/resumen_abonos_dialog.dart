@@ -6,6 +6,7 @@ import '../../data/abono_compra_model.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
+import 'estado_cuenta_proveedor_dialog.dart';
 
 class _FilaResumen {
   final DateTime? dia;
@@ -60,6 +61,19 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  void _abrirEstadoCuenta(List<dynamic> proveedores) {
+    if (_idProveedorFiltro == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Elegí un proveedor primero para ver su estado de cuenta')));
+      return;
+    }
+    final proveedor = proveedores.where((p) => p.id == _idProveedorFiltro).firstOrNull;
+    final nombre = proveedor?.razonSocial as String? ?? '';
+    showDialog(
+      context: context,
+      builder: (context) => EstadoCuentaProveedorDialog(idProveedor: _idProveedorFiltro!, nombreProveedor: nombre),
+    );
   }
 
   void _limpiar() {
@@ -186,6 +200,13 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                       onPressed: _cargando ? null : _limpiar,
                       icon: const Icon(Icons.close, size: 18),
                       label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    ),
+                    const SizedBox(width: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => _abrirEstadoCuenta(proveedoresAsync.value ?? []),
+                      icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                      label: Text('Estado de Cuenta', style: GoogleFonts.poppins(fontSize: 13)),
                       style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     ),
                   ],
