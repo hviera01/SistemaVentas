@@ -40,6 +40,14 @@
       ]
     },
     {
+      "collectionGroup": "abonosCompra",
+      "fieldPath": "idProveedor",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
       "collectionGroup": "egresos",
       "fieldPath": "fecha",
       "indexes": [

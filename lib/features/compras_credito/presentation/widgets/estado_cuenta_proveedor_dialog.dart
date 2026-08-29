@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/abono_compra_model.dart';
+import '../../data/compra_credito_export_service.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/widgets/pdf_preview_dialog.dart';
+import '../../../negocio/providers/negocio_provider.dart';
 
 /// Una fila del estado de cuenta: o una factura nueva (aumenta la deuda) o
 /// el total abonado en un día (sin importar si el pago se repartió entre
@@ -42,6 +45,7 @@ class EstadoCuentaProveedorDialog extends ConsumerStatefulWidget {
 }
 
 class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProveedorDialog> {
+  final _servicioExport = CompraCreditoExportService();
   bool _cargando = true;
   String? _error;
   List<_MovimientoCuenta> _movimientos = [];
@@ -66,15 +70,36 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       final abonos = await repo.obtenerAbonosPorProveedor(widget.idProveedor);
       final comprasPorId = {for (final c in compras) c.id: c};
 
+      // El "cargo" de cada factura al estado de cuenta no siempre es su
+      // montoTotal: algunas facturas se registraron con un saldoPendiente ya
+      // menor al total (un pago hecho antes de digitalizar el crédito, sin
+      // abono registrado para esa diferencia -caso real: Ventura, facturas
+      // 00052894 y 00052953-). El saldoAnterior del primer abono (si hay
+      // abonos) es la deuda real que entró al sistema; si nunca hubo abonos,
+      // es el saldoPendiente actual. Usar montoTotal a ciegas acá hacía que
+      // el saldo corriendo del estado de cuenta no cuadrara con el saldo
+      // pendiente real (reportado por el dueño: quedaba una diferencia igual
+      // a esos pagos previos no registrados).
+      final abonosPorCompra = <String, List<AbonoCompraModel>>{};
+      for (final a in abonos) {
+        abonosPorCompra.putIfAbsent(a.idCompra, () => []).add(a);
+      }
+
       final movimientos = <_MovimientoCuenta>[];
       for (final c in compras) {
         if (c.fechaRegistro == null) continue;
+        final abonosDeEsta = abonosPorCompra[c.id] ?? [];
+        abonosDeEsta.sort((x, y) => (x.fecha ?? DateTime(0)).compareTo(y.fecha ?? DateTime(0)));
+        final saldoInicial = abonosDeEsta.isNotEmpty ? abonosDeEsta.first.saldoAnterior : c.saldoPendiente;
+        final huboPagoPrevio = c.montoTotal - saldoInicial > 0.01;
         movimientos.add(_MovimientoCuenta(
           fecha: c.fechaRegistro!,
           esCargo: true,
           titulo: 'Factura ${c.noFactura.isEmpty ? c.numeroDocumento : c.noFactura} registrada',
-          subtitulo: 'Documento ${c.numeroDocumento}',
-          monto: c.montoTotal,
+          subtitulo: huboPagoPrevio
+              ? 'Documento ${c.numeroDocumento} · Factura original ${formatearMoneda(c.montoTotal)}, ya traía ${formatearMoneda(c.montoTotal - saldoInicial)} abonado antes de registrarse'
+              : 'Documento ${c.numeroDocumento}',
+          monto: saldoInicial,
         ));
       }
 
@@ -113,7 +138,10 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
 
       movimientos.sort((a, b) => a.fecha.compareTo(b.fecha));
 
-      final totalFacturado = compras.fold<double>(0, (s, c) => s + c.montoTotal);
+      // Mismo criterio que arriba: sumar el cargo real que entró a la cuenta
+      // (no el montoTotal de la factura), para que Total Facturado - Total
+      // Abonado dé siempre exactamente el Saldo Pendiente Actual.
+      final totalFacturado = movimientos.where((m) => m.esCargo).fold<double>(0, (s, m) => s + m.monto);
       final totalAbonado = abonos.fold<double>(0, (s, a) => s + a.montoAbonado);
       final saldoActual = compras.fold<double>(0, (s, c) => s + c.saldoPendiente);
 
@@ -130,6 +158,44 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  List<FilaEstadoCuenta> _filasParaPdf() {
+    var saldo = 0.0;
+    return _movimientos.map((m) {
+      saldo = m.esCargo ? saldo + m.monto : saldo - m.monto;
+      final usuarios = m.montoPorUsuario.keys.join(', ');
+      return FilaEstadoCuenta(
+        fecha: m.fecha,
+        esCargo: m.esCargo,
+        titulo: m.titulo,
+        subtitulo: m.subtitulo,
+        monto: m.monto,
+        usuarios: usuarios.isEmpty ? '-' : usuarios,
+        saldoDespues: saldo,
+      );
+    }).toList();
+  }
+
+  Future<void> _exportarPdf() async {
+    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    if (!mounted) return;
+    final filas = _filasParaPdf();
+    await showDialog(
+      context: context,
+      builder: (context) => PdfPreviewDialog(
+        titulo: 'Vista previa · Estado de Cuenta',
+        nombreArchivo: 'estado_cuenta_${widget.nombreProveedor.replaceAll(' ', '_')}.pdf',
+        generarPdf: () => _servicioExport.generarPdfEstadoCuenta(
+          nombreProveedor: widget.nombreProveedor,
+          filas: filas,
+          totalFacturado: _totalFacturado,
+          totalAbonado: _totalAbonado,
+          saldoActual: _saldoActual,
+          negocio: negocio,
+        ),
+      ),
+    );
   }
 
   @override
@@ -161,6 +227,12 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
                     ],
                   ),
                 ),
+                if (!_cargando && _error == null && _movimientos.isNotEmpty)
+                  IconButton(
+                    tooltip: 'Descargar PDF',
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 22, color: Color(0xFFC62828)),
+                    onPressed: _exportarPdf,
+                  ),
                 IconButton(icon: const Icon(Icons.close, size: 22), onPressed: () => Navigator.pop(context)),
               ],
             ),
