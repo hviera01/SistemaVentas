@@ -28,6 +28,7 @@ import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
+import '../../../../core/widgets/imagen_producto_network.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
   const InventarioScreen({super.key});
@@ -53,6 +54,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   String? _columnaOrden;
   bool _ordenAscendente = false;
   bool _precioConIsv = true;
+  // Vista elegida en el rango "tablet" -pedido explícito del dueño-: 'tabla'
+  // por defecto, 'tarjetas' si el usuario la cambia con
+  // _selectorVistaTabletChico. No aplica en celular (siempre tarjetas) ni en
+  // escritorio ancho (siempre tabla) -ver esTablet en build()-.
+  String _vistaTablet = 'tabla';
   // Cuando la búsqueda viene de escanear un código de barras se filtra por
   // coincidencia exacta de código, no con el buscador difuso (que con
   // códigos largos puede "acercarse" a varios productos distintos).
@@ -796,6 +802,11 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
+          // Rango "tablet" -pedido explícito del dueño-: ni tan angosto como
+          // para forzar tarjetas, ni tan ancho como para forzar la tabla; acá
+          // se deja elegir (ver _selectorVistaTabletChico), con "Tabla" por
+          // defecto.
+          final esTablet = !esMovil && constraints.maxWidth < 1100;
           return Padding(
             padding: EdgeInsets.all(esMovil ? 14 : 26),
             child: NestedScrollView(
@@ -814,6 +825,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                         runSpacing: 6,
                         alignment: WrapAlignment.end,
                         children: [
+                          if (esTablet) _selectorVistaTabletChico(),
                           _selectorPrecioIsvChico(),
                           _selectorEstadoChico(),
                         ],
@@ -1036,10 +1048,12 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                       );
                     }
 
+                    final usarTarjetas =
+                        esMovil || (esTablet && _vistaTablet == 'tarjetas');
                     return Focus(
                       focusNode: _focusNode,
                       onKeyEvent: _manejarTeclado,
-                      child: esMovil
+                      child: usarTarjetas
                           ? _tarjetas(lista, mapaCategorias, mapaProductos)
                           : _tabla(lista, mapaCategorias, mapaProductos),
                     );
@@ -1367,37 +1381,119 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             itemCount: lista.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final p = lista[index];
-              final existencia = p.esCombo
-                  ? p.stockDisponibleCombo(mapaProductos)
-                  : p.stock;
-              final bajoStock = existencia < 3;
-              final seleccionada = _filaSeleccionada == p.id;
-              return InkWell(
-                borderRadius: BorderRadius.circular(16),
-                // Un solo onTap -sin onDoubleTap acá- a propósito: ver el
-                // comentario grande junto a _tocarFila.
-                onTap: () => _tocarFila(p, mapaCategorias, mapaProductos),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: seleccionada
-                        ? const Color(0xFFFBEAEA)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: seleccionada
-                          ? const Color(0xFFC62828)
-                          : const Color(0xFFC7CBD3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            itemBuilder: (context, index) => _tarjetaProductoMovil(
+              lista[index],
+              mapaCategorias,
+              mapaProductos,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Fila etiqueta/valor de la tarjeta de producto en móvil (ver
+  // _tarjetaProductoMovil) -pedido explícito del dueño, con captura de
+  // referencia-: etiqueta chica gris a la izquierda, valor a la derecha.
+  Widget _filaDatoTarjeta(String etiqueta, Widget valor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            etiqueta,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade500,
+              letterSpacing: 0.3,
+            ),
+          ),
+          valor,
+        ],
+      ),
+    );
+  }
+
+  // Tarjeta de producto en móvil -pedido explícito del dueño, con captura de
+  // referencia-: franja roja a la izquierda, miniatura + nombre arriba, filas
+  // de dato divididas (código/categoría/stock/estado), y una franja inferior
+  // con costo y precio de venta.
+  Widget _tarjetaProductoMovil(
+    ProductoModel p,
+    Map<String, String> mapaCategorias,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
+    final existencia = p.esCombo
+        ? p.stockDisponibleCombo(mapaProductos)
+        : p.stock;
+    final bajoStock = existencia < 3;
+    final seleccionada = _filaSeleccionada == p.id;
+    final categoria = mapaCategorias[p.idCategoria] ?? '-';
+    final textoExistencia = existencia.toStringAsFixed(
+      existencia == existencia.roundToDouble() ? 0 : 2,
+    );
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      // Un solo onTap -sin onDoubleTap acá- a propósito: ver el comentario
+      // grande junto a _tocarFila.
+      onTap: () => _tocarFila(p, mapaCategorias, mapaProductos),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: seleccionada
+                ? const Color(0xFFC62828)
+                : const Color(0xFFE0E2E8),
+            width: seleccionada ? 1.6 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(width: 4, color: const Color(0xFFC62828)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: p.imagenUrl.isEmpty
+                                ? Container(
+                                    width: 52,
+                                    height: 52,
+                                    color: const Color(0xFFF3F4F6),
+                                    child: Icon(
+                                      Icons.image_outlined,
+                                      color: Colors.grey.shade400,
+                                      size: 24,
+                                    ),
+                                  )
+                                : ImagenProductoNetwork(
+                                    url: p.imagenUrl,
+                                    width: 52,
+                                    height: 52,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1424,113 +1520,166 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                   ),
                                 Text(
                                   p.nombre,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 14.5,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF1A1A1A),
                                   ),
                                 ),
+                                if (p.descripcion.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    p.descripcion,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade500,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                           _celdaAccionesMovil(p),
                         ],
                       ),
-                      if (p.descripcion.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          p.descripcion,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    _filaDatoTarjeta(
+                      'CODIGO',
+                      Text(
+                        p.codigo,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
                         ),
-                      ],
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    _filaDatoTarjeta(
+                      'CATEGORIA',
+                      Text(
+                        categoria,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    _filaDatoTarjeta(
+                      'STOCK',
+                      Text(
+                        '$textoExistencia Unidades',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: bajoStock
+                              ? const Color(0xFFC62828)
+                              : const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    _filaDatoTarjeta(
+                      'ESTADO',
+                      Text(
+                        p.estado ? 'Activo' : 'Inactivo',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: p.estado
+                              ? const Color(0xFF16A34A)
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      color: const Color(0xFFF7F7F9),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _chipInfo('Código', p.codigo),
-                          _chipInfo(
-                            'Categoría',
-                            mapaCategorias[p.idCategoria] ?? '-',
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: bajoStock
-                                  ? const Color(0xFFFCE4E4)
-                                  : const Color(0xFFEFF4FF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Existencia: ${existencia.toStringAsFixed(existencia == existencia.roundToDouble() ? 0 : 2)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: bajoStock
-                                    ? const Color(0xFFC62828)
-                                    : const Color(0xFF3B82F6),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'COSTO',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade500,
+                                  letterSpacing: 0.3,
+                                ),
                               ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: p.estado
-                                  ? const Color(0xFFE8F8EE)
-                                  : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              p.estado ? 'Activo' : 'Inactivo',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: p.estado
-                                    ? const Color(0xFF16A34A)
-                                    : Colors.grey.shade600,
+                              const SizedBox(height: 2),
+                              Text(
+                                formatearMoneda(p.precioCompra),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'PRECIO VENTA',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade500,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    formatearMoneda(_precioMostrado(p)),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFFC62828),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _precioConIsv ? 'c/ISV' : 's/ISV',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9.5,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 4,
-                        children: [
-                          Text(
-                            'Venta (${_precioConIsv ? 'c/ISV' : 's/ISV'}): ${formatearMoneda(_precioMostrado(p))}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'Compra: ${formatearMoneda(p.precioCompra)}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.5,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1573,23 +1722,6 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chipInfo(String label, String valor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '$label: $valor',
-        style: GoogleFonts.poppins(
-          fontSize: 11.5,
-          color: const Color(0xFF3F434A),
         ),
       ),
     );
@@ -2072,6 +2204,15 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
       _filtroEstado,
       (v) => setState(() => _filtroEstado = v),
       const [('Activos', 'activos'), ('Inactivos', 'inactivos')],
+    );
+  }
+
+  Widget _selectorVistaTabletChico() {
+    return _pildoraChica<String>(
+      _vistaTablet,
+      _vistaTablet,
+      (v) => setState(() => _vistaTablet = v),
+      const [('Tabla', 'tabla'), ('Tarjetas', 'tarjetas')],
     );
   }
 

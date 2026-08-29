@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,7 +49,12 @@ class DetalleVentaScreen extends ConsumerStatefulWidget {
   /// pestañas).
   final bool esDialogo;
 
-  const DetalleVentaScreen({super.key, this.ventaIdInicial, this.numeroDocumentoInicial, this.esDialogo = true});
+  const DetalleVentaScreen({
+    super.key,
+    this.ventaIdInicial,
+    this.numeroDocumentoInicial,
+    this.esDialogo = true,
+  });
 
   @override
   ConsumerState<DetalleVentaScreen> createState() => _DetalleVentaScreenState();
@@ -97,7 +103,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       _error = null;
     });
     try {
-      final venta = await ref.read(ventaRepositoryProvider).obtenerVentaPorId(id);
+      final venta = await ref
+          .read(ventaRepositoryProvider)
+          .obtenerVentaPorId(id);
       if (!mounted) return;
       if (venta == null) {
         setState(() => _error = 'No se encontró la venta');
@@ -124,10 +132,18 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       _venta = null;
     });
     try {
-      final resultados = await ref.read(ventaRepositoryProvider).buscarVentasPorNumeroDocumento(texto, tipoDocumento: _tipoDocumentoFiltro);
+      final resultados = await ref
+          .read(ventaRepositoryProvider)
+          .buscarVentasPorNumeroDocumento(
+            texto,
+            tipoDocumento: _tipoDocumentoFiltro,
+          );
       if (!mounted) return;
       if (resultados.isEmpty) {
-        setState(() => _error = 'No se encontró ninguna venta con ese número de documento');
+        setState(
+          () => _error =
+              'No se encontró ninguna venta con ese número de documento',
+        );
       } else if (resultados.length == 1) {
         setState(() => _venta = resultados.first);
       } else {
@@ -136,7 +152,10 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
         if (elegida != null) {
           setState(() => _venta = elegida);
         } else {
-          setState(() => _error = 'Hay más de una venta con ese número: elegí el tipo de documento para buscar más preciso');
+          setState(
+            () => _error =
+                'Hay más de una venta con ese número: elegí el tipo de documento para buscar más preciso',
+          );
         }
       }
     } catch (e) {
@@ -156,7 +175,10 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Hay más de una venta con ese número', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15)),
+        title: Text(
+          'Hay más de una venta con ese número',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
         content: SizedBox(
           width: 380,
           child: ListView.separated(
@@ -167,7 +189,13 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               final v = ventas[i];
               return ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text('${tiposDocumento[v.tipoDocumento] ?? v.tipoDocumento} · ${v.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                title: Text(
+                  '${tiposDocumento[v.tipoDocumento] ?? v.tipoDocumento} · ${v.numeroDocumento}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 subtitle: Text(
                   '${v.nombreCliente.isEmpty ? 'Sin cliente' : v.nombreCliente}${v.fechaRegistro != null ? ' · ${formatoFecha.format(v.fechaRegistro!)}' : ''}',
                   style: GoogleFonts.poppins(fontSize: 11.5),
@@ -177,7 +205,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             },
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins()))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
+        ],
       ),
     );
   }
@@ -199,13 +232,27 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Reimprimir', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿La hoja reimpresa debe decir "ORIGINAL" o "COPIA"?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Reimprimir',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿La hoja reimpresa debe decir "ORIGINAL" o "COPIA"?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins())),
-          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: Text('Original', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Original', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Copia', style: GoogleFonts.poppins()),
           ),
@@ -216,7 +263,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
 
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje), showCloseIcon: true));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje), showCloseIcon: true));
   }
 
   Future<void> _reimprimir() async {
@@ -226,7 +275,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     if (esCopia == null || !mounted) return;
     setState(() => _procesandoPdf = true);
     try {
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final negocio = await ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
       if (!mounted) return;
 
       // En Android/iOS no hay impresoras del SO para elegir (esto es
@@ -241,24 +292,54 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en
       // web no sirve de nada) detecta el sistema operativo real aunque se
       // esté usando desde el navegador.
-      final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+      final esMovil =
+          defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS;
       if (kIsWeb && esMovil) {
-        await _pedirImpresionEnVivo(venta, esCopia, mensajeSinPc: 'No se puede reimprimir directo desde el navegador del celular');
+        await _pedirImpresionEnVivo(
+          venta,
+          esCopia,
+          mensajeSinPc:
+              'No se puede reimprimir directo desde el navegador del celular',
+        );
         return;
       }
 
-      final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+      final impresora = negocio.impresoraTermicaUrl.isEmpty
+          ? null
+          : Printer(
+              url: negocio.impresoraTermicaUrl,
+              name: negocio.impresoraTermicaNombre,
+            );
       await showDialog(
         context: context,
         builder: (context) => PdfPreviewDialog(
-          titulo: 'Vista previa · ${venta.numeroDocumento} (${esCopia ? 'copia' : 'original'})',
+          titulo:
+              'Vista previa · ${venta.numeroDocumento} (${esCopia ? 'copia' : 'original'})',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
-          generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia),
-          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, forzarCopia: esCopia, formatoImpresora: formato),
+          generarPdf: () => _servicioExport.generarPdfFactura(
+            venta,
+            negocio,
+            forzarCopia: esCopia,
+          ),
+          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(
+            venta,
+            negocio,
+            forzarCopia: esCopia,
+            formatoImpresora: formato,
+          ),
           impresora: impresora,
-          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio, forzarCopia: esCopia),
+          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(
+            venta,
+            negocio,
+            forzarCopia: esCopia,
+          ),
           nombreImpresoraWindows: negocio.impresoraTermicaNombre,
-          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: esCopia),
+          vistaPreviaTicket: () => TicketEscPosPreview(
+            venta: venta,
+            negocio: negocio,
+            esCopia: esCopia,
+          ),
         ),
       );
     } catch (e) {
@@ -268,10 +349,22 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     }
   }
 
-  Future<void> _reimprimirEscPosORemoto(VentaModel venta, NegocioModel negocio, bool esCopia) async {
+  Future<void> _reimprimirEscPosORemoto(
+    VentaModel venta,
+    NegocioModel negocio,
+    bool esCopia,
+  ) async {
     if (negocio.impresoraRedIp.isNotEmpty) {
-      final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio, forzarCopia: esCopia);
-      final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+      final bytes = await _servicioTicketEscPos.generarTicket(
+        venta,
+        negocio,
+        forzarCopia: esCopia,
+      );
+      final ok = await _servicioImpresoraRed.imprimir(
+        ip: negocio.impresoraRedIp,
+        puerto: negocio.impresoraRedPuerto,
+        bytes: bytes,
+      );
       if (ok) {
         _mostrarMensaje('Ticket reimpreso');
         return;
@@ -307,8 +400,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     // vez que se genera la guía-.
     String direccionInicial = venta.envioDireccion;
     String telefonoInicial = venta.envioTelefono;
-    if (direccionInicial.isEmpty && telefonoInicial.isEmpty && venta.idCliente != null) {
-      final cliente = await ref.read(clienteRepositoryProvider).obtenerPorId(venta.idCliente!);
+    if (direccionInicial.isEmpty &&
+        telefonoInicial.isEmpty &&
+        venta.idCliente != null) {
+      final cliente = await ref
+          .read(clienteRepositoryProvider)
+          .obtenerPorId(venta.idCliente!);
       direccionInicial = cliente?.direccion ?? '';
       telefonoInicial = cliente?.telefono ?? '';
     }
@@ -316,7 +413,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     final resultado = await showDialog<DatosEnvioResultado>(
       context: context,
       builder: (context) => DatosEnvioDialog(
-        nombreInicial: venta.envioNombre.isNotEmpty ? venta.envioNombre : (venta.nombreCliente == 'CONSUMIDOR FINAL' ? '' : venta.nombreCliente),
+        nombreInicial: venta.envioNombre.isNotEmpty
+            ? venta.envioNombre
+            : (venta.nombreCliente == 'CONSUMIDOR FINAL'
+                  ? ''
+                  : venta.nombreCliente),
         direccionInicial: direccionInicial,
         telefonoInicial: telefonoInicial,
         mostrarOpcionImprimir: false,
@@ -324,7 +425,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     );
     if (resultado == null || !mounted) return;
     try {
-      await ref.read(ventaRepositoryProvider).actualizarDatosEnvio(
+      await ref
+          .read(ventaRepositoryProvider)
+          .actualizarDatosEnvio(
             id: venta.id,
             envioNombre: resultado.nombre,
             envioDireccion: resultado.direccion,
@@ -334,10 +437,17 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       _mostrarMensaje('No se pudieron guardar los datos de envío: $e');
       return;
     }
-    ventaConEnvio = venta.copyWith(esEnvio: true, envioNombre: resultado.nombre, envioDireccion: resultado.direccion, envioTelefono: resultado.telefono);
+    ventaConEnvio = venta.copyWith(
+      esEnvio: true,
+      envioNombre: resultado.nombre,
+      envioDireccion: resultado.direccion,
+      envioTelefono: resultado.telefono,
+    );
     if (mounted) setState(() => _venta = ventaConEnvio);
 
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
 
     // Misma filosofía que _reimprimir: en Android/iOS (donde normalmente no
@@ -349,8 +459,16 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       if (negocio.impresoraRedIp.isNotEmpty) {
         try {
-          final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio, grande: resultado.formatoGrande);
-          final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+          final bytes = await _servicioTicketEscPos.generarGuiaEnvio(
+            ventaConEnvio,
+            negocio,
+            grande: resultado.formatoGrande,
+          );
+          final ok = await _servicioImpresoraRed.imprimir(
+            ip: negocio.impresoraRedIp,
+            puerto: negocio.impresoraRedPuerto,
+            bytes: bytes,
+          );
           if (ok) {
             _mostrarMensaje('Guía de envío impresa');
             return;
@@ -359,44 +477,77 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       }
       if (!mounted) return;
       try {
-        await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionGuiaEnvio(venta.id, true, grande: resultado.formatoGrande);
+        await ref
+            .read(ventaRepositoryProvider)
+            .marcarSolicitudImpresionGuiaEnvio(
+              venta.id,
+              true,
+              grande: resultado.formatoGrande,
+            );
       } catch (_) {}
       final pcConectada = await _presencia.estaConectada();
       if (!mounted) return;
       if (pcConectada) {
-        _mostrarMensaje('Se envió la orden de impresión de la guía a la caja principal');
+        _mostrarMensaje(
+          'Se envió la orden de impresión de la guía a la caja principal',
+        );
       } else {
-        _mostrarMensaje('No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal');
+        _mostrarMensaje(
+          'No se pudo imprimir la guía desde este dispositivo: quedó pendiente para la caja principal',
+        );
       }
       return;
     }
 
     try {
-      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(ventaConEnvio, negocio, grande: resultado.formatoGrande);
+      final bytes = await _servicioTicketEscPos.generarGuiaEnvio(
+        ventaConEnvio,
+        negocio,
+        grande: resultado.formatoGrande,
+      );
       if (!kIsWeb && Platform.isWindows) {
         if (negocio.impresoraTermicaNombre.isEmpty) {
-          _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+          _mostrarMensaje(
+            'No hay impresora configurada, no se pudo imprimir la guía de envío',
+          );
           return;
         }
-        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        final ok = ImpresoraUsbWindowsService().imprimir(
+          nombreImpresora: negocio.impresoraTermicaNombre,
+          bytes: bytes,
+        );
         if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
       } else if (negocio.impresoraRedIp.isNotEmpty) {
-        final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+        final ok = await _servicioImpresoraRed.imprimir(
+          ip: negocio.impresoraRedIp,
+          puerto: negocio.impresoraRedPuerto,
+          bytes: bytes,
+        );
         if (!ok) _mostrarMensaje('No se pudo imprimir la guía de envío');
       } else {
-        _mostrarMensaje('No hay impresora configurada, no se pudo imprimir la guía de envío');
+        _mostrarMensaje(
+          'No hay impresora configurada, no se pudo imprimir la guía de envío',
+        );
       }
     } catch (_) {
       _mostrarMensaje('No se pudo imprimir la guía de envío');
     }
   }
 
-  Future<void> _pedirImpresionEnVivo(VentaModel venta, bool esCopia, {String mensajeSinPc = 'No se pudo reimprimir desde este dispositivo'}) async {
+  Future<void> _pedirImpresionEnVivo(
+    VentaModel venta,
+    bool esCopia, {
+    String mensajeSinPc = 'No se pudo reimprimir desde este dispositivo',
+  }) async {
     final pcConectada = await _presencia.estaConectada();
     if (!mounted) return;
     if (pcConectada) {
-      await ref.read(ventaRepositoryProvider).marcarSolicitudImpresionEnVivo(venta.id, true, esCopia: esCopia);
-      _mostrarMensaje('Se envió la orden de reimpresión (${esCopia ? 'copia' : 'original'}) a la caja principal');
+      await ref
+          .read(ventaRepositoryProvider)
+          .marcarSolicitudImpresionEnVivo(venta.id, true, esCopia: esCopia);
+      _mostrarMensaje(
+        'Se envió la orden de reimpresión (${esCopia ? 'copia' : 'original'}) a la caja principal',
+      );
     } else {
       _mostrarMensaje(mensajeSinPc);
     }
@@ -406,10 +557,17 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     final venta = _venta;
     if (venta == null) return;
     try {
-      await ref.read(ventaRepositoryProvider).marcarPendienteImpresion(venta.id, false);
+      await ref
+          .read(ventaRepositoryProvider)
+          .marcarPendienteImpresion(venta.id, false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo actualizar: $e'), showCloseIcon: true));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo actualizar: $e'),
+            showCloseIcon: true,
+          ),
+        );
       }
       return;
     }
@@ -421,19 +579,30 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     if (venta == null) return;
     setState(() => _procesandoPdf = true);
     try {
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final negocio = await ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
       if (!mounted) return;
       await showDialog(
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo: 'Documento formal · ${venta.numeroDocumento}',
           nombreArchivo: '${venta.tipoDocumento}_${venta.numeroDocumento}.pdf',
-          generarPdf: () => _servicioExport.generarPdfDetalleVenta(venta, negocio, preciosConIsv: _precioConIsv),
+          generarPdf: () => _servicioExport.generarPdfDetalleVenta(
+            venta,
+            negocio,
+            preciosConIsv: _precioConIsv,
+          ),
         ),
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo generar el PDF: $e'), showCloseIcon: true));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo generar el PDF: $e'),
+            showCloseIcon: true,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _procesandoPdf = false);
@@ -443,21 +612,43 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   Future<void> _abrirRegistrarAbono() async {
     final venta = _venta;
     if (venta == null) return;
-    final credito = await ref.read(ventaCreditoRepositoryProvider).obtenerPorId(venta.id);
+    final credito = await ref
+        .read(ventaCreditoRepositoryProvider)
+        .obtenerPorId(venta.id);
     if (!mounted) return;
     if (credito == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró el crédito asociado a esta venta'), showCloseIcon: true));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se encontró el crédito asociado a esta venta'),
+          showCloseIcon: true,
+        ),
+      );
       return;
     }
     if (credito.saldoPendiente <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este crédito ya está saldado'), showCloseIcon: true));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Este crédito ya está saldado'),
+          showCloseIcon: true,
+        ),
+      );
       return;
     }
-    final abono = await showDialog<AbonoModel>(context: context, builder: (context) => RegistrarAbonoDialog(credito: credito));
+    final abono = await showDialog<AbonoModel>(
+      context: context,
+      builder: (context) => RegistrarAbonoDialog(credito: credito),
+    );
     if (abono == null || !mounted) return;
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
-    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    final impresora = negocio.impresoraTermicaUrl.isEmpty
+        ? null
+        : Printer(
+            url: negocio.impresoraTermicaUrl,
+            name: negocio.impresoraTermicaNombre,
+          );
     await Future<void>.delayed(const Duration(milliseconds: 150));
     if (!mounted) return;
     showDialog(
@@ -465,7 +656,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Recibo de abono',
         nombreArchivo: 'recibo_${credito.numeroDocumento}.pdf',
-        generarPdf: () => VentaCreditoExportService().generarPdfRecibo(credito, abono, negocio),
+        generarPdf: () => VentaCreditoExportService().generarPdfRecibo(
+          credito,
+          abono,
+          negocio,
+        ),
         impresora: impresora,
       ),
     );
@@ -477,17 +672,36 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   /// es lo que distingue "Duplicar venta" (una cotización sigue siendo
   /// cotización) de "Convertir a venta" (pasa a Factura).
   void _duplicarVenta(VentaModel venta, {bool forzarFactura = false}) {
-    ref.read(ventaParaCargarProvider.notifier).establecer(venta, forzarFactura: forzarFactura);
+    ref
+        .read(ventaParaCargarProvider.notifier)
+        .establecer(venta, forzarFactura: forzarFactura);
     final id = 'ventas_registrar_${DateTime.now().millisecondsSinceEpoch}';
-    ref.read(tabsProvider.notifier).abrirTab(
+    ref
+        .read(tabsProvider.notifier)
+        .abrirTab(
           TabItem(
             id: id,
             titulo: 'Registrar Venta',
             icono: Icons.add_shopping_cart_outlined,
-            contenido: construirPantalla('ventas_registrar', 'Registrar Venta', Icons.add_shopping_cart_outlined, id),
+            contenido: construirPantalla(
+              'ventas_registrar',
+              'Registrar Venta',
+              Icons.add_shopping_cart_outlined,
+              id,
+            ),
           ),
         );
-    if (widget.esDialogo) Navigator.pop(context);
+    // `popUntil((route) => route.isFirst)` en vez de un solo `pop` -pedido
+    // explícito del dueño: antes había que salir manual-: cuando se llega acá
+    // desde "Ver Facturas" (Navigator.push encima de la pestaña, y ESE
+    // Detalle de Venta es otro push encima de Ver Facturas), un solo `pop`
+    // solo cerraba Detalle de Venta y dejaba Ver Facturas tapando la pestaña
+    // nueva ya activa. Esto cierra TODO lo apilado (venga de Ver Facturas,
+    // de Pendientes de Impresión, o de un solo nivel) y deja ver de una vez
+    // la pestaña de Registrar Venta recién abierta con la venta duplicada.
+    if (widget.esDialogo) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   Future<void> _anular() async {
@@ -499,7 +713,10 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Anular venta ${venta.numeroDocumento}', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Anular venta ${venta.numeroDocumento}',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,26 +731,34 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               numerico: false,
               titulo: 'Motivo (opcional)',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: motivoController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                labelText: 'Motivo (opcional)',
-                labelStyle: GoogleFonts.poppins(fontSize: 12.5),
-                filled: true,
-                fillColor: const Color(0xFFE8EAF0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: motivoController,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'Motivo (opcional)',
+                  labelStyle: GoogleFonts.poppins(fontSize: 12.5),
+                  filled: true,
+                  fillColor: const Color(0xFFE8EAF0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
-            ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Anular', style: GoogleFonts.poppins()),
           ),
@@ -545,15 +770,31 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     setState(() => _anulando = true);
     try {
       final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-      await ref.read(ventaRepositoryProvider).anularVenta(id: venta.id, usuario: usuario, motivo: motivoController.text.trim());
+      await ref
+          .read(ventaRepositoryProvider)
+          .anularVenta(
+            id: venta.id,
+            usuario: usuario,
+            motivo: motivoController.text.trim(),
+          );
       if (!mounted) return;
       await _buscarPorId(venta.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Venta anulada correctamente'), showCloseIcon: true));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Venta anulada correctamente'),
+            showCloseIcon: true,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), showCloseIcon: true));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            showCloseIcon: true,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _anulando = false);
@@ -566,111 +807,201 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     final esMovil = tamano.width < 760;
 
     final contenido = Padding(
-          padding: EdgeInsets.all(esMovil ? 14 : 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.all(esMovil ? 14 : 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          widget.esDialogo
+              ? Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Detalle de Venta',
+                      style: GoogleFonts.poppins(
+                        fontSize: esMovil ? 18 : 21,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  'Detalle de Venta',
+                  style: GoogleFonts.poppins(
+                    fontSize: esMovil ? 19 : 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              widget.esDialogo
-                  ? Row(
-                      children: [
-                        IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
-                        const SizedBox(width: 6),
-                        Text('Detalle de Venta', style: GoogleFonts.poppins(fontSize: esMovil ? 18 : 21, fontWeight: FontWeight.w700)),
-                      ],
-                    )
-                  : Text('Detalle de Venta', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: esMovil ? tamano.width - 28 : 320,
-                    child: Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-                      child: CampoTecladoCompacto(
-                        controller: _busquedaController,
-                        numerico: false,
-                        onSubmitted: (_) => _buscarPorNumero(),
-                        titulo: 'Número de documento...',
-                        child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _busquedaController,
-                        autofocus: widget.ventaIdInicial == null,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Número de documento...',
-                          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-                          border: InputBorder.none,
-                          isDense: true,
+              SizedBox(
+                width: esMovil ? tamano.width - 28 : 320,
+                child: Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFB6BCC7)),
+                  ),
+                  child: CampoTecladoCompacto(
+                    controller: _busquedaController,
+                    numerico: false,
+                    onSubmitted: (_) => _buscarPorNumero(),
+                    titulo: 'Número de documento...',
+                    child: TextField(
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: _busquedaController,
+                      autofocus: widget.ventaIdInicial == null,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Número de documento...',
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey.shade400,
                         ),
-                        onSubmitted: (_) => _buscarPorNumero(),
+                        border: InputBorder.none,
+                        isDense: true,
                       ),
-                      ),
+                      onSubmitted: (_) => _buscarPorNumero(),
                     ),
                   ),
-                  SizedBox(
-                    width: esMovil ? tamano.width - 28 : 200,
-                    child: Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String?>(
-                          value: _tipoDocumentoFiltro,
-                          isExpanded: true,
-                          hint: Text('Tipo (todos)', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
-                          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                          items: [
-                            DropdownMenuItem<String?>(value: null, child: Text('Tipo (todos)', style: GoogleFonts.poppins(fontSize: 13))),
-                            ...tiposDocumento.entries.map((e) => DropdownMenuItem<String?>(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))),
-                          ],
-                          onChanged: (v) => setState(() => _tipoDocumentoFiltro = v),
-                        ),
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _cargando ? null : _buscarPorNumero,
-                    icon: const Icon(Icons.search, size: 18),
-                    label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _cargando ? null : _limpiar,
-                    icon: const Icon(Icons.close, size: 18),
-                    label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _cargando
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
-                    : _error != null
-                        ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                        : _venta == null
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
-                                    const SizedBox(height: 12),
-                                    Text('Buscá una venta por su número de documento', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                  ],
-                                ),
-                              )
-                            : SingleChildScrollView(child: _detalle(_venta!, esMovil)),
+              SizedBox(
+                width: esMovil ? tamano.width - 28 : 200,
+                child: Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFB6BCC7)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String?>(
+                      value: _tipoDocumentoFiltro,
+                      isExpanded: true,
+                      hint: Text(
+                        'Tipo (todos)',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(
+                            'Tipo (todos)',
+                            style: GoogleFonts.poppins(fontSize: 13),
+                          ),
+                        ),
+                        ...tiposDocumento.entries.map(
+                          (e) => DropdownMenuItem<String?>(
+                            value: e.key,
+                            child: Text(
+                              e.value,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _tipoDocumentoFiltro = v),
+                    ),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _cargando ? null : _buscarPorNumero,
+                icon: const Icon(Icons.search, size: 18),
+                label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1A1A1A),
+                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _cargando ? null : _limpiar,
+                icon: const Icon(Icons.close, size: 18),
+                label: Text(
+                  'Limpiar',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1A1A1A),
+                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
           ),
-        );
+          const SizedBox(height: 16),
+          Expanded(
+            child: _cargando
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  )
+                : _error != null
+                ? Center(
+                    child: Text(
+                      _error!,
+                      style: GoogleFonts.poppins(color: Colors.red),
+                    ),
+                  )
+                : _venta == null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 56,
+                          color: Colors.grey.shade300,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Buscá una venta por su número de documento',
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : SingleChildScrollView(child: _detalle(_venta!, esMovil)),
+          ),
+        ],
+      ),
+    );
 
     if (widget.esDialogo) {
       return Scaffold(
@@ -704,22 +1035,44 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             children: [
               _campoInfo('Tipo de documento', venta.tipoDocumento),
               _campoInfo('No. Documento', venta.numeroDocumento),
-              _campoInfo('Fecha', venta.fechaRegistro != null ? formatoDia.format(venta.fechaRegistro!) : '-'),
+              _campoInfo(
+                'Fecha',
+                venta.fechaRegistro != null
+                    ? formatoDia.format(venta.fechaRegistro!)
+                    : '-',
+              ),
               _campoInfo('Atendido por', venta.usuarioRegistro),
-              _campoInfo('Cliente', venta.nombreCliente.isEmpty ? 'CONSUMIDOR FINAL' : venta.nombreCliente),
-              _campoInfo('Documento cliente', venta.documentoCliente.isEmpty ? 'N/A' : venta.documentoCliente),
+              _campoInfo(
+                'Cliente',
+                venta.nombreCliente.isEmpty
+                    ? 'CONSUMIDOR FINAL'
+                    : venta.nombreCliente,
+              ),
+              _campoInfo(
+                'Documento cliente',
+                venta.documentoCliente.isEmpty ? 'N/A' : venta.documentoCliente,
+              ),
               _campoInfo('Condición', esCredito ? 'Crédito' : 'Contado'),
-              if (esCredito && venta.fechaVencimiento != null) _campoInfo('Vence', formatoDia.format(venta.fechaVencimiento!)),
-              if (!esCotizacion && !esCredito) _campoInfo('Método de pago', venta.metodoPago),
+              if (esCredito && venta.fechaVencimiento != null)
+                _campoInfo('Vence', formatoDia.format(venta.fechaVencimiento!)),
+              if (!esCotizacion && !esCredito)
+                _campoInfo('Método de pago', venta.metodoPago),
               _campoInfo('Estado', venta.estado),
-              if (venta.observaciones.isNotEmpty) _campoInfo('Observaciones', venta.observaciones),
+              if (venta.observaciones.isNotEmpty)
+                _campoInfo('Observaciones', venta.observaciones),
             ],
           ),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Text('Productos', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+            Text(
+              'Productos',
+              style: GoogleFonts.poppins(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const Spacer(),
             _selectorPrecioIsv(),
           ],
@@ -736,56 +1089,181 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             OutlinedButton.icon(
               onPressed: _procesandoPdf ? null : _reimprimir,
               icon: _procesandoPdf
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1A1A1A)))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    )
                   : const Icon(Icons.print_outlined, size: 18),
-              label: Text('Reimprimir', style: GoogleFonts.poppins(fontSize: 13)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              label: Text(
+                'Reimprimir',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A1A1A),
+                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: _procesandoPdf ? null : _descargarPdf,
               icon: _procesandoPdf
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1A1A1A)))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    )
                   : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-              label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 13)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              label: Text(
+                'Descargar PDF',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A1A1A),
+                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
             if (!venta.estaAnulada)
               OutlinedButton.icon(
                 onPressed: _procesandoGuia ? null : _imprimirGuiaEnvio,
                 icon: _procesandoGuia
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF1565C0),
+                        ),
+                      )
                     : const Icon(Icons.local_shipping_outlined, size: 18),
-                label: Text(venta.esEnvio ? 'Reimprimir guía de envío' : 'Generar guía de envío', style: GoogleFonts.poppins(fontSize: 13)),
-                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1565C0), side: const BorderSide(color: Color(0xFF1565C0)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  venta.esEnvio
+                      ? 'Reimprimir guía de envío'
+                      : 'Generar guía de envío',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1565C0),
+                  side: const BorderSide(color: Color(0xFF1565C0)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             if (esCredito && !venta.estaAnulada)
               OutlinedButton.icon(
                 onPressed: _abrirRegistrarAbono,
                 icon: const Icon(Icons.payments_outlined, size: 18),
-                label: Text('Registrar Abono', style: GoogleFonts.poppins(fontSize: 13)),
-                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF16A34A), side: const BorderSide(color: Color(0xFFBEE9CE)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  'Registrar Abono',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF16A34A),
+                  side: const BorderSide(color: Color(0xFFBEE9CE)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             OutlinedButton.icon(
               onPressed: () => _duplicarVenta(venta),
               icon: const Icon(Icons.content_copy_outlined, size: 18),
-              label: Text('Duplicar venta', style: GoogleFonts.poppins(fontSize: 13)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              label: Text(
+                'Duplicar venta',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A1A1A),
+                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
             if (esCotizacion && !venta.estaAnulada)
               FilledButton.icon(
                 onPressed: () => _duplicarVenta(venta, forzarFactura: true),
                 icon: const Icon(Icons.point_of_sale_outlined, size: 18),
-                label: Text('Convertir a venta', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  'Convertir a venta',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             if (!esCotizacion && !venta.estaAnulada)
               FilledButton.icon(
                 onPressed: _anulando ? null : _anular,
                 icon: _anulando
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.block_outlined, size: 18),
-                label: Text(_anulando ? 'Anulando...' : 'Anular Venta', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  _anulando ? 'Anulando...' : 'Anular Venta',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
           ],
         ),
@@ -797,7 +1275,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(color: const Color(0xFFFCE4E4), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC62828))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFCE4E4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFC62828)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -807,15 +1289,35 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Esta venta está anulada', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
-                if (venta.motivoAnulacion.isNotEmpty) Text('Motivo: ${venta.motivoAnulacion}', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF7A1F1F))),
-                if (venta.usuarioAnulacion.isNotEmpty || venta.fechaAnulacion != null)
+                Text(
+                  'Esta venta está anulada',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFC62828),
+                  ),
+                ),
+                if (venta.motivoAnulacion.isNotEmpty)
+                  Text(
+                    'Motivo: ${venta.motivoAnulacion}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: const Color(0xFF7A1F1F),
+                    ),
+                  ),
+                if (venta.usuarioAnulacion.isNotEmpty ||
+                    venta.fechaAnulacion != null)
                   Text(
                     [
-                      if (venta.usuarioAnulacion.isNotEmpty) 'Por ${venta.usuarioAnulacion}',
-                      if (venta.fechaAnulacion != null) 'el ${formatoDia.format(venta.fechaAnulacion!)}',
+                      if (venta.usuarioAnulacion.isNotEmpty)
+                        'Por ${venta.usuarioAnulacion}',
+                      if (venta.fechaAnulacion != null)
+                        'el ${formatoDia.format(venta.fechaAnulacion!)}',
                     ].join(' '),
-                    style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF7A1F1F)),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: const Color(0xFF7A1F1F),
+                    ),
                   ),
               ],
             ),
@@ -829,7 +1331,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(color: const Color(0xFFFFF4E0), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE0A63C))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E0),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE0A63C)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -838,13 +1344,23 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           Expanded(
             child: Text(
               'Esta venta se guardó sin imprimir (probablemente desde el celular, sin la impresora a mano). Usá "Reimprimir" cuando tengas la impresora disponible.',
-              style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF9A6B0F)),
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: const Color(0xFF9A6B0F),
+              ),
             ),
           ),
           const SizedBox(width: 12),
           TextButton(
             onPressed: _marcarComoImpresa,
-            child: Text('Marcar como impresa', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF9A6B0F))),
+            child: Text(
+              'Marcar como impresa',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF9A6B0F),
+              ),
+            ),
           ),
         ],
       ),
@@ -870,9 +1386,23 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+          Text(
+            etiqueta.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade500,
+              letterSpacing: 0.4,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(valor, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A))),
+          Text(
+            valor,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: const Color(0xFF1A1A1A),
+            ),
+          ),
         ],
       ),
     );
@@ -887,37 +1417,85 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-          child: Text(texto, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72))),
+          decoration: BoxDecoration(
+            color: activo ? const Color(0xFFC62828) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            texto,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: activo ? Colors.white : const Color(0xFF666A72),
+            ),
+          ),
         ),
       );
     }
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [opcion('Con ISV', true), opcion('Sin ISV', false)]),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [opcion('Con ISV', true), opcion('Sin ISV', false)],
+      ),
     );
   }
 
-  double _precioMostrado(dynamic item) => _precioConIsv ? redondearMoneda((item.precioVenta as double) * 1.15) : item.precioVenta as double;
+  double _precioMostrado(dynamic item) => _precioConIsv
+      ? redondearMoneda((item.precioVenta as double) * 1.15)
+      : item.precioVenta as double;
 
   double _importeMostrado(dynamic item) {
     final precio = _precioMostrado(item);
-    return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
+    return redondearMoneda(
+      precio *
+          (item.cantidad as double) *
+          (1 - (item.descuentoPorcentaje as double) / 100),
+    );
   }
 
   Widget _tablaItems(VentaModel venta) {
-    final estiloEncabezado = GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estiloEncabezado = GoogleFonts.poppins(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      color: Colors.grey.shade600,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(flex: 2, child: Text('Cant.', textAlign: TextAlign.center, style: estiloEncabezado)),
+            Expanded(
+              flex: 2,
+              child: Text(
+                'Cant.',
+                textAlign: TextAlign.center,
+                style: estiloEncabezado,
+              ),
+            ),
             Expanded(flex: 5, child: Text('Producto', style: estiloEncabezado)),
-            Expanded(flex: 2, child: Text(_precioConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)', textAlign: TextAlign.right, style: estiloEncabezado)),
-            Expanded(flex: 2, child: Text('Importe', textAlign: TextAlign.right, style: estiloEncabezado)),
+            Expanded(
+              flex: 2,
+              child: Text(
+                _precioConIsv ? 'Precio (c/ISV)' : 'Precio (s/ISV)',
+                textAlign: TextAlign.right,
+                style: estiloEncabezado,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                'Importe',
+                textAlign: TextAlign.right,
+                style: estiloEncabezado,
+              ),
+            ),
           ],
         ),
         Divider(height: 18, color: Colors.grey.shade300),
@@ -927,27 +1505,78 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(flex: 2, child: Text(_formatoCantidad(item.cantidad), textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13))),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    _formatoCantidad(item.cantidad),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                  ),
+                ),
                 Expanded(
                   flex: 5,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(
+                        item.nombreProducto,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (item.codigosColor.isNotEmpty)
-                        Text('Código: ${item.codigosColor.join(', ')}', style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFFC62828))),
-                      if (item.reembasado) Text('Reembasado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
-                      if (item.descuentoPorcentaje > 0) Text('Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+                        Text(
+                          'Código: ${item.codigosColor.join(', ')}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            color: const Color(0xFFC62828),
+                          ),
+                        ),
+                      if (item.reembasado)
+                        Text(
+                          'Reembasado',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      if (item.descuentoPorcentaje > 0)
+                        Text(
+                          'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                Expanded(flex: 2, child: Text(formatearMoneda(_precioMostrado(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13))),
-                Expanded(flex: 2, child: Text(formatearMoneda(_importeMostrado(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    formatearMoneda(_precioMostrado(item)),
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    formatearMoneda(_importeMostrado(item)),
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          if (item != venta.detalle.last) Divider(height: 1, color: Colors.grey.shade200),
+          if (item != venta.detalle.last)
+            Divider(height: 1, color: Colors.grey.shade200),
         ],
       ],
     );
@@ -963,23 +1592,46 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                Text(
+                  item.nombreProducto,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (item.codigosColor.isNotEmpty)
-                  Text('Código: ${item.codigosColor.join(', ')}', style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFC62828))),
+                  Text(
+                    'Código: ${item.codigosColor.join(', ')}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFFC62828),
+                    ),
+                  ),
                 if (item.reembasado || item.descuentoPorcentaje > 0)
                   Text(
-                    [if (item.reembasado) 'Reembasado', if (item.descuentoPorcentaje > 0) 'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%'].join(' · '),
-                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                    [
+                      if (item.reembasado) 'Reembasado',
+                      if (item.descuentoPorcentaje > 0)
+                        'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%',
+                    ].join(' · '),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 const SizedBox(height: 4),
                 Text(
                   '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(_precioMostrado(item))} = ${formatearMoneda(_importeMostrado(item))}',
-                  style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF3F434A)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: const Color(0xFF3F434A),
+                  ),
                 ),
               ],
             ),
           ),
-          if (item != venta.detalle.last) Divider(height: 1, color: Colors.grey.shade200),
+          if (item != venta.detalle.last)
+            Divider(height: 1, color: Colors.grey.shade200),
         ],
       ],
     );
@@ -988,7 +1640,10 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   // Misma base sin ISV que usan Subtotal/Gravado 15% en el PDF: precio de
   // lista (sin descuento) de cada línea menos lo que quedó en subtotal.
   double _descuentosYRebajas(VentaModel venta) {
-    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
+    final totalSinDescuento = venta.detalle.fold<double>(
+      0,
+      (s, item) => s + item.precioVenta * item.cantidad,
+    );
     return redondearMoneda(totalSinDescuento - venta.subtotal);
   }
 
@@ -1002,27 +1657,55 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             runSpacing: 10,
             children: [
               _filaTotalTexto('Subtotal', venta.subtotal),
-              if (_descuentosYRebajas(venta) > 0) _filaTotalTexto('Descuentos y rebajas', _descuentosYRebajas(venta)),
+              if (_descuentosYRebajas(venta) > 0)
+                _filaTotalTexto(
+                  'Descuentos y rebajas',
+                  _descuentosYRebajas(venta),
+                ),
               _filaTotalTexto('ISV (15%)', venta.impuesto),
-              if (venta.descuentoGlobal > 0) _filaTotalTextoPorcentaje('Descuento global', venta.descuentoGlobal),
-              if (venta.condicion != 'Credito' && venta.metodoPago == 'Efectivo' && venta.montoPago > 0) ...[
+              if (venta.descuentoGlobal > 0)
+                _filaTotalTextoPorcentaje(
+                  'Descuento global',
+                  venta.descuentoGlobal,
+                ),
+              if (venta.condicion != 'Credito' &&
+                  venta.metodoPago == 'Efectivo' &&
+                  venta.montoPago > 0) ...[
                 _filaTotalTexto('Paga con', venta.montoPago),
                 _filaTotalTexto('Cambio', venta.montoCambio),
               ],
               if (venta.condicion != 'Credito' && venta.metodoPago == 'Mixto')
-                for (final pago in venta.pagosMixtos) _filaTotalTexto(pago.metodoPago, pago.monto),
+                for (final pago in venta.pagosMixtos)
+                  _filaTotalTexto(pago.metodoPago, pago.monto),
             ],
           ),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                Text(formatearMoneda(venta.totalAPagar), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(
+                  'TOTAL A PAGAR',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  formatearMoneda(venta.totalAPagar),
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1035,8 +1718,23 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-        Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          etiqueta.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade500,
+            letterSpacing: 0.4,
+          ),
+        ),
+        Text(
+          formatearMoneda(valor),
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }
@@ -1045,14 +1743,30 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-        Text('${_formatoCantidad(porcentaje)}%', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          etiqueta.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade500,
+            letterSpacing: 0.4,
+          ),
+        ),
+        Text(
+          '${_formatoCantidad(porcentaje)}%',
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }
 
   String _formatoCantidad(double cantidad) {
-    if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+    if (cantidad == cantidad.roundToDouble())
+      return cantidad.toInt().toString();
     return cantidad.toStringAsFixed(2);
   }
 }
