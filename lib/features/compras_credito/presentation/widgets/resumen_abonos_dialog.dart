@@ -186,30 +186,23 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                   ),
                 ),
                 SizedBox(width: esMovil ? double.infinity : 240, child: _selectorVista()),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: _cargando ? null : _buscar,
-                      icon: const Icon(Icons.search, size: 18),
-                      label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                    const SizedBox(width: 10),
-                    OutlinedButton.icon(
-                      onPressed: _cargando ? null : _limpiar,
-                      icon: const Icon(Icons.close, size: 18),
-                      label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                    const SizedBox(width: 10),
-                    OutlinedButton.icon(
-                      onPressed: () => _abrirEstadoCuenta(proveedoresAsync.value ?? []),
-                      icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                      label: Text('Estado de Cuenta', style: GoogleFonts.poppins(fontSize: 13)),
-                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                  ],
+                FilledButton.icon(
+                  onPressed: _cargando ? null : _buscar,
+                  icon: const Icon(Icons.search, size: 18),
+                  label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _cargando ? null : _limpiar,
+                  icon: const Icon(Icons.close, size: 18),
+                  label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _abrirEstadoCuenta(proveedoresAsync.value ?? []),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                  label: Text('Estado de Cuenta', style: GoogleFonts.poppins(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 ),
               ],
             ),
