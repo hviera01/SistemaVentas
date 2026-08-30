@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/abono_compra_model.dart';
+import '../../data/compra_credito_model.dart';
 import '../../data/compra_credito_export_service.dart';
 import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
@@ -49,6 +50,15 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   bool _cargando = true;
   String? _error;
   List<_MovimientoCuenta> _movimientos = [];
+  // Saldo corriendo después de cada movimiento, precalculado una sola vez
+  // acá (mismo índice que _movimientos) — NUNCA calcularlo dentro de un
+  // itemBuilder de una lista con scroll: Flutter arma esas filas de forma
+  // perezosa y no garantiza orden ni una sola pasada (menos aún al rotar la
+  // pantalla, que reconstruye todo desde cero), así que una variable mutable
+  // compartida ahí daba saldos distintos según cómo se scrolleaba -reportado
+  // por el dueño: en el PDF (una sola pasada synchronous) siempre salía bien,
+  // pero en la lista de la pantalla el último monto cambiaba solo-.
+  List<double> _saldosCorrientes = [];
   double _totalFacturado = 0;
   double _totalAbonado = 0;
   double _saldoActual = 0;
@@ -66,8 +76,12 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
     });
     try {
       final repo = ref.read(compraCreditoRepositoryProvider);
-      final compras = await repo.obtenerComprasPorProveedor(widget.idProveedor);
-      final abonos = await repo.obtenerAbonosPorProveedor(widget.idProveedor);
+      final resultados = await Future.wait([
+        repo.obtenerComprasPorProveedor(widget.idProveedor),
+        repo.obtenerAbonosPorProveedor(widget.idProveedor),
+      ]);
+      final compras = resultados[0] as List<CompraCreditoModel>;
+      final abonos = resultados[1] as List<AbonoCompraModel>;
       final comprasPorId = {for (final c in compras) c.id: c};
 
       // El "cargo" de cada factura al estado de cuenta no siempre es su
@@ -145,9 +159,17 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       final totalAbonado = abonos.fold<double>(0, (s, a) => s + a.montoAbonado);
       final saldoActual = compras.fold<double>(0, (s, c) => s + c.saldoPendiente);
 
+      final saldosCorrientes = <double>[];
+      var acumulado = 0.0;
+      for (final m in movimientos) {
+        acumulado = m.esCargo ? acumulado + m.monto : acumulado - m.monto;
+        saldosCorrientes.add(acumulado);
+      }
+
       if (mounted) {
         setState(() {
           _movimientos = movimientos;
+          _saldosCorrientes = saldosCorrientes;
           _totalFacturado = totalFacturado;
           _totalAbonado = totalAbonado;
           _saldoActual = saldoActual;
@@ -161,20 +183,18 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   }
 
   List<FilaEstadoCuenta> _filasParaPdf() {
-    var saldo = 0.0;
-    return _movimientos.map((m) {
-      saldo = m.esCargo ? saldo + m.monto : saldo - m.monto;
-      final usuarios = m.montoPorUsuario.keys.join(', ');
-      return FilaEstadoCuenta(
-        fecha: m.fecha,
-        esCargo: m.esCargo,
-        titulo: m.titulo,
-        subtitulo: m.subtitulo,
-        monto: m.monto,
-        usuarios: usuarios.isEmpty ? '-' : usuarios,
-        saldoDespues: saldo,
-      );
-    }).toList();
+    return [
+      for (var i = 0; i < _movimientos.length; i++)
+        FilaEstadoCuenta(
+          fecha: _movimientos[i].fecha,
+          esCargo: _movimientos[i].esCargo,
+          titulo: _movimientos[i].titulo,
+          subtitulo: _movimientos[i].subtitulo,
+          monto: _movimientos[i].monto,
+          usuarios: _movimientos[i].montoPorUsuario.keys.isEmpty ? '-' : _movimientos[i].montoPorUsuario.keys.join(', '),
+          saldoDespues: _saldosCorrientes[i],
+        ),
+    ];
   }
 
   Future<void> _exportarPdf() async {
@@ -314,7 +334,6 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
 
   Widget _tabla() {
     final formatoFecha = DateFormat('dd/MM/yyyy');
-    var saldo = 0.0;
     return Container(
       decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
       child: Column(
@@ -339,7 +358,7 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
               separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
               itemBuilder: (context, index) {
                 final m = _movimientos[index];
-                saldo = m.esCargo ? saldo + m.monto : saldo - m.monto;
+                final saldo = _saldosCorrientes[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Row(
@@ -373,13 +392,12 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
 
   Widget _listaMovil() {
     final formatoFecha = DateFormat('dd/MM/yyyy');
-    var saldo = 0.0;
     return ListView.separated(
       itemCount: _movimientos.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final m = _movimientos[index];
-        saldo = m.esCargo ? saldo + m.monto : saldo - m.monto;
+        final saldo = _saldosCorrientes[index];
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
