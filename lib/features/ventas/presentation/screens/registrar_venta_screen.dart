@@ -3656,7 +3656,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _barraTotalesCompacta(carrito),
+          _barraTotalesCompacta(carrito, destacarTotal: true),
         ],
       ),
     );
@@ -3742,35 +3742,31 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         : _nombreClienteController.text.trim();
 
     final chipCliente = InkWell(
-      onTap: () => _abrirDatosVentaModal(esMovil),
-      borderRadius: BorderRadius.circular(10),
+      onTap: () => _abrirDatosVentaModal(esMovil, disenioAmplio: true),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
-        constraints: BoxConstraints(maxWidth: esMovil ? 160 : 220),
+        constraints: BoxConstraints(maxWidth: esMovil ? 150 : 170),
         padding: EdgeInsets.symmetric(
-          horizontal: esMovil ? 8 : 12,
-          vertical: esMovil ? 6 : 11,
+          horizontal: esMovil ? 8 : 10,
+          vertical: esMovil ? 6 : 8,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(9),
           border: Border.all(color: const Color(0xFFDFE1E6)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.tune,
-              size: esMovil ? 13 : 16,
-              color: Colors.grey.shade600,
-            ),
-            SizedBox(width: esMovil ? 4 : 6),
+            Icon(Icons.tune, size: 13, color: Colors.grey.shade600),
+            const SizedBox(width: 4),
             Flexible(
               child: Text(
                 nombreCliente,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  fontSize: esMovil ? 10.5 : 12.5,
+                  fontSize: esMovil ? 10.5 : 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -3783,6 +3779,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (esMovil) {
       // Sin cambios en celular: ahí sí conviene la tira compacta con scroll
       // horizontal propio -a diferencia de escritorio, acá no sobra ancho-.
+      // El menú "⋮" cubre las acciones que el modal (ahora sin esa fila,
+      // ver _abrirDatosVentaModal) ya no muestra.
       return Row(
         children: [
           chipCliente,
@@ -3793,84 +3791,245 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               child: _barraAccionesCarritoCompacta(compacta: true),
             ),
           ),
+          const SizedBox(width: 4),
+          _botonMenuAccionesVenta(),
         ],
       );
     }
 
-    // Escritorio: acá sí sobra ancho horizontal -pedido explícito del dueño:
-    // "ahí tenemos espacio, aprovechalo"-, así que en vez de la tira de
-    // íconos de 28px con scroll propio, los controles van en un Wrap normal
-    // (baja de línea sola si la ventana se achica) con "Agregar Producto"
-    // legible y las acciones que antes solo vivían escondidas en el modal
-    // "Datos de la venta" (Guardar/Ver en espera, Ver perdidas, Ver
-    // facturas, Pendientes de impresión) ahora visibles de una.
-    return Wrap(
-      spacing: 10,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        chipCliente,
-        _barraAccionesCarritoCompacta(compacta: false),
-        OutlinedButton.icon(
-          onPressed: _guardarEnEspera,
-          icon: const Icon(Icons.pause_circle_outline, size: 18),
-          label: Text(
-            'Guardar en Espera',
-            style: GoogleFonts.poppins(fontSize: 12.5),
-          ),
-          style: _estiloBotonSecundario(),
+    // Escritorio (Tabla grande): controles chicos, todos en una sola línea
+    // -pedido explícito del dueño: "no quiero que nada pase a segunda
+    // línea... el ancho que agarren sea mínimo, para hacer lo más grande
+    // posible la tabla"-. Row (no Wrap) dentro de un scroll horizontal
+    // propio: nunca bajan de línea: si alguna vez no entran todos (ventana
+    // muy angosta) se deslizan en vez de desbordar o apilarse.
+    final controles = <Widget>[
+      chipCliente,
+      _botonCompacto(
+        icono: Icons.add_circle,
+        texto: 'Agregar Producto',
+        onPressed: _agregarProductoDesdeBusqueda,
+        destacado: true,
+      ),
+      _iconoCompacto(
+        icono: _escaneoRemotoConectado
+            ? Icons.wifi_tethering
+            : Icons.qr_code_scanner,
+        tooltip: _escaneoRemotoConectado
+            ? 'Escaneo activo'
+            : 'Escanear con celular',
+        onPressed: _abrirEscaneoRemoto,
+        color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
+      ),
+      _iconoCompacto(
+        icono: Icons.local_offer_outlined,
+        tooltip: 'Ver promociones vigentes',
+        onPressed: _abrirPromocionesVigentes,
+      ),
+      _iconoCompacto(
+        icono: Icons.calculate_outlined,
+        tooltip: 'Consultar costo de un color',
+        onPressed: _abrirConsultarCosto,
+      ),
+      _iconoCompacto(
+        icono: Icons.straighten,
+        tooltip: 'Calculadora de pintura',
+        onPressed: () => _calculadoraRendimiento.abrir(context),
+      ),
+      _selectorPrecioIsvCarrito(compacto: true),
+      _botonCompacto(
+        icono: Icons.pause_circle_outline,
+        texto: 'Guardar en Espera',
+        onPressed: _guardarEnEspera,
+      ),
+      _botonCompacto(
+        icono: Icons.list_alt_outlined,
+        texto: 'Ver en Espera',
+        onPressed: _verEnEspera,
+      ),
+      _botonCompacto(
+        icono: Icons.find_in_page_outlined,
+        texto: 'Ver Perdidas',
+        onPressed: _verPerdidas,
+      ),
+      _botonCompacto(
+        icono: Icons.receipt_long_outlined,
+        texto: 'Ver Facturas',
+        onPressed: _verFacturas,
+      ),
+      Badge(
+        label: Text('$_cantidadPendientesImpresion'),
+        backgroundColor: const Color(0xFFE0A63C),
+        isLabelVisible: _cantidadPendientesImpresion > 0,
+        child: _botonCompacto(
+          icono: Icons.print_disabled_outlined,
+          texto: 'Pendientes de Impresión',
+          onPressed: _verPendientesImpresion,
         ),
-        OutlinedButton.icon(
-          onPressed: _verEnEspera,
-          icon: const Icon(Icons.list_alt_outlined, size: 18),
-          label: Text(
-            'Ver en Espera',
-            style: GoogleFonts.poppins(fontSize: 12.5),
-          ),
-          style: _estiloBotonSecundario(),
+      ),
+      _botonCompacto(
+        icono: Icons.delete_sweep_outlined,
+        texto: 'Limpiar Venta',
+        onPressed: _confirmarLimpiar,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          for (var i = 0; i < controles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            controles[i],
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Botón chico (texto corto + ícono) para la barra superior de Tabla
+  // grande en escritorio -ver comentario en _barraSuperiorDynamics: el
+  // objetivo es ocupar el mínimo ancho posible sin perder legibilidad, para
+  // que la tabla del carrito se quede con todo el espacio de sobra.
+  Widget _botonCompacto({
+    required IconData icono,
+    required String texto,
+    required VoidCallback onPressed,
+    bool destacado = false,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icono, size: 15),
+      label: Text(
+        texto,
+        style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: destacado ? Colors.white : const Color(0xFF1A1A1A),
+        backgroundColor: destacado ? const Color(0xFFC62828) : Colors.white,
+        side: BorderSide(
+          color: destacado ? const Color(0xFFC62828) : const Color(0xFFDFE1E6),
         ),
-        OutlinedButton.icon(
-          onPressed: _verPerdidas,
-          icon: const Icon(Icons.find_in_page_outlined, size: 18),
-          label: Text(
-            'Ver Perdidas',
-            style: GoogleFonts.poppins(fontSize: 12.5),
-          ),
-          style: _estiloBotonSecundario(),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      ),
+    );
+  }
+
+  // Ícono solo (con tooltip) para la misma barra -acciones secundarias que
+  // no necesitan texto para entenderse (escanear, promociones, etc.)-.
+  Widget _iconoCompacto({
+    required IconData icono,
+    required String tooltip,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icono, size: 17, color: color ?? Colors.grey.shade600),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: Color(0xFFDFE1E6)),
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(32, 32),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
         ),
-        OutlinedButton.icon(
-          onPressed: _verFacturas,
-          icon: const Icon(Icons.receipt_long_outlined, size: 18),
-          label: Text(
-            'Ver Facturas',
-            style: GoogleFonts.poppins(fontSize: 12.5),
+        visualDensity: VisualDensity.compact,
+        splashRadius: 16,
+      ),
+    );
+  }
+
+  // Menú "⋮" con las acciones que ya no viven en el modal "Datos de la
+  // venta" cuando se abre con disenioAmplio -en Tabla grande escritorio ya
+  // están todas visibles en la barra de arriba, así que esto solo hace
+  // falta en Tabla grande celular (ahí sigue sin sobrar ancho para
+  // mostrarlas directo).
+  Widget _botonMenuAccionesVenta() {
+    Widget item(IconData icono, String texto) {
+      return Row(
+        children: [
+          Icon(icono, size: 18, color: const Color(0xFF4B4F58)),
+          const SizedBox(width: 10),
+          Text(texto, style: GoogleFonts.poppins(fontSize: 12.5)),
+        ],
+      );
+    }
+
+    return Badge(
+      label: Text('$_cantidadPendientesImpresion'),
+      backgroundColor: const Color(0xFFE0A63C),
+      isLabelVisible: _cantidadPendientesImpresion > 0,
+      child: PopupMenuButton<String>(
+        tooltip: 'Más acciones',
+        icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF4B4F58)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onSelected: (valor) {
+          switch (valor) {
+            case 'usuario':
+              _cambiarUsuarioVenta();
+              break;
+            case 'limpiar':
+              _confirmarLimpiar();
+              break;
+            case 'guardar_espera':
+              _guardarEnEspera();
+              break;
+            case 'ver_espera':
+              _verEnEspera();
+              break;
+            case 'ver_perdidas':
+              _verPerdidas();
+              break;
+            case 'ver_facturas':
+              _verFacturas();
+              break;
+            case 'pendientes':
+              _verPendientesImpresion();
+              break;
+          }
+        },
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            value: 'usuario',
+            child: item(Icons.person_outline, 'Cambiar usuario'),
           ),
-          style: _estiloBotonSecundario(),
-        ),
-        Badge(
-          label: Text('$_cantidadPendientesImpresion'),
-          backgroundColor: const Color(0xFFE0A63C),
-          isLabelVisible: _cantidadPendientesImpresion > 0,
-          child: OutlinedButton.icon(
-            onPressed: _verPendientesImpresion,
-            icon: const Icon(Icons.print_disabled_outlined, size: 18),
-            label: Text(
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'limpiar',
+            child: item(Icons.delete_sweep_outlined, 'Limpiar Venta'),
+          ),
+          PopupMenuItem(
+            value: 'guardar_espera',
+            child: item(Icons.pause_circle_outline, 'Guardar en Espera'),
+          ),
+          PopupMenuItem(
+            value: 'ver_espera',
+            child: item(Icons.list_alt_outlined, 'Ver en Espera'),
+          ),
+          PopupMenuItem(
+            value: 'ver_perdidas',
+            child: item(Icons.find_in_page_outlined, 'Ver Perdidas'),
+          ),
+          PopupMenuItem(
+            value: 'ver_facturas',
+            child: item(Icons.receipt_long_outlined, 'Ver Facturas'),
+          ),
+          PopupMenuItem(
+            value: 'pendientes',
+            child: item(
+              Icons.print_disabled_outlined,
               'Pendientes de Impresión',
-              style: GoogleFonts.poppins(fontSize: 12.5),
             ),
-            style: _estiloBotonSecundario(),
           ),
-        ),
-        OutlinedButton.icon(
-          onPressed: _confirmarLimpiar,
-          icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-          label: Text(
-            'Limpiar Venta',
-            style: GoogleFonts.poppins(fontSize: 12.5),
-          ),
-          style: _estiloBotonSecundario(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -3955,13 +4114,68 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // empuja al modal vía _refrescarModalDatosVenta, en vez de que el modal
   // -que cuelga del Navigator raíz, no de esta pestaña- intente leer el
   // provider por su cuenta.
-  // Ventana "Datos de la venta" -pedido explícito del dueño: "cambiale el
-  // diseño, hacela mejor más ordenada bonita grande y todo fácil": antes era
-  // fija (680x700) con un solo Wrap de campos mezclados; ahora aprovecha el
-  // tamaño real de la pantalla y los campos van agrupados en secciones (ver
-  // _seccionDatos/_tarjetaDatosVenta) con un encabezado con ícono como el
-  // resto de los diálogos nuevos de la app.
-  void _abrirDatosVentaModal(bool esMovil) {
+  // Ventana "Datos de la venta". [disenioAmplio] (solo Tabla grande/Dynamics
+  // -pedido explícito del dueño: "cambiale el diseño, hacela mejor más
+  // ordenada bonita grande" para ESA vista, pero "la clásica no la cambies
+  // ni la otra, dejalas como estaban"-): diálogo grande responsivo, campos
+  // agrupados en secciones, sin la fila de acciones -esas ya quedaron
+  // visibles afuera, en la barra superior de Tabla grande-. Con el valor
+  // por defecto (false, Clásica/Dividida) es EXACTAMENTE el diálogo de
+  // siempre: 680x700 con _encabezado (título + botones) arriba del todo.
+  void _abrirDatosVentaModal(bool esMovil, {bool disenioAmplio = false}) {
+    if (!disenioAmplio) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            insetPadding: const EdgeInsets.all(20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680, maxHeight: 700),
+              child: StatefulBuilder(
+                builder: (context, setDialogState) {
+                  _refrescarModalDatosVenta = setDialogState;
+                  final carritoActual = ref.read(carritoVentaProvider);
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Datos de la venta',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(dialogContext),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        _encabezado(esMovil),
+                        const SizedBox(height: 14),
+                        _tarjetaDatosVenta(carritoActual, esMovil),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ).then((_) => _refrescarModalDatosVenta = null);
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -4035,109 +4249,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      _tarjetaDatosVenta(carritoActual, esMovil),
-                      const SizedBox(height: 18),
-                      Divider(color: Colors.grey.shade200),
-                      const SizedBox(height: 10),
-                      Text(
-                        'ACCIONES',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Mismos botones que _encabezado, sin repetir el
-                      // título "Registrar Venta" -acá ya está "Datos de la
-                      // Venta" arriba-. Esenciales para la vista Dividida
-                      // (única forma de llegar a Limpiar/Espera/Facturas/
-                      // etc. ahí); en Tabla grande (escritorio) ya están
-                      // visibles también en la barra superior, así que acá
-                      // quedan como acceso de respaldo, no duplicado visual
-                      // del título.
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          _chipUsuarioVenta(),
-                          OutlinedButton.icon(
-                            onPressed: _confirmarLimpiar,
-                            icon: const Icon(
-                              Icons.delete_sweep_outlined,
-                              size: 18,
-                            ),
-                            label: Text(
-                              'Limpiar Venta',
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                            style: _estiloBotonSecundario(),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _guardarEnEspera,
-                            icon: const Icon(
-                              Icons.pause_circle_outline,
-                              size: 18,
-                            ),
-                            label: Text(
-                              'Guardar en Espera',
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                            style: _estiloBotonSecundario(),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _verEnEspera,
-                            icon: const Icon(Icons.list_alt_outlined, size: 18),
-                            label: Text(
-                              'Ver en Espera',
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                            style: _estiloBotonSecundario(),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _verPerdidas,
-                            icon: const Icon(
-                              Icons.find_in_page_outlined,
-                              size: 18,
-                            ),
-                            label: Text(
-                              'Ver Perdidas',
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                            style: _estiloBotonSecundario(),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _verFacturas,
-                            icon: const Icon(
-                              Icons.receipt_long_outlined,
-                              size: 18,
-                            ),
-                            label: Text(
-                              'Ver Facturas',
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                            style: _estiloBotonSecundario(),
-                          ),
-                          Badge(
-                            label: Text('$_cantidadPendientesImpresion'),
-                            backgroundColor: const Color(0xFFE0A63C),
-                            isLabelVisible: _cantidadPendientesImpresion > 0,
-                            child: OutlinedButton.icon(
-                              onPressed: _verPendientesImpresion,
-                              icon: const Icon(
-                                Icons.print_disabled_outlined,
-                                size: 18,
-                              ),
-                              label: Text(
-                                'Pendientes de Impresión',
-                                style: GoogleFonts.poppins(fontSize: 13),
-                              ),
-                              style: _estiloBotonSecundario(),
-                            ),
-                          ),
-                        ],
+                      _tarjetaDatosVenta(
+                        carritoActual,
+                        esMovil,
+                        disenioAmplio: true,
                       ),
                     ],
                   ),
@@ -4735,8 +4850,21 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
   }
 
-  Widget _tarjetaDatosVenta(CarritoVentaState carrito, bool esMovil) {
+  // [disenioAmplio] (solo Tabla grande/Dynamics -pedido explícito del
+  // dueño: "no cambies la clásica ni la otra, dejalas como estaban"-) usa el
+  // diseño nuevo con secciones agrupadas y todos los campos visibles de una
+  // (sin "Más datos"/"Ver menos": ya es una ventana grande dedicada). Con
+  // el valor por defecto (false) esto es EXACTAMENTE el diseño de siempre —
+  // Clásica y Dividida no cambiaron en nada.
+  Widget _tarjetaDatosVenta(
+    CarritoVentaState carrito,
+    bool esMovil, {
+    bool disenioAmplio = false,
+  }) {
     final formatoFecha = DateFormat('dd/MM/yyyy');
+    if (!disenioAmplio) {
+      return _tarjetaDatosVentaOriginal(carrito, esMovil, formatoFecha);
+    }
 
     return _tarjeta(
       child: Column(
@@ -5096,38 +5224,440 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             const SizedBox(height: 14),
             _avisoCreditoVencido(_saldoVencidoCliente!),
           ],
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () =>
-                setState(() => _datosExpandidos = !_datosExpandidos),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 10,
+          // Sin toggle "Más datos"/"Ver menos" acá -pedido explícito del
+          // dueño: "como es una sola ventana... todo en una sola", esta
+          // sección siempre visible de una en vez de escondida-.
+          const SizedBox(height: 14),
+          _seccionDatos(
+            icono: Icons.tune,
+            titulo: 'DESCUENTO Y DATOS FISCALES',
+            campos: [
+              SizedBox(
+                width: esMovil ? double.infinity : 280,
+                child: CampoTecladoCompacto(
+                  controller: _descuentoGlobalController,
+                  numerico: true,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _descuentoGlobalController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion(
+                      'Descuento global (%) sobre toda la venta',
+                    ),
+                    onChanged: (v) {
+                      final valor = double.tryParse(
+                        v.replaceAll(',', '').trim(),
+                      );
+                      if (valor == null || valor < 0 || valor > 100) return;
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerDescuentoGlobal(valor);
+                    },
+                  ),
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _datosExpandidos
-                        ? 'Ver menos'
-                        : 'Descuento y datos fiscales',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFC62828),
+              SizedBox(
+                width: esMovil ? double.infinity : 200,
+                child: CampoTecladoCompacto(
+                  controller: _ocController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    enabled: !carrito.esCotizacion,
+                    controller: _ocController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('No. O/C exenta'),
+                    onChanged: (v) =>
+                        ref.read(carritoVentaProvider.notifier).establecerOc(v),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: esMovil ? double.infinity : 200,
+                child: CampoTecladoCompacto(
+                  controller: _regExoneradoController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    enabled: !carrito.esCotizacion,
+                    controller: _regExoneradoController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('No. Reg. exonerado'),
+                    onChanged: (v) => ref
+                        .read(carritoVentaProvider.notifier)
+                        .establecerRegExonerado(v),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: esMovil ? double.infinity : 200,
+                child: CampoTecladoCompacto(
+                  controller: _regSagController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    enabled: !carrito.esCotizacion,
+                    controller: _regSagController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('No. Reg. SAG'),
+                    onChanged: (v) => ref
+                        .read(carritoVentaProvider.notifier)
+                        .establecerRegSag(v),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: CampoTecladoCompacto(
+                  controller: _observacionesController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _observacionesController,
+                    maxLines: 2,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion(
+                      'Observaciones (se imprimen en la factura)',
+                    ),
+                    onChanged: (v) => ref
+                        .read(carritoVentaProvider.notifier)
+                        .establecerObservaciones(v),
+                  ),
+                ),
+              ),
+              SizedBox(width: double.infinity, child: _chipEnvio()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Diseño de siempre de "Datos de la venta" -Clásica y Dividida, sin
+  // cambios-: un solo Wrap con todos los campos, y "Más datos"/"Ver menos"
+  // para el descuento/campos fiscales de uso poco frecuente.
+  Widget _tarjetaDatosVentaOriginal(
+    CarritoVentaState carrito,
+    bool esMovil,
+    DateFormat formatoFecha,
+  ) {
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 14,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: esMovil ? double.infinity : 160,
+                child: InkWell(
+                  onTap: () async {
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: carrito.fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (fecha != null)
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerFecha(fecha);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            formatoFecha.format(carrito.fecha),
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Icon(
-                    _datosExpandidos ? Icons.expand_less : Icons.expand_more,
-                    size: 20,
-                    color: const Color(0xFFC62828),
-                  ),
-                ],
+                ),
               ),
-            ),
+              SizedBox(
+                width: esMovil ? double.infinity : 190,
+                child: DropdownButtonFormField<String>(
+                  initialValue: carrito.tipoDocumento,
+                  isExpanded: true,
+                  decoration: _decoracion('Tipo de documento'),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                  items: tiposDocumento.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    ref
+                        .read(carritoVentaProvider.notifier)
+                        .establecerTipoDocumento(v);
+                  },
+                ),
+              ),
+              SizedBox(
+                // Antes 220: "RONALD CAMAS" (nombre real, largo normal)
+                // quedaba cortado en "RONALD C" -pedido explícito del
+                // dueño-. 340 le da lugar de sobra al nombre incluso con los
+                // dos IconButton (buscar + completar datos) compartiendo la
+                // fila; el Wrap que contiene toda esta fila igual manda esta
+                // caja a una línea nueva sola si no entra, así que ensanchar
+                // acá no rompe pantallas angostas.
+                width: esMovil ? double.infinity : 340,
+                child: Row(
+                  children: [
+                    Expanded(
+                      // Con un cliente ya vinculado (carrito.idCliente !=
+                      // null) esto se ve como una píldora rellena, NO como
+                      // un TextField editable -pedido explícito del dueño:
+                      // antes, aunque ya hubiera un cliente elegido, seguía
+                      // pareciendo un campo de texto suelto en el que el
+                      // cajero podía seguir tipeando por error, sin ningún
+                      // indicio visual de que ya estaba "resuelto"-. Tocar
+                      // la píldora desvincula y vuelve al campo de texto
+                      // normal (ver _chipClienteVinculado/
+                      // _desvincularClienteCampo).
+                      child: carrito.idCliente != null
+                          ? _chipClienteVinculado()
+                          : CompositedTransformTarget(
+                              link: _clienteLayerLink,
+                              // Mismo groupId que el TapRegion del listado de
+                              // sugerencias (ver _sugerenciasClienteOverlay):
+                              // un toque en cualquiera de los dos cuenta como
+                              // "adentro" del mismo grupo, así tocar una
+                              // sugerencia no dispara este onTapOutside antes
+                              // de que corra su propio onTap -esto es lo que
+                              // arregla el bug real de "tocar una sugerencia
+                              // no hace nada" (ver el comentario en
+                              // initState).
+                              child: TapRegion(
+                                groupId: 'sugerencias-cliente',
+                                onTapOutside: (_) =>
+                                    _ocultarSugerenciasCliente(),
+                                child: CampoTecladoCompacto(
+                                  controller: _nombreClienteController,
+                                  numerico: false,
+                                  titulo: 'Vacío = Consumidor Final',
+                                  child: TextField(
+                                    inputFormatters: [mayusculasInputFormatter],
+                                    autocorrect: false,
+                                    enableSuggestions: false,
+                                    controller: _nombreClienteController,
+                                    focusNode: _focusNombreCliente,
+                                    style: GoogleFonts.poppins(fontSize: 13),
+                                    decoration: _decoracion('Cliente').copyWith(
+                                      hintText: 'Vacío = Consumidor Final',
+                                      hintStyle: GoogleFonts.poppins(
+                                        fontSize: 11.5,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    ),
+                                    // Si el cajero tipea acá directo (no usó
+                                    // el buscador), el vínculo real a un
+                                    // cliente elegido antes ya no es
+                                    // confiable -ver
+                                    // establecerNombreClienteManual-. Además
+                                    // se refrescan las sugerencias de
+                                    // clientes ya registrados que coincidan
+                                    // con lo tipeado.
+                                    onChanged: (v) {
+                                      ref
+                                          .read(carritoVentaProvider.notifier)
+                                          .establecerNombreClienteManual(v);
+                                      if (_clienteVinculado != null)
+                                        setState(
+                                          () => _clienteVinculado = null,
+                                        );
+                                      _actualizarSugerenciasCliente(v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _buscarCliente,
+                      icon: const Icon(Icons.search),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFE8EAF0),
+                        padding: const EdgeInsets.all(14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    // Visible con un cliente vinculado a esta venta (elegido
+                    // por el buscador, o cargado de una venta duplicada):
+                    // abre el mismo formulario de Clientes ya precargado,
+                    // para completarle teléfono/dirección sin salir de acá.
+                    if (carrito.idCliente != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Completar datos del cliente',
+                        onPressed: _completarDatosCliente,
+                        icon: const Icon(Icons.person_add_alt_1_outlined),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFE8EAF0),
+                          padding: const EdgeInsets.all(14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: esMovil ? double.infinity : 180,
+                child: CampoTecladoCompacto(
+                  controller: _documentoClienteController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _documentoClienteController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('RTN / Documento'),
+                    onChanged: (v) {
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerDocumentoCliente(v);
+                      if (_clienteVinculado != null)
+                        setState(() => _clienteVinculado = null);
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: esMovil ? double.infinity : 150,
+                child: DropdownButtonFormField<String>(
+                  initialValue: carrito.condicion,
+                  isExpanded: true,
+                  decoration: _decoracion('Condición'),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Contado', child: Text('Contado')),
+                    DropdownMenuItem(value: 'Credito', child: Text('Crédito')),
+                  ],
+                  onChanged: carrito.esCotizacion
+                      ? null
+                      : (v) {
+                          if (v == null) return;
+                          ref
+                              .read(carritoVentaProvider.notifier)
+                              .establecerCondicion(v);
+                        },
+                ),
+              ),
+              if (!carrito.esCotizacion && carrito.condicion != 'Credito')
+                SizedBox(
+                  width: esMovil ? double.infinity : 160,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _metodosPago.contains(carrito.metodoPago)
+                        ? carrito.metodoPago
+                        : null,
+                    isExpanded: true,
+                    decoration: _decoracion('Método de pago'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                    items: _metodosPago
+                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      ref
+                          .read(carritoVentaProvider.notifier)
+                          .establecerMetodoPago(v);
+                    },
+                  ),
+                ),
+              InkWell(
+                onTap: () =>
+                    setState(() => _datosExpandidos = !_datosExpandidos),
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _datosExpandidos ? 'Ver menos' : 'Más datos',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFC62828),
+                        ),
+                      ),
+                      Icon(
+                        _datosExpandidos
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        size: 20,
+                        color: const Color(0xFFC62828),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (_saldoVencidoCliente != null) ...[
+            const SizedBox(height: 10),
+            _avisoCreditoVencido(_saldoVencidoCliente!),
+          ],
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
@@ -5135,121 +5665,214 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             child: !_datosExpandidos
                 ? const SizedBox(width: double.infinity)
                 : Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: _seccionDatos(
-                      icono: Icons.tune,
-                      titulo: 'DESCUENTO Y DATOS FISCALES (poco frecuente)',
-                      campos: [
-                        SizedBox(
-                          width: esMovil ? double.infinity : 280,
-                          child: CampoTecladoCompacto(
-                            controller: _descuentoGlobalController,
-                            numerico: true,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _descuentoGlobalController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Divider(color: Colors.grey.shade200),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Descuento y campos fiscales de uso poco frecuente',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 12,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (carrito.esCredito && !carrito.esCotizacion)
+                              SizedBox(
+                                width: esMovil ? double.infinity : 160,
+                                child: InkWell(
+                                  onTap: () async {
+                                    final fecha = await showDatePicker(
+                                      context: context,
+                                      initialDate:
+                                          carrito.fechaVencimiento ??
+                                          DateTime.now().add(
+                                            const Duration(days: 15),
+                                          ),
+                                      firstDate: DateTime(2020),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (fecha != null)
+                                      ref
+                                          .read(carritoVentaProvider.notifier)
+                                          .establecerFechaVencimiento(fecha);
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8EAF0),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.event_outlined,
+                                          size: 16,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Flexible(
+                                          child: Text(
+                                            'Vence: ${carrito.fechaVencimiento != null ? formatoFecha.format(carrito.fechaVencimiento!) : 'Sin definir'}',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              color: const Color(0xFF1A1A1A),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: _decoracion(
-                                'Descuento global (%) sobre toda la venta',
+                                ),
                               ),
-                              onChanged: (v) {
-                                final valor = double.tryParse(
-                                  v.replaceAll(',', '').trim(),
-                                );
-                                if (valor == null || valor < 0 || valor > 100)
-                                  return;
-                                ref
-                                    .read(carritoVentaProvider.notifier)
-                                    .establecerDescuentoGlobal(valor);
-                              },
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: esMovil ? double.infinity : 200,
-                          child: CampoTecladoCompacto(
-                            controller: _ocController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              enabled: !carrito.esCotizacion,
-                              controller: _ocController,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: _decoracion('No. O/C exenta'),
-                              onChanged: (v) => ref
-                                  .read(carritoVentaProvider.notifier)
-                                  .establecerOc(v),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: esMovil ? double.infinity : 200,
-                          child: CampoTecladoCompacto(
-                            controller: _regExoneradoController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              enabled: !carrito.esCotizacion,
-                              controller: _regExoneradoController,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: _decoracion('No. Reg. exonerado'),
-                              onChanged: (v) => ref
-                                  .read(carritoVentaProvider.notifier)
-                                  .establecerRegExonerado(v),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: esMovil ? double.infinity : 200,
-                          child: CampoTecladoCompacto(
-                            controller: _regSagController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              enabled: !carrito.esCotizacion,
-                              controller: _regSagController,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: _decoracion('No. Reg. SAG'),
-                              onChanged: (v) => ref
-                                  .read(carritoVentaProvider.notifier)
-                                  .establecerRegSag(v),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: CampoTecladoCompacto(
-                            controller: _observacionesController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _observacionesController,
-                              maxLines: 2,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                              decoration: _decoracion(
-                                'Observaciones (se imprimen en la factura)',
+                            if (carrito.esCredito && !carrito.esCotizacion)
+                              SizedBox(
+                                width: esMovil ? double.infinity : 200,
+                                child: CampoTecladoCompacto(
+                                  controller: _telefonoCreditoController,
+                                  numerico: false,
+                                  child: TextField(
+                                    controller: _telefonoCreditoController,
+                                    keyboardType: TextInputType.phone,
+                                    style: GoogleFonts.poppins(fontSize: 13),
+                                    decoration: _decoracion(
+                                      'Teléfono para avisos de crédito',
+                                    ),
+                                    onChanged: (v) => ref
+                                        .read(carritoVentaProvider.notifier)
+                                        .establecerTelefonoCredito(v),
+                                  ),
+                                ),
                               ),
-                              onChanged: (v) => ref
-                                  .read(carritoVentaProvider.notifier)
-                                  .establecerObservaciones(v),
+                            SizedBox(
+                              width: esMovil ? double.infinity : 260,
+                              child: CampoTecladoCompacto(
+                                controller: _descuentoGlobalController,
+                                numerico: true,
+                                child: TextField(
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _descuentoGlobalController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Descuento global (%) sobre toda la venta',
+                                  ),
+                                  onChanged: (v) {
+                                    final valor = double.tryParse(
+                                      v.replaceAll(',', '').trim(),
+                                    );
+                                    if (valor == null ||
+                                        valor < 0 ||
+                                        valor > 100)
+                                      return;
+                                    ref
+                                        .read(carritoVentaProvider.notifier)
+                                        .establecerDescuentoGlobal(valor);
+                                  },
+                                ),
+                              ),
                             ),
-                          ),
+                            SizedBox(
+                              width: esMovil ? double.infinity : 200,
+                              child: CampoTecladoCompacto(
+                                controller: _ocController,
+                                numerico: false,
+                                child: TextField(
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _ocController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. O/C exenta'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerOc(v),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: esMovil ? double.infinity : 200,
+                              child: CampoTecladoCompacto(
+                                controller: _regExoneradoController,
+                                numerico: false,
+                                child: TextField(
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _regExoneradoController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. Reg. exonerado'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerRegExonerado(v),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: esMovil ? double.infinity : 200,
+                              child: CampoTecladoCompacto(
+                                controller: _regSagController,
+                                numerico: false,
+                                child: TextField(
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  enabled: !carrito.esCotizacion,
+                                  controller: _regSagController,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('No. Reg. SAG'),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerRegSag(v),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: CampoTecladoCompacto(
+                                controller: _observacionesController,
+                                numerico: false,
+                                child: TextField(
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _observacionesController,
+                                  maxLines: 2,
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Observaciones (se imprimen en la factura)',
+                                  ),
+                                  onChanged: (v) => ref
+                                      .read(carritoVentaProvider.notifier)
+                                      .establecerObservaciones(v),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: _chipEnvio(),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: double.infinity, child: _chipEnvio()),
                       ],
                     ),
                   ),
@@ -5913,7 +6536,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // expandida (ver _expandirTablaProductos): una sola fila delgada, para
   // que la tabla se quede con casi todo el espacio, que es para lo que se
   // abrió este diálogo.
-  Widget _barraTotalesCompacta(CarritoVentaState carrito) {
+  // [destacarTotal] (solo Tabla grande/Dynamics -pedido explícito del
+  // dueño-) agrega el renglón de "Descuentos y rebajas" cuando aplica y
+  // pone el Total a Pagar en su propia cajita oscura, sin agrandar la
+  // barra -el dueño aclaró después: "un poco más protagonista pero no tan
+  // grande", la tabla siempre tiene que ganar el espacio, no esta barra-.
+  // Clásica/Dividida (false, default) quedan exactamente como estaban.
+  Widget _barraTotalesCompacta(
+    CarritoVentaState carrito, {
+    bool destacarTotal = false,
+  }) {
     Widget total(String etiqueta, double valor, {bool destacado = false}) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -5945,7 +6577,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final descuentosYRebajas = carrito.descuentosYRebajas;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F3F7),
         borderRadius: BorderRadius.circular(12),
@@ -5954,70 +6586,74 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         children: [
           total('Subtotal', carrito.subtotal),
           const SizedBox(width: 20),
-          if (descuentosYRebajas > 0) ...[
+          if (destacarTotal && descuentosYRebajas > 0) ...[
             total('Descuentos y rebajas', descuentosYRebajas),
             const SizedBox(width: 20),
           ],
           total('ISV', carrito.impuesto),
+          const SizedBox(width: 20),
+          if (!destacarTotal)
+            total('Total a pagar', carrito.totalAPagar, destacado: true),
           const Spacer(),
-          // Total a pagar como protagonista -pedido explícito del dueño:
-          // "más grandecito y que sea más protagonista"- en su propia
-          // tarjeta oscura en vez de una columna más entre las demás.
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'TOTAL A PAGAR',
-                  style: GoogleFonts.poppins(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white70,
-                    letterSpacing: 0.5,
+          if (destacarTotal) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'TOTAL A PAGAR',
+                    style: GoogleFonts.poppins(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white70,
+                      letterSpacing: 0.4,
+                    ),
                   ),
-                ),
-                Text(
-                  formatearMoneda(carrito.totalAPagar),
-                  style: GoogleFonts.poppins(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                  Text(
+                    formatearMoneda(carrito.totalAPagar),
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 14),
+            const SizedBox(width: 14),
+          ],
           SizedBox(
-            height: 46,
+            height: 38,
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarVenta,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFC62828),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                backgroundColor: destacarTotal
+                    ? const Color(0xFFC62828)
+                    : const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: _guardando
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(
                         color: Colors.white,
-                        strokeWidth: 2.2,
+                        strokeWidth: 2,
                       ),
                     )
                   : Text(
                       _textoBoton,
                       style: GoogleFonts.poppins(
-                        fontSize: 13.5,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
