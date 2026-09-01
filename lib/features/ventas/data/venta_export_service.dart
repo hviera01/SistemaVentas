@@ -272,11 +272,7 @@ class VentaExportService {
   }
 
   pw.Widget _bloqueTotales(VentaModel venta) {
-    // Misma base sin ISV que ya usan Subtotal y Gravado 15%: precio de lista
-    // (sin descuento) de cada línea menos lo que realmente quedó en
-    // subtotal, así que cuadra con el resto del desglose.
-    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
-    final descuentosYRebajas = redondearMoneda(totalSinDescuento - venta.subtotal);
+    final descuentosYRebajas = venta.descuentosYRebajas;
 
     return pw.Container(
       width: 210,
@@ -287,7 +283,7 @@ class VentaExportService {
         children: [
           _filaTotalFormal('Subtotal', formatearMoneda(venta.subtotal)),
           if (venta.descuentoGlobal > 0) _filaTotalFormal('Descuento global', '${_formatoCantidad(venta.descuentoGlobal)}%'),
-          _filaTotalFormal('Descuentos y rebajas', formatearMoneda(descuentosYRebajas)),
+          if (descuentosYRebajas > 0) _filaTotalFormal('Descuentos y rebajas', formatearMoneda(descuentosYRebajas)),
           _filaTotalFormal('Importe exento', formatearMoneda(0)),
           _filaTotalFormal('Importe exonerado', formatearMoneda(0)),
           _filaTotalFormal('Gravado 15%', formatearMoneda(venta.subtotal)),
@@ -430,12 +426,7 @@ class VentaExportService {
       return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
     }
 
-    // Suma de descuentos por línea (precio de lista de cada producto, sin
-    // descuento, menos lo que realmente quedó en subtotal) más el descuento
-    // global: es la misma base sin ISV que ya usan SUBTOTAL y Gravado 15%
-    // más abajo, así que cuadra con el resto de la lista.
-    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
-    final descuentosYRebajas = redondearMoneda(totalSinDescuento - venta.subtotal);
+    final descuentosYRebajas = venta.descuentosYRebajas;
 
     // En la web (imprime a través del diálogo del navegador) y en Android
     // (ESC/POS por red, ni siquiera pasa por acá) 5mm de margen imprime
@@ -552,7 +543,7 @@ class VentaExportService {
             _separador(),
             _filaTotal('SUBTOTAL:', venta.subtotal),
             if (venta.descuentoGlobal > 0) pw.Text('Descuento global: ${_formatoCantidad(venta.descuentoGlobal)}%', style: const pw.TextStyle(fontSize: fSmall)),
-            _filaTotal('Descuentos y rebajas:', descuentosYRebajas),
+            if (descuentosYRebajas > 0) _filaTotal('Descuentos y rebajas:', descuentosYRebajas),
             _filaTotal('Importe Exento:', 0),
             _filaTotal('Importe Exonerado:', 0),
             _filaTotal('Gravado 15%:', venta.subtotal),

@@ -110,6 +110,20 @@ class CarritoVentaState {
     _subtotalLineasSinDescuentoGlobal * (1 - descuentoGlobalPorcentaje / 100),
   );
 
+  /// Cuánto se rebajó en total (por descuento de línea y/o descuento
+  /// general), sin ISV. Cada línea se compara contra SU PROPIO precio de
+  /// lista ya redondeado a centavos (no una suma sin redondear contra el
+  /// subtotal final, que sí viene redondeado) — así una venta sin ningún
+  /// descuento da 0.00 exacto en vez de un residuo tipo -0.01 quedando
+  /// precios que no caen en centavos exactos al sacarles el ISV.
+  double get descuentosYRebajas {
+    final listaSinDescuento = items.fold<double>(
+      0,
+      (s, i) => s + redondearMoneda(i.precioVenta * i.cantidad),
+    );
+    return redondearMoneda(listaSinDescuento - subtotal);
+  }
+
   double get _totalConImpuestoBase {
     var total = 0.0;
     for (final i in items) {
@@ -427,7 +441,7 @@ class CarritoVentaNotifier extends Notifier<CarritoVentaState> {
       metodoPago: v == 'Credito' ? '' : 'Efectivo',
       fechaVencimiento: v == 'Credito'
           ? (state.fechaVencimiento ??
-                DateTime.now().add(const Duration(days: 30)))
+                DateTime.now().add(const Duration(days: 15)))
           : null,
       pagosMixtos: const [],
     );

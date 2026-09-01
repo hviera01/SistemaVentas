@@ -160,8 +160,8 @@ class VentaCreditoImportService {
         saldoPendiente: saldoPendiente ?? 0,
         fechaRegistro: fechaRegistro,
         // Igual que en el alta manual: sin fecha de vencimiento en el archivo se
-        // usa fecha de registro (o de importación) + 30 días.
-        fechaVencimiento: fechaVencimiento ?? (fechaRegistro ?? DateTime.now()).add(const Duration(days: 30)),
+        // usa fecha de registro (o de importación) + 15 días.
+        fechaVencimiento: fechaVencimiento ?? (fechaRegistro ?? DateTime.now()).add(const Duration(days: 15)),
         error: error,
       ));
     }

@@ -318,8 +318,7 @@ class VentaTicketEscPosService {
       final precio = precioMostrado(item);
       return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
     }
-    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
-    final descuentosYRebajas = redondearMoneda(totalSinDescuento - venta.subtotal);
+    final descuentosYRebajas = venta.descuentosYRebajas;
 
     List<int> bytes = [];
 
@@ -390,7 +389,7 @@ class VentaTicketEscPosService {
 
     bytes += _filaTotal(generador, 'SUBTOTAL:', venta.subtotal);
     if (venta.descuentoGlobal > 0) bytes += _texto(generador, 'Descuento global: ${_formatoCantidad(venta.descuentoGlobal)}%');
-    bytes += _filaTotal(generador, 'Descuentos y rebajas:', descuentosYRebajas);
+    if (descuentosYRebajas > 0) bytes += _filaTotal(generador, 'Descuentos y rebajas:', descuentosYRebajas);
     bytes += _filaTotal(generador, 'Importe Exento:', 0);
     bytes += _filaTotal(generador, 'Importe Exonerado:', 0);
     bytes += _filaTotal(generador, 'Gravado 15%:', venta.subtotal);

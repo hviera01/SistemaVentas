@@ -37,8 +37,7 @@ class TicketEscPosPreview extends StatelessWidget {
       return redondearMoneda(precio * (item.cantidad as double) * (1 - (item.descuentoPorcentaje as double) / 100));
     }
 
-    final totalSinDescuento = venta.detalle.fold<double>(0, (s, item) => s + item.precioVenta * item.cantidad);
-    final descuentosYRebajas = redondearMoneda(totalSinDescuento - venta.subtotal);
+    final descuentosYRebajas = venta.descuentosYRebajas;
 
     // quitarTildes acá también: esta vista previa tiene que mostrar
     // exactamente lo que va a salir impreso (ver el comentario de la
@@ -149,7 +148,7 @@ class TicketEscPosPreview extends StatelessWidget {
           separador(),
           fila('SUBTOTAL:', formatearMoneda(venta.subtotal)),
           if (venta.descuentoGlobal > 0) linea('Descuento global: ${_formatoCantidad(venta.descuentoGlobal)}%'),
-          fila('Descuentos y rebajas:', formatearMoneda(descuentosYRebajas)),
+          if (descuentosYRebajas > 0) fila('Descuentos y rebajas:', formatearMoneda(descuentosYRebajas)),
           fila('Importe Exento:', formatearMoneda(0)),
           fila('Importe Exonerado:', formatearMoneda(0)),
           fila('Gravado 15%:', formatearMoneda(venta.subtotal)),

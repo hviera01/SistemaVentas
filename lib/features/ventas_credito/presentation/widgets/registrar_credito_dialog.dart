@@ -22,7 +22,7 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
   final _rtnController = TextEditingController();
   final _montoTotalController = TextEditingController();
   final _saldoPendienteController = TextEditingController();
-  DateTime _fechaVencimiento = DateTime.now().add(const Duration(days: 30));
+  DateTime _fechaVencimiento = DateTime.now().add(const Duration(days: 15));
   bool _guardando = false;
   String? _error;
   // Cliente elegido con BuscarClienteDialog (opcional): si se elige, este

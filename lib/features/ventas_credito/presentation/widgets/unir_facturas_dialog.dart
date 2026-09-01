@@ -30,7 +30,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
     final primera = widget.facturas.first;
     _documentoController.text = primera.documentoCliente == 'N/A' ? '' : primera.documentoCliente;
     _nombreController.text = primera.nombreCliente;
-    _fechaVencimiento = DateTime.now().add(const Duration(days: 30));
+    _fechaVencimiento = DateTime.now().add(const Duration(days: 15));
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'item_venta_model.dart';
 import 'pago_detalle_model.dart';
+import '../../../core/utils/formato_moneda.dart';
 
 class VentaModel {
   final String id;
@@ -75,6 +76,21 @@ class VentaModel {
   final bool solicitudImpresionGuiaGrande;
 
   bool get estaAnulada => estado == 'Anulada';
+
+  /// Cuánto se rebajó en total (por descuento de línea y/o descuento
+  /// general), sin ISV. Ver mismo getter/comentario en CarritoVentaState:
+  /// compara cada línea contra SU PROPIO precio de lista ya redondeado a
+  /// centavos -no una suma sin redondear contra el subtotal final, que sí
+  /// viene redondeado-, para que una venta sin ningún descuento dé 0.00
+  /// exacto en vez de un residuo tipo -0.01 -bug real reportado por el
+  /// dueño: salía en TODAS las facturas, con o sin descuento-.
+  double get descuentosYRebajas {
+    final listaSinDescuento = detalle.fold<double>(
+      0,
+      (s, item) => s + redondearMoneda(item.precioVenta * item.cantidad),
+    );
+    return redondearMoneda(listaSinDescuento - subtotal);
+  }
 
   // Usado para completar con el detalle (items) una VentaModel que ya se
   // tenía con todo lo demás (por ejemplo, la que llega de un stream sin

@@ -1637,16 +1637,6 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     );
   }
 
-  // Misma base sin ISV que usan Subtotal/Gravado 15% en el PDF: precio de
-  // lista (sin descuento) de cada línea menos lo que quedó en subtotal.
-  double _descuentosYRebajas(VentaModel venta) {
-    final totalSinDescuento = venta.detalle.fold<double>(
-      0,
-      (s, item) => s + item.precioVenta * item.cantidad,
-    );
-    return redondearMoneda(totalSinDescuento - venta.subtotal);
-  }
-
   Widget _tarjetaTotales(VentaModel venta) {
     return _tarjeta(
       child: Column(
@@ -1657,10 +1647,10 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             runSpacing: 10,
             children: [
               _filaTotalTexto('Subtotal', venta.subtotal),
-              if (_descuentosYRebajas(venta) > 0)
+              if (venta.descuentosYRebajas > 0)
                 _filaTotalTexto(
                   'Descuentos y rebajas',
-                  _descuentosYRebajas(venta),
+                  venta.descuentosYRebajas,
                 ),
               _filaTotalTexto('ISV (15%)', venta.impuesto),
               if (venta.descuentoGlobal > 0)
