@@ -5,7 +5,9 @@ import 'package:crypto/crypto.dart';
 import 'negocio_model.dart';
 
 class NegocioRepository {
-  final _doc = FirebaseFirestore.instance.collection('configuracion').doc('negocio');
+  final _doc = FirebaseFirestore.instance
+      .collection('configuracion')
+      .doc('negocio');
 
   // Cache en memoria de la última lectura exitosa de `obtenerNegocioActual`.
   // Antes cada acción puntual (pedir clave especial, abrir ajuste de stock,
@@ -44,7 +46,9 @@ class NegocioRepository {
   Future<NegocioModel> obtenerNegocioActual() async {
     final cache = _cache;
     final cacheFecha = _cacheFecha;
-    if (cache != null && cacheFecha != null && DateTime.now().difference(cacheFecha) < _vigenciaCache) {
+    if (cache != null &&
+        cacheFecha != null &&
+        DateTime.now().difference(cacheFecha) < _vigenciaCache) {
       return cache;
     }
     try {
@@ -91,18 +95,24 @@ class NegocioRepository {
       'rangoPrefijo': rangoPrefijo,
       'rangoDesde': rangoDesde,
       'rangoHasta': rangoHasta,
-      'fechaLimiteEmision': fechaLimiteEmision != null ? Timestamp.fromDate(fechaLimiteEmision) : null,
+      'fechaLimiteEmision': fechaLimiteEmision != null
+          ? Timestamp.fromDate(fechaLimiteEmision)
+          : null,
     }, SetOptions(merge: true));
     _invalidarCache();
   }
 
   Future<void> guardarLogoColor(Uint8List bytes) async {
-    await _doc.set({'logoColorBase64': base64Encode(bytes)}, SetOptions(merge: true));
+    await _doc.set({
+      'logoColorBase64': base64Encode(bytes),
+    }, SetOptions(merge: true));
     _invalidarCache();
   }
 
   Future<void> guardarLogoBn(Uint8List bytes) async {
-    await _doc.set({'logoBnBase64': base64Encode(bytes)}, SetOptions(merge: true));
+    await _doc.set({
+      'logoBnBase64': base64Encode(bytes),
+    }, SetOptions(merge: true));
     _invalidarCache();
   }
 
@@ -112,7 +122,9 @@ class NegocioRepository {
   }
 
   Future<void> establecerClave(String clave) async {
-    await _doc.set({'claveEspecialHash': hashClave(clave)}, SetOptions(merge: true));
+    await _doc.set({
+      'claveEspecialHash': hashClave(clave),
+    }, SetOptions(merge: true));
     _invalidarCache();
   }
 
@@ -122,12 +134,18 @@ class NegocioRepository {
   }
 
   Future<void> actualizarImpresoraTermica(String url, String nombre) async {
-    await _doc.set({'impresoraTermicaUrl': url, 'impresoraTermicaNombre': nombre}, SetOptions(merge: true));
+    await _doc.set({
+      'impresoraTermicaUrl': url,
+      'impresoraTermicaNombre': nombre,
+    }, SetOptions(merge: true));
     _invalidarCache();
   }
 
   Future<void> actualizarImpresoraEtiquetas(String url, String nombre) async {
-    await _doc.set({'impresoraEtiquetasUrl': url, 'impresoraEtiquetasNombre': nombre}, SetOptions(merge: true));
+    await _doc.set({
+      'impresoraEtiquetasUrl': url,
+      'impresoraEtiquetasNombre': nombre,
+    }, SetOptions(merge: true));
     _invalidarCache();
   }
 
@@ -152,7 +170,17 @@ class NegocioRepository {
   }
 
   Future<void> actualizarImpresoraRed(String ip, int puerto) async {
-    await _doc.set({'impresoraRedIp': ip, 'impresoraRedPuerto': puerto}, SetOptions(merge: true));
+    await _doc.set({
+      'impresoraRedIp': ip,
+      'impresoraRedPuerto': puerto,
+    }, SetOptions(merge: true));
+    _invalidarCache();
+  }
+
+  /// [hostname] vacío vuelve al comportamiento de siempre (cualquier
+  /// escritorio actúa como PC principal) -ver NegocioModel.pcPrincipalHostname-.
+  Future<void> establecerPcPrincipalHostname(String hostname) async {
+    await _doc.set({'pcPrincipalHostname': hostname}, SetOptions(merge: true));
     _invalidarCache();
   }
 }

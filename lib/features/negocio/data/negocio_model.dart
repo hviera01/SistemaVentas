@@ -18,12 +18,18 @@ class PermisosEspeciales {
   };
 
   static const Map<String, String> descripciones = {
-    inventarioEditarProducto: 'Pide la clave especial antes de guardar cambios en un producto existente.',
-    inventarioAjustarStock: 'Pide la clave especial antes de confirmar un ajuste de existencia.',
-    ventasCreditoEliminar: 'Pide la clave especial antes de eliminar un crédito.',
-    ventasCambiarPrecio: 'Pide la clave especial antes de modificar el precio unitario de un producto dentro de una venta.',
-    ventasEditarDescripcion: 'Pide la clave especial antes de cambiar la descripción de un producto dentro de una venta.',
-    ventasVenderSinStock: 'Pide la clave especial antes de agregar a una venta (o aumentar la cantidad de) un producto sin existencia disponible, en categorías que sí controlan stock. Si se cancela, se ofrece igual la opción de reembasado.',
+    inventarioEditarProducto:
+        'Pide la clave especial antes de guardar cambios en un producto existente.',
+    inventarioAjustarStock:
+        'Pide la clave especial antes de confirmar un ajuste de existencia.',
+    ventasCreditoEliminar:
+        'Pide la clave especial antes de eliminar un crédito.',
+    ventasCambiarPrecio:
+        'Pide la clave especial antes de modificar el precio unitario de un producto dentro de una venta.',
+    ventasEditarDescripcion:
+        'Pide la clave especial antes de cambiar la descripción de un producto dentro de una venta.',
+    ventasVenderSinStock:
+        'Pide la clave especial antes de agregar a una venta (o aumentar la cantidad de) un producto sin existencia disponible, en categorías que sí controlan stock. Si se cancela, se ofrece igual la opción de reembasado.',
   };
 }
 
@@ -78,6 +84,19 @@ class NegocioModel {
   // No aplica en celular (el teclado nativo angosto ya funciona bien ahí) ni
   // en escritorio/PC.
   final bool tecladoCompactoTablet;
+  // Hostname (ver core/utils/device_id.dart, mismo id que muestra la
+  // pantalla de Dispositivos) de la PC que de verdad tiene la impresora
+  // térmica conectada. Vacío (default) = comportamiento de siempre:
+  // CUALQUIER escritorio (Windows/macOS/Linux) actúa como "PC principal"
+  // (manda latido de presencia y procesa impresiones remotas pedidas desde
+  // el celular). Si el dueño marca un hostname acá (ver Dispositivos >
+  // "Marcar como PC principal" -pedido explícito: tenía otra PC propia,
+  // sin impresora, y esa también se comportaba como si lo fuera-), SOLO esa
+  // PC manda latido/procesa solicitudes; cualquier otro escritorio deja de
+  // considerarse principal y, si no logra imprimir localmente, puede
+  // preguntarle de verdad a Firestore si la de verdad está encendida antes
+  // de pedirle que imprima ella (ver RegistrarVentaScreen._manejarImpresion).
+  final String pcPrincipalHostname;
 
   const NegocioModel({
     this.nombre = '',
@@ -105,6 +124,7 @@ class NegocioModel {
     this.impresoraRedIp = '',
     this.impresoraRedPuerto = 9100,
     this.tecladoCompactoTablet = false,
+    this.pcPrincipalHostname = '',
   });
 
   bool get tieneClaveEspecial => claveEspecialHash.isNotEmpty;
@@ -139,6 +159,7 @@ class NegocioModel {
       impresoraRedIp: data['impresoraRedIp'] ?? '',
       impresoraRedPuerto: ((data['impresoraRedPuerto'] ?? 9100) as num).toInt(),
       tecladoCompactoTablet: data['tecladoCompactoTablet'] ?? false,
+      pcPrincipalHostname: data['pcPrincipalHostname'] ?? '',
     );
   }
 
@@ -154,7 +175,9 @@ class NegocioModel {
       'rangoPrefijo': rangoPrefijo,
       'rangoDesde': rangoDesde,
       'rangoHasta': rangoHasta,
-      'fechaLimiteEmision': fechaLimiteEmision != null ? Timestamp.fromDate(fechaLimiteEmision!) : null,
+      'fechaLimiteEmision': fechaLimiteEmision != null
+          ? Timestamp.fromDate(fechaLimiteEmision!)
+          : null,
       'logoColorBase64': logoColorBase64,
       'logoBnBase64': logoBnBase64,
       'claveEspecialHash': claveEspecialHash,
@@ -169,6 +192,7 @@ class NegocioModel {
       'impresoraRedIp': impresoraRedIp,
       'impresoraRedPuerto': impresoraRedPuerto,
       'tecladoCompactoTablet': tecladoCompactoTablet,
+      'pcPrincipalHostname': pcPrincipalHostname,
     };
   }
 
@@ -198,6 +222,7 @@ class NegocioModel {
     String? impresoraRedIp,
     int? impresoraRedPuerto,
     bool? tecladoCompactoTablet,
+    String? pcPrincipalHostname,
   }) {
     return NegocioModel(
       nombre: nombre ?? this.nombre,
@@ -216,15 +241,20 @@ class NegocioModel {
       claveEspecialHash: claveEspecialHash ?? this.claveEspecialHash,
       permisos: permisos ?? this.permisos,
       impresoraTermicaUrl: impresoraTermicaUrl ?? this.impresoraTermicaUrl,
-      impresoraTermicaNombre: impresoraTermicaNombre ?? this.impresoraTermicaNombre,
-      impresoraEtiquetasUrl: impresoraEtiquetasUrl ?? this.impresoraEtiquetasUrl,
-      impresoraEtiquetasNombre: impresoraEtiquetasNombre ?? this.impresoraEtiquetasNombre,
+      impresoraTermicaNombre:
+          impresoraTermicaNombre ?? this.impresoraTermicaNombre,
+      impresoraEtiquetasUrl:
+          impresoraEtiquetasUrl ?? this.impresoraEtiquetasUrl,
+      impresoraEtiquetasNombre:
+          impresoraEtiquetasNombre ?? this.impresoraEtiquetasNombre,
       facturaImprimirCopia: facturaImprimirCopia ?? this.facturaImprimirCopia,
       facturaPreciosConIsv: facturaPreciosConIsv ?? this.facturaPreciosConIsv,
       modoImpresion: modoImpresion ?? this.modoImpresion,
       impresoraRedIp: impresoraRedIp ?? this.impresoraRedIp,
       impresoraRedPuerto: impresoraRedPuerto ?? this.impresoraRedPuerto,
-      tecladoCompactoTablet: tecladoCompactoTablet ?? this.tecladoCompactoTablet,
+      tecladoCompactoTablet:
+          tecladoCompactoTablet ?? this.tecladoCompactoTablet,
+      pcPrincipalHostname: pcPrincipalHostname ?? this.pcPrincipalHostname,
     );
   }
 }

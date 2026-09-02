@@ -15,6 +15,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/dispositivos/providers/dispositivos_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/negocio/providers/negocio_provider.dart';
+import '../utils/device_id.dart';
 import '../../features/ventas/data/impresion_en_vivo_service.dart';
 import '../../features/ventas/data/venta_model.dart';
 import '../../features/ventas/providers/ventas_provider.dart';
@@ -35,7 +36,17 @@ class _AppShellState extends ConsumerState<AppShell> {
   // forma de mandar un PDF directo a una impresora sin diálogo) ni en el
   // celular. Solo esta plataforma envía latido de presencia y procesa
   // solicitudes de impresión en vivo, ver PresenciaImpresionRepository.
-  final bool _esPcPrincipal = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+  //
+  // Valor inicial: cualquier escritorio (comportamiento de siempre, para no
+  // perder ninguna impresión mientras se resuelve la comprobación de abajo).
+  // Se corrige solo -sin bloquear el arranque- en _confirmarPcPrincipal:
+  // si el dueño marcó un hostname específico como principal (ver
+  // NegocioModel.pcPrincipalHostname y Dispositivos > "Marcar como PC
+  // principal" -pedido explícito: su propia PC, sin impresora, también se
+  // comportaba como si lo fuera-) y ESTE equipo no es ese, deja de actuar
+  // como principal.
+  bool _esPcPrincipal =
+      !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
   Timer? _latidoTimer;
   Timer? _actualizacionTimer;
   final _servicioImpresionEnVivo = ImpresionEnVivoService();
@@ -47,28 +58,33 @@ class _AppShellState extends ConsumerState<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tabsState = ref.read(tabsProvider);
       if (tabsState.tabs.isEmpty) {
-        ref.read(tabsProvider.notifier).abrirTab(
-          TabItem(
-            id: 'inicio',
-            titulo: 'Inicio',
-            icono: Icons.home_outlined,
-            contenido: const HomeScreen(),
-            cerrable: false,
-          ),
-        );
+        ref
+            .read(tabsProvider.notifier)
+            .abrirTab(
+              TabItem(
+                id: 'inicio',
+                titulo: 'Inicio',
+                icono: Icons.home_outlined,
+                contenido: const HomeScreen(),
+                cerrable: false,
+              ),
+            );
       }
     });
 
     if (_esPcPrincipal) {
-      final presencia = ref.read(presenciaImpresionRepositoryProvider);
-      presencia.enviarLatido();
-      _latidoTimer = Timer.periodic(const Duration(seconds: 25), (_) => presencia.enviarLatido());
+      _confirmarPcPrincipal();
     }
 
     // Reporta este equipo (versión instalada + quién inició sesión) al
     // módulo de Dispositivos. Silencioso: ver DispositivoRepository.reportar.
     final usuario = ref.read(authProvider).usuario;
-    ref.read(dispositivoRepositoryProvider).reportar(versionApp: versionApp, usuario: usuario?.nombreCompleto ?? '');
+    ref
+        .read(dispositivoRepositoryProvider)
+        .reportar(
+          versionApp: versionApp,
+          usuario: usuario?.nombreCompleto ?? '',
+        );
 
     // Solo en Windows/Android: ver ActualizacionService. No bloquea el
     // arranque -si no hay internet o GitHub no responde a tiempo, sigue de
@@ -78,15 +94,41 @@ class _AppShellState extends ConsumerState<AppShell> {
     // aviso igual le llega sin que tenga que cerrar y volver a abrir.
     if (ActualizacionService.aplica) {
       _chequearActualizacion();
-      _actualizacionTimer = Timer.periodic(const Duration(minutes: 10), (_) => _chequearActualizacion());
+      _actualizacionTimer = Timer.periodic(
+        const Duration(minutes: 10),
+        (_) => _chequearActualizacion(),
+      );
     }
+  }
+
+  // Ver comentario grande en _esPcPrincipal. No bloquea el arranque: hasta
+  // que esto resuelva, el equipo sigue actuando como principal (valor
+  // inicial), así que no se pierde ninguna impresión por la espera.
+  Future<void> _confirmarPcPrincipal() async {
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
+    final esEste = await esteEquipoEsPcPrincipal(negocio.pcPrincipalHostname);
+    if (!mounted) return;
+    if (!esEste) {
+      setState(() => _esPcPrincipal = false);
+      return;
+    }
+    final presencia = ref.read(presenciaImpresionRepositoryProvider);
+    presencia.enviarLatido();
+    _latidoTimer = Timer.periodic(
+      const Duration(seconds: 25),
+      (_) => presencia.enviarLatido(),
+    );
   }
 
   Future<void> _chequearActualizacion() async {
     if (_dialogoActualizacionAbierto) return;
     final actualizacion = await ActualizacionService.buscarActualizacion();
     if (actualizacion == null || !mounted) return;
-    ref.read(actualizacionDisponibleProvider.notifier).establecer(actualizacion);
+    ref
+        .read(actualizacionDisponibleProvider.notifier)
+        .establecer(actualizacion);
     _dialogoActualizacionAbierto = true;
     await mostrarDialogoActualizacion(context, actualizacion);
     _dialogoActualizacionAbierto = false;
@@ -121,17 +163,25 @@ class _AppShellState extends ConsumerState<AppShell> {
       // posible.
       unawaited(ventaRepo.marcarSolicitudImpresionEnVivo(venta.id, false));
       final futureDetalle = ventaRepo.obtenerDetalleVenta(venta.id);
-      final futureNegocio = ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final futureNegocio = ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
       final detalle = await futureDetalle;
       final negocio = await futureNegocio;
       final ventaCompleta = venta.copyWith(detalle: detalle);
-      final ok = await _servicioImpresionEnVivo.imprimirSilencioso(ventaCompleta, negocio, forzarCopia: ventaCompleta.solicitudImpresionEsCopia);
+      final ok = await _servicioImpresionEnVivo.imprimirSilencioso(
+        ventaCompleta,
+        negocio,
+        forzarCopia: ventaCompleta.solicitudImpresionEsCopia,
+      );
       if (ok) {
         await ventaRepo.marcarPendienteImpresion(venta.id, false);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Venta ${ventaCompleta.numeroDocumento} recibida desde el celular: no se pudo imprimir automáticamente, quedó en Pendientes de Impresión.'),
+            content: Text(
+              'Venta ${ventaCompleta.numeroDocumento} recibida desde el celular: no se pudo imprimir automáticamente, quedó en Pendientes de Impresión.',
+            ),
             duration: const Duration(seconds: 8),
           ),
         );
@@ -152,12 +202,20 @@ class _AppShellState extends ConsumerState<AppShell> {
     try {
       final ventaRepo = ref.read(ventaRepositoryProvider);
       unawaited(ventaRepo.marcarSolicitudImpresionGuiaEnvio(venta.id, false));
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
-      final ok = await _servicioImpresionEnVivo.imprimirGuiaSilencioso(venta, negocio, grande: venta.solicitudImpresionGuiaGrande);
+      final negocio = await ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
+      final ok = await _servicioImpresionEnVivo.imprimirGuiaSilencioso(
+        venta,
+        negocio,
+        grande: venta.solicitudImpresionGuiaGrande,
+      );
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Guía de envío de la venta ${venta.numeroDocumento} (pedida desde otro dispositivo): no se pudo imprimir automáticamente.'),
+            content: Text(
+              'Guía de envío de la venta ${venta.numeroDocumento} (pedida desde otro dispositivo): no se pudo imprimir automáticamente.',
+            ),
             duration: const Duration(seconds: 8),
           ),
         );
@@ -174,16 +232,22 @@ class _AppShellState extends ConsumerState<AppShell> {
     final usuario = authState.usuario;
 
     if (_esPcPrincipal) {
-      ref.listen<AsyncValue<List<VentaModel>>>(ventasConSolicitudImpresionEnVivoStreamProvider, (previous, next) {
-        for (final venta in next.value ?? const <VentaModel>[]) {
-          unawaited(_procesarSolicitudImpresionEnVivo(venta));
-        }
-      });
-      ref.listen<AsyncValue<List<VentaModel>>>(ventasConSolicitudImpresionGuiaEnvioStreamProvider, (previous, next) {
-        for (final venta in next.value ?? const <VentaModel>[]) {
-          unawaited(_procesarSolicitudImpresionGuiaEnvio(venta));
-        }
-      });
+      ref.listen<AsyncValue<List<VentaModel>>>(
+        ventasConSolicitudImpresionEnVivoStreamProvider,
+        (previous, next) {
+          for (final venta in next.value ?? const <VentaModel>[]) {
+            unawaited(_procesarSolicitudImpresionEnVivo(venta));
+          }
+        },
+      );
+      ref.listen<AsyncValue<List<VentaModel>>>(
+        ventasConSolicitudImpresionGuiaEnvioStreamProvider,
+        (previous, next) {
+          for (final venta in next.value ?? const <VentaModel>[]) {
+            unawaited(_procesarSolicitudImpresionGuiaEnvio(venta));
+          }
+        },
+      );
     }
 
     return Scaffold(
@@ -199,7 +263,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                     ? const SizedBox()
                     : IndexedStack(
                         index: tabsState.indiceActivo,
-                        children: tabsState.tabs.map((t) => t.contenido).toList(),
+                        children: tabsState.tabs
+                            .map((t) => t.contenido)
+                            .toList(),
                       ),
               ),
             ],
@@ -215,14 +281,16 @@ class _AppShellState extends ConsumerState<AppShell> {
             left: _menuAbierto ? 0 : -300,
             top: 0,
             bottom: 0,
-            child: SideMenu(onCerrar: () => setState(() => _menuAbierto = false)),
+            child: SideMenu(
+              onCerrar: () => setState(() => _menuAbierto = false),
+            ),
           ),
         ],
       ),
     );
   }
 
- Widget _barraSuperior(dynamic usuario) {
+  Widget _barraSuperior(dynamic usuario) {
     return SizedBox(
       width: double.infinity,
       height: 64,
@@ -241,17 +309,24 @@ class _AppShellState extends ConsumerState<AppShell> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.menu, color: Colors.white),
-                        onPressed: () => setState(() => _menuAbierto = !_menuAbierto),
+                        onPressed: () =>
+                            setState(() => _menuAbierto = !_menuAbierto),
                       ),
                       const SizedBox(width: 4),
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
                         child: ClipOval(
                           child: Padding(
                             padding: const EdgeInsets.all(3),
-                            child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
+                            child: Image.asset(
+                              'assets/images/logo.jpg',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
@@ -259,7 +334,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                         const SizedBox(width: 12),
                         Text(
                           'SUPERCOLOR',
-                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 1),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ],
                     ],
@@ -273,8 +353,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                         radius: 16,
                         backgroundColor: Colors.white.withOpacity(0.2),
                         child: Text(
-                          usuario.nombreCompleto.isNotEmpty ? usuario.nombreCompleto[0].toUpperCase() : '?',
-                          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+                          usuario.nombreCompleto.isNotEmpty
+                              ? usuario.nombreCompleto[0].toUpperCase()
+                              : '?',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       if (!esAngosto) ...[
@@ -290,13 +375,20 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 usuario.nombreCompleto,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
-                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 usuario.rol,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
-                                style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.75), fontSize: 11),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white.withOpacity(0.75),
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
@@ -304,9 +396,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                       ],
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+                        icon: const Icon(
+                          Icons.logout,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                         tooltip: 'Cerrar sesión',
-                        onPressed: () => ref.read(authProvider.notifier).logout(),
+                        onPressed: () =>
+                            ref.read(authProvider.notifier).logout(),
                       ),
                     ],
                   ),
@@ -337,26 +434,43 @@ class _AppShellState extends ConsumerState<AppShell> {
               decoration: BoxDecoration(
                 color: activo ? const Color(0xFFFCE9E9) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
-                border: activo ? Border.all(color: const Color(0xFFC62828).withOpacity(0.25)) : null,
+                border: activo
+                    ? Border.all(
+                        color: const Color(0xFFC62828).withOpacity(0.25),
+                      )
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(tab.icono, size: 16, color: activo ? const Color(0xFFC62828) : Colors.grey.shade500),
+                  Icon(
+                    tab.icono,
+                    size: 16,
+                    color: activo
+                        ? const Color(0xFFC62828)
+                        : Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     tab.titulo,
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
-                      color: activo ? const Color(0xFFC62828) : Colors.grey.shade600,
+                      color: activo
+                          ? const Color(0xFFC62828)
+                          : Colors.grey.shade600,
                       fontWeight: activo ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                   if (tab.cerrable) ...[
                     const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: () => ref.read(tabsProvider.notifier).cerrarTab(tab.id),
-                      child: Icon(Icons.close, size: 14, color: Colors.grey.shade400),
+                      onTap: () =>
+                          ref.read(tabsProvider.notifier).cerrarTab(tab.id),
+                      child: Icon(
+                        Icons.close,
+                        size: 14,
+                        color: Colors.grey.shade400,
+                      ),
                     ),
                   ],
                 ],

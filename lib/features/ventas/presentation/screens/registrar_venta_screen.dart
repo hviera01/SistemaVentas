@@ -3034,9 +3034,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     // Desktop (Windows/macOS/Linux).
     if (negocio.impresoraTermicaUrl.isEmpty) {
-      _mostrarMensaje(
-        'No hay impresora configurada, la venta se guardó sin imprimir',
-      );
+      await _intentarImpresionRemota(venta);
       return;
     }
     // En Windows se manda el ticket como ESC/POS crudo por USB en vez de
@@ -3052,10 +3050,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           nombreImpresora: negocio.impresoraTermicaNombre,
           bytes: bytes,
         );
-        if (!ok)
-          _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+        if (!ok) await _intentarImpresionRemota(venta);
       } catch (_) {
-        _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+        await _intentarImpresionRemota(venta);
       }
       return;
     }
@@ -3073,8 +3070,40 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         ),
       );
     } catch (_) {
-      _mostrarMensaje('No se pudo imprimir en la impresora configurada');
+      await _intentarImpresionRemota(venta);
     }
+  }
+
+  // Cuando ESTE equipo (una PC de escritorio que no es la que tiene la
+  // impresora física conectada -por ejemplo, la propia PC del dueño, sin
+  // ninguna impresora a mano- pedido explícito del dueño) no logra imprimir
+  // localmente, antes de resignarse a dejarla pendiente se le pide a la PC
+  // principal que la imprima ella sola apenas la detecte -mismo mecanismo
+  // que ya usa el celular por navegador (ver el bloque kIsWeb&&esMovil de
+  // arriba)-: si está conectada (envía latido periódico, ver
+  // PresenciaImpresionRepository), se le manda la solicitud; si no, o si la
+  // consulta falla por falta de red, cae al comportamiento de siempre
+  // (queda pendiente para reimprimir después a mano).
+  Future<void> _intentarImpresionRemota(VentaModel venta) async {
+    final ventaRepoLocal = ref.read(ventaRepositoryProvider);
+    final futurePendiente = ventaRepoLocal.marcarPendienteImpresion(
+      venta.id,
+      true,
+    );
+    final pcConectada = await ref
+        .read(presenciaImpresionRepositoryProvider)
+        .estaConectada();
+    if (pcConectada) {
+      await ventaRepoLocal.marcarSolicitudImpresionEnVivo(venta.id, true);
+      _mostrarMensaje(
+        'No se pudo imprimir acá: se envió la orden a la PC principal',
+      );
+    } else {
+      _mostrarMensaje(
+        'No se pudo imprimir, la venta quedó pendiente de impresión',
+      );
+    }
+    await futurePendiente;
   }
 
   /// Imprime la guía de envío -pedido explícito del dueño: directo por
@@ -4367,7 +4396,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       ? Colors.green.shade600
                       : Colors.grey.shade600,
                 ),
-            ),
+              ),
       compacta
           ? _botonAccionChico(
               icono: Icons.local_offer_outlined,

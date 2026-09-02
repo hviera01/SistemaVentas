@@ -26,6 +26,20 @@ Future<String> obtenerIdDispositivo() async {
   return id;
 }
 
+/// true si ESTE equipo es "la PC principal" (la que tiene la impresora
+/// térmica conectada de verdad) según [pcPrincipalHostname] -ver
+/// NegocioModel-: vacío (no configurado, comportamiento de siempre) cuenta
+/// como que sí, para no romper nada en los negocios que nunca tocaron esto.
+/// Usado tanto para decidir si este equipo manda latido de presencia y
+/// procesa impresiones remotas (ver AppShell) como para decidir si, al
+/// fallar una impresión local, vale la pena preguntarle a Firestore si la
+/// PC de verdad está encendida (ver RegistrarVentaScreen._manejarImpresion).
+Future<bool> esteEquipoEsPcPrincipal(String pcPrincipalHostname) async {
+  if (pcPrincipalHostname.isEmpty) return true;
+  final id = await obtenerIdDispositivo();
+  return id == pcPrincipalHostname;
+}
+
 String obtenerPlataforma() {
   if (kIsWeb) return 'Web';
   if (Platform.isWindows) return 'Windows';

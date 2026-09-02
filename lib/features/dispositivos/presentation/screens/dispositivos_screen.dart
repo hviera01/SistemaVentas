@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../providers/dispositivos_provider.dart';
 import '../../../../core/services/actualizacion_service.dart';
+import '../../../negocio/providers/negocio_provider.dart';
 
 class DispositivosScreen extends ConsumerStatefulWidget {
   const DispositivosScreen({super.key});
@@ -23,9 +24,17 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
     });
   }
 
+  Future<void> _alternarPcPrincipal(String hostname, bool marcada) async {
+    await ref
+        .read(negocioRepositoryProvider)
+        .establecerPcPrincipalHostname(marcada ? '' : hostname);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dispositivosAsync = ref.watch(dispositivosStreamProvider);
+    final negocioAsync = ref.watch(negocioStreamProvider);
+    final pcPrincipalHostname = negocioAsync.value?.pcPrincipalHostname ?? '';
     final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
 
     return Container(
@@ -40,19 +49,50 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
               spacing: 12,
               runSpacing: 10,
               children: [
-                Text('Dispositivos', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                Text(
+                  'Dispositivos',
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
                 if (_ultimaVersionPublicada != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(10)),
-                    child: Text('Última versión publicada: v$_ultimaVersionPublicada', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.white, fontWeight: FontWeight.w600)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1A1A),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'Última versión publicada: v$_ultimaVersionPublicada',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: 6),
             Text(
               'Cada equipo actualiza este registro solo al iniciar sesión: si alguien no ha abierto la app en un tiempo, su fila va a quedar vieja.',
-              style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Marcá con la estrella la PC que tiene la impresora conectada de verdad. Sin ninguna marcada (como hasta ahora), cualquier PC/laptop con la app abierta se comporta como si lo fuera -si tenés más de un equipo de escritorio, marcá el correcto para que los demás, al no poder imprimir local, le pidan a este que imprima en su lugar en vez de intentar imprimir ellos mismos-.',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
             ),
             const SizedBox(height: 18),
             Expanded(
@@ -60,14 +100,28 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
+                  border: Border.all(
+                    color: const Color(0xFFAEB4C0),
+                    width: 1.3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.14),
+                      blurRadius: 26,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
                 child: dispositivosAsync.when(
                   data: (dispositivos) {
                     if (dispositivos.isEmpty) {
                       return Center(
-                        child: Text('Todavía no hay dispositivos registrados', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                        child: Text(
+                          'Todavía no hay dispositivos registrados',
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                       );
                     }
                     return ListView.builder(
@@ -77,7 +131,15 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                           return Container(
                             height: 48,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECEEF3),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
                             child: Row(
                               children: [
                                 _celdaHeader('DISPOSITIVO', 3),
@@ -85,15 +147,31 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                                 _celdaHeader('VERSIÓN', 2),
                                 _celdaHeader('ÚLTIMO USUARIO', 2),
                                 _celdaHeader('ÚLTIMA CONEXIÓN', 3),
+                                SizedBox(
+                                  width: 48,
+                                  child: _celdaHeader('PPAL', 1),
+                                ),
                               ],
                             ),
                           );
                         }
                         final d = dispositivos[index - 1];
-                        final desactualizado = _ultimaVersionPublicada != null && d.versionApp < _ultimaVersionPublicada!;
+                        final desactualizado =
+                            _ultimaVersionPublicada != null &&
+                            d.versionApp < _ultimaVersionPublicada!;
+                        final esPrincipal =
+                            pcPrincipalHostname.isNotEmpty &&
+                            pcPrincipalHostname == d.id;
                         return Container(
-                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade200),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Row(
                             children: [
                               _celda(3, d.id, peso: FontWeight.w600),
@@ -101,33 +179,83 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                               Expanded(
                                 flex: 2,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: desactualizado ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE),
+                                    color: desactualizado
+                                        ? const Color(0xFFFCE4E4)
+                                        : const Color(0xFFE8F8EE),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('v${d.versionApp}', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: desactualizado ? const Color(0xFFB91C1C) : const Color(0xFF16A34A))),
+                                      Text(
+                                        'v${d.versionApp}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: desactualizado
+                                              ? const Color(0xFFB91C1C)
+                                              : const Color(0xFF16A34A),
+                                        ),
+                                      ),
                                       if (desactualizado) ...[
                                         const SizedBox(width: 4),
-                                        const Icon(Icons.warning_amber_rounded, size: 13, color: Color(0xFFB91C1C)),
+                                        const Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 13,
+                                          color: Color(0xFFB91C1C),
+                                        ),
                                       ],
                                     ],
                                   ),
                                 ),
                               ),
                               _celda(2, d.usuario.isEmpty ? '-' : d.usuario),
-                              _celda(3, d.ultimaConexion != null ? formatoFecha.format(d.ultimaConexion!) : '-', gris: true),
+                              _celda(
+                                3,
+                                d.ultimaConexion != null
+                                    ? formatoFecha.format(d.ultimaConexion!)
+                                    : '-',
+                                gris: true,
+                              ),
+                              SizedBox(
+                                width: 48,
+                                child: IconButton(
+                                  tooltip: esPrincipal
+                                      ? 'Es la PC principal (tocá para quitarla)'
+                                      : 'Marcar como PC principal',
+                                  onPressed: () =>
+                                      _alternarPcPrincipal(d.id, esPrincipal),
+                                  icon: Icon(
+                                    esPrincipal
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: esPrincipal
+                                        ? const Color(0xFFE0A63C)
+                                        : Colors.grey.shade400,
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         );
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF0F1B3D))),
-                  error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF0F1B3D)),
+                  ),
+                  error: (e, st) => Center(
+                    child: Text(
+                      'Error: $e',
+                      style: GoogleFonts.poppins(color: Colors.red),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -140,16 +268,40 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
   Widget _celdaHeader(String texto, int flex) {
     return Expanded(
       flex: flex,
-      child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF666A72), letterSpacing: 0.3)),
+      child: Text(
+        texto,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF666A72),
+          letterSpacing: 0.3,
+        ),
+      ),
     );
   }
 
-  Widget _celda(int flex, String texto, {bool gris = false, FontWeight peso = FontWeight.w400}) {
+  Widget _celda(
+    int flex,
+    String texto, {
+    bool gris = false,
+    FontWeight peso = FontWeight.w400,
+  }) {
     return Expanded(
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.only(right: 8),
-        child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: peso, color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A))),
+        child: Text(
+          texto,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: peso,
+            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+          ),
+        ),
       ),
     );
   }
