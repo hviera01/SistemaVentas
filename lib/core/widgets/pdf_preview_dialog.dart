@@ -34,6 +34,16 @@ class PdfPreviewDialog extends StatefulWidget {
   // previa en PDF ya no representa lo que realmente se manda a imprimir, así
   // que se muestra esto en su lugar.
   final Widget Function()? vistaPreviaTicket;
+  // Se llama cuando falla el intento de imprimir directo (impresora
+  // desconectada, no encontrada por nombre en este equipo, etc.) -pedido
+  // explícito del dueño: en vez de solo avisar el error, poder pedirle a
+  // la PC principal que imprima ella sola, para el caso de otra PC de
+  // escritorio sin la impresora física a mano (ver
+  // RegistrarVentaScreen._intentarImpresionRemota/DetalleVentaScreen.
+  // _pedirImpresionEnVivo). Si no se manda, sigue el aviso genérico de
+  // siempre -documentos que no son una venta (reportes, etc.) no tienen
+  // a quién pedirle una reimpresión remota-.
+  final Future<void> Function()? alFallarImprimir;
 
   const PdfPreviewDialog({
     super.key,
@@ -45,6 +55,7 @@ class PdfPreviewDialog extends StatefulWidget {
     this.generarTicketEscPos,
     this.nombreImpresoraWindows,
     this.vistaPreviaTicket,
+    this.alFallarImprimir,
   });
 
   @override
@@ -55,7 +66,10 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
   bool _imprimiendo = false;
 
   bool get _usaEscPosEnWindows =>
-      !kIsWeb && Platform.isWindows && widget.generarTicketEscPos != null && (widget.nombreImpresoraWindows?.isNotEmpty ?? false);
+      !kIsWeb &&
+      Platform.isWindows &&
+      widget.generarTicketEscPos != null &&
+      (widget.nombreImpresoraWindows?.isNotEmpty ?? false);
 
   Future<void> _imprimirDirecto() async {
     final impresora = widget.impresora;
@@ -64,18 +78,30 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
     try {
       if (_usaEscPosEnWindows) {
         final bytes = await widget.generarTicketEscPos!();
-        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: widget.nombreImpresoraWindows!, bytes: bytes);
+        final ok = ImpresoraUsbWindowsService().imprimir(
+          nombreImpresora: widget.nombreImpresoraWindows!,
+          bytes: bytes,
+        );
         if (!ok) throw Exception('No se pudo escribir en la impresora');
         return;
       }
       final generarConFormato = widget.generarPdfConFormato;
       await Printing.directPrintPdf(
         printer: impresora,
-        onLayout: generarConFormato != null ? (format) => generarConFormato(format) : (format) => widget.generarPdf(),
+        onLayout: generarConFormato != null
+            ? (format) => generarConFormato(format)
+            : (format) => widget.generarPdf(),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo imprimir en la impresora configurada')));
+      final alFallar = widget.alFallarImprimir;
+      if (alFallar != null) {
+        await alFallar();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo imprimir en la impresora configurada'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _imprimiendo = false);
@@ -95,14 +121,28 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
         width: anchoDialog,
         height: kIsWeb ? null : altoDialog,
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Column(
           mainAxisSize: kIsWeb ? MainAxisSize.min : MainAxisSize.max,
           children: [
             Row(
               children: [
-                Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
-                IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                Expanded(
+                  child: Text(
+                    widget.titulo,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             if (widget.impresora != null) ...[
@@ -112,13 +152,32 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
                 child: FilledButton.icon(
                   onPressed: _imprimiendo ? null : _imprimirDirecto,
                   icon: _imprimiendo
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.print_outlined, size: 18),
                   label: Text(
-                    _imprimiendo ? 'Imprimiendo...' : 'Imprimir en ${widget.impresora!.name}',
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                    _imprimiendo
+                        ? 'Imprimiendo...'
+                        : 'Imprimir en ${widget.impresora!.name}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -135,15 +194,26 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     final bytes = await widget.generarPdf();
-                    await Printing.sharePdf(bytes: bytes, filename: widget.nombreArchivo);
+                    await Printing.sharePdf(
+                      bytes: bytes,
+                      filename: widget.nombreArchivo,
+                    );
                   },
                   icon: const Icon(Icons.share_outlined, size: 18),
-                  label: Text('Compartir PDF', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                  label: Text(
+                    'Compartir PDF',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1A1A1A),
                     side: const BorderSide(color: Color(0xFFB6BCC7)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -172,7 +242,10 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
       // imprime de verdad VentaTicketEscPosService.
       return Expanded(
         child: Container(
-          decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F3F7),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(child: vistaTicket()),
@@ -206,30 +279,66 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.picture_as_pdf_outlined, size: 44, color: Colors.grey.shade400),
+        Icon(
+          Icons.picture_as_pdf_outlined,
+          size: 44,
+          color: Colors.grey.shade400,
+        ),
         const SizedBox(height: 10),
-        Text('El documento está listo', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+        Text(
+          'El documento está listo',
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: () async {
               final bytes = await widget.generarPdf();
-              await Printing.sharePdf(bytes: bytes, filename: widget.nombreArchivo);
+              await Printing.sharePdf(
+                bytes: bytes,
+                filename: widget.nombreArchivo,
+              );
             },
             icon: const Icon(Icons.download_outlined, size: 18),
-            label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            label: Text(
+              'Descargar PDF',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1A1A1A),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () => Printing.layoutPdf(onLayout: (format) => widget.generarPdf(), name: widget.nombreArchivo),
+            onPressed: () => Printing.layoutPdf(
+              onLayout: (format) => widget.generarPdf(),
+              name: widget.nombreArchivo,
+            ),
             icon: const Icon(Icons.print_outlined, size: 18),
-            label: Text('Ver / imprimir', style: GoogleFonts.poppins(fontSize: 13)),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            label: Text(
+              'Ver / imprimir',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1A1A1A),
+              side: const BorderSide(color: Color(0xFFB6BCC7)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ),
       ],

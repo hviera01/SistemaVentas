@@ -340,6 +340,16 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             negocio: negocio,
             esCopia: esCopia,
           ),
+          // Esta PC de escritorio puede no ser la que tiene la impresora
+          // física conectada (ver Dispositivos > "Marcar como PC
+          // principal") -pedido explícito del dueño-: si el intento local
+          // falla, se le pide a la de verdad que reimprima ella sola en
+          // vez de solo avisar el error.
+          alFallarImprimir: () => _pedirImpresionEnVivo(
+            venta,
+            esCopia,
+            mensajeSinPc: 'No se pudo imprimir, quedó pendiente de impresión',
+          ),
         ),
       );
     } catch (e) {

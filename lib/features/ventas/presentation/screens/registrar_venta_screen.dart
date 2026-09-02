@@ -2948,6 +2948,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             negocio: negocio,
             esCopia: false,
           ),
+          alFallarImprimir: () => _intentarImpresionRemota(venta),
         ),
       );
       return;
