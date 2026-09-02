@@ -280,9 +280,10 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     // Un código escaneado (exacta) con un solo resultado se agrega directo
     // en cualquier plataforma, para que escanear siga siendo instantáneo.
     // Una búsqueda por escrito con un solo resultado también se agregaba
-    // directo antes, pero en escritorio eso no dejaba ver la existencia
-    // disponible antes de decidir: ahí ahora solo se muestra en la lista.
-    if (coincidencias.length == 1 && (exacta || _esPlataformaMovil)) {
+    // directo en celular/tablet -pedido explícito del dueño: quitar eso,
+    // que cargue en la lista igual que en PC, para poder ver el producto
+    // antes de decidir en vez de que se agregue solo-.
+    if (coincidencias.length == 1 && exacta) {
       _confirmarSeleccion(coincidencias.first);
     }
   }

@@ -728,7 +728,13 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(child: Text(credito.nombreCliente, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)))),
+                // Sin maxLines/ellipsis a propósito -pedido explícito del
+                // dueño: "quiero siempre ver los nombres de clientes
+                // completos", sobre todo en tablet horizontal (cae en esta
+                // misma tabla "de escritorio" con columnas más angostas que
+                // en una PC de verdad)-: si el nombre no entra en una
+                // línea, baja a una segunda en vez de cortarse.
+                Flexible(child: Text(credito.nombreCliente, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)))),
                 if (credito.errorAvisoWhatsApp != null)
                   Tooltip(
                     message: 'Aviso de WhatsApp falló: ${credito.errorAvisoWhatsApp}',

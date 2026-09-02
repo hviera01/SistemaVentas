@@ -121,9 +121,13 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
   }
 
   /// La búsqueda no filtra en vivo: solo se aplica al presionar Enter o
-  /// tocar el botón de buscar. Si el texto tiene una sola coincidencia (por
-  /// ejemplo, un código exacto leído con lector de código de barras) se
-  /// agrega directo, sin necesidad de un segundo Enter para confirmar.
+  /// tocar el botón de buscar. El escaneo de código de barras real de
+  /// Compras no pasa por acá -tiene su propio campo en
+  /// RegistrarCompraScreen (ver _confirmarCodigoBarras)-, así que esto es
+  /// siempre una búsqueda manual por nombre: antes, con una sola
+  /// coincidencia, se agregaba directo sin dejar verla primero -pedido
+  /// explícito del dueño: que cargue en la lista igual que en PC/Ventas, en
+  /// vez de agregarse sola-.
   void _buscar() {
     final texto = _busquedaController.text.trim();
     setState(() {
@@ -131,12 +135,6 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
       _filaSeleccionada = null;
       _clavesFila.clear();
     });
-    if (texto.isEmpty) return;
-    final productos = ref.read(productosStreamProvider).value ?? [];
-    final coincidencias = productos.where((p) => p.estado && !p.esCombo && coincideFuzzy(p.textoBusqueda, texto)).toList();
-    if (coincidencias.length == 1) {
-      _confirmarSeleccion(coincidencias.first);
-    }
   }
 
   Future<void> _crearProductoNuevo() async {

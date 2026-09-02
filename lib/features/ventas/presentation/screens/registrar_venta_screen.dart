@@ -3811,16 +3811,29 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         onPressed: _agregarProductoDesdeBusqueda,
         destacado: true,
       ),
-      _iconoCompacto(
-        icono: _escaneoRemotoConectado
-            ? Icons.wifi_tethering
-            : Icons.qr_code_scanner,
-        tooltip: _escaneoRemotoConectado
-            ? 'Escaneo activo'
-            : 'Escanear con celular',
-        onPressed: _abrirEscaneoRemoto,
-        color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
-      ),
+      // Acá abajo puede caer una tablet en horizontal (esMovil se calcula
+      // por ancho de pantalla, no por plataforma real) -pedido explícito
+      // del dueño: en un equipo que YA tiene su propia cámara (celular o
+      // tablet), lo que tiene que aparecer es el escaneo directo con esa
+      // cámara, no "Escanear con celular" (el QR para emparejar un celular
+      // COMO EQUIPO APARTE, pensado para cuando la PC no tiene cámara).
+      if (_esPlataformaMovil)
+        _iconoCompacto(
+          icono: Icons.qr_code_scanner,
+          tooltip: 'Escanear con cámara',
+          onPressed: _escanearConCamara,
+        )
+      else
+        _iconoCompacto(
+          icono: _escaneoRemotoConectado
+              ? Icons.wifi_tethering
+              : Icons.qr_code_scanner,
+          tooltip: _escaneoRemotoConectado
+              ? 'Escaneo activo'
+              : 'Escanear con celular',
+          onPressed: _abrirEscaneoRemoto,
+          color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
+        ),
       _iconoCompacto(
         icono: Icons.local_offer_outlined,
         tooltip: 'Ver promociones vigentes',
@@ -4325,30 +4338,35 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 onPressed: _escanearConCamara,
                 icon: Icon(Icons.qr_code_scanner, color: Colors.grey.shade600),
               ),
-      compacta
-          ? _botonAccionChico(
-              icono: _escaneoRemotoConectado
-                  ? Icons.wifi_tethering
-                  : Icons.qr_code_scanner,
-              tooltip: _escaneoRemotoConectado
-                  ? 'Escaneo activo'
-                  : 'Escanear con celular',
-              onPressed: _abrirEscaneoRemoto,
-              color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
-            )
-          : IconButton(
-              tooltip: _escaneoRemotoConectado
-                  ? 'Escaneo activo'
-                  : 'Escanear con celular',
-              onPressed: _abrirEscaneoRemoto,
-              icon: Icon(
-                _escaneoRemotoConectado
+      // "Escanear con celular" (QR para emparejar un celular COMO EQUIPO
+      // APARTE) solo tiene sentido cuando ESTE equipo no tiene su propia
+      // cámara -pedido explícito del dueño: en celular/tablet, que ya tiene
+      // cámara propia, no debe aparecer, solo "Escanear con cámara" (arriba)-.
+      if (!_esPlataformaMovil)
+        compacta
+            ? _botonAccionChico(
+                icono: _escaneoRemotoConectado
                     ? Icons.wifi_tethering
                     : Icons.qr_code_scanner,
-                color: _escaneoRemotoConectado
-                    ? Colors.green.shade600
-                    : Colors.grey.shade600,
-              ),
+                tooltip: _escaneoRemotoConectado
+                    ? 'Escaneo activo'
+                    : 'Escanear con celular',
+                onPressed: _abrirEscaneoRemoto,
+                color: _escaneoRemotoConectado ? Colors.green.shade600 : null,
+              )
+            : IconButton(
+                tooltip: _escaneoRemotoConectado
+                    ? 'Escaneo activo'
+                    : 'Escanear con celular',
+                onPressed: _abrirEscaneoRemoto,
+                icon: Icon(
+                  _escaneoRemotoConectado
+                      ? Icons.wifi_tethering
+                      : Icons.qr_code_scanner,
+                  color: _escaneoRemotoConectado
+                      ? Colors.green.shade600
+                      : Colors.grey.shade600,
+                ),
             ),
       compacta
           ? _botonAccionChico(
@@ -6149,46 +6167,53 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       ),
                       const SizedBox(width: 10),
                     ],
-                    OutlinedButton.icon(
-                      onPressed: _abrirEscaneoRemoto,
-                      icon: Icon(
-                        _escaneoRemotoConectado
-                            ? Icons.wifi_tethering
-                            : Icons.qr_code_scanner,
-                        size: 18,
-                        color: _escaneoRemotoConectado
-                            ? Colors.green.shade600
-                            : null,
-                      ),
-                      label: Text(
-                        _escaneoRemotoConectado
-                            ? 'Escaneo activo'
-                            : 'Escanear con celular',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                    // Solo cuando ESTE equipo no tiene cámara propia -pedido
+                    // explícito del dueño: en tablet/celular (que ya tiene
+                    // la suya, ver el botón "Escanear" de arriba) esto no
+                    // debe aparecer, para no confundir con dos botones de
+                    // escanear casi iguales-.
+                    if (!_esPlataformaMovil) ...[
+                      OutlinedButton.icon(
+                        onPressed: _abrirEscaneoRemoto,
+                        icon: Icon(
+                          _escaneoRemotoConectado
+                              ? Icons.wifi_tethering
+                              : Icons.qr_code_scanner,
+                          size: 18,
                           color: _escaneoRemotoConectado
-                              ? Colors.green.shade700
+                              ? Colors.green.shade600
                               : null,
                         ),
+                        label: Text(
+                          _escaneoRemotoConectado
+                              ? 'Escaneo activo'
+                              : 'Escanear con celular',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _escaneoRemotoConectado
+                                ? Colors.green.shade700
+                                : null,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: BorderSide(
+                            color: _escaneoRemotoConectado
+                                ? Colors.green.shade400
+                                : const Color(0xFFB6BCC7),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 13,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: BorderSide(
-                          color: _escaneoRemotoConectado
-                              ? Colors.green.shade400
-                              : const Color(0xFFB6BCC7),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                    ],
                     FilledButton.icon(
                       onPressed: _agregarProductoDesdeBusqueda,
                       icon: const Icon(Icons.add, size: 18),
