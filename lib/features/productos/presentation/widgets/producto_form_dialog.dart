@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import '../../data/producto_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../categorias/providers/categorias_provider.dart';
+import '../../../categorias/data/categoria_model.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/reintentar_dialog.dart';
 import '../../../../core/services/cloudinary_service.dart';
@@ -472,7 +473,22 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     final categoriasAsync = ref.watch(categoriasStreamProvider);
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 540;
-    final anchoDialog = esMovil ? tamano.width - 48 : 480.0;
+    // En pantalla ancha (PC) el formulario se organiza en dos columnas -pedido
+    // explícito del dueño: que aproveche el ancho disponible y no haya que
+    // scrollear-, así que el diálogo necesita bastante más ancho que el
+    // angosto de una sola columna que sigue usando el celular.
+    final anchoDisponibleDesktop = tamano.width - 120;
+    final anchoDialog = esMovil
+        ? tamano.width - 48
+        : anchoDisponibleDesktop > 920
+        ? 920.0
+        : (anchoDisponibleDesktop < 700 ? 700.0 : anchoDisponibleDesktop);
+    final altoDisponibleDesktop = tamano.height - 80;
+    final altoMaximoDialog = esMovil
+        ? 640.0
+        : altoDisponibleDesktop > 760
+        ? 760.0
+        : (altoDisponibleDesktop < 520 ? 520.0 : altoDisponibleDesktop);
 
     // Al editar un combo ya existente, arma _componentesCombo a partir de la
     // receta guardada (solo id+cantidad) apenas el stream de productos trae
@@ -502,7 +518,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       insetPadding: const EdgeInsets.all(20),
       child: Container(
         width: anchoDialog,
-        constraints: const BoxConstraints(maxHeight: 640),
+        constraints: BoxConstraints(maxHeight: altoMaximoDialog),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -552,363 +568,37 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
                   children: [
                     Center(child: _selectorImagen()),
                     const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CampoTecladoCompacto(
-                            controller: _codigoController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _codigoController,
-                              style: GoogleFonts.poppins(fontSize: 14),
-                              decoration: _decoracion('Código (opcional)'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: CampoTecladoCompacto(
-                            controller: _codigoBarrasController,
-                            numerico: false,
-                            child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _codigoBarrasController,
-                              style: GoogleFonts.poppins(fontSize: 14),
-                              decoration: _decoracion('Código de barras')
-                                  .copyWith(
-                                    suffixIcon: IconButton(
-                                      tooltip: 'Escanear',
-                                      icon: const Icon(
-                                        Icons.qr_code_scanner,
-                                        size: 20,
-                                      ),
-                                      onPressed: () async {
-                                        final codigo =
-                                            await escanearCodigoBarras(context);
-                                        if (codigo == null ||
-                                            codigo.isEmpty ||
-                                            !mounted)
-                                          return;
-                                        setState(
-                                          () => _codigoBarrasController.text =
-                                              codigo,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _nombreController,
-                      numerico: false,
-                      child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _nombreController,
-                        focusNode: _focusNombre,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        decoration: _decoracion('Nombre'),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _descripcionController,
-                      numerico: false,
-                      child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _descripcionController,
-                        maxLines: 2,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        decoration: _decoracion('Descripción (opcional)'),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    categoriasAsync.when(
-                      data: (categorias) {
-                        return DropdownButtonFormField<String>(
-                          value: _idCategoria,
-                          decoration: _decoracion('Categoría'),
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: const Color(0xFF1A1A1A),
-                          ),
-                          items: categorias.map((c) {
-                            return DropdownMenuItem(
-                              value: c.id,
-                              child: Text(c.descripcion),
-                            );
-                          }).toList(),
-                          onChanged: (v) => setState(() => _idCategoria = v),
-                        );
-                      },
-                      loading: () => const LinearProgressIndicator(),
-                      error: (e, st) => Text(
-                        'Error cargando categorías',
-                        style: GoogleFonts.poppins(
-                          color: Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    if (!editando) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8EAF0),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Es un combo/kit',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ),
-                            Switch(
-                              value: _esCombo,
-                              activeColor: const Color(0xFF16A34A),
-                              onChanged: (v) => setState(() => _esCombo = v),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (_esCombo) ...[
-                      const SizedBox(height: 14),
-                      _armadorCombo(),
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8EAF0),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Costo sumado',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              'L. ${_costoSumadoCombo.toStringAsFixed(2)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1A1A1A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 14),
+                    // En pantalla ancha (PC) se reparte en dos columnas para
+                    // aprovechar el ancho del diálogo y evitar el scroll del
+                    // formulario largo; en celular/tablet angosto se apilan
+                    // igual que siempre (una sola columna).
+                    if (esMovil)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ..._camposIdentidad(categoriasAsync),
+                          ..._camposPrecioEstado(editando),
+                        ],
+                      )
+                    else
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: CampoTecladoCompacto(
-                              controller: _stockController,
-                              numerico: true,
-                              child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _stockController,
-                                enabled: !editando,
-                                keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: 14),
-                                decoration: _decoracion(
-                                  editando
-                                      ? 'Existencia (ajustar abajo)'
-                                      : 'Existencia inicial',
-                                ),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: _camposIdentidad(categoriasAsync),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 24),
                           Expanded(
-                            child: CampoTecladoCompacto(
-                              controller: _precioCompraController,
-                              numerico: true,
-                              child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _precioCompraController,
-                                keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: 14),
-                                decoration: _decoracion('Precio Compra'),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: _camposPrecioEstado(editando),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                    const SizedBox(height: 14),
-                    CampoTecladoCompacto(
-                      controller: _precioVentaController,
-                      numerico: true,
-                      child: TextField(
-                        inputFormatters: [mayusculasInputFormatter],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        controller: _precioVentaController,
-                        keyboardType: TextInputType.number,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        decoration: _decoracion('Precio Venta'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => setState(
-                        () => _mostrarNivelesExtra = !_mostrarNivelesExtra,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _mostrarNivelesExtra
-                                ? Icons.remove_circle_outline
-                                : Icons.add_circle_outline,
-                            size: 18,
-                            color: const Color(0xFFC62828),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Niveles de precio adicionales',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.5,
-                              color: const Color(0xFFC62828),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_mostrarNivelesExtra) ...[
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CampoTecladoCompacto(
-                              controller: _precioVenta2Controller,
-                              numerico: true,
-                              child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _precioVenta2Controller,
-                                keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: 14),
-                                decoration: _decoracion('Precio Venta 2'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: CampoTecladoCompacto(
-                              controller: _precioVenta3Controller,
-                              numerico: true,
-                              child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _precioVenta3Controller,
-                                keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: 14),
-                                decoration: _decoracion('Precio Venta 3'),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8EAF0),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Estado',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            _activo ? 'Activo' : 'Inactivo',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _activo
-                                  ? const Color(0xFF16A34A)
-                                  : Colors.grey.shade500,
-                            ),
-                          ),
-                          Switch(
-                            value: _activo,
-                            activeColor: const Color(0xFF16A34A),
-                            onChanged: (v) => setState(() => _activo = v),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.red.shade200),
-                        ),
-                        child: Text(
-                          _error!,
-                          style: GoogleFonts.poppins(
-                            color: Colors.red.shade700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -979,6 +669,347 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
         ),
       ),
     );
+  }
+
+  /// Columna izquierda del formulario en pantalla ancha (o el primer tramo
+  /// de la única columna en celular/tablet): identidad del producto.
+  List<Widget> _camposIdentidad(
+    AsyncValue<List<CategoriaModel>> categoriasAsync,
+  ) {
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: CampoTecladoCompacto(
+              controller: _codigoController,
+              numerico: false,
+              child: TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _codigoController,
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: _decoracion('Código (opcional)'),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: CampoTecladoCompacto(
+              controller: _codigoBarrasController,
+              numerico: false,
+              child: TextField(
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _codigoBarrasController,
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: _decoracion('Código de barras').copyWith(
+                  suffixIcon: IconButton(
+                    tooltip: 'Escanear',
+                    icon: const Icon(Icons.qr_code_scanner, size: 20),
+                    onPressed: () async {
+                      final codigo = await escanearCodigoBarras(context);
+                      if (codigo == null || codigo.isEmpty || !mounted) return;
+                      setState(() => _codigoBarrasController.text = codigo);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      CampoTecladoCompacto(
+        controller: _nombreController,
+        numerico: false,
+        child: TextField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
+          controller: _nombreController,
+          focusNode: _focusNombre,
+          style: GoogleFonts.poppins(fontSize: 14),
+          decoration: _decoracion('Nombre'),
+        ),
+      ),
+      const SizedBox(height: 14),
+      CampoTecladoCompacto(
+        controller: _descripcionController,
+        numerico: false,
+        child: TextField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
+          controller: _descripcionController,
+          maxLines: 2,
+          style: GoogleFonts.poppins(fontSize: 14),
+          decoration: _decoracion('Descripción (opcional)'),
+        ),
+      ),
+      const SizedBox(height: 14),
+      categoriasAsync.when(
+        data: (categorias) {
+          return DropdownButtonFormField<String>(
+            value: _idCategoria,
+            decoration: _decoracion('Categoría'),
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: const Color(0xFF1A1A1A),
+            ),
+            items: categorias.map((c) {
+              return DropdownMenuItem(value: c.id, child: Text(c.descripcion));
+            }).toList(),
+            onChanged: (v) => setState(() => _idCategoria = v),
+          );
+        },
+        loading: () => const LinearProgressIndicator(),
+        error: (e, st) => Text(
+          'Error cargando categorías',
+          style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+        ),
+      ),
+    ];
+  }
+
+  /// Columna derecha del formulario en pantalla ancha (o el segundo tramo
+  /// de la única columna en celular/tablet): combo/precios/estado.
+  List<Widget> _camposPrecioEstado(bool editando) {
+    return [
+      if (!editando) ...[
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8EAF0),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Es un combo/kit',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
+              Switch(
+                value: _esCombo,
+                activeColor: const Color(0xFF16A34A),
+                onChanged: (v) => setState(() => _esCombo = v),
+              ),
+            ],
+          ),
+        ),
+      ],
+      if (_esCombo) ...[
+        const SizedBox(height: 14),
+        _armadorCombo(),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8EAF0),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Costo sumado',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'L. ${_costoSumadoCombo.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ] else ...[
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: CampoTecladoCompacto(
+                controller: _stockController,
+                numerico: true,
+                child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _stockController,
+                  enabled: !editando,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion(
+                    editando
+                        ? 'Existencia (ajustar abajo)'
+                        : 'Existencia inicial',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CampoTecladoCompacto(
+                controller: _precioCompraController,
+                numerico: true,
+                child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _precioCompraController,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Precio Compra'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      const SizedBox(height: 14),
+      CampoTecladoCompacto(
+        controller: _precioVentaController,
+        numerico: true,
+        child: TextField(
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
+          controller: _precioVentaController,
+          keyboardType: TextInputType.number,
+          style: GoogleFonts.poppins(fontSize: 14),
+          decoration: _decoracion('Precio Venta'),
+        ),
+      ),
+      const SizedBox(height: 8),
+      InkWell(
+        onTap: () =>
+            setState(() => _mostrarNivelesExtra = !_mostrarNivelesExtra),
+        child: Row(
+          children: [
+            Icon(
+              _mostrarNivelesExtra
+                  ? Icons.remove_circle_outline
+                  : Icons.add_circle_outline,
+              size: 18,
+              color: const Color(0xFFC62828),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Niveles de precio adicionales',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: const Color(0xFFC62828),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      if (_mostrarNivelesExtra) ...[
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: CampoTecladoCompacto(
+                controller: _precioVenta2Controller,
+                numerico: true,
+                child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _precioVenta2Controller,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Precio Venta 2'),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CampoTecladoCompacto(
+                controller: _precioVenta3Controller,
+                numerico: true,
+                child: TextField(
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _precioVenta3Controller,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Precio Venta 3'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      const SizedBox(height: 14),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8EAF0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Text(
+              'Estado',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              _activo ? 'Activo' : 'Inactivo',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _activo ? const Color(0xFF16A34A) : Colors.grey.shade500,
+              ),
+            ),
+            Switch(
+              value: _activo,
+              activeColor: const Color(0xFF16A34A),
+              onChanged: (v) => setState(() => _activo = v),
+            ),
+          ],
+        ),
+      ),
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.red.shade200),
+          ),
+          child: Text(
+            _error!,
+            style: GoogleFonts.poppins(
+              color: Colors.red.shade700,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    ];
   }
 
   Widget _armadorCombo() {

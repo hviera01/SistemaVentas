@@ -27,6 +27,15 @@ import '../../features/caja/presentation/screens/cierre_caja_screen.dart';
 import '../../features/egresos/presentation/screens/ingresos_egresos_screen.dart';
 import '../../features/dispositivos/presentation/screens/dispositivos_screen.dart';
 import '../../features/promociones/presentation/screens/promociones_screen.dart';
+import '../../features/productos/providers/productos_provider.dart';
+import '../../features/categorias/providers/categorias_provider.dart';
+import '../../features/colores/providers/colores_provider.dart';
+import '../../features/clientes/providers/clientes_provider.dart';
+import '../../features/proveedores/providers/proveedores_provider.dart';
+import '../../features/ventas_credito/providers/ventas_credito_provider.dart';
+import '../../features/compras_credito/providers/compras_credito_provider.dart';
+import '../../features/promociones/providers/promociones_provider.dart';
+import '../../features/usuarios/providers/usuarios_provider.dart';
 
 /// Encierra el contenido de una pestaña en su propio Navigator -pedido
 /// explícito del dueño: "ninguna ventana sea independiente sola... siempre
@@ -125,27 +134,58 @@ Widget _construirContenidoPantalla(
     case 'compras_pedido':
       return const HacerPedidoScreen();
     case 'categorias':
-      return const CategoriasScreen();
+      // Búsqueda propia por pestaña -si el usuario abre una segunda pestaña
+      // de este módulo (ver abrir_submodulo.dart), no debe compartir lo que
+      // se escribió en el buscador de la primera-. El resto de providers de
+      // este módulo (datos reales de Firestore) siguen compartidos.
+      return ProviderScope(
+        overrides: [categoriaBusquedaProvider],
+        child: const CategoriasScreen(),
+      );
     case 'inventario':
-      return const InventarioScreen();
+      return ProviderScope(
+        overrides: [inventarioBusquedaProvider, inventarioVistaProvider],
+        child: const InventarioScreen(),
+      );
     case 'auditoria_inventario':
       return const AuditoriaInventarioScreen();
     case 'pendientes_reposicion':
       return const PendientesReposicionScreen();
     case 'usuarios':
-      return const UsuariosScreen();
+      return ProviderScope(
+        overrides: [usuarioBusquedaProvider],
+        child: const UsuariosScreen(),
+      );
     case 'negocio':
       return const NegocioScreen();
     case 'colores':
-      return const ColoresScreen();
+      return ProviderScope(
+        overrides: [coloresBusquedaProvider, coloresVistaProvider],
+        child: const ColoresScreen(),
+      );
     case 'clientes':
-      return const ClientesScreen();
+      return ProviderScope(
+        overrides: [clientesBusquedaProvider, clientesVistaProvider],
+        child: const ClientesScreen(),
+      );
     case 'proveedores':
-      return const ProveedoresScreen();
+      return ProviderScope(
+        overrides: [proveedoresBusquedaProvider, proveedoresVistaProvider],
+        child: const ProveedoresScreen(),
+      );
     case 'ventas_credito':
-      return const VentasCreditoScreen();
+      return ProviderScope(
+        overrides: [ventasCreditoBusquedaProvider, ventasCreditoVistaProvider],
+        child: const VentasCreditoScreen(),
+      );
     case 'compras_credito':
-      return const ComprasCreditoScreen();
+      return ProviderScope(
+        overrides: [
+          comprasCreditoBusquedaProvider,
+          comprasCreditoVistaProvider,
+        ],
+        child: const ComprasCreditoScreen(),
+      );
     case 'reporte_ventas':
       return const ReporteVentasScreen();
     case 'reporte_compras':
@@ -159,7 +199,10 @@ Widget _construirContenidoPantalla(
     case 'dispositivos':
       return const DispositivosScreen();
     case 'promociones':
-      return const PromocionesScreen();
+      return ProviderScope(
+        overrides: [promocionesBusquedaProvider],
+        child: const PromocionesScreen(),
+      );
     default:
       return PlaceholderScreen(titulo: titulo, icono: icono);
   }
