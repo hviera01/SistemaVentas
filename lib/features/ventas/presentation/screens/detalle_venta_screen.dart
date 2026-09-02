@@ -172,6 +172,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   Future<VentaModel?> _elegirEntreVarias(List<VentaModel> ventas) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return showDialog<VentaModel>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -229,6 +230,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   /// revés). Devuelve true para copia, false para original, null si canceló.
   Future<bool?> _elegirOriginalOCopia() {
     return showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -312,6 +314,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               name: negocio.impresoraTermicaNombre,
             );
       await showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo:
@@ -421,6 +424,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     }
     if (!mounted) return;
     final resultado = await showDialog<DatosEnvioResultado>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => DatosEnvioDialog(
         nombreInicial: venta.envioNombre.isNotEmpty
@@ -594,6 +598,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           .obtenerNegocioActual();
       if (!mounted) return;
       await showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo: 'Documento formal · ${venta.numeroDocumento}',
@@ -645,6 +650,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       return;
     }
     final abono = await showDialog<AbonoModel>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => RegistrarAbonoDialog(credito: credito),
     );
@@ -662,6 +668,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     if (!mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Recibo de abono',
@@ -720,6 +727,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
 
     final motivoController = TextEditingController();
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

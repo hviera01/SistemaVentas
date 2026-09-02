@@ -19,10 +19,12 @@ class BuscarProductoCompraDialog extends ConsumerStatefulWidget {
   const BuscarProductoCompraDialog({super.key});
 
   @override
-  ConsumerState<BuscarProductoCompraDialog> createState() => _BuscarProductoCompraDialogState();
+  ConsumerState<BuscarProductoCompraDialog> createState() =>
+      _BuscarProductoCompraDialogState();
 }
 
-class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompraDialog> {
+class _BuscarProductoCompraDialogState
+    extends ConsumerState<BuscarProductoCompraDialog> {
   final _busquedaController = TextEditingController();
   final _focusNodeLista = FocusNode();
   // Sin `autofocus`: en Windows, pedir el foco durante el primer build (que
@@ -67,24 +69,40 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
   }
 
   List<ProductoModel> _filtrar(List<ProductoModel> productos) {
-    if (identical(productos, _productosCacheados) && _busquedaFiltroCacheada == _busquedaAplicada) {
+    if (identical(productos, _productosCacheados) &&
+        _busquedaFiltroCacheada == _busquedaAplicada) {
       return _listaActual;
     }
     _productosCacheados = productos;
     _busquedaFiltroCacheada = _busquedaAplicada;
-    return productos.where((p) => p.estado && !p.esCombo && coincideFuzzy(p.textoBusqueda, _busquedaAplicada)).toList();
+    return productos
+        .where(
+          (p) =>
+              p.estado &&
+              !p.esCombo &&
+              coincideFuzzy(p.textoBusqueda, _busquedaAplicada),
+        )
+        .toList();
   }
 
   void _moverSeleccion(int delta) {
     if (_listaActual.isEmpty) return;
-    final indiceActual = _filaSeleccionada == null ? -1 : _listaActual.indexWhere((p) => p.id == _filaSeleccionada);
+    final indiceActual = _filaSeleccionada == null
+        ? -1
+        : _listaActual.indexWhere((p) => p.id == _filaSeleccionada);
     var nuevoIndice = indiceActual + delta;
     if (nuevoIndice < 0) nuevoIndice = 0;
-    if (nuevoIndice >= _listaActual.length) nuevoIndice = _listaActual.length - 1;
+    if (nuevoIndice >= _listaActual.length)
+      nuevoIndice = _listaActual.length - 1;
     setState(() => _filaSeleccionada = _listaActual[nuevoIndice].id);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contexto = _clavesFila[nuevoIndice]?.currentContext;
-      if (contexto != null) Scrollable.ensureVisible(contexto, duration: const Duration(milliseconds: 120), alignment: 0.5);
+      if (contexto != null)
+        Scrollable.ensureVisible(
+          contexto,
+          duration: const Duration(milliseconds: 120),
+          alignment: 0.5,
+        );
     });
   }
 
@@ -98,7 +116,8 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
         _moverSeleccion(-1);
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.numpadEnter) {
         _seleccionarAlPresionarEnter();
         return KeyEventResult.handled;
       }
@@ -116,8 +135,12 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
 
   void _seleccionarAlPresionarEnter() {
     if (_listaActual.isEmpty) return;
-    final resaltado = _listaActual.where((p) => p.id == _filaSeleccionada).toList();
-    _confirmarSeleccion(resaltado.isNotEmpty ? resaltado.first : _listaActual.first);
+    final resaltado = _listaActual
+        .where((p) => p.id == _filaSeleccionada)
+        .toList();
+    _confirmarSeleccion(
+      resaltado.isNotEmpty ? resaltado.first : _listaActual.first,
+    );
   }
 
   /// La búsqueda no filtra en vivo: solo se aplica al presionar Enter o
@@ -138,13 +161,21 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
   }
 
   Future<void> _crearProductoNuevo() async {
-    final nuevo = await showDialog<ProductoModel>(context: context, builder: (context) => const ProductoFormDialog());
+    final nuevo = await showDialog<ProductoModel>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const ProductoFormDialog(),
+    );
     if (nuevo == null || !mounted) return;
     _confirmarSeleccion(nuevo);
   }
 
   void _verFoto(ProductoModel p) {
-    showDialog(context: context, builder: (context) => ImagenZoomDialog(url: p.imagenUrl));
+    showDialog(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => ImagenZoomDialog(url: p.imagenUrl),
+    );
   }
 
   @override
@@ -152,7 +183,9 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     final productosAsync = ref.watch(productosStreamProvider);
     final categoriasAsync = ref.watch(categoriasStreamProvider);
     final categoriasLista = categoriasAsync.value ?? <dynamic>[];
-    final mapaCategorias = {for (final c in categoriasLista) c.id as String: c.descripcion as String};
+    final mapaCategorias = {
+      for (final c in categoriasLista) c.id as String: c.descripcion as String,
+    };
 
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 720;
@@ -167,10 +200,19 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
             children: [
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text('Buscar Producto', style: GoogleFonts.poppins(fontSize: esMovil ? 18 : 21, fontWeight: FontWeight.w700)),
+                    child: Text(
+                      'Buscar Producto',
+                      style: GoogleFonts.poppins(
+                        fontSize: esMovil ? 18 : 21,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -179,7 +221,10 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                 padding: EdgeInsets.only(left: esMovil ? 0 : 54),
                 child: Text(
                   'Enter en el buscador busca · doble clic o Enter en la lista agrega el producto resaltado',
-                  style: GoogleFonts.poppins(fontSize: esMovil ? 11.5 : 12.5, color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(
+                    fontSize: esMovil ? 11.5 : 12.5,
+                    color: Colors.grey.shade500,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -193,10 +238,18 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                     child: Container(
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFB6BCC7)),
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+                          Icon(
+                            Icons.search,
+                            size: 20,
+                            color: Colors.grey.shade400,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: CampoTecladoCompacto(
@@ -205,23 +258,31 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                               onSubmitted: (_) => _buscar(),
                               titulo: 'Escribí y presioná Enter para buscar...',
                               child: TextField(
-                              inputFormatters: [mayusculasInputFormatter],
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              controller: _busquedaController,
-                              focusNode: _focusBusqueda,
-                              style: GoogleFonts.poppins(fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: 'Escribí y presioná Enter para buscar...',
-                                hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-                                border: InputBorder.none,
-                                isDense: true,
+                                inputFormatters: [mayusculasInputFormatter],
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                controller: _busquedaController,
+                                focusNode: _focusBusqueda,
+                                style: GoogleFonts.poppins(fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Escribí y presioná Enter para buscar...',
+                                  hintStyle: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                                onSubmitted: (_) => _buscar(),
                               ),
-                              onSubmitted: (_) => _buscar(),
-                            ),
                             ),
                           ),
-                          IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),
+                          IconButton(
+                            tooltip: 'Buscar',
+                            icon: const Icon(Icons.arrow_forward, size: 18),
+                            onPressed: _buscar,
+                          ),
                         ],
                       ),
                     ),
@@ -229,12 +290,20 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                   OutlinedButton.icon(
                     onPressed: _crearProductoNuevo,
                     icon: const Icon(Icons.add_circle_outline, size: 18),
-                    label: Text('Producto Nuevo', style: GoogleFonts.poppins(fontSize: 13)),
+                    label: Text(
+                      'Producto Nuevo',
+                      style: GoogleFonts.poppins(fontSize: 13),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFC62828),
                       side: const BorderSide(color: Color(0xFFC62828)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -260,9 +329,18 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.search, size: 48, color: Colors.grey.shade300),
+                                Icon(
+                                  Icons.search,
+                                  size: 48,
+                                  color: Colors.grey.shade300,
+                                ),
                                 const SizedBox(height: 12),
-                                Text('Escribí algo y presioná Enter para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                                Text(
+                                  'Escribí algo y presioná Enter para buscar',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
                               ],
                             ),
                           );
@@ -272,7 +350,12 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                         _listaActual = lista;
                         if (lista.isEmpty) {
                           return Center(
-                            child: Text('No se encontraron productos', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                            child: Text(
+                              'No se encontraron productos',
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
                           );
                         }
                         return Column(
@@ -286,18 +369,32 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                             Expanded(
                               child: ListView.separated(
                                 itemCount: lista.length,
-                                separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                                separatorBuilder: (context, i) => Divider(
+                                  height: 1,
+                                  color: Colors.grey.shade200,
+                                ),
                                 itemBuilder: (context, i) {
                                   final p = lista[i];
-                                  return esMovil ? _tarjetaMovil(i, p, mapaCategorias) : _filaTabla(i, p, mapaCategorias);
+                                  return esMovil
+                                      ? _tarjetaMovil(i, p, mapaCategorias)
+                                      : _filaTabla(i, p, mapaCategorias);
                                 },
                               ),
                             ),
                           ],
                         );
                       },
-                      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                      error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFC62828),
+                        ),
+                      ),
+                      error: (e, st) => Center(
+                        child: Text(
+                          'Error: $e',
+                          style: GoogleFonts.poppins(color: Colors.red),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -310,21 +407,35 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
   }
 
   Widget _encabezadoTabla() {
-    final estilo = GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estilo = GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: Colors.grey.shade600,
+    );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 6, child: Text('Descripción', style: estilo)),
         Expanded(flex: 3, child: Text('Categoría', style: estilo)),
-        Expanded(flex: 3, child: Text('Costo', textAlign: TextAlign.right, style: estilo)),
-        Expanded(flex: 2, child: Text('Existencia', textAlign: TextAlign.center, style: estilo)),
+        Expanded(
+          flex: 3,
+          child: Text('Costo', textAlign: TextAlign.right, style: estilo),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text('Existencia', textAlign: TextAlign.center, style: estilo),
+        ),
         const SizedBox(width: 40),
       ],
     );
   }
 
-  Widget _filaTabla(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _filaTabla(
+    int indice,
+    ProductoModel p,
+    Map<String, String> mapaCategorias,
+  ) {
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
       key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
@@ -341,39 +452,84 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
           decoration: BoxDecoration(
             color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: seleccionada ? Border.all(color: const Color(0xFFC62828), width: 1.4) : Border.all(color: Colors.transparent, width: 1.4),
+            border: seleccionada
+                ? Border.all(color: const Color(0xFFC62828), width: 1.4)
+                : Border.all(color: Colors.transparent, width: 1.4),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(flex: 2, child: Text(p.codigo, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600))),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  p.codigo,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
               Expanded(
                 flex: 6,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    p.nombre,
+                    softWrap: true,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
               Expanded(
                 flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: Text(mapaCategorias[p.idCategoria] ?? '-', softWrap: true, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+                  child: Text(
+                    mapaCategorias[p.idCategoria] ?? '-',
+                    softWrap: true,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                 ),
               ),
               Expanded(
                 flex: 3,
-                child: Text(formatearMoneda(p.precioCompra), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2B6CB0))),
+                child: Text(
+                  formatearMoneda(p.precioCompra),
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2B6CB0),
+                  ),
+                ),
               ),
               Expanded(
                 flex: 2,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(color: const Color(0xFFF0FBF4), borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FBF4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
-                      p.stock.toStringAsFixed(p.stock == p.stock.roundToDouble() ? 0 : 2),
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF1E9E5A)),
+                      p.stock.toStringAsFixed(
+                        p.stock == p.stock.roundToDouble() ? 0 : 2,
+                      ),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E9E5A),
+                      ),
                     ),
                   ),
                 ),
@@ -384,7 +540,11 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                     ? null
                     : IconButton(
                         tooltip: 'Ver foto',
-                        icon: const Icon(Icons.photo_outlined, size: 18, color: Color(0xFFC62828)),
+                        icon: const Icon(
+                          Icons.photo_outlined,
+                          size: 18,
+                          color: Color(0xFFC62828),
+                        ),
                         onPressed: () => _verFoto(p),
                       ),
               ),
@@ -395,7 +555,11 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
     );
   }
 
-  Widget _tarjetaMovil(int indice, ProductoModel p, Map<String, String> mapaCategorias) {
+  Widget _tarjetaMovil(
+    int indice,
+    ProductoModel p,
+    Map<String, String> mapaCategorias,
+  ) {
     final seleccionada = _filaSeleccionada == p.id;
     return Material(
       key: _clavesFila.putIfAbsent(indice, () => GlobalKey()),
@@ -413,7 +577,9 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
           decoration: BoxDecoration(
             color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
-            border: seleccionada ? Border.all(color: const Color(0xFFC62828), width: 1.4) : Border.all(color: Colors.transparent, width: 1.4),
+            border: seleccionada
+                ? Border.all(color: const Color(0xFFC62828), width: 1.4)
+                : Border.all(color: Colors.transparent, width: 1.4),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,18 +590,42 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.nombre, softWrap: true, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(
+                          p.nombre,
+                          softWrap: true,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text('${p.codigo} · ${mapaCategorias[p.idCategoria] ?? '-'}', softWrap: true, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(
+                          '${p.codigo} · ${mapaCategorias[p.idCategoria] ?? '-'}',
+                          softWrap: true,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(color: const Color(0xFFF0FBF4), borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FBF4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
                       'Existencia: ${p.stock.toStringAsFixed(p.stock == p.stock.roundToDouble() ? 0 : 2)}',
-                      style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF1E9E5A)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E9E5A),
+                      ),
                     ),
                   ),
                 ],
@@ -443,11 +633,24 @@ class _BuscarProductoCompraDialogState extends ConsumerState<BuscarProductoCompr
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: Text(formatearMoneda(p.precioCompra), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2B6CB0)))),
+                  Expanded(
+                    child: Text(
+                      formatearMoneda(p.precioCompra),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2B6CB0),
+                      ),
+                    ),
+                  ),
                   if (p.imagenUrl.isNotEmpty)
                     IconButton(
                       tooltip: 'Ver foto',
-                      icon: const Icon(Icons.photo_outlined, size: 18, color: Color(0xFFC62828)),
+                      icon: const Icon(
+                        Icons.photo_outlined,
+                        size: 18,
+                        color: Color(0xFFC62828),
+                      ),
                       onPressed: () => _verFoto(p),
                     ),
                 ],

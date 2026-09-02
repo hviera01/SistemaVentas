@@ -33,7 +33,9 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
       _documentoController.text = widget.usuario!.documento;
       _nombreController.text = widget.usuario!.nombreCompleto;
       _correoController.text = widget.usuario!.correo;
-      _rol = widget.usuario!.rol.isNotEmpty ? widget.usuario!.rol : Roles.empleado;
+      _rol = widget.usuario!.rol.isNotEmpty
+          ? widget.usuario!.rol
+          : Roles.empleado;
       _activo = widget.usuario!.estado;
     }
   }
@@ -71,7 +73,15 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
       if (!editando) {
         await repo.crear(documento, nombre, correo, clave, _rol, _activo);
       } else {
-        await repo.actualizar(widget.usuario!.id, documento, nombre, correo, _rol, _activo, clave.isEmpty ? null : clave);
+        await repo.actualizar(
+          widget.usuario!.id,
+          documento,
+          nombre,
+          correo,
+          _rol,
+          _activo,
+          clave.isEmpty ? null : clave,
+        );
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -84,15 +94,27 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
 
   Future<void> _eliminar() async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar usuario', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar este usuario?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Eliminar usuario',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Seguro que querés eliminar este usuario?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -155,13 +177,20 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                       color: const Color(0xFFC62828).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.people_alt_outlined, color: Color(0xFFC62828)),
+                    child: const Icon(
+                      Icons.people_alt_outlined,
+                      color: Color(0xFFC62828),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       editando ? 'Editar Usuario' : 'Nuevo Usuario',
-                      style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A1A),
+                      ),
                     ),
                   ),
                   IconButton(
@@ -175,71 +204,96 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                 controller: _documentoController,
                 numerico: false,
                 child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _documentoController,
-                autofocus: true,
-                style: GoogleFonts.poppins(fontSize: 14),
-                decoration: _decoracion('Documento'),
-              ),
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _documentoController,
+                  autofocus: true,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Documento'),
+                ),
               ),
               const SizedBox(height: 14),
               CampoTecladoCompacto(
                 controller: _nombreController,
                 numerico: false,
                 child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _nombreController,
-                style: GoogleFonts.poppins(fontSize: 14),
-                decoration: _decoracion('Nombre completo'),
-              ),
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _nombreController,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Nombre completo'),
+                ),
               ),
               const SizedBox(height: 14),
               CampoTecladoCompacto(
                 controller: _correoController,
                 numerico: false,
                 child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _correoController,
-                style: GoogleFonts.poppins(fontSize: 14),
-                decoration: _decoracion('Correo'),
-              ),
+                  inputFormatters: [mayusculasInputFormatter],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  controller: _correoController,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: _decoracion('Correo'),
+                ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _claveController,
                 obscureText: true,
                 style: GoogleFonts.poppins(fontSize: 14),
-                decoration: _decoracion(editando ? 'Nueva contraseña (opcional)' : 'Contraseña'),
+                decoration: _decoracion(
+                  editando ? 'Nueva contraseña (opcional)' : 'Contraseña',
+                ),
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
                 initialValue: _rol,
                 decoration: _decoracion('Rol'),
                 items: [Roles.administrador, Roles.empleado]
-                    .map((r) => DropdownMenuItem(value: r, child: Text(r, style: GoogleFonts.poppins(fontSize: 13))))
+                    .map(
+                      (r) => DropdownMenuItem(
+                        value: r,
+                        child: Text(
+                          r,
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _rol = v ?? Roles.empleado),
               ),
               const SizedBox(height: 18),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8EAF0),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    Text('Estado', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+                    Text(
+                      'Estado',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
                     const Spacer(),
                     Text(
                       _activo ? 'Activo' : 'Inactivo',
-                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _activo ? const Color(0xFF16A34A) : Colors.grey.shade500),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _activo
+                            ? const Color(0xFF16A34A)
+                            : Colors.grey.shade500,
+                      ),
                     ),
                     Switch(
                       value: _activo,
@@ -253,13 +307,22 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.red.shade200),
                   ),
-                  child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                  child: Text(
+                    _error!,
+                    style: GoogleFonts.poppins(
+                      color: Colors.red.shade700,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(height: 24),
@@ -268,28 +331,56 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
                   if (editando)
                     IconButton(
                       onPressed: _guardando ? null : _eliminar,
-                      icon: const Icon(Icons.delete_outline, color: Color(0xFFC62828)),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFC62828),
+                      ),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFC62828).withOpacity(0.08),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: const Color(
+                          0xFFC62828,
+                        ).withOpacity(0.08),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _guardando ? null : _guardar,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFC62828),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _guardando
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                        : Text('Guardar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),

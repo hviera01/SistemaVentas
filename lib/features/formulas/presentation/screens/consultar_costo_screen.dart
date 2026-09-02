@@ -64,26 +64,49 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
               if (widget.esDialogo)
                 Row(
                   children: [
-                    IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                     const SizedBox(width: 6),
-                    Text('Consultar costo de un color', style: GoogleFonts.poppins(fontSize: esMovil ? 18 : 21, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Consultar costo de un color',
+                      style: GoogleFonts.poppins(
+                        fontSize: esMovil ? 18 : 21,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 )
               else
-                Text('Consultar costo de un color', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                Text(
+                  'Consultar costo de un color',
+                  style: GoogleFonts.poppins(
+                    fontSize: esMovil ? 19 : 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
               const SizedBox(height: 6),
               Padding(
-                padding: EdgeInsets.only(left: (widget.esDialogo && !esMovil) ? 54 : 0),
+                padding: EdgeInsets.only(
+                  left: (widget.esDialogo && !esMovil) ? 54 : 0,
+                ),
                 child: Text(
                   'Solo consulta -no descuenta stock ni registra nada, es para saber cuánto cuesta antes de vender.',
-                  style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               _selectorModo(),
               const SizedBox(height: 16),
               ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: _modo == _ModoConsulta.promedios ? 720 : 560),
+                constraints: BoxConstraints(
+                  maxWidth: _modo == _ModoConsulta.promedios ? 720 : 560,
+                ),
                 // IndexedStack en vez de un switch que arma un widget nuevo
                 // por modo: un switch destruye por completo el State del
                 // modo que se deja (_productoBase, la lista de tintes
@@ -94,7 +117,11 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
                 // activo.
                 child: IndexedStack(
                   index: _modo.index,
-                  children: const [_ModoFormulaConProducto(), _ModoSoloTinte(), _ModoPromediosPorBase()],
+                  children: const [
+                    _ModoFormulaConProducto(),
+                    _ModoSoloTinte(),
+                    _ModoPromediosPorBase(),
+                  ],
                 ),
               ),
             ],
@@ -103,8 +130,12 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
       },
     );
 
-    if (!widget.esDialogo) return Container(color: const Color(0xFFF2F3F7), child: contenido);
-    return Scaffold(backgroundColor: const Color(0xFFF2F3F7), body: SafeArea(child: contenido));
+    if (!widget.esDialogo)
+      return Container(color: const Color(0xFFF2F3F7), child: contenido);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF2F3F7),
+      body: SafeArea(child: contenido),
+    );
   }
 
   Widget _selectorModo() {
@@ -116,8 +147,18 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-          child: Text(texto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72))),
+          decoration: BoxDecoration(
+            color: activo ? const Color(0xFFC62828) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            texto,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: activo ? Colors.white : const Color(0xFF666A72),
+            ),
+          ),
         ),
       );
     }
@@ -125,7 +166,11 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
     return Container(
       height: 50,
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -165,7 +210,11 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
   int _resetMargen = 0;
 
   Future<void> _agregarTinte() async {
-    final resultado = await showDialog<ResultadoCostoTinte>(context: context, builder: (context) => const AgregarTinteManualDialog());
+    final resultado = await showDialog<ResultadoCostoTinte>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const AgregarTinteManualDialog(),
+    );
     if (resultado == null || !mounted) return;
     setState(() => _tintes.add(resultado));
   }
@@ -187,39 +236,80 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text('Entintada personalizada (sin código de fórmula)', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700))),
+              Expanded(
+                child: Text(
+                  'Entintada personalizada (sin código de fórmula)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
               if (_tintes.isNotEmpty)
                 TextButton.icon(
                   onPressed: _limpiar,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF666A72), padding: const EdgeInsets.symmetric(horizontal: 8)),
+                  label: Text(
+                    'Limpiar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF666A72),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 4),
-          Text('"Tanto Y de tal tinte, tanto Y de tal otro..." -uno o varios tintes mezclados a ojo, sin fórmula del libro.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+          Text(
+            '"Tanto Y de tal tinte, tanto Y de tal otro..." -uno o varios tintes mezclados a ojo, sin fórmula del libro.',
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.grey.shade500,
+            ),
+          ),
           const SizedBox(height: 12),
           if (_tintes.isEmpty)
-            Text('Sin tinte cargado todavía.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500))
+            Text(
+              'Sin tinte cargado todavía.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+            )
           else
             for (var i = 0; i < _tintes.length; i++) _filaTinte(i, _tintes[i]),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _agregarTinte,
             icon: const Icon(Icons.colorize, size: 16),
-            label: Text('Agregar tinte', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+            label: Text(
+              'Agregar tinte',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFC62828),
               side: const BorderSide(color: Color(0xFFC62828)),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           if (_tintes.isNotEmpty) ...[
@@ -228,8 +318,23 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: Text('Costo total de la entintada', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700))),
-                Text(formatearMoneda(costoTotal), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
+                Expanded(
+                  child: Text(
+                    'Costo total de la entintada',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  formatearMoneda(costoTotal),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E9E5A),
+                  ),
+                ),
               ],
             ),
           ],
@@ -237,9 +342,19 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             const SizedBox(height: 16),
             Divider(height: 1, color: Colors.grey.shade300),
             const SizedBox(height: 14),
-            Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+            Text(
+              '¿A cuánto puedo venderlo?',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 10),
-            CampoMargenPrecioVenta(key: ValueKey('margen_$_resetMargen'), costoBase: costoTotal, onPrecioVentaCambiado: (_) {}),
+            CampoMargenPrecioVenta(
+              key: ValueKey('margen_$_resetMargen'),
+              costoBase: costoTotal,
+              onPrecioVentaCambiado: (_) {},
+            ),
           ],
         ],
       ),
@@ -251,17 +366,34 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(color: t.resuelto ? const Color(0xFFF8F9FB) : const Color(0xFFFCE9E9), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: t.resuelto ? const Color(0xFFF8F9FB) : const Color(0xFFFCE9E9),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                   Text(
-                    t.resuelto ? formatearMoneda(t.costoTotal) : 'sin producto en inventario',
-                    style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: t.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
+                    'COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    t.resuelto
+                        ? formatearMoneda(t.costoTotal)
+                        : 'sin producto en inventario',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: t.resuelto
+                          ? const Color(0xFF1E9E5A)
+                          : const Color(0xFFC62828),
+                    ),
                   ),
                 ],
               ),
@@ -269,7 +401,10 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             InkWell(
               onTap: () => _quitarTinte(index),
               borderRadius: BorderRadius.circular(8),
-              child: const Padding(padding: EdgeInsets.all(2), child: Icon(Icons.close, size: 16, color: Color(0xFFC62828))),
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child: Icon(Icons.close, size: 16, color: Color(0xFFC62828)),
+              ),
             ),
           ],
         ),
@@ -285,7 +420,8 @@ class _ModoFormulaConProducto extends StatefulWidget {
   const _ModoFormulaConProducto();
 
   @override
-  State<_ModoFormulaConProducto> createState() => _ModoFormulaConProductoState();
+  State<_ModoFormulaConProducto> createState() =>
+      _ModoFormulaConProductoState();
 }
 
 class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
@@ -303,7 +439,12 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
   }
 
   Future<void> _elegirProductoBase() async {
-    final resultado = await Navigator.of(context).push<ProductoConPrecio>(MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoDialog()));
+    final resultado = await Navigator.of(context).push<ProductoConPrecio>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const BuscarProductoDialog(),
+      ),
+    );
     if (resultado == null || !mounted) return;
     setState(() {
       _productoBase = resultado.producto;
@@ -314,15 +455,27 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
   Future<void> _buscarFormula() async {
     final tamano = _tamanoEfectivo;
     if (tamano == null) return;
-    final formula = await showDialog<FormulaColortrendModel>(context: context, builder: (context) => const SeleccionarFormulaDialog());
+    final formula = await showDialog<FormulaColortrendModel>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const SeleccionarFormulaDialog(),
+    );
     if (formula == null || !mounted) return;
     final usos = onzasFormulaParaTamano(formula, tamano, 1);
     if (usos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Esta fórmula no tiene datos de colorante para ${etiquetaTamano(tamano)}.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Esta fórmula no tiene datos de colorante para ${etiquetaTamano(tamano)}.',
+          ),
+        ),
+      );
       return;
     }
     setState(() => _calculando = true);
-    final resultados = await CostoTinteService().calcular([for (final u in usos) UsoTinte(colorante: u.colorante, onzas: u.onzas)]);
+    final resultados = await CostoTinteService().calcular([
+      for (final u in usos) UsoTinte(colorante: u.colorante, onzas: u.onzas),
+    ]);
     if (!mounted) return;
     setState(() {
       _tintes.addAll(resultados);
@@ -334,7 +487,11 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
     // Reusa el mismo diálogo del carrito de venta (mismo motor de costeo,
     // misma UI, ver AgregarTinteManualDialog) -no hace nada de venta acá,
     // solo devuelve el cálculo.
-    final resultado = await showDialog<ResultadoCostoTinte>(context: context, builder: (context) => const AgregarTinteManualDialog());
+    final resultado = await showDialog<ResultadoCostoTinte>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const AgregarTinteManualDialog(),
+    );
     if (resultado == null || !mounted) return;
     setState(() => _tintes.add(resultado));
   }
@@ -357,19 +514,40 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text('Producto base', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700))),
+              Expanded(
+                child: Text(
+                  'Producto base',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
               if (hayAlgoQueLimpiar)
                 TextButton.icon(
                   onPressed: _limpiar,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF666A72), padding: const EdgeInsets.symmetric(horizontal: 8)),
+                  label: Text(
+                    'Limpiar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF666A72),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
             ],
           ),
@@ -377,25 +555,40 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
           OutlinedButton.icon(
             onPressed: _elegirProductoBase,
             icon: const Icon(Icons.search, size: 16),
-            label: Text(_productoBase?.nombre ?? 'Elegir producto base...', style: GoogleFonts.poppins(fontSize: 12.5)),
+            label: Text(
+              _productoBase?.nombre ?? 'Elegir producto base...',
+              style: GoogleFonts.poppins(fontSize: 12.5),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF1A1A1A),
               side: const BorderSide(color: Color(0xFFB6BCC7)),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               alignment: Alignment.centerLeft,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
-          if (_productoBase != null && tamanoDesdeNombreProducto(_productoBase!.nombre) == null) ...[
+          if (_productoBase != null &&
+              tamanoDesdeNombreProducto(_productoBase!.nombre) == null) ...[
             const SizedBox(height: 8),
-            Text('No se pudo determinar el tamaño por el nombre -elegilo a mano:', style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309))),
+            Text(
+              'No se pudo determinar el tamaño por el nombre -elegilo a mano:',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: const Color(0xFFB45309),
+              ),
+            ),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
               children: [
                 for (final t in TamanoFormula.values)
                   ChoiceChip(
-                    label: Text(etiquetaTamano(t), style: GoogleFonts.poppins(fontSize: 11.5)),
+                    label: Text(
+                      etiquetaTamano(t),
+                      style: GoogleFonts.poppins(fontSize: 11.5),
+                    ),
                     selected: _tamanoManual == t,
                     onSelected: (_) => setState(() => _tamanoManual = t),
                   ),
@@ -405,21 +598,55 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
           const SizedBox(height: 16),
           Divider(height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 14),
-          Text('Tinte', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+          Text(
+            'Tinte',
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 8),
           if (_tintes.isEmpty)
-            Text('Sin tinte cargado todavía.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500))
+            Text(
+              'Sin tinte cargado todavía.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+            )
           else
             for (final t in _tintes)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FB),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Row(
                     children: [
-                      Expanded(child: Text('COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct', style: GoogleFonts.poppins(fontSize: 12))),
-                      Text(t.resuelto ? formatearMoneda(t.costoTotal) : 'sin inventario', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: t.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828))),
+                      Expanded(
+                        child: Text(
+                          'COLORANTE ${t.colorante} · ${t.cuartos.toStringAsFixed(2)} ct',
+                          style: GoogleFonts.poppins(fontSize: 12),
+                        ),
+                      ),
+                      Text(
+                        t.resuelto
+                            ? formatearMoneda(t.costoTotal)
+                            : 'sin inventario',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: t.resuelto
+                              ? const Color(0xFF1E9E5A)
+                              : const Color(0xFFC62828),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -429,10 +656,34 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: (_calculando || _tamanoEfectivo == null) ? null : _buscarFormula,
-                  icon: _calculando ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828))) : const Icon(Icons.menu_book_outlined, size: 16),
-                  label: Text('Buscar fórmula', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFC62828)), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  onPressed: (_calculando || _tamanoEfectivo == null)
+                      ? null
+                      : _buscarFormula,
+                  icon: _calculando
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFC62828),
+                          ),
+                        )
+                      : const Icon(Icons.menu_book_outlined, size: 16),
+                  label: Text(
+                    'Buscar fórmula',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC62828),
+                    side: const BorderSide(color: Color(0xFFC62828)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -440,8 +691,21 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                 child: OutlinedButton.icon(
                   onPressed: _agregarTinteManual,
                   icon: const Icon(Icons.colorize, size: 16),
-                  label: Text('Tinte manual', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  label: Text(
+                    'Tinte manual',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1A1A1A),
+                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -449,23 +713,44 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
           if (_productoBase == null && _tamanoEfectivo == null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Elegí un producto base primero para poder buscar una fórmula (el tamaño sale de ahí).', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+              child: Text(
+                'Elegí un producto base primero para poder buscar una fórmula (el tamaño sale de ahí).',
+                style: GoogleFonts.poppins(
+                  fontSize: 10.5,
+                  color: Colors.grey.shade500,
+                ),
+              ),
             ),
           const SizedBox(height: 16),
           Divider(height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 8),
           _filaCosto('Costo de tinte', costoTinte, const Color(0xFFC62828)),
           const SizedBox(height: 4),
-          _filaCosto('Costo del producto base', costoBase, const Color(0xFF2B6CB0)),
+          _filaCosto(
+            'Costo del producto base',
+            costoBase,
+            const Color(0xFF2B6CB0),
+          ),
           const SizedBox(height: 8),
           Divider(height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 8),
-          _filaCosto('Total combinado', costoCombinado, const Color(0xFF1A1A1A), grande: true),
+          _filaCosto(
+            'Total combinado',
+            costoCombinado,
+            const Color(0xFF1A1A1A),
+            grande: true,
+          ),
           if (costoCombinado > 0) ...[
             const SizedBox(height: 16),
             Divider(height: 1, color: Colors.grey.shade300),
             const SizedBox(height: 14),
-            Text('¿A cuánto puedo venderlo?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+            Text(
+              '¿A cuánto puedo venderlo?',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 10),
             CampoMargenPrecioVenta(
               // El producto base cambia el precio de arranque del
@@ -482,7 +767,10 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               // -el costo FIFO de cada lote se guarda con ISV incluido, ver
               // CompraRepository- igual que precioVenta, así que se comparan
               // directo sin convertir nada.
-              precioVentaInicial: _productoBase != null && _productoBase!.precioVenta > 0 ? _productoBase!.precioVenta : null,
+              precioVentaInicial:
+                  _productoBase != null && _productoBase!.precioVenta > 0
+                  ? _productoBase!.precioVenta
+                  : null,
               etiquetaPrecio: 'Precio de venta (c/ISV)',
               onPrecioVentaCambiado: (_) {},
             ),
@@ -492,11 +780,31 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
     );
   }
 
-  Widget _filaCosto(String etiqueta, double valor, Color color, {bool grande = false}) {
+  Widget _filaCosto(
+    String etiqueta,
+    double valor,
+    Color color, {
+    bool grande = false,
+  }) {
     return Row(
       children: [
-        Expanded(child: Text(etiqueta, style: GoogleFonts.poppins(fontSize: grande ? 14 : 12.5, fontWeight: grande ? FontWeight.w700 : FontWeight.w500))),
-        Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: grande ? 18 : 13, fontWeight: FontWeight.w800, color: color)),
+        Expanded(
+          child: Text(
+            etiqueta,
+            style: GoogleFonts.poppins(
+              fontSize: grande ? 14 : 12.5,
+              fontWeight: grande ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          formatearMoneda(valor),
+          style: GoogleFonts.poppins(
+            fontSize: grande ? 18 : 13,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
       ],
     );
   }
@@ -522,16 +830,35 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
 // (confirmado contra assets/data/formulas_colortrend.json). Cualquier otro
 // valor -no debería haber, pero por las dudas- cae en "Otra" en vez de
 // perderse en silencio.
-const _basesConocidas = ['Pastel Base', 'Deep Base', 'Accent Base', 'Tint Base'];
-const _tamanosPromedios = [TamanoFormula.cuarto, TamanoFormula.galon, TamanoFormula.quinto];
+const _basesConocidas = [
+  'Pastel Base',
+  'Deep Base',
+  'Accent Base',
+  'Tint Base',
+];
+const _tamanosPromedios = [
+  TamanoFormula.cuarto,
+  TamanoFormula.galon,
+  TamanoFormula.quinto,
+];
 
-typedef _PromedioBaseTamano = ({double promedio, int incluidas, int excluidas, double minimo, double maximo});
+typedef _PromedioBaseTamano = ({
+  double promedio,
+  int incluidas,
+  int excluidas,
+  double minimo,
+  double maximo,
+});
 
 Future<Map<String, double>> _costoPorCuartoDeTintesReales(Ref ref) async {
   final productos = await ref.watch(productosStreamProvider.future);
-  final tintes = productos.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList();
+  final tintes = productos
+      .where((p) => p.idCategoria == idCategoriaTintes && p.estado)
+      .toList();
   final repo = LoteCostoRepository();
-  final snapshots = await Future.wait(tintes.map((p) => repo.consultarLotes(p.id)));
+  final snapshots = await Future.wait(
+    tintes.map((p) => repo.consultarLotes(p.id)),
+  );
   final mapa = <String, double>{};
   for (var i = 0; i < tintes.length; i++) {
     final producto = tintes[i];
@@ -539,8 +866,14 @@ Future<Map<String, double>> _costoPorCuartoDeTintesReales(Ref ref) async {
     // Costo de consumir 1 cuarto completo con el estado de lotes vigente
     // ahora mismo -un "costo unitario actual" representativo, mismo motor
     // FIFO que usa CostoTinteService en cualquier otro lado de la app.
-    final costoPorCuarto = repo.consumir(estado, 1.0, costoFallback: producto.precioCompra);
-    final colorante = normalizarColorante(producto.nombre.replaceFirst('COLORANTE ', ''));
+    final costoPorCuarto = repo.consumir(
+      estado,
+      1.0,
+      costoFallback: producto.precioCompra,
+    );
+    final colorante = normalizarColorante(
+      producto.nombre.replaceFirst('COLORANTE ', ''),
+    );
     mapa[colorante] = costoPorCuarto;
   }
   return mapa;
@@ -555,33 +888,45 @@ Future<Map<String, double>> _costoPorCuartoDeTintesReales(Ref ref) async {
 /// no usa IndexedStack y por lo tanto destruye/recrea el State-, que era la
 /// demora real que reportó el dueño ("a promedio por base le cuesta mucho
 /// también cargar").
-final _promediosPorBaseProvider = FutureProvider<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>>((ref) async {
-  // Límite de tiempo total: sin esto, una conexión lenta o cortada a mitad
-  // de una consulta a Firestore (get() no tiene timeout propio) dejaba este
-  // modo cargando para siempre, sin ningún mensaje de error ni forma de
-  // reintentar -bug real reportado desde la versión web (Pages), donde la
-  // red del que consulta puede ser bastante más lenta/inestable que en la
-  // app de escritorio.
-  return Future(() async {
-    final costoPorCuarto = await _costoPorCuartoDeTintesReales(ref);
-    final formulas = await ref.watch(formulasColortrendProvider.future);
-    return _calcularPromediosDesde(costoPorCuarto, formulas);
-  }).timeout(
-    const Duration(seconds: 25),
-    onTimeout: () => throw Exception('La consulta tardó demasiado -probá con mejor conexión, o entrá de nuevo a este modo para reintentar.'),
-  );
-});
+final _promediosPorBaseProvider =
+    FutureProvider<Map<String, Map<TamanoFormula, _PromedioBaseTamano>>>((
+      ref,
+    ) async {
+      // Límite de tiempo total: sin esto, una conexión lenta o cortada a mitad
+      // de una consulta a Firestore (get() no tiene timeout propio) dejaba este
+      // modo cargando para siempre, sin ningún mensaje de error ni forma de
+      // reintentar -bug real reportado desde la versión web (Pages), donde la
+      // red del que consulta puede ser bastante más lenta/inestable que en la
+      // app de escritorio.
+      return Future(() async {
+        final costoPorCuarto = await _costoPorCuartoDeTintesReales(ref);
+        final formulas = await ref.watch(formulasColortrendProvider.future);
+        return _calcularPromediosDesde(costoPorCuarto, formulas);
+      }).timeout(
+        const Duration(seconds: 25),
+        onTimeout: () => throw Exception(
+          'La consulta tardó demasiado -probá con mejor conexión, o entrá de nuevo a este modo para reintentar.',
+        ),
+      );
+    });
 
-Map<String, Map<TamanoFormula, _PromedioBaseTamano>> _calcularPromediosDesde(Map<String, double> costoPorCuarto, List<FormulaColortrendModel> formulas) {
-
+Map<String, Map<TamanoFormula, _PromedioBaseTamano>> _calcularPromediosDesde(
+  Map<String, double> costoPorCuarto,
+  List<FormulaColortrendModel> formulas,
+) {
   // sumas[base][tamano] = (sumaDeCosto, incluidas, excluidas, minimo, maximo)
   // -minimo/maximo dan el rango real de costo dentro de ese grupo, para que
   // se vea que un color puntual bien arriba o abajo del promedio no es un
   // error: el gasto de tinte varía mucho de un color a otro dentro de la
   // misma base.
-  final sumas = <String, Map<TamanoFormula, (double, int, int, double, double)>>{
-    for (final base in [..._basesConocidas, 'Otra']) base: {for (final t in _tamanosPromedios) t: (0.0, 0, 0, double.infinity, 0.0)},
-  };
+  final sumas =
+      <String, Map<TamanoFormula, (double, int, int, double, double)>>{
+        for (final base in [..._basesConocidas, 'Otra'])
+          base: {
+            for (final t in _tamanosPromedios)
+              t: (0.0, 0, 0, double.infinity, 0.0),
+          },
+      };
 
   for (final formula in formulas) {
     final base = _basesConocidas.contains(formula.base) ? formula.base : 'Otra';
@@ -591,7 +936,13 @@ Map<String, Map<TamanoFormula, _PromedioBaseTamano>> _calcularPromediosDesde(Map
       if (usos.isEmpty) {
         // Sin datos de colorante del libro para este tamaño -no cuenta ni
         // a favor ni en contra del promedio, solo se anota como excluida.
-        sumas[base]![tamano] = (actual.$1, actual.$2, actual.$3 + 1, actual.$4, actual.$5);
+        sumas[base]![tamano] = (
+          actual.$1,
+          actual.$2,
+          actual.$3 + 1,
+          actual.$4,
+          actual.$5,
+        );
         continue;
       }
       var costoFormula = 0.0;
@@ -639,7 +990,8 @@ class _ModoPromediosPorBase extends ConsumerStatefulWidget {
   const _ModoPromediosPorBase();
 
   @override
-  ConsumerState<_ModoPromediosPorBase> createState() => _ModoPromediosPorBaseState();
+  ConsumerState<_ModoPromediosPorBase> createState() =>
+      _ModoPromediosPorBaseState();
 }
 
 class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
@@ -651,15 +1003,28 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Costo promedio de tinte por tipo de base y tamaño', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+          Text(
+            'Costo promedio de tinte por tipo de base y tamaño',
+            style: GoogleFonts.poppins(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             'Promedio sobre todas las fórmulas del libro de ese tipo de base, con el costo FIFO vigente ahora mismo de cada tinte -para tener una referencia de precio base sin revisar cada fórmula una por una.',
-            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 16),
           if (promedios.hasError)
@@ -668,13 +1033,28 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('No se pudo calcular: ${promedios.error}', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828))),
+                  Text(
+                    'No se pudo calcular: ${promedios.error}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: const Color(0xFFC62828),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
                     onPressed: () => ref.invalidate(_promediosPorBaseProvider),
                     icon: const Icon(Icons.refresh, size: 16),
-                    label: Text('Reintentar', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFC62828))),
+                    label: Text(
+                      'Reintentar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC62828),
+                      side: const BorderSide(color: Color(0xFFC62828)),
+                    ),
                   ),
                 ],
               ),
@@ -682,14 +1062,23 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
           else if (promedios.value != null)
             _tabla(promedios.value!)
           else
-            const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFC62828)),
+              ),
+            ),
         ],
       ),
     );
   }
 
   Widget _tabla(Map<String, Map<TamanoFormula, _PromedioBaseTamano>> datos) {
-    final otraTieneAlgo = (datos['Otra']?.values.any((v) => v.incluidas > 0 || v.excluidas > 0)) ?? false;
+    final otraTieneAlgo =
+        (datos['Otra']?.values.any(
+          (v) => v.incluidas > 0 || v.excluidas > 0,
+        )) ??
+        false;
     final bases = [..._basesConocidas, if (otraTieneAlgo) 'Otra'];
     // En móvil, una tabla de 4 columnas (Base + 3 tamaños, cada una con
     // monto+rango+cantidad de fórmulas) no entra sin scroll horizontal
@@ -699,14 +1088,19 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
     if (esMovil) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [for (final base in bases) _tarjetaBaseMovil(base, datos[base])],
+        children: [
+          for (final base in bases) _tarjetaBaseMovil(base, datos[base]),
+        ],
       );
     }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Table(
         defaultColumnWidth: const IntrinsicColumnWidth(),
-        border: TableBorder.all(color: const Color(0xFFE0E2E8), borderRadius: BorderRadius.circular(8)),
+        border: TableBorder.all(
+          color: const Color(0xFFE0E2E8),
+          borderRadius: BorderRadius.circular(8),
+        ),
         children: [
           TableRow(
             decoration: const BoxDecoration(color: Color(0xFFF2F3F7)),
@@ -727,18 +1121,32 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
     );
   }
 
-  Widget _tarjetaBaseMovil(String base, Map<TamanoFormula, _PromedioBaseTamano>? valores) {
+  Widget _tarjetaBaseMovil(
+    String base,
+    Map<TamanoFormula, _PromedioBaseTamano>? valores,
+  ) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFE0E2E8))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE0E2E8)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(base, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+          Text(
+            base,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 8),
-          for (final t in _tamanos) _filaValorMovil(etiquetaTamano(t), valores?[t]),
+          for (final t in _tamanos)
+            _filaValorMovil(etiquetaTamano(t), valores?[t]),
         ],
       ),
     );
@@ -750,15 +1158,43 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 70, child: Text(etiquetaTamano, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+          SizedBox(
+            width: 70,
+            child: Text(
+              etiquetaTamano,
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
           Expanded(
             child: valor == null || valor.incluidas == 0
-                ? Text('Sin datos', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400))
+                ? Text(
+                    'Sin datos',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade400,
+                    ),
+                  )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(formatearMoneda(valor.promedio), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
-                      Text(_detalleValor(valor), style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+                      Text(
+                        formatearMoneda(valor.promedio),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1E9E5A),
+                        ),
+                      ),
+                      Text(
+                        _detalleValor(valor),
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
                     ],
                   ),
           ),
@@ -770,14 +1206,20 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
   Widget _celdaEncabezado(String texto) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Text(texto, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
+      child: Text(
+        texto,
+        style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700),
+      ),
     );
   }
 
   Widget _celdaBase(String texto) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Text(texto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+      child: Text(
+        texto,
+        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700),
+      ),
     );
   }
 
@@ -785,7 +1227,13 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
     if (valor == null || valor.incluidas == 0) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Text('Sin datos', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400)),
+        child: Text(
+          'Sin datos',
+          style: GoogleFonts.poppins(
+            fontSize: 11.5,
+            color: Colors.grey.shade400,
+          ),
+        ),
       );
     }
     return Padding(
@@ -794,8 +1242,21 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(formatearMoneda(valor.promedio), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E9E5A))),
-          Text(_detalleValor(valor), style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+          Text(
+            formatearMoneda(valor.promedio),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E9E5A),
+            ),
+          ),
+          Text(
+            _detalleValor(valor),
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: Colors.grey.shade500,
+            ),
+          ),
         ],
       ),
     );
@@ -807,7 +1268,10 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
   // varía mucho de un color a otro, así que ver el máximo real (no solo el
   // promedio) da contexto de una.
   String _detalleValor(_PromedioBaseTamano valor) {
-    final rango = 'rango ${formatearMoneda(valor.minimo)}-${formatearMoneda(valor.maximo)}';
-    return valor.excluidas > 0 ? '${valor.incluidas} fórmulas, $rango (${valor.excluidas} excluidas)' : '${valor.incluidas} fórmulas, $rango';
+    final rango =
+        'rango ${formatearMoneda(valor.minimo)}-${formatearMoneda(valor.maximo)}';
+    return valor.excluidas > 0
+        ? '${valor.incluidas} fórmulas, $rango (${valor.excluidas} excluidas)'
+        : '${valor.incluidas} fórmulas, $rango';
   }
 }

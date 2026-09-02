@@ -44,8 +44,13 @@ class FormulaDetalleCard extends StatelessWidget {
     return '${entero}Y${_numeroSinCerosDeMas(avos)}';
   }
 
-  void _abrirUnidadGrande(BuildContext context, String etiqueta, List<(String tinte, String valor, bool esEstimado)> filas) {
+  void _abrirUnidadGrande(
+    BuildContext context,
+    String etiqueta,
+    List<(String tinte, String valor, bool esEstimado)> filas,
+  ) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => Dialog(
         insetPadding: const EdgeInsets.all(20),
@@ -63,14 +68,40 @@ class FormulaDetalleCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(formula.codigo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
+                      Text(
+                        formula.codigo,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFC62828),
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(formula.nombre, style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis)),
-                      IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                      Expanded(
+                        child: Text(
+                          formula.nombre,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(etiqueta, style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF0F1B3D))),
+                  Text(
+                    etiqueta,
+                    style: GoogleFonts.poppins(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F1B3D),
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   Flexible(
                     child: SingleChildScrollView(
@@ -81,11 +112,23 @@ class FormulaDetalleCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Row(
                                 children: [
-                                  Text(tinte, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w800)),
+                                  Text(
+                                    tinte,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                   const SizedBox(width: 14),
                                   Text(
                                     valor,
-                                    style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w800, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFFC62828)),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: esEstimado
+                                          ? const Color(0xFFB45309)
+                                          : const Color(0xFFC62828),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -113,7 +156,13 @@ class FormulaDetalleCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,20 +174,53 @@ class FormulaDetalleCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(f.codigo, style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w800, color: const Color(0xFFC62828))),
-                    Text(f.nombre, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+                    Text(
+                      f.codigo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFC62828),
+                      ),
+                    ),
+                    Text(
+                      f.nombre,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: const Color(0xFF0F1B3D), borderRadius: BorderRadius.circular(8)),
-                child: Text(f.base.toUpperCase(), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F1B3D),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  f.base.toUpperCase(),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 2),
-          Text('Libro físico: página ${f.pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+          Text(
+            'Libro físico: página ${f.pagina}',
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              color: Colors.grey.shade500,
+            ),
+          ),
           const SizedBox(height: 12),
           if (!f.cuartoDisponible)
             Padding(
@@ -146,12 +228,19 @@ class FormulaDetalleCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline, size: 14, color: Color(0xFFB45309)),
+                  const Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: Color(0xFFB45309),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'El libro no trae fórmula de Cuarto para este color. El Cuarto de abajo es un estimado (Galón ÷ 4), no un valor impreso.',
-                      style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: const Color(0xFFB45309),
+                      ),
                     ),
                   ),
                 ],
@@ -161,7 +250,15 @@ class FormulaDetalleCard extends StatelessWidget {
             builder: (context, constraints) {
               final tresEnFila = constraints.maxWidth >= 620;
               final tarjetas = [
-                _tarjetaUnidad(context, 'CUARTO', (c) => f.cuartoDisponible ? c.cuarto : null, estimado: !f.cuartoDisponible, estimadoValor: (c) => c.galonOz != null ? '≈ ${formatoEstimado(c.galonOz! / 4)}' : '—'),
+                _tarjetaUnidad(
+                  context,
+                  'CUARTO',
+                  (c) => f.cuartoDisponible ? c.cuarto : null,
+                  estimado: !f.cuartoDisponible,
+                  estimadoValor: (c) => c.galonOz != null
+                      ? '≈ ${formatoEstimado(c.galonOz! / 4)}'
+                      : '—',
+                ),
                 _tarjetaUnidad(context, 'GALÓN', (c) => c.galon),
                 _tarjetaUnidad(context, 'CUBETA 5 GAL.', (c) => c.cubeta5gal),
               ];
@@ -204,7 +301,9 @@ class FormulaDetalleCard extends StatelessWidget {
       for (final c in formula.colorantes)
         (
           c.colorante,
-          (estimado && valorDe(c) == null) ? (estimadoValor?.call(c) ?? '—') : (valorDe(c) ?? '—'),
+          (estimado && valorDe(c) == null)
+              ? (estimadoValor?.call(c) ?? '—')
+              : (valorDe(c) ?? '—'),
           estimado && valorDe(c) == null,
         ),
     ];
@@ -214,7 +313,11 @@ class FormulaDetalleCard extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE0E2E8))),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE0E2E8)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -222,7 +325,15 @@ class FormulaDetalleCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(etiqueta, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF0F1B3D), letterSpacing: 0.3)),
+                  child: Text(
+                    etiqueta,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F1B3D),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
                 Icon(Icons.open_in_full, size: 14, color: Colors.grey.shade400),
               ],
@@ -233,12 +344,24 @@ class FormulaDetalleCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   children: [
-                    Text(tinte, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      tinte,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         valor,
-                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: esEstimado ? const Color(0xFFB45309) : const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: esEstimado
+                              ? const Color(0xFFB45309)
+                              : const Color(0xFF1A1A1A),
+                        ),
                       ),
                     ),
                   ],

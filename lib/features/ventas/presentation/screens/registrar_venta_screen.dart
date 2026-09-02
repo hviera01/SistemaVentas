@@ -580,6 +580,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   Future<bool> _confirmarDialogo(String titulo, String mensaje) async {
     final resultado = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -610,6 +611,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   Future<void> _buscarCliente() async {
     final cliente = await showDialog<ClienteModel>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => const BuscarClienteDialog(),
     );
@@ -893,6 +895,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return;
     }
     await showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => ClienteFormDialog(cliente: cliente),
     );
@@ -1203,6 +1206,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       if (!mounted) return;
       if (quiereReembasar) {
         final resultadoReembase = await showDialog<ReembaseResultado>(
+          useRootNavigator: false,
           context: context,
           builder: (context) => const ReembaseDialog(),
         );
@@ -1293,6 +1297,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     // caso NO se toca el precio de la línea (ver más abajo).
     double? precioPorOnzaElegido;
     final confirmado = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) {
@@ -1517,6 +1522,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     );
     if (promoPrecio != null) {
       final aceptar = await showDialog<bool>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PromocionDetectadaDialog(promocion: promoPrecio),
       );
@@ -1611,6 +1617,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   }) async {
     if (!mounted) return;
     final aceptar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PromocionDetectadaDialog(
         promocion: promo,
@@ -1791,6 +1798,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   Future<void> _abrirPromocionesVigentes() async {
     await showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => const PromocionesVigentesDialog(),
     );
@@ -1930,6 +1938,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (_codigoEscaneoRemoto != null && _escaneoRemotoConectado) {
       final codigoActivo = _codigoEscaneoRemoto!;
       await showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => EscaneoActivoDialog(
           eventos: _escaneoRemoto.escucharEventos(codigoActivo),
@@ -1950,6 +1959,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final codigo = await _asegurarSesionEscaneoRemoto();
     if (!mounted) return;
     await showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => EscanearRemotoDialog(
         codigo: codigo,
@@ -2125,6 +2135,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       }
 
       final resultado = await showDialog<ReembaseResultado>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => const ReembaseDialog(),
       );
@@ -2329,6 +2340,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   void _verPendientesImpresion() {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => const VentasPendientesImpresionDialog(),
     );
@@ -2395,6 +2407,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   Future<void> _abrirVentasEnEsperaOPerdidas({required bool perdidas}) async {
     final sesion = await showDialog<VentaEnEsperaModel>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => VentasEnEsperaDialog(perdidas: perdidas),
     );
@@ -2481,6 +2494,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   /// todo (botón "Quitar" en el chip, ver _chipEnvio).
   Future<void> _abrirDatosEnvio() async {
     final resultado = await showDialog<DatosEnvioResultado>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => DatosEnvioDialog(
         nombreInicial: _envioNombre.isNotEmpty
@@ -2650,6 +2664,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           montoCambio = 0;
         } else if (carrito.metodoPago == 'Efectivo') {
           final resultado = await showDialog<CobrarResultado>(
+            useRootNavigator: false,
             context: context,
             builder: (context) => CobrarDialog(total: carrito.totalAPagar),
           );
@@ -2929,6 +2944,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
       showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo: 'Vista previa · ${venta.numeroDocumento}',
@@ -3233,6 +3249,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   ) async {
     if (!mounted) return;
     final opcion = await showDialog<String>(
+      useRootNavigator: false,
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -4168,6 +4185,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _abrirDatosVentaModal(bool esMovil, {bool disenioAmplio = false}) {
     if (!disenioAmplio) {
       showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (dialogContext) {
           return Dialog(
@@ -4220,6 +4238,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (dialogContext) {
         final tamano = MediaQuery.of(dialogContext).size;
@@ -6460,6 +6479,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   void _expandirTablaProductos() {
     setState(() => _tablaExpandida = true);
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (dialogContext) {
         final tamano = MediaQuery.of(dialogContext).size;
@@ -6864,6 +6884,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       // texto, deshaciendo lo que confirmar() acababa de arreglar.
       focusNode.unfocus();
       final texto = await showDialog<String>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => TecladoNumericoDialog(
           titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor',
@@ -7094,6 +7115,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
     Future<void> abrir() async {
       final resultado = await showDialog<CodigosColorResultado>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => CodigosColorDialog(
           codigosIniciales: codigos,
@@ -7229,6 +7251,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       );
 
       final confirmado = await showDialog<bool>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setStateDialog) {

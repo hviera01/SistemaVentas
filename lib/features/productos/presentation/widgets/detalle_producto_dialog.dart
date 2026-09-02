@@ -98,7 +98,9 @@ class DetalleProductoDialog extends StatelessWidget {
                     ),
                     _fila('Categoría', categoria),
                     _fila(
-                      producto.esCombo ? 'Existencia (calculada)' : 'Existencia',
+                      producto.esCombo
+                          ? 'Existencia (calculada)'
+                          : 'Existencia',
                       _formatearCantidad(_existenciaMostrada),
                     ),
                     const Divider(height: 28),
@@ -136,9 +138,12 @@ class DetalleProductoDialog extends StatelessWidget {
     );
   }
 
-  double get _existenciaMostrada => producto.esCombo ? producto.stockDisponibleCombo(mapaProductos ?? const {}) : producto.stock;
+  double get _existenciaMostrada => producto.esCombo
+      ? producto.stockDisponibleCombo(mapaProductos ?? const {})
+      : producto.stock;
 
-  String _formatearCantidad(double c) => c.toStringAsFixed(c == c.roundToDouble() ? 0 : 2);
+  String _formatearCantidad(double c) =>
+      c.toStringAsFixed(c == c.roundToDouble() ? 0 : 2);
 
   Widget _seccionComponentes() {
     return Column(
@@ -146,29 +151,47 @@ class DetalleProductoDialog extends StatelessWidget {
       children: [
         Text(
           'Compuesto por',
-          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade600,
+          ),
         ),
         const SizedBox(height: 8),
         ...producto.componentes.map((c) {
           final productoComponente = mapaProductos?[c.idProducto];
-          final nombre = productoComponente?.nombre ?? '(producto ya no existe)';
+          final nombre =
+              productoComponente?.nombre ?? '(producto ya no existe)';
           final stockComponente = productoComponente?.stock;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(nombre, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A))),
+                  child: Text(
+                    nombre,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                  ),
                 ),
                 Text(
                   'x${_formatearCantidad(c.cantidad)}',
-                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFFC62828)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFC62828),
+                  ),
                 ),
                 if (stockComponente != null) ...[
                   const SizedBox(width: 8),
                   Text(
                     '(hay ${_formatearCantidad(stockComponente)})',
-                    style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 ],
               ],
@@ -182,10 +205,18 @@ class DetalleProductoDialog extends StatelessWidget {
   Widget _miniaturaProducto(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => showDialog(context: context, builder: (context) => ImagenZoomDialog(url: producto.imagenUrl)),
+      onTap: () => showDialog(
+        useRootNavigator: false,
+        context: context,
+        builder: (context) => ImagenZoomDialog(url: producto.imagenUrl),
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: ImagenProductoNetwork(url: producto.imagenUrl, width: 56, height: 56),
+        child: ImagenProductoNetwork(
+          url: producto.imagenUrl,
+          width: 56,
+          height: 56,
+        ),
       ),
     );
   }

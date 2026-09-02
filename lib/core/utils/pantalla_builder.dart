@@ -28,7 +28,56 @@ import '../../features/egresos/presentation/screens/ingresos_egresos_screen.dart
 import '../../features/dispositivos/presentation/screens/dispositivos_screen.dart';
 import '../../features/promociones/presentation/screens/promociones_screen.dart';
 
-Widget construirPantalla(String moduleKey, String titulo, IconData icono, String tabId) {
+/// Encierra el contenido de una pestaña en su propio Navigator -pedido
+/// explícito del dueño: "ninguna ventana sea independiente sola... siempre
+/// dentro de la pestaña", para poder abrir Buscar Producto (o Ver Detalle de
+/// Venta, o lo que sea) en una pestaña y seguir trabajando en otra sin que
+/// nada tape toda la pantalla-. Todo `showDialog`/`Navigator.push` que se
+/// dispare desde dentro de esta pestaña, mientras use el context normal de
+/// esa pantalla, cae solo en ESTE Navigator (el más cercano) en vez del de
+/// toda la app: showDialog necesita el parámetro `useRootNavigator: false`
+/// a mano (su default es `true`, ver cada llamado en el resto del código);
+/// Navigator.push ya usa el más cercano por su cuenta, así que esos no
+/// hicieron falta tocarlos uno por uno.
+///
+/// Instancia única por pestaña (este widget se crea UNA vez, al abrir la
+/// pestaña, y ese mismo Widget/Navigator queda guardado en TabItem.contenido
+/// -ver TabsNotifier.abrirTab- mientras la pestaña siga abierta; el
+/// IndexedStack de AppShell nunca lo reconstruye de cero al cambiar de
+/// pestaña), así que la pila de rutas de cada pestaña -y lo que el usuario
+/// tenga escrito en un buscador abierto ahí- se mantiene intacta al ir y
+/// volver, exactamente igual que el resto del estado de la pestaña.
+class _NavegadorDePestana extends StatelessWidget {
+  final Widget contenido;
+
+  const _NavegadorDePestana({required this.contenido});
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      onGenerateRoute: (settings) =>
+          MaterialPageRoute(builder: (_) => contenido),
+    );
+  }
+}
+
+Widget construirPantalla(
+  String moduleKey,
+  String titulo,
+  IconData icono,
+  String tabId,
+) {
+  return _NavegadorDePestana(
+    contenido: _construirContenidoPantalla(moduleKey, titulo, icono, tabId),
+  );
+}
+
+Widget _construirContenidoPantalla(
+  String moduleKey,
+  String titulo,
+  IconData icono,
+  String tabId,
+) {
   switch (moduleKey) {
     case 'ventas_registrar':
       // Cada pestaña de "Registrar Venta" necesita su propio carrito
@@ -66,7 +115,9 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono, String
       // Mismo aislamiento por pestaña que 'ventas_registrar': cada pestaña
       // de "Registrar Compra" tiene su propio carrito independiente.
       return ProviderScope(
-        overrides: [carritoCompraProvider.overrideWith(() => CarritoCompraNotifier())],
+        overrides: [
+          carritoCompraProvider.overrideWith(() => CarritoCompraNotifier()),
+        ],
         child: RegistrarCompraScreen(tabId: tabId),
       );
     case 'compras_detalle':
@@ -81,7 +132,7 @@ Widget construirPantalla(String moduleKey, String titulo, IconData icono, String
       return const AuditoriaInventarioScreen();
     case 'pendientes_reposicion':
       return const PendientesReposicionScreen();
-      case 'usuarios':
+    case 'usuarios':
       return const UsuariosScreen();
     case 'negocio':
       return const NegocioScreen();

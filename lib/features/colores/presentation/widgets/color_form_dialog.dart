@@ -112,15 +112,27 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
 
   Future<void> _eliminar() async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar registro', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar este registro de color?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Eliminar registro',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Seguro que querés eliminar este registro de color?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -146,7 +158,10 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
@@ -164,7 +179,10 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
       child: Container(
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 680),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -175,17 +193,30 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.palette_outlined, color: Color(0xFFC62828)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.palette_outlined,
+                      color: Color(0xFFC62828),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       editando ? 'Editar Color' : 'Nuevo Color',
-                      style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A1A),
+                      ),
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),
@@ -202,14 +233,14 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             controller: _codigoController,
                             numerico: false,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _codigoController,
-                            autofocus: true,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Código'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _codigoController,
+                              autofocus: true,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Código'),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -218,13 +249,13 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             controller: _clienteController,
                             numerico: false,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _clienteController,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Cliente'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _clienteController,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Cliente'),
+                            ),
                           ),
                         ),
                       ],
@@ -234,14 +265,14 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       controller: _descripcionController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _descripcionController,
-                      maxLines: 2,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Descripción'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _descripcionController,
+                        maxLines: 2,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Descripción'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -251,13 +282,13 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             controller: _ubicacionController,
                             numerico: false,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _ubicacionController,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Ubicación física'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _ubicacionController,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Ubicación física'),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -266,36 +297,57 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             controller: _paginaController,
                             numerico: false,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _paginaController,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Página'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _paginaController,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Página'),
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Text('Fecha de registro', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                    Text(
+                      'Fecha de registro',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: _seleccionarFecha,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8EAF0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
+                              color: Colors.grey.shade500,
+                            ),
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                _fechaRegistro != null ? formatoFecha.format(_fechaRegistro!) : 'Sin definir',
+                                _fechaRegistro != null
+                                    ? formatoFecha.format(_fechaRegistro!)
+                                    : 'Sin definir',
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF1A1A1A)),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.5,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
                               ),
                             ),
                           ],
@@ -307,26 +359,35 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       controller: _observacionesController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _observacionesController,
-                      maxLines: 3,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Observaciones'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _observacionesController,
+                        maxLines: 3,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Observaciones'),
+                      ),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.poppins(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -341,28 +402,56 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                   if (editando)
                     IconButton(
                       onPressed: _guardando ? null : _eliminar,
-                      icon: const Icon(Icons.delete_outline, color: Color(0xFFC62828)),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFC62828),
+                      ),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFC62828).withOpacity(0.08),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: const Color(
+                          0xFFC62828,
+                        ).withOpacity(0.08),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _guardando ? null : _guardar,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFC62828),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _guardando
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                        : Text('Guardar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),

@@ -12,7 +12,8 @@ class BuscarClienteDialog extends ConsumerStatefulWidget {
   const BuscarClienteDialog({super.key});
 
   @override
-  ConsumerState<BuscarClienteDialog> createState() => _BuscarClienteDialogState();
+  ConsumerState<BuscarClienteDialog> createState() =>
+      _BuscarClienteDialogState();
 }
 
 class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
@@ -59,8 +60,10 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
   /// Navigator.pop(context, cliente).
   Future<void> _crearClienteNuevo() async {
     final nuevo = await showDialog<ClienteModel>(
+      useRootNavigator: false,
       context: context,
-      builder: (context) => ClienteFormDialog(nombreInicial: _busquedaController.text),
+      builder: (context) =>
+          ClienteFormDialog(nombreInicial: _busquedaController.text),
     );
     if (nuevo == null || !mounted) return;
     Navigator.pop(context, nuevo);
@@ -81,18 +84,38 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(child: Text('Buscar Cliente', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
-                IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                Expanded(
+                  child: Text(
+                    'Buscar Cliente',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             const SizedBox(height: 4),
-            Text('Escribí y presioná Enter para buscar por DNI o nombre.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+            Text(
+              'Escribí y presioná Enter para buscar por DNI o nombre.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -100,10 +123,18 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   child: Container(
                     height: 46,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFB6BCC7)),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.search,
+                          size: 20,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: CampoTecladoCompacto(
@@ -120,7 +151,10 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                               style: GoogleFonts.poppins(fontSize: 13),
                               decoration: InputDecoration(
                                 hintText: 'Buscar por DNI o nombre...',
-                                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
+                                hintStyle: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  color: Colors.grey.shade400,
+                                ),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -137,7 +171,13 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   tooltip: 'Buscar',
                   onPressed: _buscar,
                   icon: const Icon(Icons.arrow_forward),
-                  style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFE8EAF0),
+                    padding: const EdgeInsets.all(12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -147,12 +187,20 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
               child: OutlinedButton.icon(
                 onPressed: _crearClienteNuevo,
                 icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-                label: Text('Crear cliente nuevo', style: GoogleFonts.poppins(fontSize: 13)),
+                label: Text(
+                  'Crear cliente nuevo',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFC62828),
                   side: const BorderSide(color: Color(0xFFC62828)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -166,27 +214,46 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.search, size: 48, color: Colors.grey.shade300),
+                          Icon(
+                            Icons.search,
+                            size: 48,
+                            color: Colors.grey.shade300,
+                          ),
                           const SizedBox(height: 12),
-                          Text('Escribí algo y presioná Enter para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          Text(
+                            'Escribí algo y presioná Enter para buscar',
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
                         ],
                       ),
                     );
                   }
                   final lista = aplicada.isEmpty
                       ? const <ClienteModel>[]
-                      : clientes.where((c) => c.estado && coincideFuzzy(c.textoBusqueda, aplicada)).toList();
+                      : clientes
+                            .where(
+                              (c) =>
+                                  c.estado &&
+                                  coincideFuzzy(c.textoBusqueda, aplicada),
+                            )
+                            .toList();
                   if (lista.isEmpty) {
                     // El botón "Crear cliente nuevo" ya vive siempre visible
                     // arriba del buscador (ver Align más arriba); acá ya no
                     // hace falta repetirlo.
                     return Center(
-                      child: Text('No se encontraron clientes', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                      child: Text(
+                        'No se encontraron clientes',
+                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      ),
                     );
                   }
                   return ListView.separated(
                     itemCount: lista.length,
-                    separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                    separatorBuilder: (context, i) =>
+                        Divider(height: 1, color: Colors.grey.shade200),
                     itemBuilder: (context, i) {
                       final c = lista[i];
                       return InkWell(
@@ -196,8 +263,21 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
-                              if (c.dni.isNotEmpty) Text('DNI: ${c.dni}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                              Text(
+                                c.nombreCompleto,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (c.dni.isNotEmpty)
+                                Text(
+                                  'DNI: ${c.dni}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11.5,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -205,8 +285,15 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                ),
+                error: (e, st) => Center(
+                  child: Text(
+                    'Error: $e',
+                    style: GoogleFonts.poppins(color: Colors.red),
+                  ),
+                ),
               ),
             ),
           ],

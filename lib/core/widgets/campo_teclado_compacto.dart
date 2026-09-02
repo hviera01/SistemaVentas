@@ -29,12 +29,33 @@ class CampoTecladoCompacto extends StatelessWidget {
   final String? titulo;
   final ValueChanged<String>? onSubmitted;
 
-  const CampoTecladoCompacto({super.key, required this.controller, required this.child, this.numerico = false, this.titulo, this.onSubmitted});
+  const CampoTecladoCompacto({
+    super.key,
+    required this.controller,
+    required this.child,
+    this.numerico = false,
+    this.titulo,
+    this.onSubmitted,
+  });
 
   Future<void> _abrir(BuildContext context) async {
     final resultado = numerico
-        ? await showDialog<String>(context: context, builder: (_) => TecladoNumericoDialog(titulo: titulo ?? 'Valor', valorInicial: controller.text))
-        : await showDialog<String>(context: context, builder: (_) => TecladoTextoDialog(titulo: titulo ?? 'Escribir', valorInicial: controller.text));
+        ? await showDialog<String>(
+            useRootNavigator: false,
+            context: context,
+            builder: (_) => TecladoNumericoDialog(
+              titulo: titulo ?? 'Valor',
+              valorInicial: controller.text,
+            ),
+          )
+        : await showDialog<String>(
+            useRootNavigator: false,
+            context: context,
+            builder: (_) => TecladoTextoDialog(
+              titulo: titulo ?? 'Escribir',
+              valorInicial: controller.text,
+            ),
+          );
     if (resultado == null) return;
     controller.text = resultado;
     onSubmitted?.call(resultado);
@@ -45,7 +66,9 @@ class CampoTecladoCompacto extends StatelessWidget {
     return Consumer(
       builder: (context, ref, _) {
         final negocio = ref.watch(negocioStreamProvider).value;
-        final activo = (negocio?.tecladoCompactoTablet ?? false) && esTabletTactil(context);
+        final activo =
+            (negocio?.tecladoCompactoTablet ?? false) &&
+            esTabletTactil(context);
         if (!activo) return child;
         return GestureDetector(
           behavior: HitTestBehavior.opaque,

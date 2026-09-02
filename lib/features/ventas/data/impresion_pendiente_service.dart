@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import '../../../core/services/impresora_red_service.dart';
@@ -39,18 +40,33 @@ class ImpresionPendienteService {
     }
 
     if (negocio.modoImpresion != ModoImpresion.directo) {
-      final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+      final impresora = negocio.impresoraTermicaUrl.isEmpty
+          ? null
+          : Printer(
+              url: negocio.impresoraTermicaUrl,
+              name: negocio.impresoraTermicaNombre,
+            );
       showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo: 'Vista previa · ${venta.numeroDocumento}',
           nombreArchivo: 'venta_${venta.numeroDocumento}.pdf',
           generarPdf: () => _servicioExport.generarPdfFactura(venta, negocio),
-          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato),
+          generarPdfConFormato: (formato) => _servicioExport.generarPdfFactura(
+            venta,
+            negocio,
+            formatoImpresora: formato,
+          ),
           impresora: impresora,
-          generarTicketEscPos: () => _servicioTicketEscPos.generarTicket(venta, negocio),
+          generarTicketEscPos: () =>
+              _servicioTicketEscPos.generarTicket(venta, negocio),
           nombreImpresoraWindows: negocio.impresoraTermicaNombre,
-          vistaPreviaTicket: () => TicketEscPosPreview(venta: venta, negocio: negocio, esCopia: false),
+          vistaPreviaTicket: () => TicketEscPosPreview(
+            venta: venta,
+            negocio: negocio,
+            esCopia: false,
+          ),
         ),
       );
       await ventaRepo.marcarPendienteImpresion(venta.id, false);
@@ -60,19 +76,31 @@ class ImpresionPendienteService {
     // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en web
     // no sirve de nada) detecta el sistema operativo real aunque se esté
     // usando desde el navegador.
-    final esMovil = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+    final esMovil =
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
 
     if (kIsWeb && esMovil) {
       // No hay forma de imprimir directo desde el navegador del celular:
       // antes de resignarse, se intenta pedirle a la PC principal que
       // imprima ella sola (ver PresenciaImpresionRepository).
-      await _pedirImpresionEnVivoOMensaje(venta, ventaRepo, mostrarMensaje, mensajeSinPc: 'No se puede imprimir directo desde el navegador del celular');
+      await _pedirImpresionEnVivoOMensaje(
+        venta,
+        ventaRepo,
+        mostrarMensaje,
+        mensajeSinPc:
+            'No se puede imprimir directo desde el navegador del celular',
+      );
       return;
     }
 
     if (kIsWeb) {
       try {
-        await Printing.layoutPdf(onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio), name: 'venta_${venta.numeroDocumento}.pdf');
+        await Printing.layoutPdf(
+          onLayout: (formato) =>
+              _servicioExport.generarPdfFactura(venta, negocio),
+          name: 'venta_${venta.numeroDocumento}.pdf',
+        );
         await ventaRepo.marcarPendienteImpresion(venta.id, false);
       } catch (_) {
         mostrarMensaje('No se pudo imprimir');
@@ -96,7 +124,10 @@ class ImpresionPendienteService {
     if (!kIsWeb && Platform.isWindows) {
       try {
         final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-        final ok = ImpresoraUsbWindowsService().imprimir(nombreImpresora: negocio.impresoraTermicaNombre, bytes: bytes);
+        final ok = ImpresoraUsbWindowsService().imprimir(
+          nombreImpresora: negocio.impresoraTermicaNombre,
+          bytes: bytes,
+        );
         if (ok) {
           await ventaRepo.marcarPendienteImpresion(venta.id, false);
         } else {
@@ -108,8 +139,18 @@ class ImpresionPendienteService {
       return;
     }
     try {
-      final impresora = Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
-      await Printing.directPrintPdf(printer: impresora, onLayout: (formato) => _servicioExport.generarPdfFactura(venta, negocio, formatoImpresora: formato));
+      final impresora = Printer(
+        url: negocio.impresoraTermicaUrl,
+        name: negocio.impresoraTermicaNombre,
+      );
+      await Printing.directPrintPdf(
+        printer: impresora,
+        onLayout: (formato) => _servicioExport.generarPdfFactura(
+          venta,
+          negocio,
+          formatoImpresora: formato,
+        ),
+      );
       await ventaRepo.marcarPendienteImpresion(venta.id, false);
     } catch (_) {
       mostrarMensaje('No se pudo imprimir en la impresora configurada');
@@ -119,10 +160,19 @@ class ImpresionPendienteService {
   // Intenta ESC/POS de red (Android/iOS). Si no hay impresora de red
   // configurada, o falla el intento -lo más común en un celular-, antes de
   // resignarse se prueba pedirle a la PC principal que imprima ella sola.
-  Future<void> _imprimirEscPosRed(VentaModel venta, NegocioModel negocio, VentaRepository ventaRepo, void Function(String) mostrarMensaje) async {
+  Future<void> _imprimirEscPosRed(
+    VentaModel venta,
+    NegocioModel negocio,
+    VentaRepository ventaRepo,
+    void Function(String) mostrarMensaje,
+  ) async {
     if (negocio.impresoraRedIp.isNotEmpty) {
       final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-      final ok = await _servicioImpresoraRed.imprimir(ip: negocio.impresoraRedIp, puerto: negocio.impresoraRedPuerto, bytes: bytes);
+      final ok = await _servicioImpresoraRed.imprimir(
+        ip: negocio.impresoraRedIp,
+        puerto: negocio.impresoraRedPuerto,
+        bytes: bytes,
+      );
       if (ok) {
         await ventaRepo.marcarPendienteImpresion(venta.id, false);
         return;

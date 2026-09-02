@@ -39,7 +39,12 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   List<ReporteVentaModel>? _ventas;
 
   static const _estados = ['Activa', 'Anulada'];
-  static const _tiposDocumento = ['Factura', 'Boleta', 'Cotizacion', 'VentaSinFacturar'];
+  static const _tiposDocumento = [
+    'Factura',
+    'Boleta',
+    'Cotizacion',
+    'VentaSinFacturar',
+  ];
 
   @override
   void initState() {
@@ -62,8 +67,17 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
       _error = null;
     });
     try {
-      final finInclusive = DateTime(_fechaFin.year, _fechaFin.month, _fechaFin.day, 23, 59, 59);
-      final ventas = await ref.read(reporteRepositoryProvider).obtenerReporteVentas(_fechaInicio, finInclusive);
+      final finInclusive = DateTime(
+        _fechaFin.year,
+        _fechaFin.month,
+        _fechaFin.day,
+        23,
+        59,
+        59,
+      );
+      final ventas = await ref
+          .read(reporteRepositoryProvider)
+          .obtenerReporteVentas(_fechaInicio, finInclusive);
       if (mounted) setState(() => _ventas = ventas);
     } catch (e) {
       if (mounted) setState(() => _error = 'No se pudo cargar la lista');
@@ -78,7 +92,10 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
       return;
     }
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleVentaScreen(ventaIdInicial: venta.id)),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => DetalleVentaScreen(ventaIdInicial: venta.id),
+      ),
     );
   }
 
@@ -87,6 +104,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   /// DetalleVentaScreen para ellas — solo consulta, sin reimpresión/anular.
   void _verDetalleHistorico(ReporteVentaModel venta) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Venta ${venta.numeroDocumento}'),
@@ -96,42 +114,76 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
             future: HistoricoVentaService().obtenerDetalleDeVenta(venta.id),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               final items = snapshot.data!;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${venta.nombreCliente} · ${venta.condicion}', style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    '${venta.nombreCliente} · ${venta.condicion}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Total: ${formatearMoneda(venta.totalAPagar)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Total: ${formatearMoneda(venta.totalAPagar)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const Divider(height: 20),
                   if (items.isEmpty)
-                    const Text('Esta venta del sistema anterior no tiene el detalle de productos guardado.')
+                    const Text(
+                      'Esta venta del sistema anterior no tiene el detalle de productos guardado.',
+                    )
                   else
-                    ...items.map((i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text('${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}')),
-                              Text(formatearMoneda(redondearMoneda(i.subtotal * 1.15))),
-                            ],
-                          ),
-                        )),
+                    ...items.map(
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}',
+                              ),
+                            ),
+                            Text(
+                              formatearMoneda(
+                                redondearMoneda(i.subtotal * 1.15),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 8),
-                  Text('Venta del sistema anterior — solo consulta.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                  Text(
+                    'Venta del sistema anterior — solo consulta.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ],
               );
             },
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }
 
-  void _aplicarBusqueda() => setState(() => _busqueda = _busquedaController.text.trim());
+  void _aplicarBusqueda() =>
+      setState(() => _busqueda = _busquedaController.text.trim());
 
   void _limpiar() {
     final hoy = DateTime.now();
@@ -147,7 +199,12 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   }
 
   Future<void> _seleccionarFecha(bool esInicio) async {
-    final fecha = await showDatePicker(context: context, initialDate: esInicio ? _fechaInicio : _fechaFin, firstDate: DateTime(2000), lastDate: DateTime(2100));
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: esInicio ? _fechaInicio : _fechaFin,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
     if (fecha == null) return;
     setState(() {
       if (esInicio) {
@@ -160,9 +217,16 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
 
   List<ReporteVentaModel> get _listaFiltrada {
     var lista = _ventas ?? [];
-    if (_busqueda.isNotEmpty) lista = lista.where((v) => coincideFuzzy(v.textoBusqueda, _busqueda)).toList();
-    if (_estadoFiltro != null) lista = lista.where((v) => v.estado == _estadoFiltro).toList();
-    if (_tipoDocumentoFiltro != null) lista = lista.where((v) => v.tipoDocumento == _tipoDocumentoFiltro).toList();
+    if (_busqueda.isNotEmpty)
+      lista = lista
+          .where((v) => coincideFuzzy(v.textoBusqueda, _busqueda))
+          .toList();
+    if (_estadoFiltro != null)
+      lista = lista.where((v) => v.estado == _estadoFiltro).toList();
+    if (_tipoDocumentoFiltro != null)
+      lista = lista
+          .where((v) => v.tipoDocumento == _tipoDocumentoFiltro)
+          .toList();
     return lista;
   }
 
@@ -182,8 +246,20 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                   SliverToBoxAdapter(
                     child: Row(
                       children: [
-                        Expanded(child: Text('Ver Facturas', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)))),
-                        IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+                        Expanded(
+                          child: Text(
+                            'Ver Facturas',
+                            style: GoogleFonts.poppins(
+                              fontSize: esMovil ? 19 : 22,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
                       ],
                     ),
                   ),
@@ -194,20 +270,59 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                       runSpacing: 10,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        _campoFecha('Desde', _fechaInicio, () => _seleccionarFecha(true), esMovil),
-                        _campoFecha('Hasta', _fechaFin, () => _seleccionarFecha(false), esMovil),
-                        SizedBox(width: esMovil ? constraints.maxWidth : 300, child: _buscador()),
+                        _campoFecha(
+                          'Desde',
+                          _fechaInicio,
+                          () => _seleccionarFecha(true),
+                          esMovil,
+                        ),
+                        _campoFecha(
+                          'Hasta',
+                          _fechaFin,
+                          () => _seleccionarFecha(false),
+                          esMovil,
+                        ),
+                        SizedBox(
+                          width: esMovil ? constraints.maxWidth : 300,
+                          child: _buscador(),
+                        ),
                         OutlinedButton.icon(
                           onPressed: _cargando ? null : _buscar,
                           icon: const Icon(Icons.search, size: 18),
-                          label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          label: Text(
+                            'Buscar',
+                            style: GoogleFonts.poppins(fontSize: 13),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1A1A1A),
+                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: _cargando ? null : _limpiar,
                           icon: const Icon(Icons.close, size: 18),
-                          label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          label: Text(
+                            'Limpiar',
+                            style: GoogleFonts.poppins(fontSize: 13),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1A1A1A),
+                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -218,8 +333,24 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        SizedBox(width: esMovil ? constraints.maxWidth : 190, child: _selectorGenerico('Estado', _estadoFiltro, _estados, (v) => setState(() => _estadoFiltro = v))),
-                        SizedBox(width: esMovil ? constraints.maxWidth : 190, child: _selectorGenerico('Tipo de documento', _tipoDocumentoFiltro, _tiposDocumento, (v) => setState(() => _tipoDocumentoFiltro = v))),
+                        SizedBox(
+                          width: esMovil ? constraints.maxWidth : 190,
+                          child: _selectorGenerico(
+                            'Estado',
+                            _estadoFiltro,
+                            _estados,
+                            (v) => setState(() => _estadoFiltro = v),
+                          ),
+                        ),
+                        SizedBox(
+                          width: esMovil ? constraints.maxWidth : 190,
+                          child: _selectorGenerico(
+                            'Tipo de documento',
+                            _tipoDocumentoFiltro,
+                            _tiposDocumento,
+                            (v) => setState(() => _tipoDocumentoFiltro = v),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -229,25 +360,53 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 26, offset: const Offset(0, 12))],
+                    border: Border.all(
+                      color: const Color(0xFFAEB4C0),
+                      width: 1.3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.14),
+                        blurRadius: 26,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
                   ),
                   child: _cargando
-                      ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFC62828),
+                          ),
+                        )
                       : _error != null
-                          ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                          : lista.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
-                                      const SizedBox(height: 12),
-                                      Text('No se encontraron facturas', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                    ],
-                                  ),
-                                )
-                              : (esMovil ? _tarjetas(lista) : _tabla(lista)),
+                      ? Center(
+                          child: Text(
+                            _error!,
+                            style: GoogleFonts.poppins(color: Colors.red),
+                          ),
+                        )
+                      : lista.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 56,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No se encontraron facturas',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : (esMovil ? _tarjetas(lista) : _tabla(lista)),
                 ),
               ),
             );
@@ -257,7 +416,12 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     );
   }
 
-  Widget _campoFecha(String label, DateTime fecha, VoidCallback onTap, bool esMovil) {
+  Widget _campoFecha(
+    String label,
+    DateTime fecha,
+    VoidCallback onTap,
+    bool esMovil,
+  ) {
     final formato = DateFormat('dd/MM/yyyy');
     return SizedBox(
       width: esMovil ? double.infinity : 200,
@@ -266,13 +430,31 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFB6BCC7)),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 15,
+                color: Colors.grey.shade500,
+              ),
               const SizedBox(width: 8),
-              Flexible(child: Text('$label: ${formato.format(fecha)}', overflow: TextOverflow.ellipsis, maxLines: 1, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)))),
+              Flexible(
+                child: Text(
+                  '$label: ${formato.format(fecha)}',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -280,20 +462,49 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     );
   }
 
-  Widget _selectorGenerico(String etiqueta, String? valor, List<String> opciones, void Function(String?) onChanged) {
+  Widget _selectorGenerico(
+    String etiqueta,
+    String? valor,
+    List<String> opciones,
+    void Function(String?) onChanged,
+  ) {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: valor,
           isExpanded: true,
-          hint: Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
-          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+          hint: Text(
+            etiqueta,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.grey.shade500,
+            ),
+          ),
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: const Color(0xFF1A1A1A),
+          ),
           items: [
-            DropdownMenuItem<String?>(value: null, child: Text('$etiqueta: Todos', style: GoogleFonts.poppins(fontSize: 13))),
-            ...opciones.map((o) => DropdownMenuItem<String?>(value: o, child: Text(o, overflow: TextOverflow.ellipsis))),
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(
+                '$etiqueta: Todos',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+            ),
+            ...opciones.map(
+              (o) => DropdownMenuItem<String?>(
+                value: o,
+                child: Text(o, overflow: TextOverflow.ellipsis),
+              ),
+            ),
           ],
           onChanged: onChanged,
         ),
@@ -305,7 +516,11 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -324,7 +539,10 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                 style: GoogleFonts.poppins(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Buscar por número, cliente, método de pago...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade400,
+                  ),
                   border: InputBorder.none,
                   isDense: true,
                 ),
@@ -332,7 +550,11 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
               ),
             ),
           ),
-          IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _aplicarBusqueda),
+          IconButton(
+            tooltip: 'Buscar',
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            onPressed: _aplicarBusqueda,
+          ),
         ],
       ),
     );
@@ -342,8 +564,20 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     final esCotizacion = v.esCotizacion;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: esCotizacion ? const Color(0xFFFFF6D8) : const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(8)),
-      child: Text(v.tipoDocumento, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: esCotizacion ? const Color(0xFF92720B) : const Color(0xFF3B82F6))),
+      decoration: BoxDecoration(
+        color: esCotizacion ? const Color(0xFFFFF6D8) : const Color(0xFFEFF4FF),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        v.tipoDocumento,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: esCotizacion
+              ? const Color(0xFF92720B)
+              : const Color(0xFF3B82F6),
+        ),
+      ),
     );
   }
 
@@ -351,8 +585,18 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     final anulada = !v.esActiva;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: anulada ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE), borderRadius: BorderRadius.circular(8)),
-      child: Text(v.estado, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: anulada ? const Color(0xFFC62828) : const Color(0xFF16A34A))),
+      decoration: BoxDecoration(
+        color: anulada ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        v.estado,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: anulada ? const Color(0xFFC62828) : const Color(0xFF16A34A),
+        ),
+      ),
     );
   }
 
@@ -371,7 +615,15 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
               return Container(
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECEEF3),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
                 child: Row(
                   children: [
                     _celdaHeader('FECHA', 3),
@@ -394,20 +646,44 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                 InkWell(
                   onTap: () => _verDetalle(v),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
-                        _celda(3, v.fechaRegistro != null ? formatoFecha.format(v.fechaRegistro!) : '-', gris: true),
+                        _celda(
+                          3,
+                          v.fechaRegistro != null
+                              ? formatoFecha.format(v.fechaRegistro!)
+                              : '-',
+                          gris: true,
+                        ),
                         Expanded(flex: 2, child: _chipTipo(v)),
                         _celda(2, v.numeroDocumento, peso: FontWeight.w600),
                         _celda(3, v.nombreCliente),
-                        _celda(2, formatearMoneda(v.totalAPagar), peso: FontWeight.w700),
-                        if (mostrarMetodoPago) _celda(2, v.metodoPago, gris: true),
-                        if (mostrarCondicion) _celda(2, v.condicion, gris: true),
+                        _celda(
+                          2,
+                          formatearMoneda(v.totalAPagar),
+                          peso: FontWeight.w700,
+                        ),
+                        if (mostrarMetodoPago)
+                          _celda(2, v.metodoPago, gris: true),
+                        if (mostrarCondicion)
+                          _celda(2, v.condicion, gris: true),
                         Expanded(flex: 2, child: _chipEstado(v)),
                         SizedBox(
                           width: 24,
-                          child: v.pendienteImpresion ? Tooltip(message: 'Pendiente de impresión', child: Icon(Icons.print_disabled_outlined, size: 16, color: Colors.amber.shade800)) : null,
+                          child: v.pendienteImpresion
+                              ? Tooltip(
+                                  message: 'Pendiente de impresión',
+                                  child: Icon(
+                                    Icons.print_disabled_outlined,
+                                    size: 16,
+                                    color: Colors.amber.shade800,
+                                  ),
+                                )
+                              : null,
                         ),
                       ],
                     ),
@@ -424,16 +700,40 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   Widget _celdaHeader(String texto, int flex) {
     return Expanded(
       flex: flex,
-      child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF666A72), letterSpacing: 0.3)),
+      child: Text(
+        texto,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF666A72),
+          letterSpacing: 0.3,
+        ),
+      ),
     );
   }
 
-  Widget _celda(int flex, String texto, {bool gris = false, FontWeight peso = FontWeight.w400}) {
+  Widget _celda(
+    int flex,
+    String texto, {
+    bool gris = false,
+    FontWeight peso = FontWeight.w400,
+  }) {
     return Expanded(
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.only(right: 8),
-        child: Text(texto, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: peso, color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A))),
+        child: Text(
+          texto,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: peso,
+            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+          ),
+        ),
       ),
     );
   }
@@ -451,7 +751,11 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
           onTap: () => _verDetalle(v),
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFC7CBD3)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -462,12 +766,34 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(v.nombreCliente.isEmpty ? 'Sin cliente' : v.nombreCliente, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                          Text('Doc. ${v.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                          Text(
+                            v.nombreCliente.isEmpty
+                                ? 'Sin cliente'
+                                : v.nombreCliente,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          Text(
+                            'Doc. ${v.numeroDocumento}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Text(formatearMoneda(v.totalAPagar), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+                    Text(
+                      formatearMoneda(v.totalAPagar),
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -478,17 +804,39 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                     _chipTipo(v),
                     _chipEstado(v),
                     _chipInfo('Pago', v.metodoPago),
-                    _chipInfo('Fecha', v.fechaRegistro != null ? formatoFecha.format(v.fechaRegistro!) : '-'),
+                    _chipInfo(
+                      'Fecha',
+                      v.fechaRegistro != null
+                          ? formatoFecha.format(v.fechaRegistro!)
+                          : '-',
+                    ),
                     if (v.pendienteImpresion)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.amber.shade200)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.print_disabled_outlined, size: 13, color: Colors.amber.shade800),
+                            Icon(
+                              Icons.print_disabled_outlined,
+                              size: 13,
+                              color: Colors.amber.shade800,
+                            ),
                             const SizedBox(width: 4),
-                            Text('Pendiente de impresión', style: GoogleFonts.poppins(fontSize: 11, color: Colors.amber.shade900)),
+                            Text(
+                              'Pendiente de impresión',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -505,8 +853,17 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   Widget _chipInfo(String label, String valor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(8)),
-      child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label: $valor',
+        style: GoogleFonts.poppins(
+          fontSize: 11.5,
+          color: const Color(0xFF3F434A),
+        ),
+      ),
     );
   }
 }

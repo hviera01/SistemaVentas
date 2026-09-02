@@ -8,19 +8,36 @@ import '../../providers/reportes_provider.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/reporte_financiero_secciones.dart';
 
-typedef _SeccionBuilder = Widget Function(ReporteFinancieroData data, bool esMovil);
+typedef _SeccionBuilder =
+    Widget Function(ReporteFinancieroData data, bool esMovil);
 
 const _tabs = <(String, IconData, _SeccionBuilder)>[
   ('Utilidad', Icons.trending_up_outlined, seccionUtilidad),
-  ('Flujo de Efectivo', Icons.account_balance_wallet_outlined, seccionFlujoEfectivo),
-  ('Comparación Mensual', Icons.calendar_month_outlined, seccionComparacionMensual),
+  (
+    'Flujo de Efectivo',
+    Icons.account_balance_wallet_outlined,
+    seccionFlujoEfectivo,
+  ),
+  (
+    'Comparación Mensual',
+    Icons.calendar_month_outlined,
+    seccionComparacionMensual,
+  ),
   ('Ranking de Productos', Icons.leaderboard_outlined, seccionRankingProductos),
   ('Sin Movimiento', Icons.inventory_2_outlined, seccionProductosSinVenta),
   ('Ventas por Usuario', Icons.people_outline, seccionVentasPorUsuario),
-  ('Abonos a Proveedores', Icons.payments_outlined, seccionAbonosComprasCredito),
+  (
+    'Abonos a Proveedores',
+    Icons.payments_outlined,
+    seccionAbonosComprasCredito,
+  ),
   ('Recomendación de Pago', Icons.lightbulb_outline, seccionRecomendacionPago),
   ('Balance General', Icons.account_balance_outlined, seccionBalanceGeneral),
-  ('Inteligencia de Negocios', Icons.psychology_outlined, seccionInteligenciaNegocio),
+  (
+    'Inteligencia de Negocios',
+    Icons.psychology_outlined,
+    seccionInteligenciaNegocio,
+  ),
   ('Clientes', Icons.groups_outlined, seccionClientes),
 ];
 
@@ -32,10 +49,12 @@ class ReporteFinancieroScreen extends ConsumerStatefulWidget {
   const ReporteFinancieroScreen({super.key});
 
   @override
-  ConsumerState<ReporteFinancieroScreen> createState() => _ReporteFinancieroScreenState();
+  ConsumerState<ReporteFinancieroScreen> createState() =>
+      _ReporteFinancieroScreenState();
 }
 
-class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScreen> {
+class _ReporteFinancieroScreenState
+    extends ConsumerState<ReporteFinancieroScreen> {
   final _servicioExport = ReporteFinancieroExportService();
   late DateTime _fechaInicio;
   late DateTime _fechaFin;
@@ -58,8 +77,17 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
       _error = null;
     });
     try {
-      final finInclusive = DateTime(_fechaFin.year, _fechaFin.month, _fechaFin.day, 23, 59, 59);
-      final data = await ref.read(reporteFinancieroRepositoryProvider).obtenerReporte(_fechaInicio, finInclusive);
+      final finInclusive = DateTime(
+        _fechaFin.year,
+        _fechaFin.month,
+        _fechaFin.day,
+        23,
+        59,
+        59,
+      );
+      final data = await ref
+          .read(reporteFinancieroRepositoryProvider)
+          .obtenerReporte(_fechaInicio, finInclusive);
       if (mounted) setState(() => _data = data);
     } catch (e) {
       if (mounted) setState(() => _error = 'No se pudo generar el reporte: $e');
@@ -89,6 +117,7 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
     final data = _data;
     if (data == null) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Reporte Financiero',
@@ -108,10 +137,30 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(padding: EdgeInsets.all(esMovil ? 14 : 24), child: _encabezado(esMovil)),
-              if (_cargando) const Expanded(child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
-              if (_error != null) Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(20), child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red))))),
-              if (!_cargando && _error == null && _data != null) Expanded(child: _tabsYContenido(_data!, esMovil)),
+              Padding(
+                padding: EdgeInsets.all(esMovil ? 14 : 24),
+                child: _encabezado(esMovil),
+              ),
+              if (_cargando)
+                const Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  ),
+                ),
+              if (_error != null)
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        _error!,
+                        style: GoogleFonts.poppins(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ),
+              if (!_cargando && _error == null && _data != null)
+                Expanded(child: _tabsYContenido(_data!, esMovil)),
             ],
           );
         },
@@ -153,9 +202,15 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
                         labelColor: const Color(0xFFC62828),
                         unselectedLabelColor: Colors.grey.shade600,
                         indicatorColor: const Color(0xFFC62828),
-                        labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                        labelStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                         unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
-                        tabs: [for (final t in _tabs) Tab(icon: Icon(t.$2, size: 18), text: t.$1)],
+                        tabs: [
+                          for (final t in _tabs)
+                            Tab(icon: Icon(t.$2, size: 18), text: t.$1),
+                        ],
                       ),
                     ),
                     IconButton(
@@ -195,38 +250,93 @@ class _ReporteFinancieroScreenState extends ConsumerState<ReporteFinancieroScree
       spacing: 12,
       runSpacing: 10,
       children: [
-        Text('Reporte Financiero', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-        _campoFecha('Desde', _fechaInicio, () => _seleccionarFecha(true), formato),
-        _campoFecha('Hasta', _fechaFin, () => _seleccionarFecha(false), formato),
+        Text(
+          'Reporte Financiero',
+          style: GoogleFonts.poppins(
+            fontSize: esMovil ? 19 : 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        _campoFecha(
+          'Desde',
+          _fechaInicio,
+          () => _seleccionarFecha(true),
+          formato,
+        ),
+        _campoFecha(
+          'Hasta',
+          _fechaFin,
+          () => _seleccionarFecha(false),
+          formato,
+        ),
         OutlinedButton.icon(
           onPressed: _cargando ? null : _generar,
           icon: const Icon(Icons.refresh, size: 18),
           label: Text('Generar', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF1A1A1A),
+            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
         FilledButton.icon(
           onPressed: _data == null ? null : _descargarPdf,
           icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-          label: Text('Descargar PDF completo', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          label: Text(
+            'Descargar PDF completo',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFC62828),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _campoFecha(String label, DateTime fecha, VoidCallback onTap, DateFormat formato) {
+  Widget _campoFecha(
+    String label,
+    DateTime fecha,
+    VoidCallback onTap,
+    DateFormat formato,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFB6BCC7)),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 15,
+              color: Colors.grey.shade500,
+            ),
             const SizedBox(width: 8),
-            Text('$label: ${formato.format(fecha)}', style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+            Text(
+              '$label: ${formato.format(fecha)}',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
           ],
         ),
       ),

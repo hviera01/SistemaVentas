@@ -19,7 +19,8 @@ class ReporteVentasScreen extends ConsumerStatefulWidget {
   const ReporteVentasScreen({super.key});
 
   @override
-  ConsumerState<ReporteVentasScreen> createState() => _ReporteVentasScreenState();
+  ConsumerState<ReporteVentasScreen> createState() =>
+      _ReporteVentasScreenState();
 }
 
 class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
@@ -37,10 +38,21 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   String? _error;
   List<ReporteVentaModel>? _ventas;
 
-  static const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque', 'Mixto'];
+  static const _metodosPago = [
+    'Efectivo',
+    'Transferencia',
+    'Tarjeta',
+    'Cheque',
+    'Mixto',
+  ];
   static const _condiciones = ['Contado', 'Crédito'];
   static const _estados = ['Activa', 'Anulada'];
-  static const _tiposDocumento = ['Factura', 'Boleta', 'Cotizacion', 'VentaSinFacturar'];
+  static const _tiposDocumento = [
+    'Factura',
+    'Boleta',
+    'Cotizacion',
+    'VentaSinFacturar',
+  ];
 
   @override
   void initState() {
@@ -63,8 +75,17 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
       _error = null;
     });
     try {
-      final finInclusive = DateTime(_fechaFin.year, _fechaFin.month, _fechaFin.day, 23, 59, 59);
-      final ventas = await ref.read(reporteRepositoryProvider).obtenerReporteVentas(_fechaInicio, finInclusive);
+      final finInclusive = DateTime(
+        _fechaFin.year,
+        _fechaFin.month,
+        _fechaFin.day,
+        23,
+        59,
+        59,
+      );
+      final ventas = await ref
+          .read(reporteRepositoryProvider)
+          .obtenerReporteVentas(_fechaInicio, finInclusive);
       if (mounted) setState(() => _ventas = ventas);
     } catch (e) {
       if (mounted) setState(() => _error = 'No se pudo cargar el reporte');
@@ -79,7 +100,10 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
       return;
     }
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => DetalleVentaScreen(ventaIdInicial: venta.id)),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => DetalleVentaScreen(ventaIdInicial: venta.id),
+      ),
     );
   }
 
@@ -90,6 +114,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   /// productos, en vez de una pantalla completa.
   void _verDetalleHistorico(ReporteVentaModel venta) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Venta ${venta.numeroDocumento}'),
@@ -99,42 +124,75 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
             future: HistoricoVentaService().obtenerDetalleDeVenta(venta.id),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               final items = snapshot.data!;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${venta.nombreCliente} · ${venta.condicion}', style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    '${venta.nombreCliente} · ${venta.condicion}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Total: ${formatearMoneda(venta.totalAPagar)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Total: ${formatearMoneda(venta.totalAPagar)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const Divider(height: 20),
                   if (items.isEmpty)
-                    const Text('Esta venta del sistema anterior no tiene el detalle de productos guardado.')
+                    const Text(
+                      'Esta venta del sistema anterior no tiene el detalle de productos guardado.',
+                    )
                   else
                     // El sistema anterior guardaba el precio unitario sin ISV
                     // (igual que este, ver DetalleVentaScreen._precioMostrado)
                     // y sumaba el impuesto aparte a nivel de factura, así que
                     // acá se multiplica por 1.15 para mostrar el precio con
                     // ISV cargado, que es como se ve en el resto de la app.
-                    ...items.map((i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text('${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}')),
-                              Text(formatearMoneda(redondearMoneda(i.subtotal * 1.15))),
-                            ],
-                          ),
-                        )),
+                    ...items.map(
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${i.cantidad.toStringAsFixed(0)}x ${i.nombreProducto}',
+                              ),
+                            ),
+                            Text(
+                              formatearMoneda(
+                                redondearMoneda(i.subtotal * 1.15),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 8),
-                  Text('Venta del sistema anterior — solo consulta.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                  Text(
+                    'Venta del sistema anterior — solo consulta.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ],
               );
             },
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }
@@ -179,7 +237,9 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   List<ReporteVentaModel> get _listaFiltrada {
     var lista = _ventas ?? [];
     if (_busqueda.isNotEmpty) {
-      lista = lista.where((v) => coincideFuzzy(v.textoBusqueda, _busqueda)).toList();
+      lista = lista
+          .where((v) => coincideFuzzy(v.textoBusqueda, _busqueda))
+          .toList();
     }
     if (_metodoPagoFiltro != null) {
       lista = lista.where((v) => v.metodoPago == _metodoPagoFiltro).toList();
@@ -191,7 +251,9 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
       lista = lista.where((v) => v.estado == _estadoFiltro).toList();
     }
     if (_tipoDocumentoFiltro != null) {
-      lista = lista.where((v) => v.tipoDocumento == _tipoDocumentoFiltro).toList();
+      lista = lista
+          .where((v) => v.tipoDocumento == _tipoDocumentoFiltro)
+          .toList();
     }
     if (_usuarioFiltro != null) {
       lista = lista.where((v) => v.usuarioRegistro == _usuarioFiltro).toList();
@@ -211,6 +273,7 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     final lista = _listaFiltrada;
     if (lista.isEmpty) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Reporte de Ventas',
@@ -223,7 +286,9 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   @override
   Widget build(BuildContext context) {
     final lista = _listaFiltrada;
-    final totalFacturado = lista.where((v) => v.esActiva && !v.esCotizacion).fold<double>(0, (s, v) => s + v.totalAPagar);
+    final totalFacturado = lista
+        .where((v) => v.esActiva && !v.esCotizacion)
+        .fold<double>(0, (s, v) => s + v.totalAPagar);
 
     return Container(
       color: const Color(0xFFF2F3F7),
@@ -246,7 +311,14 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                     spacing: 12,
                     runSpacing: 10,
                     children: [
-                      Text('Reporte de Ventas', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                      Text(
+                        'Reporte de Ventas',
+                        style: GoogleFonts.poppins(
+                          fontSize: esMovil ? 19 : 22,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
                       _statTotalFacturado(totalFacturado),
                     ],
                   ),
@@ -258,32 +330,100 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                     runSpacing: 10,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      _campoFecha('Desde', _fechaInicio, () => _seleccionarFecha(true), esMovil),
-                      _campoFecha('Hasta', _fechaFin, () => _seleccionarFecha(false), esMovil),
-                      SizedBox(width: esMovil ? constraints.maxWidth : 280, child: _buscador()),
+                      _campoFecha(
+                        'Desde',
+                        _fechaInicio,
+                        () => _seleccionarFecha(true),
+                        esMovil,
+                      ),
+                      _campoFecha(
+                        'Hasta',
+                        _fechaFin,
+                        () => _seleccionarFecha(false),
+                        esMovil,
+                      ),
+                      SizedBox(
+                        width: esMovil ? constraints.maxWidth : 280,
+                        child: _buscador(),
+                      ),
                       OutlinedButton.icon(
                         onPressed: _cargando ? null : _buscar,
                         icon: const Icon(Icons.search, size: 18),
-                        label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        label: Text(
+                          'Buscar',
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: _cargando ? null : _limpiar,
                         icon: const Icon(Icons.close, size: 18),
-                        label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        label: Text(
+                          'Limpiar',
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: _exportarExcel,
                         icon: const Icon(Icons.grid_on_outlined, size: 18),
-                        label: Text('Descargar Excel', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        label: Text(
+                          'Descargar Excel',
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: _exportarPdf,
-                        icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                        label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        icon: const Icon(
+                          Icons.picture_as_pdf_outlined,
+                          size: 18,
+                        ),
+                        label: Text(
+                          'Descargar PDF',
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A1A),
+                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -296,24 +436,51 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                     children: [
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 190,
-                        child: _selectorGenerico('Método de pago', _metodoPagoFiltro, _metodosPago, (v) => setState(() => _metodoPagoFiltro = v)),
+                        child: _selectorGenerico(
+                          'Método de pago',
+                          _metodoPagoFiltro,
+                          _metodosPago,
+                          (v) => setState(() => _metodoPagoFiltro = v),
+                        ),
                       ),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 190,
-                        child: _selectorGenerico('Condición', _condicionFiltro, _condiciones, (v) => setState(() => _condicionFiltro = v)),
+                        child: _selectorGenerico(
+                          'Condición',
+                          _condicionFiltro,
+                          _condiciones,
+                          (v) => setState(() => _condicionFiltro = v),
+                        ),
                       ),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 190,
-                        child: _selectorGenerico('Estado', _estadoFiltro, _estados, (v) => setState(() => _estadoFiltro = v)),
+                        child: _selectorGenerico(
+                          'Estado',
+                          _estadoFiltro,
+                          _estados,
+                          (v) => setState(() => _estadoFiltro = v),
+                        ),
                       ),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 190,
-                        child: _selectorGenerico('Tipo de documento', _tipoDocumentoFiltro, _tiposDocumento, (v) => setState(() => _tipoDocumentoFiltro = v)),
+                        child: _selectorGenerico(
+                          'Tipo de documento',
+                          _tipoDocumentoFiltro,
+                          _tiposDocumento,
+                          (v) => setState(() => _tipoDocumentoFiltro = v),
+                        ),
                       ),
                       SizedBox(
                         width: esMovil ? constraints.maxWidth : 190,
-                        child: ref.watch(usuariosStreamProvider).when(
-                              data: (usuarios) => _selectorGenerico('Usuario', _usuarioFiltro, usuarios.map((u) => u.nombreCompleto).toList(), (v) => setState(() => _usuarioFiltro = v)),
+                        child: ref
+                            .watch(usuariosStreamProvider)
+                            .when(
+                              data: (usuarios) => _selectorGenerico(
+                                'Usuario',
+                                _usuarioFiltro,
+                                usuarios.map((u) => u.nombreCompleto).toList(),
+                                (v) => setState(() => _usuarioFiltro = v),
+                              ),
                               loading: () => const LinearProgressIndicator(),
                               error: (e, st) => const SizedBox(),
                             ),
@@ -327,25 +494,53 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
+                  border: Border.all(
+                    color: const Color(0xFFAEB4C0),
+                    width: 1.3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.14),
+                      blurRadius: 26,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
                 child: _cargando
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFC62828),
+                        ),
+                      )
                     : _error != null
-                        ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                        : lista.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
-                                    const SizedBox(height: 12),
-                                    Text('No se encontraron resultados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                  ],
-                                ),
-                              )
-                            : (esMovil ? _tarjetas(lista) : _tabla(lista)),
+                    ? Center(
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.poppins(color: Colors.red),
+                        ),
+                      )
+                    : lista.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 56,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No se encontraron resultados',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : (esMovil ? _tarjetas(lista) : _tabla(lista)),
               ),
             ),
           );
@@ -360,19 +555,44 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFC62828),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: const Color(0xFFC62828).withOpacity(0.35), blurRadius: 18, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC62828).withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.point_of_sale_outlined, color: Colors.white, size: 24),
+          const Icon(
+            Icons.point_of_sale_outlined,
+            color: Colors.white,
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('TOTAL FACTURADO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.85), letterSpacing: 0.6)),
-              Text(formatearMoneda(total), style: GoogleFonts.poppins(fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white)),
+              Text(
+                'TOTAL FACTURADO',
+                style: GoogleFonts.poppins(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.85),
+                  letterSpacing: 0.6,
+                ),
+              ),
+              Text(
+                formatearMoneda(total),
+                style: GoogleFonts.poppins(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ],
@@ -380,7 +600,12 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     );
   }
 
-  Widget _campoFecha(String label, DateTime fecha, VoidCallback onTap, bool esMovil) {
+  Widget _campoFecha(
+    String label,
+    DateTime fecha,
+    VoidCallback onTap,
+    bool esMovil,
+  ) {
     final formato = DateFormat('dd/MM/yyyy');
     return SizedBox(
       width: esMovil ? double.infinity : 200,
@@ -389,14 +614,30 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFB6BCC7)),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 15,
+                color: Colors.grey.shade500,
+              ),
               const SizedBox(width: 8),
               Flexible(
-                child: Text('$label: ${formato.format(fecha)}', overflow: TextOverflow.ellipsis, maxLines: 1, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+                child: Text(
+                  '$label: ${formato.format(fecha)}',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
               ),
             ],
           ),
@@ -405,20 +646,49 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     );
   }
 
-  Widget _selectorGenerico(String etiqueta, String? valor, List<String> opciones, void Function(String?) onChanged) {
+  Widget _selectorGenerico(
+    String etiqueta,
+    String? valor,
+    List<String> opciones,
+    void Function(String?) onChanged,
+  ) {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: valor,
           isExpanded: true,
-          hint: Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
-          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+          hint: Text(
+            etiqueta,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.grey.shade500,
+            ),
+          ),
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: const Color(0xFF1A1A1A),
+          ),
           items: [
-            DropdownMenuItem<String?>(value: null, child: Text('$etiqueta: Todos', style: GoogleFonts.poppins(fontSize: 13))),
-            ...opciones.map((o) => DropdownMenuItem<String?>(value: o, child: Text(o, overflow: TextOverflow.ellipsis))),
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(
+                '$etiqueta: Todos',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+            ),
+            ...opciones.map(
+              (o) => DropdownMenuItem<String?>(
+                value: o,
+                child: Text(o, overflow: TextOverflow.ellipsis),
+              ),
+            ),
           ],
           onChanged: onChanged,
         ),
@@ -430,7 +700,11 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -442,22 +716,29 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
               onSubmitted: (_) => _aplicarBusqueda(),
               titulo: 'Buscar por documento, cliente, método de pago...',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _busquedaController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Buscar por documento, cliente, método de pago...',
-                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
-                border: InputBorder.none,
-                isDense: true,
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _busquedaController,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por documento, cliente, método de pago...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade400,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onSubmitted: (_) => _aplicarBusqueda(),
               ),
-              onSubmitted: (_) => _aplicarBusqueda(),
-            ),
             ),
           ),
-          IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _aplicarBusqueda),
+          IconButton(
+            tooltip: 'Buscar',
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            onPressed: _aplicarBusqueda,
+          ),
         ],
       ),
     );
@@ -467,8 +748,20 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     final esCotizacion = v.esCotizacion;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: esCotizacion ? const Color(0xFFFFF6D8) : const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(8)),
-      child: Text(v.tipoDocumento, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: esCotizacion ? const Color(0xFF92720B) : const Color(0xFF3B82F6))),
+      decoration: BoxDecoration(
+        color: esCotizacion ? const Color(0xFFFFF6D8) : const Color(0xFFEFF4FF),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        v.tipoDocumento,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: esCotizacion
+              ? const Color(0xFF92720B)
+              : const Color(0xFF3B82F6),
+        ),
+      ),
     );
   }
 
@@ -476,8 +769,18 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
     final anulada = !v.esActiva;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: anulada ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE), borderRadius: BorderRadius.circular(8)),
-      child: Text(v.estado, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: anulada ? const Color(0xFFC62828) : const Color(0xFF16A34A))),
+      decoration: BoxDecoration(
+        color: anulada ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        v.estado,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: anulada ? const Color(0xFFC62828) : const Color(0xFF16A34A),
+        ),
+      ),
     );
   }
 
@@ -497,7 +800,15 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
               return Container(
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECEEF3),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
                 child: Row(
                   children: [
                     _celdaHeader('FECHA', 2),
@@ -521,22 +832,45 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                 InkWell(
                   onTap: () => _verDetalle(v),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
-                        _celda(2, v.fechaRegistro != null ? formatoFecha.format(v.fechaRegistro!) : '-', gris: true),
+                        _celda(
+                          2,
+                          v.fechaRegistro != null
+                              ? formatoFecha.format(v.fechaRegistro!)
+                              : '-',
+                          gris: true,
+                        ),
                         Expanded(flex: 2, child: _chipTipo(v)),
                         _celda(2, v.numeroDocumento, peso: FontWeight.w600),
                         _celda(3, v.nombreCliente),
-                        _celda(2, formatearMoneda(v.totalAPagar), peso: FontWeight.w700),
-                        if (mostrarMetodoPago) _celda(2, v.metodoPago, gris: true),
-                        if (mostrarCondicion) _celda(2, v.condicion, gris: true),
-                        if (mostrarUsuario) _celda(2, v.usuarioRegistro, gris: true),
+                        _celda(
+                          2,
+                          formatearMoneda(v.totalAPagar),
+                          peso: FontWeight.w700,
+                        ),
+                        if (mostrarMetodoPago)
+                          _celda(2, v.metodoPago, gris: true),
+                        if (mostrarCondicion)
+                          _celda(2, v.condicion, gris: true),
+                        if (mostrarUsuario)
+                          _celda(2, v.usuarioRegistro, gris: true),
                         Expanded(flex: 2, child: _chipEstado(v)),
                         SizedBox(
                           width: 24,
                           child: v.pendienteImpresion
-                              ? Tooltip(message: 'Pendiente de impresión', child: Icon(Icons.print_disabled_outlined, size: 16, color: Colors.amber.shade800))
+                              ? Tooltip(
+                                  message: 'Pendiente de impresión',
+                                  child: Icon(
+                                    Icons.print_disabled_outlined,
+                                    size: 16,
+                                    color: Colors.amber.shade800,
+                                  ),
+                                )
                               : null,
                         ),
                       ],
@@ -554,16 +888,40 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   Widget _celdaHeader(String texto, int flex) {
     return Expanded(
       flex: flex,
-      child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF666A72), letterSpacing: 0.3)),
+      child: Text(
+        texto,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF666A72),
+          letterSpacing: 0.3,
+        ),
+      ),
     );
   }
 
-  Widget _celda(int flex, String texto, {bool gris = false, FontWeight peso = FontWeight.w400}) {
+  Widget _celda(
+    int flex,
+    String texto, {
+    bool gris = false,
+    FontWeight peso = FontWeight.w400,
+  }) {
     return Expanded(
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.only(right: 8),
-        child: Text(texto, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: peso, color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A))),
+        child: Text(
+          texto,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: peso,
+            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+          ),
+        ),
       ),
     );
   }
@@ -581,7 +939,11 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
           onTap: () => _verDetalle(v),
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFC7CBD3)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -592,12 +954,34 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(v.nombreCliente.isEmpty ? 'Sin cliente' : v.nombreCliente, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                          Text('Doc. ${v.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                          Text(
+                            v.nombreCliente.isEmpty
+                                ? 'Sin cliente'
+                                : v.nombreCliente,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          Text(
+                            'Doc. ${v.numeroDocumento}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Text(formatearMoneda(v.totalAPagar), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+                    Text(
+                      formatearMoneda(v.totalAPagar),
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -608,17 +992,39 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
                     _chipTipo(v),
                     _chipEstado(v),
                     _chipInfo('Pago', v.metodoPago),
-                    _chipInfo('Fecha', v.fechaRegistro != null ? formatoFecha.format(v.fechaRegistro!) : '-'),
+                    _chipInfo(
+                      'Fecha',
+                      v.fechaRegistro != null
+                          ? formatoFecha.format(v.fechaRegistro!)
+                          : '-',
+                    ),
                     if (v.pendienteImpresion)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.amber.shade200)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.print_disabled_outlined, size: 13, color: Colors.amber.shade800),
+                            Icon(
+                              Icons.print_disabled_outlined,
+                              size: 13,
+                              color: Colors.amber.shade800,
+                            ),
                             const SizedBox(width: 4),
-                            Text('Pendiente de impresión', style: GoogleFonts.poppins(fontSize: 11, color: Colors.amber.shade900)),
+                            Text(
+                              'Pendiente de impresión',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -635,8 +1041,17 @@ class _ReporteVentasScreenState extends ConsumerState<ReporteVentasScreen> {
   Widget _chipInfo(String label, String valor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(8)),
-      child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label: $valor',
+        style: GoogleFonts.poppins(
+          fontSize: 11.5,
+          color: const Color(0xFF3F434A),
+        ),
+      ),
     );
   }
 }

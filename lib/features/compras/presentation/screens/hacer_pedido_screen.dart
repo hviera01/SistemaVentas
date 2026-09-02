@@ -43,12 +43,17 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
 
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Future<void> _agregarProducto() async {
     final producto = await Navigator.of(context).push<ProductoModel>(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoCompraDialog()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const BuscarProductoCompraDialog(),
+      ),
     );
     if (producto == null || !mounted) return;
     if (_items.any((i) => i.idProducto == producto.id)) {
@@ -58,7 +63,13 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     setState(() {
       _items = [
         ..._items,
-        ItemPedidoModel(idProducto: producto.id, codigo: producto.codigo, nombreProducto: producto.nombre, stockActual: producto.stock, cantidad: 1),
+        ItemPedidoModel(
+          idProducto: producto.id,
+          codigo: producto.codigo,
+          nombreProducto: producto.nombre,
+          stockActual: producto.stock,
+          cantidad: 1,
+        ),
       ];
     });
   }
@@ -99,9 +110,12 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     }
     setState(() => _generando = true);
     try {
-      final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+      final negocio = await ref
+          .read(negocioRepositoryProvider)
+          .obtenerNegocioActual();
       if (!mounted) return;
       await showDialog(
+        useRootNavigator: false,
         context: context,
         builder: (context) => PdfPreviewDialog(
           titulo: 'Vista previa · Pedido de Compra',
@@ -128,7 +142,10 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
@@ -142,7 +159,13 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: child,
     );
@@ -171,10 +194,30 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                   child: FilledButton.icon(
                     onPressed: _generando ? null : _generarPdf,
                     icon: _generando
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
                         : const Icon(Icons.picture_as_pdf_outlined, size: 20),
-                    label: Text('Generar PDF del Pedido', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    label: Text(
+                      'Generar PDF del Pedido',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A1A1A),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -191,12 +234,26 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       spacing: 12,
       runSpacing: 10,
       children: [
-        Text('Hacer Pedido', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          'Hacer Pedido',
+          style: GoogleFonts.poppins(
+            fontSize: esMovil ? 19 : 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
         OutlinedButton.icon(
           onPressed: _limpiar,
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
           label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF1A1A1A),
+            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ],
     );
@@ -218,16 +275,36 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                   initialValue: _proveedor,
                   isExpanded: true,
                   decoration: _decoracion('Proveedor (opcional)'),
-                  style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
                   items: [
-                    DropdownMenuItem<ProveedorModel?>(value: null, child: Text('Sin especificar', style: GoogleFonts.poppins(fontSize: 13))),
-                    ...proveedores.map((p) => DropdownMenuItem<ProveedorModel?>(value: p, child: Text(p.razonSocial, overflow: TextOverflow.ellipsis))),
+                    DropdownMenuItem<ProveedorModel?>(
+                      value: null,
+                      child: Text(
+                        'Sin especificar',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    ...proveedores.map(
+                      (p) => DropdownMenuItem<ProveedorModel?>(
+                        value: p,
+                        child: Text(
+                          p.razonSocial,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _proveedor = v),
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, st) => Text('Error cargando proveedores', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
+              error: (e, st) => Text(
+                'Error cargando proveedores',
+                style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+              ),
             ),
           ),
           SizedBox(
@@ -236,13 +313,13 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
               controller: _observacionesController,
               numerico: false,
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _observacionesController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: _decoracion('Observaciones (opcional)'),
-            ),
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _observacionesController,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: _decoracion('Observaciones (opcional)'),
+              ),
             ),
           ),
         ],
@@ -265,13 +342,34 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
         children: [
           Row(
             children: [
-              Text('Productos del pedido', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+              Text(
+                'Productos del pedido',
+                style: GoogleFonts.poppins(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const Spacer(),
               FilledButton.icon(
                 onPressed: _agregarProducto,
                 icon: const Icon(Icons.add, size: 18),
-                label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  'Agregar Producto',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
           ),
@@ -288,10 +386,14 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
               ),
             )
           else ...[
-            if (!esMovil) ...[_encabezadoTabla(), Divider(height: 18, color: Colors.grey.shade300)],
+            if (!esMovil) ...[
+              _encabezadoTabla(),
+              Divider(height: 18, color: Colors.grey.shade300),
+            ],
             for (var i = 0; i < _items.length; i++) ...[
               esMovil ? _filaMovil(i, _items[i]) : _filaTabla(i, _items[i]),
-              if (i != _items.length - 1) Divider(height: 1, color: Colors.grey.shade200),
+              if (i != _items.length - 1)
+                Divider(height: 1, color: Colors.grey.shade200),
             ],
           ],
         ],
@@ -300,20 +402,41 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
   }
 
   Widget _encabezadoTabla() {
-    final estilo = GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estilo = GoogleFonts.poppins(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      color: Colors.grey.shade600,
+    );
     return Row(
       children: [
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 5, child: Text('Producto', style: estilo)),
-        Expanded(flex: 2, child: Text('Stock actual', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text('Cantidad a pedir', textAlign: TextAlign.center, style: estilo)),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Stock actual',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Cantidad a pedir',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
         const SizedBox(width: 40),
       ],
     );
   }
 
   Widget _campoCantidad(int index, ItemPedidoModel item) {
-    final ctrl = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad)));
+    final ctrl = _ctrlCantidad.putIfAbsent(
+      index,
+      () => TextEditingController(text: _formatoCantidad(item.cantidad)),
+    );
     void confirmar() {
       final valor = double.tryParse(ctrl.text.replaceAll(',', '').trim());
       if (valor != null) _actualizarCantidad(index, valor);
@@ -324,23 +447,29 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       numerico: true,
       onSubmitted: (_) => confirmar(),
       child: TextField(
-      inputFormatters: [mayusculasInputFormatter],
-      autocorrect: false,
-      enableSuggestions: false,
-      controller: ctrl,
-      textAlign: TextAlign.center,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: GoogleFonts.poppins(fontSize: 13),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: const Color(0xFFE8EAF0),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
+        controller: ctrl,
+        textAlign: TextAlign.center,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: GoogleFonts.poppins(fontSize: 13),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: const Color(0xFFE8EAF0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
+          ),
+        ),
+        onSubmitted: (_) => confirmar(),
+        onTapOutside: (_) => confirmar(),
       ),
-      onSubmitted: (_) => confirmar(),
-      onTapOutside: (_) => confirmar(),
-    ),
     );
   }
 
@@ -350,13 +479,55 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(flex: 2, child: Text(item.codigo.isEmpty ? '-' : item.codigo, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-          Expanded(flex: 5, child: Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-          Expanded(flex: 2, child: Text(_formatoCantidad(item.stockActual), textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoCantidad(index, item))),
+          Expanded(
+            flex: 2,
+            child: Text(
+              item.codigo.isEmpty ? '-' : item.codigo,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              item.nombreProducto,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              _formatoCantidad(item.stockActual),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _campoCantidad(index, item),
+            ),
+          ),
           SizedBox(
             width: 40,
-            child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+            child: IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: Color(0xFFC62828),
+              ),
+              onPressed: () => _quitarItem(index),
+            ),
           ),
         ],
       ),
@@ -367,7 +538,11 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -377,12 +552,31 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text('${item.codigo.isEmpty ? '-' : item.codigo} · Stock: ${_formatoCantidad(item.stockActual)}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    Text(
+                      item.nombreProducto,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${item.codigo.isEmpty ? '-' : item.codigo} · Stock: ${_formatoCantidad(item.stockActual)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Color(0xFFC62828),
+                ),
+                onPressed: () => _quitarItem(index),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -393,7 +587,8 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
   }
 
   String _formatoCantidad(double cantidad) {
-    if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+    if (cantidad == cantidad.roundToDouble())
+      return cantidad.toInt().toString();
     return cantidad.toStringAsFixed(2);
   }
 }

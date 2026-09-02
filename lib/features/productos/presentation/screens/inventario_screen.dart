@@ -265,6 +265,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     Map<String, ProductoModel> mapaProductos,
   ) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => DetalleProductoDialog(
         producto: producto,
@@ -285,6 +286,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     }
     if (!mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => ProductoFormDialog(producto: producto),
     );
@@ -298,6 +300,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
     if (!autorizado || !mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AjusteStockDialog(producto: producto),
     );
@@ -305,6 +308,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _abrirHistorial(ProductoModel producto) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => HistorialStockDialog(producto: producto),
     );
@@ -312,6 +316,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _abrirHistorialMovimientos(ProductoModel producto, String tipo) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) =>
           HistorialMovimientosDialog(producto: producto, tipo: tipo),
@@ -320,6 +325,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   void _abrirImportar() {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => const ImportarInventarioDialog(),
     );
@@ -333,6 +339,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     String titulo,
   ) {
     return showDialog<ExportarInventarioOpciones>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => ExportarInventarioOpcionesDialog(
         productos: _listaActual,
@@ -365,6 +372,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     );
     if (opciones == null || !mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Inventario',
@@ -398,6 +406,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     if (!mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Ticket',
@@ -429,6 +438,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         ? null
         : Printer(url: urlImpresora, name: nombreImpresora);
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Etiquetas · ${producto.nombre} (x$cantidad)',
@@ -448,6 +458,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   Future<void> _imprimirEtiquetasGrid() async {
     if (_listaActual.isEmpty) return;
     final soloSinCodigo = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -506,6 +517,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
         ? null
         : Printer(url: urlImpresora, name: nombreImpresora);
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Etiquetas (${productos.length})',
@@ -519,6 +531,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   Future<int?> _pedirCantidadEtiquetas(ProductoModel producto) async {
     final controller = TextEditingController(text: '1');
     return showDialog<int>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1833,6 +1846,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
   /// mismo diálogo (ImagenZoomDialog) que ya usa Buscar Producto.
   void _verFoto(ProductoModel producto) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => ImagenZoomDialog(url: producto.imagenUrl),
     );

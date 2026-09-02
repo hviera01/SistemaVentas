@@ -21,12 +21,20 @@ class VentasEnEsperaDialog extends ConsumerWidget {
   final bool perdidas;
   const VentasEnEsperaDialog({super.key, this.perdidas = false});
 
-  Future<void> _eliminar(BuildContext context, WidgetRef ref, VentaEnEsperaModel sesion) async {
+  Future<void> _eliminar(
+    BuildContext context,
+    WidgetRef ref,
+    VentaEnEsperaModel sesion,
+  ) async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(perdidas ? 'Eliminar venta perdida' : 'Eliminar venta en espera', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          perdidas ? 'Eliminar venta perdida' : 'Eliminar venta en espera',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           sesion.stockReservado
               ? '¿Seguro que querés eliminar esta venta guardada? El stock que tenía reservado se va a devolver al inventario.'
@@ -34,9 +42,14 @@ class VentasEnEsperaDialog extends ConsumerWidget {
           style: GoogleFonts.poppins(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -45,12 +58,16 @@ class VentasEnEsperaDialog extends ConsumerWidget {
     );
     if (confirmar != true) return;
     final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-    await ref.read(ventaRepositoryProvider).eliminarVentaEnEspera(sesion.id, usuario: usuario);
+    await ref
+        .read(ventaRepositoryProvider)
+        .eliminarVentaEnEspera(sesion.id, usuario: usuario);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ventasAsync = ref.watch(perdidas ? ventasPerdidasStreamProvider : ventasEnEsperaStreamProvider);
+    final ventasAsync = ref.watch(
+      perdidas ? ventasPerdidasStreamProvider : ventasEnEsperaStreamProvider,
+    );
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 560;
@@ -64,21 +81,38 @@ class VentasEnEsperaDialog extends ConsumerWidget {
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(child: Text(perdidas ? 'Facturas Perdidas' : 'Ventas en Espera', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
-                IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                Expanded(
+                  child: Text(
+                    perdidas ? 'Facturas Perdidas' : 'Ventas en Espera',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             if (perdidas) ...[
               const SizedBox(height: 4),
               Text(
                 'Ventas que quedaron a medias (se cerró antes de confirmarlas o descartarlas). No tienen stock reservado.',
-                style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(
+                  fontSize: 11.5,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ],
             const SizedBox(height: 14),
@@ -90,16 +124,30 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(perdidas ? Icons.find_in_page_outlined : Icons.pause_circle_outline, size: 48, color: Colors.grey.shade300),
+                          Icon(
+                            perdidas
+                                ? Icons.find_in_page_outlined
+                                : Icons.pause_circle_outline,
+                            size: 48,
+                            color: Colors.grey.shade300,
+                          ),
                           const SizedBox(height: 10),
-                          Text(perdidas ? 'No hay facturas perdidas' : 'No hay ventas en espera', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          Text(
+                            perdidas
+                                ? 'No hay facturas perdidas'
+                                : 'No hay ventas en espera',
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
                         ],
                       ),
                     );
                   }
                   return ListView.separated(
                     itemCount: ventas.length,
-                    separatorBuilder: (context, i) => const SizedBox(height: 10),
+                    separatorBuilder: (context, i) =>
+                        const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final sesion = ventas[i];
                       return InkWell(
@@ -107,7 +155,11 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                         onTap: () => Navigator.pop(context, sesion),
                         child: Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F9FB),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFC7CBD3)),
+                          ),
                           child: Row(
                             children: [
                               Expanded(
@@ -115,8 +167,13 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      sesion.nombreCliente.isEmpty ? 'Sin cliente' : sesion.nombreCliente,
-                                      style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700),
+                                      sesion.nombreCliente.isEmpty
+                                          ? 'Sin cliente'
+                                          : sesion.nombreCliente,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -124,20 +181,40 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                       // pagaría el cliente) -pedido explícito del dueño: antes
                                       // salía el subtotal sin impuesto-.
                                       '${sesion.tipoDocumento} · ${sesion.items.length} producto(s) · ${formatearMoneda(sesion.totalFinal)}',
-                                      style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11.5,
+                                        color: Colors.grey.shade600,
+                                      ),
                                     ),
                                     if (sesion.fecha != null) ...[
                                       const SizedBox(height: 2),
-                                      Text(formatoFecha.format(sesion.fecha!), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+                                      Text(
+                                        formatoFecha.format(sesion.fecha!),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 10.5,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                      ),
                                     ],
                                     if (sesion.stockReservado) ...[
                                       const SizedBox(height: 4),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.lock_outline, size: 12, color: Color(0xFF1565C0)),
+                                          const Icon(
+                                            Icons.lock_outline,
+                                            size: 12,
+                                            color: Color(0xFF1565C0),
+                                          ),
                                           const SizedBox(width: 4),
-                                          Text('Stock reservado', style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF1565C0), fontWeight: FontWeight.w600)),
+                                          Text(
+                                            'Stock reservado',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 10.5,
+                                              color: const Color(0xFF1565C0),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ],
@@ -145,8 +222,13 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFC62828)),
-                                onPressed: () => _eliminar(context, ref, sesion),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Color(0xFFC62828),
+                                ),
+                                onPressed: () =>
+                                    _eliminar(context, ref, sesion),
                               ),
                             ],
                           ),
@@ -155,8 +237,15 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                ),
+                error: (e, st) => Center(
+                  child: Text(
+                    'Error: $e',
+                    style: GoogleFonts.poppins(color: Colors.red),
+                  ),
+                ),
               ),
             ),
           ],

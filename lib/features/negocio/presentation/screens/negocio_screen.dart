@@ -1,5 +1,6 @@
 import 'dart:io' show Platform, Process;
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +17,9 @@ import '../widgets/negocio_logo_picker.dart';
 import '../widgets/selector_impresora.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
-import '../../../../core/utils/tablet_utils_stub.dart' if (dart.library.html) '../../../../core/utils/tablet_utils_web.dart' as tactil;
+import '../../../../core/utils/tablet_utils_stub.dart'
+    if (dart.library.html) '../../../../core/utils/tablet_utils_web.dart'
+    as tactil;
 
 // Específicamente el navegador de un celular/tablet (no la PC, no la app de
 // escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID/Touch ID que
@@ -32,7 +35,8 @@ bool get _esWebMovil =>
     kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
-        (defaultTargetPlatform == TargetPlatform.macOS && tactil.esDispositivoTactil()));
+        (defaultTargetPlatform == TargetPlatform.macOS &&
+            tactil.esDispositivoTactil()));
 
 // El script que manda el reporte financiero por WhatsApp (ver
 // tool/reporte_whatsapp) es un proceso de Node.js aparte que solo existe en
@@ -42,7 +46,8 @@ bool get _esWebMovil =>
 // otra PC que no tenga instalado ese script).
 bool get _puedeEnviarReporteWhatsapp => !kIsWeb && Platform.isWindows;
 
-const _rutaReporteWhatsapp = r'C:\Proyectos\sistema_ventas\tool\reporte_whatsapp';
+const _rutaReporteWhatsapp =
+    r'C:\Proyectos\sistema_ventas\tool\reporte_whatsapp';
 
 class NegocioScreen extends ConsumerWidget {
   const NegocioScreen({super.key});
@@ -54,8 +59,15 @@ class NegocioScreen extends ConsumerWidget {
       color: const Color(0xFFF2F3F7),
       child: negocioAsync.when(
         data: (modelo) => _NegocioForm(modelo: modelo),
-        loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-        error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC62828)),
+        ),
+        error: (e, st) => Center(
+          child: Text(
+            'Error: $e',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+        ),
       ),
     );
   }
@@ -138,7 +150,11 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
 
   Future<void> _cargarEstadoFaceId() async {
     final credencial = await credencialFaceIdGuardada();
-    if (mounted) setState(() { _credencialFaceId = credencial; _cargandoFaceId = false; });
+    if (mounted)
+      setState(() {
+        _credencialFaceId = credencial;
+        _cargandoFaceId = false;
+      });
   }
 
   // A diferencia del intento original en LoginScreen (donde se ofrecía
@@ -156,7 +172,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     if (!mounted) return;
     if (!disponible) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Face ID no está disponible en este modo/navegador')),
+        const SnackBar(
+          content: Text('Face ID no está disponible en este modo/navegador'),
+        ),
       );
       return;
     }
@@ -170,11 +188,15 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     // Face ID).
     var procesando = false;
     final credencialId = await showDialog<String>(
+      useRootNavigator: false,
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
           return AlertDialog(
-            title: Text('Activar Face ID', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            title: Text(
+              'Activar Face ID',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -188,19 +210,22 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   numerico: false,
                   titulo: 'Código de acceso',
                   child: TextField(
-                  inputFormatters: [mayusculasInputFormatter],
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  controller: ctrlCodigo,
-                  autofocus: true,
-                  style: GoogleFonts.poppins(fontSize: 14),
-                  decoration: InputDecoration(
-                    labelText: 'Código de acceso',
-                    filled: true,
-                    fillColor: const Color(0xFFE8EAF0),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: ctrlCodigo,
+                    autofocus: true,
+                    style: GoogleFonts.poppins(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Código de acceso',
+                      filled: true,
+                      fillColor: const Color(0xFFE8EAF0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
-                ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -211,14 +236,19 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     labelText: 'Contraseña',
                     filled: true,
                     fillColor: const Color(0xFFE8EAF0),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ],
             ),
             actions: [
               TextButton(
-                onPressed: procesando ? null : () => Navigator.pop(dialogContext),
+                onPressed: procesando
+                    ? null
+                    : () => Navigator.pop(dialogContext),
                 child: const Text('Cancelar'),
               ),
               FilledButton(
@@ -230,15 +260,21 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                         if (codigo.isEmpty || clave.isEmpty) return;
                         setDialogState(() => procesando = true);
                         try {
-                          await ref.read(authRepositoryProvider).login(codigo, clave);
+                          await ref
+                              .read(authRepositoryProvider)
+                              .login(codigo, clave);
                           // El pedido de Face ID se dispara DIRECTO acá,
                           // sin ningún await de más antes: Safari en
                           // iPhone exige que WebAuthn se pida dentro del
                           // mismo gesto del usuario (activación
                           // transitoria), y ya se gastó parte de esa
                           // ventana en la validación de arriba.
-                          final id = await webAuthnRegistrar(usuarioId: codigo, usuarioNombre: codigo);
-                          if (dialogContext.mounted) Navigator.pop(dialogContext, id);
+                          final id = await webAuthnRegistrar(
+                            usuarioId: codigo,
+                            usuarioNombre: codigo,
+                          );
+                          if (dialogContext.mounted)
+                            Navigator.pop(dialogContext, id);
                         } catch (e) {
                           setDialogState(() => procesando = false);
                           if (mounted) {
@@ -248,9 +284,18 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                           }
                         }
                       },
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F1B3D),
+                ),
                 child: procesando
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Activar'),
               ),
             ],
@@ -265,10 +310,16 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     ctrlClave.dispose();
     if (credencialId == null || !mounted) return;
 
-    await guardarCredencialesFaceId(credencialId: credencialId, codigo: codigo, clave: clave);
+    await guardarCredencialesFaceId(
+      credencialId: credencialId,
+      codigo: codigo,
+      clave: clave,
+    );
     if (!mounted) return;
     setState(() => _credencialFaceId = credencialId);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Face ID activado en este celular')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Face ID activado en este celular')),
+    );
   }
 
   Future<void> _olvidarFaceId() async {
@@ -277,7 +328,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   }
 
   Future<void> _cargarProximoFactura() async {
-    final proximo = await ref.read(ventaRepositoryProvider).obtenerProximoNumeroFactura();
+    final proximo = await ref
+        .read(ventaRepositoryProvider)
+        .obtenerProximoNumeroFactura();
     if (!mounted) return;
     setState(() {
       _proximoFacturaActual = proximo;
@@ -289,22 +342,34 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   Future<void> _guardarProximoFactura() async {
     final valor = int.tryParse(_ctrlProximoFactura.text.trim());
     if (valor == null || valor < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingresá un número válido (mayor a 0)')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresá un número válido (mayor a 0)')),
+      );
       return;
     }
     setState(() => _guardandoProximoFactura = true);
     try {
-      await ref.read(ventaRepositoryProvider).establecerProximoNumeroFactura(valor);
+      await ref
+          .read(ventaRepositoryProvider)
+          .establecerProximoNumeroFactura(valor);
       if (!mounted) return;
       setState(() {
         _proximoFacturaActual = valor;
         _guardandoProximoFactura = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('La próxima factura va a salir con el número ${_formatoFactura(valor)}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'La próxima factura va a salir con el número ${_formatoFactura(valor)}',
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _guardandoProximoFactura = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
     }
   }
 
@@ -340,7 +405,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       _error = null;
     });
     try {
-      await ref.read(negocioRepositoryProvider).actualizarDatosGenerales(
+      await ref
+          .read(negocioRepositoryProvider)
+          .actualizarDatosGenerales(
             nombre: nombre,
             correo: _correoController.text.trim(),
             rtn: _rtnController.text.trim(),
@@ -354,7 +421,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             fechaLimiteEmision: _fechaLimite,
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos del negocio guardados')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Datos del negocio guardados')),
+        );
       }
     } catch (e) {
       setState(() => _error = 'No se pudo guardar los cambios');
@@ -377,7 +446,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   Future<void> _guardarClave() async {
     final clave = _claveController.text.trim();
     if (clave.length < 4) {
-      setState(() => _error = 'La clave especial debe tener al menos 4 caracteres');
+      setState(
+        () => _error = 'La clave especial debe tener al menos 4 caracteres',
+      );
       return;
     }
     setState(() {
@@ -387,7 +458,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     try {
       await ref.read(negocioRepositoryProvider).establecerClave(clave);
       _claveController.clear();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clave especial actualizada')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clave especial actualizada')),
+        );
     } finally {
       if (mounted) setState(() => _guardandoClave = false);
     }
@@ -397,7 +471,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     setState(() => _guardandoClave = true);
     try {
       await ref.read(negocioRepositoryProvider).quitarClave();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clave especial eliminada')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clave especial eliminada')),
+        );
     } finally {
       if (mounted) setState(() => _guardandoClave = false);
     }
@@ -426,24 +503,39 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       if (!mounted) return;
       if (resultado.exitCode == 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reporte $tipo enviado por WhatsApp'), showCloseIcon: true),
+          SnackBar(
+            content: Text('Reporte $tipo enviado por WhatsApp'),
+            showCloseIcon: true,
+          ),
         );
       } else {
-        final salida = '${resultado.stderr}'.trim().isNotEmpty ? '${resultado.stderr}' : '${resultado.stdout}';
+        final salida = '${resultado.stderr}'.trim().isNotEmpty
+            ? '${resultado.stderr}'
+            : '${resultado.stdout}';
         // Se corta a las últimas líneas: la traza completa de un error de
         // Node/Baileys puede ser larguísima y no cabe (ni hace falta) en un
         // SnackBar -el detalle completo queda igual en la consola de esa PC
         // si hace falta revisarlo a fondo-.
         final lineas = salida.trim().split('\n');
-        final resumen = lineas.length > 4 ? lineas.sublist(lineas.length - 4).join('\n') : salida.trim();
+        final resumen = lineas.length > 4
+            ? lineas.sublist(lineas.length - 4).join('\n')
+            : salida.trim();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo enviar el reporte $tipo:\n$resumen'), showCloseIcon: true),
+          SnackBar(
+            content: Text('No se pudo enviar el reporte $tipo:\n$resumen'),
+            showCloseIcon: true,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo ejecutar el script (¿Node.js está instalado en esta PC?): $e'), showCloseIcon: true),
+          SnackBar(
+            content: Text(
+              'No se pudo ejecutar el script (¿Node.js está instalado en esta PC?): $e',
+            ),
+            showCloseIcon: true,
+          ),
         );
       }
     } finally {
@@ -469,8 +561,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     final puerto = int.tryParse(_puertoRedController.text.trim()) ?? 9100;
     setState(() => _guardandoRed = true);
     try {
-      await ref.read(negocioRepositoryProvider).actualizarImpresoraRed(ip, puerto);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impresora de red guardada')));
+      await ref
+          .read(negocioRepositoryProvider)
+          .actualizarImpresoraRed(ip, puerto);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impresora de red guardada')),
+        );
     } finally {
       if (mounted) setState(() => _guardandoRed = false);
     }
@@ -480,7 +577,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     final ip = _ipRedController.text.trim();
     final puerto = int.tryParse(_puertoRedController.text.trim()) ?? 9100;
     if (ip.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingresá la IP de la impresora primero')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresá la IP de la impresora primero')),
+      );
       return;
     }
     setState(() => _probandoRed = true);
@@ -488,10 +587,18 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       // ESC @ (inicializar impresora): no imprime nada visible, solo
       // confirma que la impresora respondió en esa IP/puerto sin gastar
       // papel en cada prueba de conexión.
-      final ok = await _servicioImpresoraRed.imprimir(ip: ip, puerto: puerto, bytes: const [0x1B, 0x40]);
+      final ok = await _servicioImpresoraRed.imprimir(
+        ip: ip,
+        puerto: puerto,
+        bytes: const [0x1B, 0x40],
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Conexión exitosa' : 'No se pudo conectar a esa IP/puerto')),
+        SnackBar(
+          content: Text(
+            ok ? 'Conexión exitosa' : 'No se pudo conectar a esa IP/puerto',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _probandoRed = false);
@@ -513,17 +620,32 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text('Negocio', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                      child: Text(
+                        'Negocio',
+                        style: GoogleFonts.poppins(
+                          fontSize: esMovil ? 19 : 22,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => ref.invalidate(negocioStreamProvider),
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
+                      label: Text(
+                        'Refrescar',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF1A1A1A),
                         side: const BorderSide(color: Color(0xFFB6BCC7)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ],
@@ -563,7 +685,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 22, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: child,
     );
@@ -574,7 +702,14 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       children: [
         Icon(icono, size: 19, color: const Color(0xFFC62828)),
         const SizedBox(width: 8),
-        Text(texto, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          texto,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }
@@ -585,7 +720,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
   }
@@ -597,13 +735,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         controller: controller,
         numerico: false,
         child: TextField(
-        inputFormatters: [mayusculasInputFormatter],
-        autocorrect: false,
-        enableSuggestions: false,
-        controller: controller,
-        style: GoogleFonts.poppins(fontSize: 13.5),
-        decoration: _decoracion(label),
-      ),
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
+          controller: controller,
+          style: GoogleFonts.poppins(fontSize: 13.5),
+          decoration: _decoracion(label),
+        ),
       ),
     );
   }
@@ -619,14 +757,24 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             spacing: 20,
             runSpacing: 16,
             children: [
-              NegocioLogoPicker(titulo: 'Logo a color', base64Actual: widget.modelo.logoColorBase64, esColor: true),
-              NegocioLogoPicker(titulo: 'Logo blanco y negro', base64Actual: widget.modelo.logoBnBase64, esColor: false),
+              NegocioLogoPicker(
+                titulo: 'Logo a color',
+                base64Actual: widget.modelo.logoColorBase64,
+                esColor: true,
+              ),
+              NegocioLogoPicker(
+                titulo: 'Logo blanco y negro',
+                base64Actual: widget.modelo.logoBnBase64,
+                esColor: false,
+              ),
             ],
           ),
           const SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, constraints) {
-              final anchoCampo = esMovil ? constraints.maxWidth : (constraints.maxWidth - 20) / 2;
+              final anchoCampo = esMovil
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 20) / 2;
               return Wrap(
                 spacing: 20,
                 runSpacing: 14,
@@ -646,7 +794,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           ),
           const SizedBox(height: 20),
           if (_error != null) ...[
-            Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFFC62828))),
+            Text(
+              _error!,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: const Color(0xFFC62828),
+              ),
+            ),
             const SizedBox(height: 12),
           ],
           SizedBox(
@@ -654,10 +808,29 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             child: FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
               icon: _guardando
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.save_outlined, size: 18),
-              label: Text(_guardando ? 'Guardando...' : 'Guardar cambios', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              label: Text(
+                _guardando ? 'Guardando...' : 'Guardar cambios',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
         ],
@@ -671,41 +844,74 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Rango autorizado', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+          Text(
+            'Rango autorizado',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
           const SizedBox(height: 6),
           Row(
             children: [
-              Expanded(flex: 3, child: CampoTecladoCompacto(
-                controller: _rangoPrefijoController,
-                numerico: false,
-                child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _rangoPrefijoController, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Prefijo')),
-              )),
+              Expanded(
+                flex: 3,
+                child: CampoTecladoCompacto(
+                  controller: _rangoPrefijoController,
+                  numerico: false,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _rangoPrefijoController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('Prefijo'),
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: CampoTecladoCompacto(
-                controller: _rangoDesdeController,
-                numerico: true,
-                child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _rangoDesdeController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Desde')),
-              )),
+              Expanded(
+                flex: 3,
+                child: CampoTecladoCompacto(
+                  controller: _rangoDesdeController,
+                  numerico: true,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _rangoDesdeController,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('Desde'),
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
-              Text('AL', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+              Text(
+                'AL',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: CampoTecladoCompacto(
-                controller: _rangoHastaController,
-                numerico: true,
-                child: TextField(
-                inputFormatters: [mayusculasInputFormatter],
-                autocorrect: false,
-                enableSuggestions: false,
-                controller: _rangoHastaController, keyboardType: TextInputType.number, style: GoogleFonts.poppins(fontSize: 13), decoration: _decoracion('Hasta')),
-              )),
+              Expanded(
+                flex: 3,
+                child: CampoTecladoCompacto(
+                  controller: _rangoHastaController,
+                  numerico: true,
+                  child: TextField(
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _rangoHastaController,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('Hasta'),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -718,19 +924,40 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Fecha límite de emisión', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+        Text(
+          'Fecha límite de emisión',
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+        ),
         const SizedBox(height: 6),
         InkWell(
           onTap: _seleccionarFecha,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8EAF0),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: Colors.grey.shade500,
+                ),
                 const SizedBox(width: 10),
-                Flexible(child: Text(_fechaLimite != null ? formato.format(_fechaLimite!) : 'Sin definir', overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF1A1A1A)))),
+                Flexible(
+                  child: Text(
+                    _fechaLimite != null
+                        ? formato.format(_fechaLimite!)
+                        : 'Sin definir',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -748,7 +975,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Text(
             'Definí una clave que se pedirá antes de realizar ciertas acciones sensibles. Es opcional: activá solo lo que necesites.',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 18),
           Wrap(
@@ -762,15 +992,34 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   controller: _claveController,
                   obscureText: true,
                   style: GoogleFonts.poppins(fontSize: 13.5),
-                  decoration: _decoracion(tieneClave ? 'Nueva clave especial' : 'Definir clave especial'),
+                  decoration: _decoracion(
+                    tieneClave
+                        ? 'Nueva clave especial'
+                        : 'Definir clave especial',
+                  ),
                 ),
               ),
               SizedBox(
                 width: esMovil ? double.infinity : null,
                 child: FilledButton(
                   onPressed: _guardandoClave ? null : _guardarClave,
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: Text('Guardar clave', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Guardar clave',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
               if (tieneClave)
@@ -778,8 +1027,21 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   width: esMovil ? double.infinity : null,
                   child: OutlinedButton(
                     onPressed: _guardandoClave ? null : _quitarClave,
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFF3B9B9)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    child: Text('Quitar clave', style: GoogleFonts.poppins(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC62828),
+                      side: const BorderSide(color: Color(0xFFF3B9B9)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Quitar clave',
+                      style: GoogleFonts.poppins(fontSize: 13),
+                    ),
                   ),
                 ),
             ],
@@ -787,21 +1049,46 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(tieneClave ? Icons.check_circle : Icons.info_outline, size: 15, color: tieneClave ? const Color(0xFF16A34A) : Colors.grey.shade500),
+              Icon(
+                tieneClave ? Icons.check_circle : Icons.info_outline,
+                size: 15,
+                color: tieneClave
+                    ? const Color(0xFF16A34A)
+                    : Colors.grey.shade500,
+              ),
               const SizedBox(width: 6),
               Text(
-                tieneClave ? 'Clave especial activa' : 'No hay clave especial configurada',
-                style: GoogleFonts.poppins(fontSize: 12, color: tieneClave ? const Color(0xFF16A34A) : Colors.grey.shade500),
+                tieneClave
+                    ? 'Clave especial activa'
+                    : 'No hay clave especial configurada',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: tieneClave
+                      ? const Color(0xFF16A34A)
+                      : Colors.grey.shade500,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade200),
           const SizedBox(height: 12),
-          Text('¿Dónde pedir la clave?', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+          Text(
+            '¿Dónde pedir la clave?',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A1A1A),
+            ),
+          ),
           const SizedBox(height: 6),
           ...PermisosEspeciales.etiquetas.entries.map(
-            (entrada) => _filaPermiso(entrada.key, entrada.value, PermisosEspeciales.descripciones[entrada.key] ?? '', tieneClave),
+            (entrada) => _filaPermiso(
+              entrada.key,
+              entrada.value,
+              PermisosEspeciales.descripciones[entrada.key] ?? '',
+              tieneClave,
+            ),
           ),
         ],
       ),
@@ -817,19 +1104,26 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Text(
             'Elegí qué impresora usar para los recibos térmicos y para las etiquetas de productos. Se usarán en todo el sistema.',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 18),
           Flex(
             direction: esMovil ? Axis.vertical : Axis.horizontal,
-            crossAxisAlignment: esMovil ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
+            crossAxisAlignment: esMovil
+                ? CrossAxisAlignment.stretch
+                : CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: SelectorImpresora(
                   titulo: 'Impresora térmica (recibos)',
                   urlActual: widget.modelo.impresoraTermicaUrl,
                   nombreActual: widget.modelo.impresoraTermicaNombre,
-                  onSeleccionar: (url, nombre) => ref.read(negocioRepositoryProvider).actualizarImpresoraTermica(url, nombre),
+                  onSeleccionar: (url, nombre) => ref
+                      .read(negocioRepositoryProvider)
+                      .actualizarImpresoraTermica(url, nombre),
                 ),
               ),
               SizedBox(width: esMovil ? 0 : 20, height: esMovil ? 16 : 0),
@@ -838,7 +1132,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   titulo: 'Impresora de etiquetas',
                   urlActual: widget.modelo.impresoraEtiquetasUrl,
                   nombreActual: widget.modelo.impresoraEtiquetasNombre,
-                  onSeleccionar: (url, nombre) => ref.read(negocioRepositoryProvider).actualizarImpresoraEtiquetas(url, nombre),
+                  onSeleccionar: (url, nombre) => ref
+                      .read(negocioRepositoryProvider)
+                      .actualizarImpresoraEtiquetas(url, nombre),
                 ),
               ),
             ],
@@ -851,24 +1147,46 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             descripcion:
                 'Al confirmar una venta facturable se imprime directo, sin mostrar el diálogo de vista previa/descargar. En el programa de escritorio sale directo de la impresora elegida arriba, sin ningún clic. En el navegador (web) salta directo al diálogo de impresión del navegador (ese cartel no se puede evitar, es del navegador, no de esta app). En el celular usa la impresora de red de abajo. Si no hay impresora configurada, la venta se guarda igual y no se bloquea nada.',
             valor: widget.modelo.modoImpresion == ModoImpresion.directo,
-            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerModoImpresion(v ? ModoImpresion.directo : ModoImpresion.preguntar),
+            onChanged: (v) => ref
+                .read(negocioRepositoryProvider)
+                .establecerModoImpresion(
+                  v ? ModoImpresion.directo : ModoImpresion.preguntar,
+                ),
           ),
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade200),
           const SizedBox(height: 14),
-          Text('Impresora térmica de red (para celular)', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+          Text(
+            'Impresora térmica de red (para celular)',
+            style: GoogleFonts.poppins(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1A1A1A),
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             'En el celular no se pueden listar las impresoras del sistema. Si tu impresora térmica está conectada a la misma red WiFi, ingresá su IP acá: la venta se manda a imprimir directo por esa dirección.',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 12),
           if (kIsWeb)
-            Text('No disponible en la versión web (el navegador no permite esta conexión directa).', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500))
+            Text(
+              'No disponible en la versión web (el navegador no permite esta conexión directa).',
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: Colors.grey.shade500,
+              ),
+            )
           else
             Flex(
               direction: esMovil ? Axis.vertical : Axis.horizontal,
-              crossAxisAlignment: esMovil ? CrossAxisAlignment.stretch : CrossAxisAlignment.end,
+              crossAxisAlignment: esMovil
+                  ? CrossAxisAlignment.stretch
+                  : CrossAxisAlignment.end,
               children: [
                 Expanded(
                   flex: 3,
@@ -877,19 +1195,22 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     numerico: false,
                     titulo: 'IP de la impresora',
                     child: TextField(
-                    inputFormatters: [mayusculasInputFormatter],
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    controller: _ipRedController,
-                    style: GoogleFonts.poppins(fontSize: 13),
-                    decoration: InputDecoration(
-                      labelText: 'IP de la impresora',
-                      hintText: '192.168.1.50',
-                      filled: true,
-                      fillColor: const Color(0xFFE8EAF0),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: _ipRedController,
+                      style: GoogleFonts.poppins(fontSize: 13),
+                      decoration: InputDecoration(
+                        labelText: 'IP de la impresora',
+                        hintText: '192.168.1.50',
+                        filled: true,
+                        fillColor: const Color(0xFFE8EAF0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
-                  ),
                   ),
                 ),
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
@@ -899,19 +1220,22 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     numerico: true,
                     titulo: 'Puerto',
                     child: TextField(
-                    inputFormatters: [mayusculasInputFormatter],
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    controller: _puertoRedController,
-                    keyboardType: TextInputType.number,
-                    style: GoogleFonts.poppins(fontSize: 13),
-                    decoration: InputDecoration(
-                      labelText: 'Puerto',
-                      filled: true,
-                      fillColor: const Color(0xFFE8EAF0),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: _puertoRedController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.poppins(fontSize: 13),
+                      decoration: InputDecoration(
+                        labelText: 'Puerto',
+                        filled: true,
+                        fillColor: const Color(0xFFE8EAF0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
-                  ),
                   ),
                 ),
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
@@ -919,10 +1243,22 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   height: 48,
                   child: OutlinedButton(
                     onPressed: _probandoRed ? null : _probarImpresoraRed,
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _probandoRed
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text('Probar', style: GoogleFonts.poppins(fontSize: 13)),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Probar',
+                            style: GoogleFonts.poppins(fontSize: 13),
+                          ),
                   ),
                 ),
                 SizedBox(width: esMovil ? 0 : 12, height: esMovil ? 12 : 0),
@@ -930,10 +1266,29 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   height: 48,
                   child: FilledButton(
                     onPressed: _guardandoRed ? null : _guardarImpresoraRed,
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F1B3D),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _guardandoRed
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Guardar', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -948,12 +1303,18 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _tituloSeccion('Reporte financiero por WhatsApp', Icons.picture_as_pdf_outlined),
+          _tituloSeccion(
+            'Reporte financiero por WhatsApp',
+            Icons.picture_as_pdf_outlined,
+          ),
           const SizedBox(height: 6),
           Text(
             'Normalmente se manda solo, programado los sábados (semanal) y a fin de mes (mensual) desde esta PC. '
             'Estos botones lo mandan al toque, sin esperar al horario programado -por ejemplo, si el envío automático falló-.',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -961,29 +1322,57 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             runSpacing: 10,
             children: [
               OutlinedButton.icon(
-                onPressed: _enviandoReporteSemanal ? null : () => _enviarReporteWhatsapp('semanal'),
+                onPressed: _enviandoReporteSemanal
+                    ? null
+                    : () => _enviarReporteWhatsapp('semanal'),
                 icon: _enviandoReporteSemanal
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.send_outlined, size: 18),
-                label: Text('Enviar reporte semanal ahora', style: GoogleFonts.poppins(fontSize: 13)),
+                label: Text(
+                  'Enviar reporte semanal ahora',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1A1A1A),
                   side: const BorderSide(color: Color(0xFFB6BCC7)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: _enviandoReporteMensual ? null : () => _enviarReporteWhatsapp('mensual'),
+                onPressed: _enviandoReporteMensual
+                    ? null
+                    : () => _enviarReporteWhatsapp('mensual'),
                 icon: _enviandoReporteMensual
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.send_outlined, size: 18),
-                label: Text('Enviar reporte mensual ahora', style: GoogleFonts.poppins(fontSize: 13)),
+                label: Text(
+                  'Enviar reporte mensual ahora',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1A1A1A),
                   side: const BorderSide(color: Color(0xFFB6BCC7)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -1002,32 +1391,56 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Text(
             'Configuración de lo que se imprime en el ticket de venta.',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 14),
           _filaSwitchFactura(
             titulo: 'Imprimir copia además del original',
-            descripcion: 'Si lo apagás, cada venta solo imprime la hoja "ORIGINAL" (se ahorra el papel de la "COPIA").',
+            descripcion:
+                'Si lo apagás, cada venta solo imprime la hoja "ORIGINAL" (se ahorra el papel de la "COPIA").',
             valor: widget.modelo.facturaImprimirCopia,
-            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerFacturaImprimirCopia(v),
+            onChanged: (v) => ref
+                .read(negocioRepositoryProvider)
+                .establecerFacturaImprimirCopia(v),
           ),
           Divider(color: Colors.grey.shade200, height: 28),
           _filaSwitchFactura(
             titulo: 'Mostrar precios con ISV incluido',
-            descripcion: 'El precio unitario y el importe de cada producto en el ticket se muestran con ISV incluido (el total y el desglose de ISV no cambian).',
+            descripcion:
+                'El precio unitario y el importe de cada producto en el ticket se muestran con ISV incluido (el total y el desglose de ISV no cambian).',
             valor: widget.modelo.facturaPreciosConIsv,
-            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerFacturaPreciosConIsv(v),
+            onChanged: (v) => ref
+                .read(negocioRepositoryProvider)
+                .establecerFacturaPreciosConIsv(v),
           ),
           Divider(color: Colors.grey.shade200, height: 28),
-          Text('Numeración de facturas', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+          Text(
+            'Numeración de facturas',
+            style: GoogleFonts.poppins(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1A1A1A),
+            ),
+          ),
           const SizedBox(height: 3),
           Text(
             'El número que le va a tocar a la próxima Factura o Boleta que registrés. Sirve para continuar la numeración de un talonario físico en vez de arrancar siempre desde 1 (por ejemplo, después de vaciar los datos de prueba).',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 12),
           if (_cargandoProximoFactura)
-            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(strokeWidth: 2)))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
           else
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1038,33 +1451,62 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     numerico: true,
                     titulo: 'Próximo número de factura',
                     child: TextField(
-                    inputFormatters: [mayusculasInputFormatter],
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    controller: _ctrlProximoFactura,
-                    keyboardType: TextInputType.number,
-                    style: GoogleFonts.poppins(fontSize: 14),
-                    decoration: InputDecoration(
-                      labelText: 'Próximo número de factura',
-                      labelStyle: GoogleFonts.poppins(fontSize: 13),
-                      helperText: _proximoFacturaActual != null ? 'Actual: ${_formatoFactura(_proximoFacturaActual!)}' : null,
-                      helperStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
-                      filled: true,
-                      fillColor: const Color(0xFFE8EAF0),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: _ctrlProximoFactura,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Próximo número de factura',
+                        labelStyle: GoogleFonts.poppins(fontSize: 13),
+                        helperText: _proximoFacturaActual != null
+                            ? 'Actual: ${_formatoFactura(_proximoFacturaActual!)}'
+                            : null,
+                        helperStyle: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade500,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFE8EAF0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
-                  ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 SizedBox(
                   height: 48,
                   child: FilledButton(
-                    onPressed: _guardandoProximoFactura ? null : _guardarProximoFactura,
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    onPressed: _guardandoProximoFactura
+                        ? null
+                        : _guardarProximoFactura,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F1B3D),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _guardandoProximoFactura
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Guardar', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1083,14 +1525,20 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           const SizedBox(height: 6),
           Text(
             'Solo afecta a tablet (no a celular ni a PC/escritorio).',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 14),
           _filaSwitchFactura(
             titulo: 'Usar teclado compacto en tablet',
-            descripcion: 'En vez de abrir el teclado nativo del sistema (que en tablet ocupa media pantalla), los campos de texto abren un teclado propio, más chico, con letras y números juntos -pensado para tocar seguido sin que la pantalla se achique tanto.',
+            descripcion:
+                'En vez de abrir el teclado nativo del sistema (que en tablet ocupa media pantalla), los campos de texto abren un teclado propio, más chico, con letras y números juntos -pensado para tocar seguido sin que la pantalla se achique tanto.',
             valor: widget.modelo.tecladoCompactoTablet,
-            onChanged: (v) => ref.read(negocioRepositoryProvider).establecerTecladoCompactoTablet(v),
+            onChanged: (v) => ref
+                .read(negocioRepositoryProvider)
+                .establecerTecladoCompactoTablet(v),
           ),
         ],
       ),
@@ -1106,29 +1554,63 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             children: [
               const FaceIdIcon(size: 19, color: Color(0xFFC62828)),
               const SizedBox(width: 8),
-              Text('Face ID en este celular', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+              Text(
+                'Face ID en este celular',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             'Activá Face ID en este celular para entrar a esta cuenta sin escribir código y contraseña cada vez. Es por celular y por cuenta: si otra persona usa este mismo teléfono, tiene que activar el suyo por separado.',
-            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 16),
           if (_cargandoFaceId)
-            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(strokeWidth: 2)))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
           else if (_credencialFaceId != null)
             Row(
               children: [
-                const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+                const Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: Color(0xFF16A34A),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Face ID activo en este celular', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF16A34A))),
+                  child: Text(
+                    'Face ID activo en este celular',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
                 ),
                 OutlinedButton(
                   onPressed: _olvidarFaceId,
-                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFF3B9B9)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: Text('Olvidar', style: GoogleFonts.poppins(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC62828),
+                    side: const BorderSide(color: Color(0xFFF3B9B9)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Olvidar',
+                    style: GoogleFonts.poppins(fontSize: 13),
+                  ),
                 ),
               ],
             )
@@ -1136,8 +1618,23 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             FilledButton.icon(
               onPressed: _procesandoFaceId ? null : _activarFaceId,
               icon: const FaceIdIcon(size: 18, color: Colors.white),
-              label: Text('Activar Face ID', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F1B3D), padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              label: Text(
+                'Activar Face ID',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0F1B3D),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
         ],
       ),
@@ -1157,19 +1654,41 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(titulo, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+              Text(
+                titulo,
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
               const SizedBox(height: 3),
-              Text(descripcion, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+              Text(
+                descripcion,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(width: 14),
-        Switch(value: valor, activeThumbColor: const Color(0xFF16A34A), onChanged: onChanged),
+        Switch(
+          value: valor,
+          activeThumbColor: const Color(0xFF16A34A),
+          onChanged: onChanged,
+        ),
       ],
     );
   }
 
-  Widget _filaPermiso(String key, String titulo, String descripcion, bool tieneClave) {
+  Widget _filaPermiso(
+    String key,
+    String titulo,
+    String descripcion,
+    bool tieneClave,
+  ) {
     final activo = _permisos[key] == true;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1180,9 +1699,22 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(titulo, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+                Text(
+                  titulo,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(descripcion, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                Text(
+                  descripcion,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
               ],
             ),
           ),

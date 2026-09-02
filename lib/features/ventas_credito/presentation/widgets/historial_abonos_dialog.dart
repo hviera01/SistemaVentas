@@ -13,24 +13,45 @@ class HistorialAbonosDialog extends ConsumerWidget {
 
   const HistorialAbonosDialog({super.key, required this.credito});
 
-  Future<void> _editar(BuildContext context, WidgetRef ref, AbonoModel abono) async {
-    await showDialog<bool>(context: context, builder: (context) => EditarAbonoDialog(credito: credito, abono: abono));
+  Future<void> _editar(
+    BuildContext context,
+    WidgetRef ref,
+    AbonoModel abono,
+  ) async {
+    await showDialog<bool>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => EditarAbonoDialog(credito: credito, abono: abono),
+    );
   }
 
-  Future<void> _eliminar(BuildContext context, WidgetRef ref, AbonoModel abono) async {
+  Future<void> _eliminar(
+    BuildContext context,
+    WidgetRef ref,
+    AbonoModel abono,
+  ) async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar abono', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Eliminar abono',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           '¿Seguro que querés eliminar el abono de ${formatearMoneda(abono.montoAbonado)}? El saldo del crédito se recalcula automáticamente. Esta acción no se puede deshacer.',
           style: GoogleFonts.poppins(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -39,10 +60,18 @@ class HistorialAbonosDialog extends ConsumerWidget {
     );
     if (confirmar != true) return;
     try {
-      await ref.read(ventaCreditoRepositoryProvider).eliminarAbono(idCredito: credito.id, idAbono: abono.id, montoTotal: credito.montoTotal);
+      await ref
+          .read(ventaCreditoRepositoryProvider)
+          .eliminarAbono(
+            idCredito: credito.id,
+            idAbono: abono.id,
+            montoTotal: credito.montoTotal,
+          );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
       }
     }
   }
@@ -58,8 +87,34 @@ class HistorialAbonosDialog extends ConsumerWidget {
         if (valor == 'eliminar') _eliminar(context, ref, abono);
       },
       itemBuilder: (context) => [
-        PopupMenuItem(value: 'editar', child: Row(children: [const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF4B4F58)), const SizedBox(width: 10), Text('Editar', style: GoogleFonts.poppins(fontSize: 12.5))])),
-        PopupMenuItem(value: 'eliminar', child: Row(children: [const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), const SizedBox(width: 10), Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5))])),
+        PopupMenuItem(
+          value: 'editar',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: Color(0xFF4B4F58),
+              ),
+              const SizedBox(width: 10),
+              Text('Editar', style: GoogleFonts.poppins(fontSize: 12.5)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'eliminar',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: Color(0xFFC62828),
+              ),
+              const SizedBox(width: 10),
+              Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5)),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -69,7 +124,9 @@ class HistorialAbonosDialog extends ConsumerWidget {
     final abonosAsync = ref.watch(abonosStreamProvider(credito.id));
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 720;
-    final anchoDialog = esMovil ? tamano.width - 24 : (tamano.width - 48).clamp(0, 1100).toDouble();
+    final anchoDialog = esMovil
+        ? tamano.width - 24
+        : (tamano.width - 48).clamp(0, 1100).toDouble();
     final altoDialog = tamano.height < 700 ? tamano.height - 40 : 640.0;
 
     return Dialog(
@@ -79,30 +136,64 @@ class HistorialAbonosDialog extends ConsumerWidget {
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: Text('Historial de Abonos · ${credito.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    'Historial de Abonos · ${credito.numeroDocumento}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             const SizedBox(height: 4),
-            Text(credito.nombreCliente, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+            Text(
+              credito.nombreCliente,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
             const SizedBox(height: 14),
             Expanded(
               child: abonosAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                ),
+                error: (e, st) => Center(
+                  child: Text(
+                    'Error: $e',
+                    style: GoogleFonts.poppins(color: Colors.red),
+                  ),
+                ),
                 data: (abonos) {
                   if (abonos.isEmpty) {
-                    return Center(child: Text('Todavía no hay abonos registrados', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+                    return Center(
+                      child: Text(
+                        'Todavía no hay abonos registrados',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      ),
+                    );
                   }
-                  return esMovil ? _tarjetas(context, ref, abonos) : _tabla(context, ref, abonos);
+                  return esMovil
+                      ? _tarjetas(context, ref, abonos)
+                      : _tabla(context, ref, abonos);
                 },
               ),
             ),
@@ -115,12 +206,18 @@ class HistorialAbonosDialog extends ConsumerWidget {
   Widget _tabla(BuildContext context, WidgetRef ref, List<AbonoModel> abonos) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+            decoration: const BoxDecoration(
+              color: Color(0xFFECEEF3),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
             child: Row(
               children: [
                 _celdaHeader('FECHA', 3),
@@ -138,22 +235,44 @@ class HistorialAbonosDialog extends ConsumerWidget {
           Expanded(
             child: ListView.separated(
               itemCount: abonos.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+              separatorBuilder: (context, index) =>
+                  Divider(height: 1, color: Colors.grey.shade200),
               itemBuilder: (context, index) {
                 final a = abonos[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
-                      _celda(3, a.fecha != null ? formatoFecha.format(a.fecha!) : '-'),
-                      _celda(2, formatearMoneda(a.montoAbonado), peso: FontWeight.w700, color: const Color(0xFF16A34A)),
+                      _celda(
+                        3,
+                        a.fecha != null ? formatoFecha.format(a.fecha!) : '-',
+                      ),
+                      _celda(
+                        2,
+                        formatearMoneda(a.montoAbonado),
+                        peso: FontWeight.w700,
+                        color: const Color(0xFF16A34A),
+                      ),
                       _celda(2, formatearMoneda(a.saldoAnterior)),
-                      _celda(2, a.interes > 0 ? formatearMoneda(a.interes) : '-'),
-                      _celda(2, formatearMoneda(a.saldoPendiente), peso: FontWeight.w700),
+                      _celda(
+                        2,
+                        a.interes > 0 ? formatearMoneda(a.interes) : '-',
+                      ),
+                      _celda(
+                        2,
+                        formatearMoneda(a.saldoPendiente),
+                        peso: FontWeight.w700,
+                      ),
                       _celda(2, a.metodoPago),
                       _celda(2, a.numeroRecibo.isEmpty ? '-' : a.numeroRecibo),
                       _celda(2, a.usuario.isEmpty ? '-' : a.usuario),
-                      SizedBox(width: 40, child: _menuAcciones(context, ref, a)),
+                      SizedBox(
+                        width: 40,
+                        child: _menuAcciones(context, ref, a),
+                      ),
                     ],
                   ),
                 );
@@ -168,21 +287,48 @@ class HistorialAbonosDialog extends ConsumerWidget {
   Widget _celdaHeader(String texto, int flex) {
     return Expanded(
       flex: flex,
-      child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
-    );
-  }
-
-  Widget _celda(int flex, String texto, {FontWeight peso = FontWeight.w400, Color? color}) {
-    return Expanded(
-      flex: flex,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: Text(texto, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12, fontWeight: peso, color: color ?? const Color(0xFF1A1A1A))),
+      child: Text(
+        texto,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: Colors.grey.shade600,
+        ),
       ),
     );
   }
 
-  Widget _tarjetas(BuildContext context, WidgetRef ref, List<AbonoModel> abonos) {
+  Widget _celda(
+    int flex,
+    String texto, {
+    FontWeight peso = FontWeight.w400,
+    Color? color,
+  }) {
+    return Expanded(
+      flex: flex,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Text(
+          texto,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: peso,
+            color: color ?? const Color(0xFF1A1A1A),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tarjetas(
+    BuildContext context,
+    WidgetRef ref,
+    List<AbonoModel> abonos,
+  ) {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return ListView.separated(
       itemCount: abonos.length,
@@ -191,30 +337,79 @@ class HistorialAbonosDialog extends ConsumerWidget {
         final a = abonos[index];
         return Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FB),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFC7CBD3)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Text(formatearMoneda(a.montoAbonado), style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: const Color(0xFF16A34A))),
+                  Text(
+                    formatearMoneda(a.montoAbonado),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
                   const Spacer(),
-                  Text(a.fecha != null ? formatoFecha.format(a.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                  Text(
+                    a.fecha != null ? formatoFecha.format(a.fecha!) : '-',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
                   _menuAcciones(context, ref, a),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Saldo anterior: ${formatearMoneda(a.saldoAnterior)} → Saldo pendiente: ${formatearMoneda(a.saldoPendiente)}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+              Text(
+                'Saldo anterior: ${formatearMoneda(a.saldoAnterior)} → Saldo pendiente: ${formatearMoneda(a.saldoPendiente)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade700,
+                ),
+              ),
               if (a.interes > 0) ...[
                 const SizedBox(height: 4),
-                Text('Interés aplicado: ${formatearMoneda(a.interes)}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                Text(
+                  'Interés aplicado: ${formatearMoneda(a.interes)}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
               ],
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Text(a.metodoPago, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
-                  if (a.numeroRecibo.isNotEmpty) Text(' · Recibo: ${a.numeroRecibo}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
-                  if (a.usuario.isNotEmpty) Text(' · ${a.usuario}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                  Text(
+                    a.metodoPago,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                  if (a.numeroRecibo.isNotEmpty)
+                    Text(
+                      ' · Recibo: ${a.numeroRecibo}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  if (a.usuario.isNotEmpty)
+                    Text(
+                      ' · ${a.usuario}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                 ],
               ),
             ],

@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +41,8 @@ class RegistrarCompraScreen extends ConsumerStatefulWidget {
   const RegistrarCompraScreen({super.key, this.tabId});
 
   @override
-  ConsumerState<RegistrarCompraScreen> createState() => _RegistrarCompraScreenState();
+  ConsumerState<RegistrarCompraScreen> createState() =>
+      _RegistrarCompraScreenState();
 }
 
 class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
@@ -73,7 +75,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   DateTime? _ultimaTeclaEscanerFisico;
   static const _intervaloMaximoEscanerFisico = Duration(milliseconds: 45);
 
-  bool get _esPlataformaMovil => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _esPlataformaMovil =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   // Específicamente el navegador de un celular (no la app APK, no
   // escritorio): ver _campoInlineNumero, donde hace que el teclado
@@ -122,7 +126,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     if (compraOrigen != null) {
       ref.read(compraParaCargarProvider.notifier).limpiar();
       ref.read(carritoCompraProvider.notifier).cargarDesdeCompra(compraOrigen);
-      _descuentoGlobalController.text = compraOrigen.descuentoGlobalPorcentaje == 0 ? '' : compraOrigen.descuentoGlobalPorcentaje.toStringAsFixed(1);
+      _descuentoGlobalController.text =
+          compraOrigen.descuentoGlobalPorcentaje == 0
+          ? ''
+          : compraOrigen.descuentoGlobalPorcentaje.toStringAsFixed(1);
       _isvController.text = compraOrigen.isvPorcentaje.toStringAsFixed(0);
     }
 
@@ -131,7 +138,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     // cualquier momento sin que el usuario tenga que tocar nada primero.
     if (!_esPlataformaMovil) {
       FocusManager.instance.addListener(_alCambiarFocoGlobal);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _alCambiarFocoGlobal());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _alCambiarFocoGlobal(),
+      );
     }
   }
 
@@ -154,8 +163,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     // de "modo menú" que F10 puede disparar a nivel de Windows se corta
     // aparte, en el lado nativo (ver FlutterWindow::MessageHandler en
     // windows/runner/flutter_window.cpp).
-    if (event.logicalKey == LogicalKeyboardKey.f10 || event.logicalKey == LogicalKeyboardKey.f12) {
-      if (event is KeyDownEvent && mounted && !_guardando && _esPestanaActiva() && !_pausarLectorFisico) {
+    if (event.logicalKey == LogicalKeyboardKey.f10 ||
+        event.logicalKey == LogicalKeyboardKey.f12) {
+      if (event is KeyDownEvent &&
+          mounted &&
+          !_guardando &&
+          _esPestanaActiva() &&
+          !_pausarLectorFisico) {
         if (event.logicalKey == LogicalKeyboardKey.f10) {
           _agregarProductoDesdeBusqueda();
         } else {
@@ -179,10 +193,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   bool _detectarEscaneoFisico(KeyEvent event) {
     final ahora = DateTime.now();
     final ultimaTecla = _ultimaTeclaEscanerFisico;
-    final llegoRapido = ultimaTecla != null && ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
+    final llegoRapido =
+        ultimaTecla != null &&
+        ahora.difference(ultimaTecla) < _intervaloMaximoEscanerFisico;
     _ultimaTeclaEscanerFisico = ahora;
 
-    if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
       final codigo = _bufferEscanerFisico.toString();
       _bufferEscanerFisico.clear();
       if (llegoRapido && codigo.length >= 3) {
@@ -211,7 +228,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final tabId = widget.tabId;
     if (tabId == null) return true;
     final tabsState = ref.read(tabsProvider);
-    if (tabsState.indiceActivo < 0 || tabsState.indiceActivo >= tabsState.tabs.length) return false;
+    if (tabsState.indiceActivo < 0 ||
+        tabsState.indiceActivo >= tabsState.tabs.length)
+      return false;
     return tabsState.tabs[tabsState.indiceActivo].id == tabId;
   }
 
@@ -252,20 +271,31 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Future<bool> _confirmarDialogo(String titulo, String mensaje) async {
     final resultado = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(titulo, style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          titulo,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(mensaje, style: GoogleFonts.poppins(fontSize: 13)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('No', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('No', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Sí', style: GoogleFonts.poppins()),
           ),
@@ -285,7 +315,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     _pausarLectorFisico = true;
     try {
       final producto = await Navigator.of(context).push<ProductoModel>(
-        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoCompraDialog()),
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => const BuscarProductoCompraDialog(),
+        ),
       );
       if (producto == null || !mounted) return;
       ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(producto);
@@ -302,14 +335,24 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   Future<void> _escanearFactura() async {
     _pausarLectorFisico = true;
     try {
-      final resultado = await Navigator.of(context).push<DatosFacturaConfirmados>(
-        MaterialPageRoute(fullscreenDialog: true, builder: (context) => const EscanearFacturaDialog()),
-      );
+      final resultado = await Navigator.of(context)
+          .push<DatosFacturaConfirmados>(
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (context) => const EscanearFacturaDialog(),
+            ),
+          );
       if (resultado == null || !mounted) return;
 
       final notifier = ref.read(carritoCompraProvider.notifier);
-      if (resultado.idProveedor != null && resultado.documentoProveedor != null && resultado.razonSocialProveedor != null) {
-        notifier.establecerProveedor(idProveedor: resultado.idProveedor!, documentoProveedor: resultado.documentoProveedor!, razonSocial: resultado.razonSocialProveedor!);
+      if (resultado.idProveedor != null &&
+          resultado.documentoProveedor != null &&
+          resultado.razonSocialProveedor != null) {
+        notifier.establecerProveedor(
+          idProveedor: resultado.idProveedor!,
+          documentoProveedor: resultado.documentoProveedor!,
+          razonSocial: resultado.razonSocialProveedor!,
+        );
       }
       // A diferencia de proveedor/fecha/condición (que la UI pinta leyendo
       // directo de carrito.xxx en cada build), "No. Factura" se muestra con
@@ -324,12 +367,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       }
       notifier.establecerFecha(resultado.fecha);
       notifier.establecerCondicion(resultado.condicion);
-      if (resultado.condicion == 'Credito' && resultado.fechaVencimiento != null) notifier.establecerFechaVencimiento(resultado.fechaVencimiento!);
+      if (resultado.condicion == 'Credito' &&
+          resultado.fechaVencimiento != null)
+        notifier.establecerFechaVencimiento(resultado.fechaVencimiento!);
       for (final item in resultado.items) {
-        notifier.agregarItemEscaneado(producto: item.producto, cantidad: item.cantidad, precioCompra: item.precioCompra, descuentoPorcentaje: item.descuentoPorcentaje);
+        notifier.agregarItemEscaneado(
+          producto: item.producto,
+          cantidad: item.cantidad,
+          precioCompra: item.precioCompra,
+          descuentoPorcentaje: item.descuentoPorcentaje,
+        );
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Se agregaron ${resultado.items.length} producto(s). Revisá la tabla antes de registrar la compra.')),
+        SnackBar(
+          content: Text(
+            'Se agregaron ${resultado.items.length} producto(s). Revisá la tabla antes de registrar la compra.',
+          ),
+        ),
       );
     } finally {
       _pausarLectorFisico = false;
@@ -348,13 +402,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       numerico: false,
       onSubmitted: (_) => _confirmarCodigoBarras(),
       child: TextField(
-      inputFormatters: [mayusculasInputFormatter],
-      autocorrect: false,
-      enableSuggestions: false,
-      controller: _ctrlCodigoBarras,
-      focusNode: _focusCodigoBarras,
-      onSubmitted: (_) => _confirmarCodigoBarras(),
-    ),
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
+        controller: _ctrlCodigoBarras,
+        focusNode: _focusCodigoBarras,
+        onSubmitted: (_) => _confirmarCodigoBarras(),
+      ),
     );
   }
 
@@ -385,7 +439,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       if (!mounted) return;
     }
     final productos = ref.read(productosStreamProvider).value ?? [];
-    bool coincide(ProductoModel p, String t) => p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
+    bool coincide(ProductoModel p, String t) =>
+        p.estado && (p.codigoBarras.trim() == t || p.codigo.trim() == t);
     var coincidencias = productos.where((p) => coincide(p, texto)).toList();
     if (coincidencias.isEmpty) {
       // Ver variantesCodigoBarras: corrige tanto el código leído al revés
@@ -400,7 +455,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _mostrarMensaje('Código escaneado no encontrado: $texto');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).agregarProductoDirecto(coincidencias.first);
+    ref
+        .read(carritoCompraProvider.notifier)
+        .agregarProductoDirecto(coincidencias.first);
   }
 
   void _quitarItem(int index) {
@@ -416,14 +473,22 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final item = ref.read(carritoCompraProvider).items[index];
     final pendientes = ref.read(pendientesReposicionStreamProvider).value ?? [];
     final resultado = await showDialog<Object?>(
+      useRootNavigator: false,
       context: context,
-      builder: (context) => VincularPendienteDialog(pendientes: pendientes, idVinculadoActual: item.idPendienteReposicionVinculado),
+      builder: (context) => VincularPendienteDialog(
+        pendientes: pendientes,
+        idVinculadoActual: item.idPendienteReposicionVinculado,
+      ),
     );
     if (resultado == null) return;
     if (identical(resultado, quitarVinculoPendiente)) {
-      ref.read(carritoCompraProvider.notifier).vincularPendienteReposicion(index, null);
+      ref
+          .read(carritoCompraProvider.notifier)
+          .vincularPendienteReposicion(index, null);
     } else if (resultado is PendienteReposicionModel) {
-      ref.read(carritoCompraProvider.notifier).vincularPendienteReposicion(index, resultado);
+      ref
+          .read(carritoCompraProvider.notifier)
+          .vincularPendienteReposicion(index, resultado);
     }
   }
 
@@ -435,7 +500,11 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         tooltip: vinculado
             ? 'Repone la venta ${item.numeroDocumentoVentaVinculada} (${item.nombreProductoVentaVinculada}). Tocá para cambiar o quitar.'
             : 'Vincular a una venta anticipada (si esta compra repone un producto distinto al que se facturó)',
-        icon: Icon(Icons.link, size: 18, color: vinculado ? const Color(0xFF16A34A) : Colors.grey.shade400),
+        icon: Icon(
+          Icons.link,
+          size: 18,
+          color: vinculado ? const Color(0xFF16A34A) : Colors.grey.shade400,
+        ),
         onPressed: () => _abrirVincularPendiente(index),
       ),
     );
@@ -445,7 +514,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: const Color(0xFF16A34A).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16A34A).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -454,7 +526,11 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           Flexible(
             child: Text(
               'Repone venta ${item.numeroDocumentoVentaVinculada}: ${item.nombreProductoVentaVinculada}',
-              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF16A34A)),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF16A34A),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -477,7 +553,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        child: Icon(icono, size: 16, color: onPressed == null ? Colors.grey.shade300 : Colors.grey.shade700),
+        child: Icon(
+          icono,
+          size: 16,
+          color: onPressed == null
+              ? Colors.grey.shade300
+              : Colors.grey.shade700,
+        ),
       ),
     );
   }
@@ -486,8 +568,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _botonOrdenIcono(Icons.keyboard_arrow_up, index == 0 ? null : () => _moverItem(index, index - 1)),
-        _botonOrdenIcono(Icons.keyboard_arrow_down, index == total - 1 ? null : () => _moverItem(index, index + 1)),
+        _botonOrdenIcono(
+          Icons.keyboard_arrow_up,
+          index == 0 ? null : () => _moverItem(index, index - 1),
+        ),
+        _botonOrdenIcono(
+          Icons.keyboard_arrow_down,
+          index == total - 1 ? null : () => _moverItem(index, index + 1),
+        ),
       ],
     );
   }
@@ -497,7 +585,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _mostrarMensaje('La cantidad debe ser mayor a 0');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, cantidad: nuevaCantidad);
+    ref
+        .read(carritoCompraProvider.notifier)
+        .actualizarLinea(index, cantidad: nuevaCantidad);
   }
 
   void _actualizarPrecio(int index, double nuevoPrecio) {
@@ -505,7 +595,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _mostrarMensaje('Precio inválido');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioCompra: nuevoPrecio);
+    ref
+        .read(carritoCompraProvider.notifier)
+        .actualizarLinea(index, precioCompra: nuevoPrecio);
     _sincronizarMargenControlador(index);
   }
 
@@ -514,7 +606,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _mostrarMensaje('El descuento debe estar entre 0 y 100');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, descuentoPorcentaje: descuento);
+    ref
+        .read(carritoCompraProvider.notifier)
+        .actualizarLinea(index, descuentoPorcentaje: descuento);
     _sincronizarMargenControlador(index);
   }
 
@@ -522,7 +616,11 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   /// aplicados): la misma referencia que usa el margen de ganancia sugerido.
   double _costoFinalItem(dynamic item) {
     final isv = ref.read(carritoCompraProvider).isvPorcentaje;
-    return redondearMoneda((item.precioCompra as double) * (1 - (item.descuentoPorcentaje as double) / 100) * (1 + isv / 100));
+    return redondearMoneda(
+      (item.precioCompra as double) *
+          (1 - (item.descuentoPorcentaje as double) / 100) *
+          (1 + isv / 100),
+    );
   }
 
   // `productos.precioVenta` siempre se guarda CON ISV incluido -es el precio
@@ -534,7 +632,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // que acá el campo "Precio de venta" y el "Margen %" se leen/editan
   // directo, sin convertir nada: lo que se ve en pantalla es exactamente lo
   // que se va a guardar en el catálogo.
-  double _precioVentaFinal(dynamic item) => redondearMoneda((item.precioVentaNuevo as double?) ?? 0);
+  double _precioVentaFinal(dynamic item) =>
+      redondearMoneda((item.precioVentaNuevo as double?) ?? 0);
 
   String get _etiquetaPrecioVenta => 'Precio de venta (c/ISV)';
 
@@ -544,9 +643,20 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return costo > 0 ? ((precioFinal - costo) / costo * 100) : 0.0;
   }
 
-  (TextEditingController, TextEditingController) _controladoresMargen(int index, dynamic item) {
-    final ctrlMargen = _ctrlMargen.putIfAbsent(index, () => TextEditingController(text: _margenActual(item).toStringAsFixed(1)));
-    final ctrlPrecioVenta = _ctrlPrecioVenta.putIfAbsent(index, () => TextEditingController(text: _precioVentaFinal(item).toStringAsFixed(2)));
+  (TextEditingController, TextEditingController) _controladoresMargen(
+    int index,
+    dynamic item,
+  ) {
+    final ctrlMargen = _ctrlMargen.putIfAbsent(
+      index,
+      () => TextEditingController(text: _margenActual(item).toStringAsFixed(1)),
+    );
+    final ctrlPrecioVenta = _ctrlPrecioVenta.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _precioVentaFinal(item).toStringAsFixed(2),
+      ),
+    );
     return (ctrlMargen, ctrlPrecioVenta);
   }
 
@@ -557,7 +667,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       _mostrarMensaje('Precio inválido');
       return;
     }
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: redondearMoneda(nuevoPrecioVentaFinal));
+    ref
+        .read(carritoCompraProvider.notifier)
+        .actualizarLinea(
+          index,
+          precioVentaNuevo: redondearMoneda(nuevoPrecioVentaFinal),
+        );
     _sincronizarMargenControlador(index);
   }
 
@@ -566,7 +681,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     if (index >= carrito.items.length) return;
     final costo = _costoFinalItem(carrito.items[index]);
     final nuevoPrecioFinal = redondearMoneda(costo * (1 + nuevoMargen / 100));
-    ref.read(carritoCompraProvider.notifier).actualizarLinea(index, precioVentaNuevo: nuevoPrecioFinal);
+    ref
+        .read(carritoCompraProvider.notifier)
+        .actualizarLinea(index, precioVentaNuevo: nuevoPrecioFinal);
     _ctrlPrecioVenta[index]?.text = nuevoPrecioFinal.toStringAsFixed(2);
   }
 
@@ -585,7 +702,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   }
 
   double _descuentoLineaMonto(dynamic item) {
-    final sinDescuento = redondearMoneda((item.precioCompra as double) * (item.cantidad as double));
+    final sinDescuento = redondearMoneda(
+      (item.precioCompra as double) * (item.cantidad as double),
+    );
     return redondearMoneda(sinDescuento - (item.subtotal as double));
   }
 
@@ -597,7 +716,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // importe. item.subtotal (neto, usado para el ISV/Total a pagar reales y
   // para lo que se guarda en Firestore) no cambia en ningún otro lado: esto
   // es solo para este texto en pantalla.
-  double _importeBrutoItem(dynamic item) => redondearMoneda((item.precioCompra as double) * (item.cantidad as double));
+  double _importeBrutoItem(dynamic item) => redondearMoneda(
+    (item.precioCompra as double) * (item.cantidad as double),
+  );
 
   // ---------- Limpiar ----------
 
@@ -632,14 +753,22 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   Future<void> _confirmarLimpiar() async {
     final carrito = ref.read(carritoCompraProvider);
-    final hayAlgoQuePerder = carrito.items.isNotEmpty || carrito.razonSocial.isNotEmpty;
+    final hayAlgoQuePerder =
+        carrito.items.isNotEmpty || carrito.razonSocial.isNotEmpty;
     if (hayAlgoQuePerder) {
-      final continuar = await _confirmarDialogo('Limpiar compra', '¿Seguro que querés borrar todos los productos y datos ingresados en esta compra?');
+      final continuar = await _confirmarDialogo(
+        'Limpiar compra',
+        '¿Seguro que querés borrar todos los productos y datos ingresados en esta compra?',
+      );
       if (!continuar) return;
     }
     _debounceEnEspera?.cancel();
     if (carrito.idEnEspera != null) {
-      unawaited(ref.read(compraRepositoryProvider).eliminarCompraEnEspera(carrito.idEnEspera!));
+      unawaited(
+        ref
+            .read(compraRepositoryProvider)
+            .eliminarCompraEnEspera(carrito.idEnEspera!),
+      );
     }
     _limpiarTodo();
   }
@@ -652,7 +781,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   void _programarAutoguardado(CarritoCompraState carrito) {
     _debounceEnEspera?.cancel();
     if (carrito.items.isEmpty) return;
-    _debounceEnEspera = Timer(const Duration(seconds: 2), _guardarEnEsperaAutomatico);
+    _debounceEnEspera = Timer(
+      const Duration(seconds: 2),
+      _guardarEnEsperaAutomatico,
+    );
   }
 
   Future<void> _guardarEnEsperaAutomatico() async {
@@ -691,13 +823,21 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   }
 
   Future<void> _verEnEspera() async {
-    final sesion = await showDialog<CompraEnEsperaModel>(context: context, builder: (context) => const ComprasEnEsperaDialog());
+    final sesion = await showDialog<CompraEnEsperaModel>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const ComprasEnEsperaDialog(),
+    );
     if (sesion == null || !mounted) return;
     ref.read(carritoCompraProvider.notifier).cargarSesion(sesion);
     _noFacturaController.text = sesion.noFactura;
-    _descuentoGlobalController.text = sesion.descuentoGlobalPorcentaje == 0 ? '' : sesion.descuentoGlobalPorcentaje.toStringAsFixed(1);
+    _descuentoGlobalController.text = sesion.descuentoGlobalPorcentaje == 0
+        ? ''
+        : sesion.descuentoGlobalPorcentaje.toStringAsFixed(1);
     _isvController.text = sesion.isvPorcentaje.toStringAsFixed(0);
-    _ajusteManualController.text = sesion.ajusteManual == 0 ? '' : sesion.ajusteManual.toStringAsFixed(2);
+    _ajusteManualController.text = sesion.ajusteManual == 0
+        ? ''
+        : sesion.ajusteManual.toStringAsFixed(2);
   }
 
   // ---------- Confirmar compra ----------
@@ -720,7 +860,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     setState(() => _guardando = true);
     try {
       final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
-      final compra = await ref.read(compraRepositoryProvider).registrarCompra(
+      final compra = await ref
+          .read(compraRepositoryProvider)
+          .registrarCompra(
             noFactura: _noFacturaController.text.trim(),
             idProveedor: carrito.idProveedor,
             documentoProveedor: carrito.documentoProveedor,
@@ -728,7 +870,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             condicion: carrito.condicion,
             metodoPago: carrito.esCredito ? 'N/A' : carrito.metodoPago,
             fechaRegistro: carrito.fecha,
-            fechaVencimiento: carrito.esCredito ? carrito.fechaVencimiento : null,
+            fechaVencimiento: carrito.esCredito
+                ? carrito.fechaVencimiento
+                : null,
             descuentoGlobalPorcentaje: carrito.descuentoGlobalPorcentaje,
             descuentoTotalMonto: carrito.descuentoTotalMonto,
             isvPorcentaje: carrito.isvPorcentaje,
@@ -742,16 +886,22 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
       if (!mounted) return;
       if (carrito.idEnEspera != null) {
-        unawaited(ref.read(compraRepositoryProvider).eliminarCompraEnEspera(carrito.idEnEspera!));
+        unawaited(
+          ref
+              .read(compraRepositoryProvider)
+              .eliminarCompraEnEspera(carrito.idEnEspera!),
+        );
       }
       _debounceEnEspera?.cancel();
       _limpiarTodo();
       _mostrarMensaje('Compra registrada: ${compra.numeroDocumento}');
       mostrarExitoTransaccion(context);
     } catch (e) {
-      _mostrarMensaje(e is TimeoutException
-          ? 'No se pudo guardar: se agotó el tiempo de espera. Revisá la conexión a internet e intentá de nuevo.'
-          : 'Error al registrar: $e');
+      _mostrarMensaje(
+        e is TimeoutException
+            ? 'No se pudo guardar: se agotó el tiempo de espera. Revisá la conexión a internet e intentá de nuevo.'
+            : 'Error al registrar: $e',
+      );
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -762,11 +912,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   @override
   Widget build(BuildContext context) {
     final carrito = ref.watch(carritoCompraProvider);
-    ref.listen<CarritoCompraState>(carritoCompraProvider, (previous, next) => _programarAutoguardado(next));
+    ref.listen<CarritoCompraState>(
+      carritoCompraProvider,
+      (previous, next) => _programarAutoguardado(next),
+    );
     // Si el diálogo de "ver la tabla más grande" está abierto, le pide que
     // se vuelva a pintar con los datos ya leídos por este `ref` cada vez que
     // el carrito cambia (ver _expandirTablaProductos).
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refrescarDialogoExpandido?.call(() {}));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refrescarDialogoExpandido?.call(() {}),
+    );
 
     // Ver _focusAnclaMovil: este Focus envuelve toda la pantalla para que
     // ese nodo (usado solo en web móvil) siempre tenga dónde vivir, sin
@@ -776,30 +931,36 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       canRequestFocus: true,
       skipTraversal: true,
       child: Container(
-      color: const Color(0xFFF2F3F7),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final esMovil = constraints.maxWidth < 900;
-          final altoTabla = (constraints.maxHeight * 0.58).clamp(360.0, 1000.0);
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(esMovil ? 14 : 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _encabezado(esMovil),
-                const SizedBox(height: 14),
-                _tarjetaDatosCompra(carrito, esMovil),
-                const SizedBox(height: 14),
-                esMovil
-                    ? _tarjetaCarritoGrande(carrito, esMovil)
-                    : SizedBox(height: altoTabla, child: _tarjetaCarritoGrande(carrito, esMovil)),
-                const SizedBox(height: 14),
-                _tarjetaTotales(carrito, esMovil),
-              ],
-            ),
-          );
-        },
-      ),
+        color: const Color(0xFFF2F3F7),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final esMovil = constraints.maxWidth < 900;
+            final altoTabla = (constraints.maxHeight * 0.58).clamp(
+              360.0,
+              1000.0,
+            );
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(esMovil ? 14 : 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _encabezado(esMovil),
+                  const SizedBox(height: 14),
+                  _tarjetaDatosCompra(carrito, esMovil),
+                  const SizedBox(height: 14),
+                  esMovil
+                      ? _tarjetaCarritoGrande(carrito, esMovil)
+                      : SizedBox(
+                          height: altoTabla,
+                          child: _tarjetaCarritoGrande(carrito, esMovil),
+                        ),
+                  const SizedBox(height: 14),
+                  _tarjetaTotales(carrito, esMovil),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -810,11 +971,21 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       spacing: 12,
       runSpacing: 10,
       children: [
-        Text('Registrar Compra', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          'Registrar Compra',
+          style: GoogleFonts.poppins(
+            fontSize: esMovil ? 19 : 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
         OutlinedButton.icon(
           onPressed: _confirmarLimpiar,
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-          label: Text('Limpiar Compra', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text(
+            'Limpiar Compra',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           style: _estiloBotonSecundario(),
         ),
         OutlinedButton.icon(
@@ -826,7 +997,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         OutlinedButton.icon(
           onPressed: _verEnEspera,
           icon: const Icon(Icons.pause_circle_outline, size: 18),
-          label: Text('Compras en Espera', style: GoogleFonts.poppins(fontSize: 13)),
+          label: Text(
+            'Compras en Espera',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           style: _estiloBotonSecundario(),
         ),
       ],
@@ -835,7 +1009,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   void _verDetalleCompra() {
     Navigator.of(context).push(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const DetalleCompraScreen()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const DetalleCompraScreen(),
+      ),
     );
   }
 
@@ -856,7 +1033,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: child,
     );
@@ -867,10 +1050,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       labelText: label,
       hintText: hint,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
-      hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade400),
+      hintStyle: GoogleFonts.poppins(
+        fontSize: 11.5,
+        color: Colors.grey.shade400,
+      ),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
@@ -893,18 +1082,45 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 width: esMovil ? double.infinity : 160,
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(context: context, initialDate: carrito.fecha, firstDate: DateTime(2020), lastDate: DateTime(2100));
-                    if (fecha != null) ref.read(carritoCompraProvider.notifier).establecerFecha(fecha);
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: carrito.fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (fecha != null)
+                      ref
+                          .read(carritoCompraProvider.notifier)
+                          .establecerFecha(fecha);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(width: 10),
-                        Flexible(child: Text(formatoFecha.format(carrito.fecha), overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)))),
+                        Flexible(
+                          child: Text(
+                            formatoFecha.format(carrito.fecha),
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -914,21 +1130,45 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 width: esMovil ? double.infinity : 260,
                 child: proveedoresAsync.when(
                   data: (proveedores) {
-                    final actual = proveedores.where((p) => p.id == carrito.idProveedor).toList();
+                    final actual = proveedores
+                        .where((p) => p.id == carrito.idProveedor)
+                        .toList();
                     return DropdownButtonFormField<ProveedorModel>(
                       initialValue: actual.isNotEmpty ? actual.first : null,
                       isExpanded: true,
                       decoration: _decoracion('Proveedor'),
-                      style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                      items: proveedores.map((p) => DropdownMenuItem(value: p, child: Text(p.razonSocial, overflow: TextOverflow.ellipsis))).toList(),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                      items: proveedores
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(
+                                p.razonSocial,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) {
                         if (v == null) return;
-                        ref.read(carritoCompraProvider.notifier).establecerProveedor(idProveedor: v.id, documentoProveedor: v.rtn, razonSocial: v.razonSocial);
+                        ref
+                            .read(carritoCompraProvider.notifier)
+                            .establecerProveedor(
+                              idProveedor: v.id,
+                              documentoProveedor: v.rtn,
+                              razonSocial: v.razonSocial,
+                            );
                       },
                     );
                   },
                   loading: () => const LinearProgressIndicator(),
-                  error: (e, st) => Text('Error cargando proveedores', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
+                  error: (e, st) => Text(
+                    'Error cargando proveedores',
+                    style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+                  ),
                 ),
               ),
               SizedBox(
@@ -937,14 +1177,16 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   controller: _noFacturaController,
                   numerico: false,
                   child: TextField(
-                  inputFormatters: [mayusculasInputFormatter],
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  controller: _noFacturaController,
-                  style: GoogleFonts.poppins(fontSize: 13),
-                  decoration: _decoracion('No. Factura'),
-                  onChanged: (v) => ref.read(carritoCompraProvider.notifier).establecerNoFactura(v),
-                ),
+                    inputFormatters: [mayusculasInputFormatter],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    controller: _noFacturaController,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: _decoracion('No. Factura'),
+                    onChanged: (v) => ref
+                        .read(carritoCompraProvider.notifier)
+                        .establecerNoFactura(v),
+                  ),
                 ),
               ),
               SizedBox(
@@ -953,14 +1195,19 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   initialValue: carrito.condicion,
                   isExpanded: true,
                   decoration: _decoracion('Condición'),
-                  style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF1A1A1A),
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
                     DropdownMenuItem(value: 'Credito', child: Text('Crédito')),
                   ],
                   onChanged: (v) {
                     if (v == null) return;
-                    ref.read(carritoCompraProvider.notifier).establecerCondicion(v);
+                    ref
+                        .read(carritoCompraProvider.notifier)
+                        .establecerCondicion(v);
                   },
                 ),
               ),
@@ -971,25 +1218,43 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     onTap: () async {
                       final fecha = await showDatePicker(
                         context: context,
-                        initialDate: carrito.fechaVencimiento ?? DateTime.now().add(const Duration(days: 30)),
+                        initialDate:
+                            carrito.fechaVencimiento ??
+                            DateTime.now().add(const Duration(days: 30)),
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2100),
                       );
-                      if (fecha != null) ref.read(carritoCompraProvider.notifier).establecerFechaVencimiento(fecha);
+                      if (fecha != null)
+                        ref
+                            .read(carritoCompraProvider.notifier)
+                            .establecerFechaVencimiento(fecha);
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8EAF0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.event_outlined, size: 16, color: Colors.grey.shade500),
+                          Icon(
+                            Icons.event_outlined,
+                            size: 16,
+                            color: Colors.grey.shade500,
+                          ),
                           const SizedBox(width: 10),
                           Flexible(
                             child: Text(
                               'Vence: ${carrito.fechaVencimiento != null ? formatoFecha.format(carrito.fechaVencimiento!) : 'Sin definir'}',
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: const Color(0xFF1A1A1A),
+                              ),
                             ),
                           ),
                         ],
@@ -1001,30 +1266,53 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 SizedBox(
                   width: esMovil ? double.infinity : 160,
                   child: DropdownButtonFormField<String>(
-                    initialValue: _metodosPago.contains(carrito.metodoPago) ? carrito.metodoPago : null,
+                    initialValue: _metodosPago.contains(carrito.metodoPago)
+                        ? carrito.metodoPago
+                        : null,
                     isExpanded: true,
                     decoration: _decoracion('Método de pago'),
-                    style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                    items: _metodosPago.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                    items: _metodosPago
+                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .toList(),
                     onChanged: (v) {
                       if (v == null) return;
-                      ref.read(carritoCompraProvider.notifier).establecerMetodoPago(v);
+                      ref
+                          .read(carritoCompraProvider.notifier)
+                          .establecerMetodoPago(v);
                     },
                   ),
                 ),
               InkWell(
-                onTap: () => setState(() => _datosExpandidos = !_datosExpandidos),
+                onTap: () =>
+                    setState(() => _datosExpandidos = !_datosExpandidos),
                 borderRadius: BorderRadius.circular(10),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         _datosExpandidos ? 'Ver menos' : 'Más datos',
-                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFC62828),
+                        ),
                       ),
-                      Icon(_datosExpandidos ? Icons.expand_less : Icons.expand_more, size: 20, color: const Color(0xFFC62828)),
+                      Icon(
+                        _datosExpandidos
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        size: 20,
+                        color: const Color(0xFFC62828),
+                      ),
                     ],
                   ),
                 ),
@@ -1044,7 +1332,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                       children: [
                         Divider(color: Colors.grey.shade200),
                         const SizedBox(height: 14),
-                        Text('Descuento global, ISV y ajuste manual', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(
+                          'Descuento global, ISV y ajuste manual',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 14,
@@ -1057,19 +1351,31 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                 controller: _descuentoGlobalController,
                                 numerico: true,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _descuentoGlobalController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('Descuento global (%)'),
-                                onChanged: (v) {
-                                  final valor = double.tryParse(v.replaceAll(',', '').trim());
-                                  if (valor == null || valor < 0 || valor > 100) return;
-                                  ref.read(carritoCompraProvider.notifier).establecerDescuentoGlobal(valor);
-                                },
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _descuentoGlobalController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Descuento global (%)',
+                                  ),
+                                  onChanged: (v) {
+                                    final valor = double.tryParse(
+                                      v.replaceAll(',', '').trim(),
+                                    );
+                                    if (valor == null ||
+                                        valor < 0 ||
+                                        valor > 100)
+                                      return;
+                                    ref
+                                        .read(carritoCompraProvider.notifier)
+                                        .establecerDescuentoGlobal(valor);
+                                  },
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -1078,19 +1384,26 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                 controller: _isvController,
                                 numerico: true,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _isvController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('ISV (%)'),
-                                onChanged: (v) {
-                                  final valor = double.tryParse(v.replaceAll(',', '').trim());
-                                  if (valor == null || valor < 0) return;
-                                  ref.read(carritoCompraProvider.notifier).establecerIsv(valor);
-                                },
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _isvController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion('ISV (%)'),
+                                  onChanged: (v) {
+                                    final valor = double.tryParse(
+                                      v.replaceAll(',', '').trim(),
+                                    );
+                                    if (valor == null || valor < 0) return;
+                                    ref
+                                        .read(carritoCompraProvider.notifier)
+                                        .establecerIsv(valor);
+                                  },
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -1099,18 +1412,30 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                                 controller: _ajusteManualController,
                                 numerico: true,
                                 child: TextField(
-                                inputFormatters: [mayusculasInputFormatter],
-                                autocorrect: false,
-                                enableSuggestions: false,
-                                controller: _ajusteManualController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                                style: GoogleFonts.poppins(fontSize: 13),
-                                decoration: _decoracion('Ajuste manual (+/-)', hint: 'Para cuadrar centavos con la factura'),
-                                onChanged: (v) {
-                                  final valor = double.tryParse(v.replaceAll(',', '').trim());
-                                  ref.read(carritoCompraProvider.notifier).establecerAjusteManual(valor ?? 0);
-                                },
-                              ),
+                                  inputFormatters: [mayusculasInputFormatter],
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  controller: _ajusteManualController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                        signed: true,
+                                      ),
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                  decoration: _decoracion(
+                                    'Ajuste manual (+/-)',
+                                    hint:
+                                        'Para cuadrar centavos con la factura',
+                                  ),
+                                  onChanged: (v) {
+                                    final valor = double.tryParse(
+                                      v.replaceAll(',', '').trim(),
+                                    );
+                                    ref
+                                        .read(carritoCompraProvider.notifier)
+                                        .establecerAjusteManual(valor ?? 0);
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -1164,7 +1489,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFC7CBD3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1173,7 +1504,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Productos en la compra',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -1181,8 +1518,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                           child: FilledButton.icon(
                             onPressed: _agregarProductoDesdeBusqueda,
                             icon: const Icon(Icons.add, size: 18),
-                            label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            label: Text(
+                              'Agregar Producto',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ),
                         if (_esPlataformaMovil) ...[
@@ -1190,12 +1542,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                           OutlinedButton.icon(
                             onPressed: _escanearConCamara,
                             icon: const Icon(Icons.qr_code_scanner, size: 16),
-                            label: Text('Escanear', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            label: Text(
+                              'Escanear',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1A1A1A),
                               side: const BorderSide(color: Color(0xFFB6BCC7)),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -1207,13 +1570,24 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: _escanearFactura,
-                          icon: const Icon(Icons.document_scanner_outlined, size: 17),
-                          label: Text('Escanear Factura (con foto)', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                          icon: const Icon(
+                            Icons.document_scanner_outlined,
+                            size: 17,
+                          ),
+                          label: Text(
+                            'Escanear Factura (con foto)',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF0F1B3D),
                             side: const BorderSide(color: Color(0xFF0F1B3D)),
                             padding: const EdgeInsets.symmetric(vertical: 13),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
@@ -1222,7 +1596,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 )
               : Row(
                   children: [
-                    Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Productos en la compra',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     IconButton(
                       tooltip: 'Ver la tabla más grande',
@@ -1234,8 +1614,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     FilledButton.icon(
                       onPressed: _agregarProductoDesdeBusqueda,
                       icon: const Icon(Icons.add, size: 18),
-                      label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      label: Text(
+                        'Agregar Producto',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1264,7 +1659,12 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-                  _filaCarritoMovil(i, carrito.items[i], mapaProductos, carrito.items.length),
+                  _filaCarritoMovil(
+                    i,
+                    carrito.items[i],
+                    mapaProductos,
+                    carrito.items.length,
+                  ),
                 ],
               ],
             )
@@ -1275,15 +1675,24 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             // controladores).
             Expanded(
               child: Center(
-                child: Text('Viendo la tabla ampliada…', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                child: Text(
+                  'Viendo la tabla ampliada…',
+                  style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                ),
               ),
             )
           else
             Expanded(
               child: ListView.separated(
                 itemCount: carrito.items.length,
-                separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                separatorBuilder: (context, i) =>
+                    Divider(height: 1, color: Colors.grey.shade200),
+                itemBuilder: (context, i) => _filaCarritoTabla(
+                  i,
+                  carrito.items[i],
+                  mapaProductos,
+                  carrito.items.length,
+                ),
               ),
             ),
         ],
@@ -1299,6 +1708,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   void _expandirTablaProductos() {
     setState(() => _tablaExpandida = true);
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (dialogContext) {
         final tamano = MediaQuery.of(dialogContext).size;
@@ -1309,7 +1719,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             width: tamano.width - 16,
             height: tamano.height - 16,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: StatefulBuilder(
               builder: (context, setDialogState) {
                 _refrescarDialogoExpandido = setDialogState;
@@ -1321,21 +1734,42 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('Productos en la compra', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                        Text(
+                          'Productos en la compra',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(width: 14),
                         OutlinedButton.icon(
                           onPressed: _agregarProductoDesdeBusqueda,
                           icon: const Icon(Icons.add, size: 18),
-                          label: Text('Agregar Producto', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                          label: Text(
+                            'Agregar Producto',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF1A1A1A),
                             side: const BorderSide(color: Color(0xFFB6BCC7)),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                         const Spacer(),
-                        IconButton(tooltip: 'Cerrar', icon: const Icon(Icons.close), onPressed: () => Navigator.pop(dialogContext)),
+                        IconButton(
+                          tooltip: 'Cerrar',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(dialogContext),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -1344,12 +1778,25 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     Expanded(
                       child: carrito.items.isEmpty
                           ? Center(
-                              child: Text('Todavía no agregaste productos.', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                              child: Text(
+                                'Todavía no agregaste productos.',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
                             )
                           : ListView.separated(
                               itemCount: carrito.items.length,
-                              separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                              itemBuilder: (context, i) => _filaCarritoTabla(i, carrito.items[i], mapaProductos, carrito.items.length),
+                              separatorBuilder: (context, i) => Divider(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+                              itemBuilder: (context, i) => _filaCarritoTabla(
+                                i,
+                                carrito.items[i],
+                                mapaProductos,
+                                carrito.items.length,
+                              ),
                             ),
                     ),
                     const SizedBox(height: 10),
@@ -1376,10 +1823,24 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+          Text(
+            etiqueta.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade500,
+              letterSpacing: 0.3,
+            ),
+          ),
           Text(
             formatearMoneda(valor),
-            style: GoogleFonts.poppins(fontSize: destacado ? 15 : 12.5, fontWeight: FontWeight.w800, color: destacado ? const Color(0xFFC62828) : const Color(0xFF1A1A1A)),
+            style: GoogleFonts.poppins(
+              fontSize: destacado ? 15 : 12.5,
+              fontWeight: FontWeight.w800,
+              color: destacado
+                  ? const Color(0xFFC62828)
+                  : const Color(0xFF1A1A1A),
+            ),
           ),
         ],
       );
@@ -1387,7 +1848,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F3F7),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           total('Subtotal', carrito.subtotal),
@@ -1400,10 +1864,30 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             height: 38,
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarCompra,
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(horizontal: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               child: _guardando
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text('Registrar Compra', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Registrar Compra',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -1412,17 +1896,48 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   }
 
   Widget _encabezadoTablaCarrito() {
-    final estilo = GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estilo = GoogleFonts.poppins(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      color: Colors.grey.shade600,
+    );
     return Row(
       children: [
         const SizedBox(width: 28),
         Expanded(flex: 2, child: Text('Código', style: estilo)),
         Expanded(flex: 4, child: Text('Descripción', style: estilo)),
-        Expanded(flex: 2, child: Text('Cantidad', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text('Costo unitario', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text('Descuento %', textAlign: TextAlign.center, style: estilo)),
-        Expanded(flex: 2, child: Text('Descuento (L)', textAlign: TextAlign.right, style: estilo)),
-        Expanded(flex: 2, child: Text('Importe', textAlign: TextAlign.right, style: estilo)),
+        Expanded(
+          flex: 2,
+          child: Text('Cantidad', textAlign: TextAlign.center, style: estilo),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Costo unitario',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Descuento %',
+            textAlign: TextAlign.center,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            'Descuento (L)',
+            textAlign: TextAlign.right,
+            style: estilo,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text('Importe', textAlign: TextAlign.right, style: estilo),
+        ),
         const SizedBox(width: 32),
         const SizedBox(width: 40),
       ],
@@ -1441,7 +1956,15 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   // así siempre usa el [valorActual]/[alConfirmar] vigentes en vez de quedar
   // atado a los del primer build (que sería el bug si el listener capturara
   // esos parámetros directamente).
-  Widget _campoInlineNumero(String claveFoco, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
+  Widget _campoInlineNumero(
+    String claveFoco,
+    TextEditingController controlador,
+    double valorActual,
+    void Function(double) alConfirmar, {
+    String? sufijo,
+    String? prefijo,
+    bool dosDecimales = false,
+  }) {
     // Antes esto agrupaba "Android/iOS" sin importar si era la app (APK) o
     // el navegador del celular, y ambos se quedaban con el teclado nativo
     // del sistema. Ahora solo la app nativa lo conserva: el navegador del
@@ -1478,11 +2001,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         _focusCodigoBarras.requestFocus();
       }
     }
+
     _confirmarInline[claveFoco] = confirmar;
 
     Future<void> abrirTecladoNumerico() async {
       focusNode.unfocus();
       final texto = await showDialog<String>(
+        useRootNavigator: false,
         context: context,
         builder: (context) => TecladoNumericoDialog(
           titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor',
@@ -1499,27 +2024,36 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       numerico: true,
       onSubmitted: (_) => confirmar(),
       child: TextField(
-      inputFormatters: [mayusculasInputFormatter],
-      autocorrect: false,
-      enableSuggestions: false,
-      controller: controlador,
-      focusNode: focusNode,
-      textAlign: TextAlign.center,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: GoogleFonts.poppins(fontSize: 13),
-      decoration: InputDecoration(
-        suffixText: sufijo,
-        prefixText: prefijo,
-        prefixStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
-        filled: true,
-        fillColor: const Color(0xFFE8EAF0),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        inputFormatters: [mayusculasInputFormatter],
+        autocorrect: false,
+        enableSuggestions: false,
+        controller: controlador,
+        focusNode: focusNode,
+        textAlign: TextAlign.center,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: GoogleFonts.poppins(fontSize: 13),
+        decoration: InputDecoration(
+          suffixText: sufijo,
+          prefixText: prefijo,
+          prefixStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+          ),
+          filled: true,
+          fillColor: const Color(0xFFE8EAF0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
+          ),
+        ),
+        onSubmitted: (_) => confirmar(),
+        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       ),
-      onSubmitted: (_) => confirmar(),
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-    ),
     );
 
     if (esMovilNativo) return campo;
@@ -1534,23 +2068,61 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     );
   }
 
-  Widget _campoInlineConEtiqueta(String claveFoco, String etiqueta, TextEditingController controlador, double valorActual, void Function(double) alConfirmar, {bool dosDecimales = false, String? prefijo}) {
+  Widget _campoInlineConEtiqueta(
+    String claveFoco,
+    String etiqueta,
+    TextEditingController controlador,
+    double valorActual,
+    void Function(double) alConfirmar, {
+    bool dosDecimales = false,
+    String? prefijo,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+        Text(
+          etiqueta,
+          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+        ),
         const SizedBox(height: 4),
-        _campoInlineNumero(claveFoco, controlador, valorActual, alConfirmar, prefijo: prefijo, dosDecimales: dosDecimales),
+        _campoInlineNumero(
+          claveFoco,
+          controlador,
+          valorActual,
+          alConfirmar,
+          prefijo: prefijo,
+          dosDecimales: dosDecimales,
+        ),
       ],
     );
   }
 
-  Widget _filaCarritoTabla(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
+  Widget _filaCarritoTabla(
+    int index,
+    dynamic item,
+    Map<String, ProductoModel> mapaProductos,
+    int totalItems,
+  ) {
     final producto = mapaProductos[item.idProducto as String];
 
-    final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
-    final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: (item.precioCompra as double).toStringAsFixed(2)));
-    final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final ctrlCantidad = _ctrlCantidad.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.cantidad as double),
+      ),
+    );
+    final ctrlPrecio = _ctrlPrecio.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: (item.precioCompra as double).toStringAsFixed(2),
+      ),
+    );
+    final ctrlDescuento = _ctrlDescuento.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.descuentoPorcentaje as double),
+      ),
+    );
     final (ctrlMargen, ctrlPrecioVenta) = _controladoresMargen(index, item);
 
     return Padding(
@@ -1562,31 +2134,139 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(width: 28, child: _botonesOrden(index, totalItems)),
-              Expanded(flex: 2, child: Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  producto?.codigo ?? '-',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
               Expanded(
                 flex: 4,
-                child: Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                child: Text(
+                  item.nombreProducto as String,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('cantidad_$index', ctrlCantidad, item.cantidad as double, (v) => _actualizarCantidad(index, v)))),
-              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('precio_$index', ctrlPrecio, item.precioCompra as double, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true))),
-              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineNumero('descuento_$index', ctrlDescuento, item.descuentoPorcentaje as double, (v) => _actualizarDescuentoLinea(index, v), sufijo: '%'))),
-              Expanded(flex: 2, child: Text(formatearMoneda(_descuentoLineaMonto(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))),
-              Expanded(flex: 2, child: Text(formatearMoneda(_importeBrutoItem(item)), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700))),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: _campoInlineNumero(
+                    'cantidad_$index',
+                    ctrlCantidad,
+                    item.cantidad as double,
+                    (v) => _actualizarCantidad(index, v),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: _campoInlineNumero(
+                    'precio_$index',
+                    ctrlPrecio,
+                    item.precioCompra as double,
+                    (v) => _actualizarPrecio(index, v),
+                    prefijo: 'L.',
+                    dosDecimales: true,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: _campoInlineNumero(
+                    'descuento_$index',
+                    ctrlDescuento,
+                    item.descuentoPorcentaje as double,
+                    (v) => _actualizarDescuentoLinea(index, v),
+                    sufijo: '%',
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  formatearMoneda(_descuentoLineaMonto(item)),
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  formatearMoneda(_importeBrutoItem(item)),
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
               _botonVincularPendiente(index, item as ItemCompraModel),
               SizedBox(
                 width: 40,
-                child: IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: Color(0xFFC62828),
+                  ),
+                  onPressed: () => _quitarItem(index),
+                ),
               ),
             ],
           ),
-          if (item.idPendienteReposicionVinculado != null) Padding(padding: const EdgeInsets.only(left: 34), child: _chipVinculoPendiente(item)),
+          if (item.idPendienteReposicionVinculado != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 34),
+              child: _chipVinculoPendiente(item),
+            ),
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Row(
               children: [
                 const Spacer(flex: 6),
-                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v)))),
-                Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: _campoInlineConEtiqueta('precioVenta_$index', _etiquetaPrecioVenta, ctrlPrecioVenta, _precioVentaFinal(item), (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true))),
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _campoInlineConEtiqueta(
+                      'margen_$index',
+                      'Margen %',
+                      ctrlMargen,
+                      _margenActual(item),
+                      (v) => _actualizarMargenCompra(index, v),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _campoInlineConEtiqueta(
+                      'precioVenta_$index',
+                      _etiquetaPrecioVenta,
+                      ctrlPrecioVenta,
+                      _precioVentaFinal(item),
+                      (v) => _actualizarPrecioVentaCompra(index, v),
+                      prefijo: 'L.',
+                      dosDecimales: true,
+                    ),
+                  ),
+                ),
                 const Spacer(flex: 4),
                 const SizedBox(width: 40),
               ],
@@ -1597,18 +2277,42 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     );
   }
 
-  Widget _filaCarritoMovil(int index, dynamic item, Map<String, ProductoModel> mapaProductos, int totalItems) {
+  Widget _filaCarritoMovil(
+    int index,
+    dynamic item,
+    Map<String, ProductoModel> mapaProductos,
+    int totalItems,
+  ) {
     final producto = mapaProductos[item.idProducto as String];
 
-    final ctrlCantidad = _ctrlCantidad.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.cantidad as double)));
-    final ctrlPrecio = _ctrlPrecio.putIfAbsent(index, () => TextEditingController(text: (item.precioCompra as double).toStringAsFixed(2)));
-    final ctrlDescuento = _ctrlDescuento.putIfAbsent(index, () => TextEditingController(text: _formatoCantidad(item.descuentoPorcentaje as double)));
+    final ctrlCantidad = _ctrlCantidad.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.cantidad as double),
+      ),
+    );
+    final ctrlPrecio = _ctrlPrecio.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: (item.precioCompra as double).toStringAsFixed(2),
+      ),
+    );
+    final ctrlDescuento = _ctrlDescuento.putIfAbsent(
+      index,
+      () => TextEditingController(
+        text: _formatoCantidad(item.descuentoPorcentaje as double),
+      ),
+    );
     final (ctrlMargen, ctrlPrecioVenta) = _controladoresMargen(index, item);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1620,40 +2324,116 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.nombreProducto as String, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text(producto?.codigo ?? '-', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    Text(
+                      item.nombreProducto as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      producto?.codigo ?? '-',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   ],
                 ),
               ),
               _botonVincularPendiente(index, item as ItemCompraModel),
-              IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)), onPressed: () => _quitarItem(index)),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Color(0xFFC62828),
+                ),
+                onPressed: () => _quitarItem(index),
+              ),
             ],
           ),
-          if (item.idPendienteReposicionVinculado != null) _chipVinculoPendiente(item),
+          if (item.idPendienteReposicionVinculado != null)
+            _chipVinculoPendiente(item),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _campoInlineConEtiqueta('cantidad_$index', 'Cantidad', ctrlCantidad, item.cantidad, (v) => _actualizarCantidad(index, v))),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'cantidad_$index',
+                  'Cantidad',
+                  ctrlCantidad,
+                  item.cantidad,
+                  (v) => _actualizarCantidad(index, v),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precio_$index', 'Costo unitario', ctrlPrecio, item.precioCompra, (v) => _actualizarPrecio(index, v), prefijo: 'L.', dosDecimales: true)),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'precio_$index',
+                  'Costo unitario',
+                  ctrlPrecio,
+                  item.precioCompra,
+                  (v) => _actualizarPrecio(index, v),
+                  prefijo: 'L.',
+                  dosDecimales: true,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('descuento_$index', 'Desc. %', ctrlDescuento, item.descuentoPorcentaje, (v) => _actualizarDescuentoLinea(index, v))),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'descuento_$index',
+                  'Desc. %',
+                  ctrlDescuento,
+                  item.descuentoPorcentaje,
+                  (v) => _actualizarDescuentoLinea(index, v),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _campoInlineConEtiqueta('margen_$index', 'Margen %', ctrlMargen, _margenActual(item), (v) => _actualizarMargenCompra(index, v))),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'margen_$index',
+                  'Margen %',
+                  ctrlMargen,
+                  _margenActual(item),
+                  (v) => _actualizarMargenCompra(index, v),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _campoInlineConEtiqueta('precioVenta_$index', _etiquetaPrecioVenta, ctrlPrecioVenta, _precioVentaFinal(item), (v) => _actualizarPrecioVentaCompra(index, v), prefijo: 'L.', dosDecimales: true)),
+              Expanded(
+                child: _campoInlineConEtiqueta(
+                  'precioVenta_$index',
+                  _etiquetaPrecioVenta,
+                  ctrlPrecioVenta,
+                  _precioVentaFinal(item),
+                  (v) => _actualizarPrecioVentaCompra(index, v),
+                  prefijo: 'L.',
+                  dosDecimales: true,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Descuento: ${formatearMoneda(_descuentoLineaMonto(item))}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-              Text('Importe: ${formatearMoneda(_importeBrutoItem(item))}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+              Text(
+                'Descuento: ${formatearMoneda(_descuentoLineaMonto(item))}',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Text(
+                'Importe: ${formatearMoneda(_importeBrutoItem(item))}',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],
@@ -1662,7 +2442,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
   }
 
   String _formatoCantidad(double cantidad) {
-    if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+    if (cantidad == cantidad.roundToDouble())
+      return cantidad.toInt().toString();
     return cantidad.toStringAsFixed(2);
   }
 
@@ -1682,23 +2463,57 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               // carrito.subtotal (ya neto) no cambia en ningún otro lado -
               // el ISV y el Total a pagar siguen calculándose sobre ese
               // valor neto real, esto es solo para esta fila de texto-.
-              _filaTotalTexto('Subtotal', carrito.subtotal + carrito.descuentoLineasMonto + carrito.descuentoTotalMonto),
-              if (carrito.descuentoLineasMonto > 0) _filaTotalTexto('Descuentos y Rebajas', carrito.descuentoLineasMonto),
-              if (carrito.descuentoTotalMonto > 0) _filaTotalTexto('Descuento global', carrito.descuentoTotalMonto),
-              _filaTotalTexto('ISV (${_formatoCantidad(carrito.isvPorcentaje)}%)', carrito.impuesto),
-              if (carrito.ajusteManual != 0) _filaTotalTexto('Ajuste', carrito.ajusteManual),
+              _filaTotalTexto(
+                'Subtotal',
+                carrito.subtotal +
+                    carrito.descuentoLineasMonto +
+                    carrito.descuentoTotalMonto,
+              ),
+              if (carrito.descuentoLineasMonto > 0)
+                _filaTotalTexto(
+                  'Descuentos y Rebajas',
+                  carrito.descuentoLineasMonto,
+                ),
+              if (carrito.descuentoTotalMonto > 0)
+                _filaTotalTexto(
+                  'Descuento global',
+                  carrito.descuentoTotalMonto,
+                ),
+              _filaTotalTexto(
+                'ISV (${_formatoCantidad(carrito.isvPorcentaje)}%)',
+                carrito.impuesto,
+              ),
+              if (carrito.ajusteManual != 0)
+                _filaTotalTexto('Ajuste', carrito.ajusteManual),
             ],
           ),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                Text(formatearMoneda(carrito.totalAPagar), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(
+                  'TOTAL A PAGAR',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  formatearMoneda(carrito.totalAPagar),
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1707,10 +2522,30 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarCompra,
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: _guardando
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                  : Text('Registrar Compra', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : Text(
+                      'Registrar Compra',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -1722,8 +2557,23 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-        Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        Text(
+          etiqueta.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade500,
+            letterSpacing: 0.4,
+          ),
+        ),
+        Text(
+          formatearMoneda(valor),
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
       ],
     );
   }

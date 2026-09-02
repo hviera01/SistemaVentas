@@ -32,12 +32,23 @@ class TabsNotifier extends Notifier<TabsState> {
     if (nuevoIndice >= nuevaLista.length) {
       nuevoIndice = nuevaLista.length - 1;
     }
-    state = TabsState(tabs: nuevaLista, indiceActivo: nuevoIndice < 0 ? 0 : nuevoIndice);
+    state = TabsState(
+      tabs: nuevaLista,
+      indiceActivo: nuevoIndice < 0 ? 0 : nuevoIndice,
+    );
   }
 
   void seleccionarTab(int index) {
     state = TabsState(tabs: state.tabs, indiceActivo: index);
   }
+
+  void seleccionarTabPorId(String id) {
+    final index = state.tabs.indexWhere((t) => t.id == id);
+    if (index == -1) return;
+    state = TabsState(tabs: state.tabs, indiceActivo: index);
+  }
 }
 
-final tabsProvider = NotifierProvider<TabsNotifier, TabsState>(TabsNotifier.new);
+final tabsProvider = NotifierProvider<TabsNotifier, TabsState>(
+  TabsNotifier.new,
+);

@@ -26,10 +26,12 @@ class AuditoriaInventarioScreen extends ConsumerStatefulWidget {
   const AuditoriaInventarioScreen({super.key});
 
   @override
-  ConsumerState<AuditoriaInventarioScreen> createState() => _AuditoriaInventarioScreenState();
+  ConsumerState<AuditoriaInventarioScreen> createState() =>
+      _AuditoriaInventarioScreenState();
 }
 
-class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioScreen> {
+class _AuditoriaInventarioScreenState
+    extends ConsumerState<AuditoriaInventarioScreen> {
   String? _idCategoria;
   // Un controller por producto, vivo mientras dure la sesión de auditoría
   // (se limpia solo al cambiar de categoría o al salir de la pantalla): así
@@ -58,14 +60,21 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   }
 
   TextEditingController _controladorDe(String idProducto) {
-    return _controladores.putIfAbsent(idProducto, () => TextEditingController());
+    return _controladores.putIfAbsent(
+      idProducto,
+      () => TextEditingController(),
+    );
   }
 
   // [busquedaInicial] lo usa _escanear: cuando el código escaneado
   // pertenece a una categoría distinta a la que no había ninguna elegida
   // todavía, cambia a esa categoría y deja el código ya cargado en el
   // buscador, para no tener que escribirlo de nuevo.
-  void _cambiarCategoria(String? id, {String? busquedaInicial, bool busquedaPorCodigoBarras = false}) {
+  void _cambiarCategoria(
+    String? id, {
+    String? busquedaInicial,
+    bool busquedaPorCodigoBarras = false,
+  }) {
     setState(() {
       _idCategoria = id;
       for (final c in _controladores.values) {
@@ -79,7 +88,8 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     });
   }
 
-  bool _coincideExacto(ProductoModel p, String texto) => p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
+  bool _coincideExacto(ProductoModel p, String texto) =>
+      p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
 
   ProductoModel? _buscarPorCodigo(List<ProductoModel> productos, String texto) {
     for (final p in productos) {
@@ -115,12 +125,20 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
 
     if (encontrado != null && encontrado.idCategoria != _idCategoria) {
       if (_idCategoria == null) {
-        _cambiarCategoria(encontrado.idCategoria, busquedaInicial: texto, busquedaPorCodigoBarras: true);
+        _cambiarCategoria(
+          encontrado.idCategoria,
+          busquedaInicial: texto,
+          busquedaPorCodigoBarras: true,
+        );
         return;
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"${encontrado.nombre}" está en otra categoría -cambiá de categoría para auditarlo (así no se pierde el conteo que ya llevás acá).')),
+        SnackBar(
+          content: Text(
+            '"${encontrado.nombre}" está en otra categoría -cambiá de categoría para auditarlo (así no se pierde el conteo que ya llevás acá).',
+          ),
+        ),
       );
       return;
     }
@@ -147,27 +165,37 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   }
 
   String _formatoCantidad(double cantidad) {
-    if (cantidad == cantidad.roundToDouble()) return cantidad.toInt().toString();
+    if (cantidad == cantidad.roundToDouble())
+      return cantidad.toInt().toString();
     return cantidad.toStringAsFixed(2);
   }
 
   void _marcarCoincide(ProductoModel producto) {
-    setState(() => _controladorDe(producto.id).text = _formatoCantidad(producto.stock));
+    setState(
+      () => _controladorDe(producto.id).text = _formatoCantidad(producto.stock),
+    );
   }
 
   void _abrirHistorial(ProductoModel producto) {
-    showDialog(context: context, builder: (_) => HistorialStockDialog(producto: producto));
+    showDialog(
+      useRootNavigator: false,
+      context: context,
+      builder: (_) => HistorialStockDialog(producto: producto),
+    );
   }
 
   void _abrirAjuste(ProductoModel producto, double? diferencia) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (_) => AjusteStockDialog(
         producto: producto,
         esIngresoInicial: diferencia == null ? null : diferencia > 0,
         cantidadInicial: diferencia?.abs(),
         motivoInicial: 'Reajuste por auditoría',
-        notaSuperior: (diferencia == null || diferencia == 0) ? null : _notaDiferencia(diferencia),
+        notaSuperior: (diferencia == null || diferencia == 0)
+            ? null
+            : _notaDiferencia(diferencia),
       ),
     );
   }
@@ -182,23 +210,33 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   Future<void> _ajustarTodosLosDescuadres(List<ProductoModel> lista) async {
     final aAjustar = [
       for (final p in lista)
-        if (_conteoDe(p.id) != null && _conteoDe(p.id) != p.stock) (producto: p, diferencia: _conteoDe(p.id)! - p.stock),
+        if (_conteoDe(p.id) != null && _conteoDe(p.id) != p.stock)
+          (producto: p, diferencia: _conteoDe(p.id)! - p.stock),
     ];
     if (aAjustar.isEmpty) return;
 
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Ajustar todos los descuadres', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Ajustar todos los descuadres',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           'Se van a ajustar ${aAjustar.length} producto${aAjustar.length == 1 ? '' : 's'} al conteo físico que anotaste, de una sola vez -motivo "Reajuste por auditoría"-. Esta acción no se puede deshacer.',
           style: GoogleFonts.poppins(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Ajustar todos', style: GoogleFonts.poppins()),
           ),
@@ -213,41 +251,65 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     const motivo = 'Reajuste por auditoría (ajuste global)';
     var exitosos = 0;
     final fallidos = <String>[];
-    await Future.wait(aAjustar.map((par) async {
-      try {
-        if (par.diferencia > 0) {
-          await repo.registrarIngreso(id: par.producto.id, cantidad: par.diferencia, costoUnitario: par.producto.precioCompra, usuario: usuario, motivo: motivo);
-        } else {
-          // Sin lote específico: es un ajuste global sobre varios productos
-          // a la vez, no tiene sentido pararse a elegir un lote por cada uno
-          // -igual que la opción "sin lote" ya disponible en el ajuste
-          // individual (ver AjusteStockDialog)-.
-          await repo.registrarSalida(id: par.producto.id, cantidad: par.diferencia.abs(), usuario: usuario, motivo: motivo);
+    await Future.wait(
+      aAjustar.map((par) async {
+        try {
+          if (par.diferencia > 0) {
+            await repo.registrarIngreso(
+              id: par.producto.id,
+              cantidad: par.diferencia,
+              costoUnitario: par.producto.precioCompra,
+              usuario: usuario,
+              motivo: motivo,
+            );
+          } else {
+            // Sin lote específico: es un ajuste global sobre varios productos
+            // a la vez, no tiene sentido pararse a elegir un lote por cada uno
+            // -igual que la opción "sin lote" ya disponible en el ajuste
+            // individual (ver AjusteStockDialog)-.
+            await repo.registrarSalida(
+              id: par.producto.id,
+              cantidad: par.diferencia.abs(),
+              usuario: usuario,
+              motivo: motivo,
+            );
+          }
+          exitosos++;
+        } catch (e) {
+          fallidos.add(par.producto.nombre);
         }
-        exitosos++;
-      } catch (e) {
-        fallidos.add(par.producto.nombre);
-      }
-    }));
+      }),
+    );
 
     if (!mounted) return;
     setState(() => _ajustandoTodo = false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-        fallidos.isEmpty ? 'Se ajustaron $exitosos productos' : 'Se ajustaron $exitosos productos. Fallaron: ${fallidos.join(', ')}',
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          fallidos.isEmpty
+              ? 'Se ajustaron $exitosos productos'
+              : 'Se ajustaron $exitosos productos. Fallaron: ${fallidos.join(', ')}',
+        ),
+        showCloseIcon: true,
       ),
-      showCloseIcon: true,
-    ));
+    );
   }
 
   Widget _notaDiferencia(double diferencia) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: const Color(0xFFFCE4E4), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFCE4E4),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Text(
         'Detectado en auditoría: diferencia de ${diferencia > 0 ? '+' : ''}${_formatoCantidad(diferencia)} contra el conteo físico.',
-        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFC62828)),
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFFC62828),
+        ),
       ),
     );
   }
@@ -259,7 +321,10 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
@@ -286,9 +351,19 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   child: _idCategoria == null
                       ? _estadoVacioSinCategoria()
                       : productosAsync.when(
-                          data: (productos) => _contenidoCategoria(productos, esMovil),
-                          loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                          error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                          data: (productos) =>
+                              _contenidoCategoria(productos, esMovil),
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFC62828),
+                            ),
+                          ),
+                          error: (e, st) => Center(
+                            child: Text(
+                              'Error: $e',
+                              style: GoogleFonts.poppins(color: Colors.red),
+                            ),
+                          ),
                         ),
                 ),
               ],
@@ -304,18 +379,35 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: const Color(0xFF0EA5A4).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.fact_check_outlined, color: Color(0xFF0EA5A4), size: 22),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0EA5A4).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.fact_check_outlined,
+            color: Color(0xFF0EA5A4),
+            size: 22,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Auditoría de Inventario', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+              Text(
+                'Auditoría de Inventario',
+                style: GoogleFonts.poppins(
+                  fontSize: esMovil ? 19 : 22,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
               Text(
                 'Elegí una categoría, contá lo que hay físicamente y compará contra el sistema.',
-                style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ],
           ),
@@ -324,7 +416,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     );
   }
 
-  Widget _barraControles(AsyncValue<List<CategoriaModel>> categoriasAsync, bool esMovil, BoxConstraints constraints) {
+  Widget _barraControles(
+    AsyncValue<List<CategoriaModel>> categoriasAsync,
+    bool esMovil,
+    BoxConstraints constraints,
+  ) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -334,19 +430,48 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           width: esMovil ? constraints.maxWidth : 260,
           child: categoriasAsync.when(
             data: (categorias) {
-              final ordenadas = [...categorias]..sort((a, b) => a.descripcion.compareTo(b.descripcion));
+              final ordenadas = [...categorias]
+                ..sort((a, b) => a.descripcion.compareTo(b.descripcion));
               return DropdownButtonFormField<String>(
-                initialValue: ordenadas.any((c) => c.id == _idCategoria) ? _idCategoria : null,
+                initialValue: ordenadas.any((c) => c.id == _idCategoria)
+                    ? _idCategoria
+                    : null,
                 isExpanded: true,
-                decoration: _decoracion('Categoría a auditar', icono: Icons.category_outlined),
-                style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
-                hint: Text('Elegí una categoría', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
-                items: ordenadas.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descripcion, overflow: TextOverflow.ellipsis))).toList(),
+                decoration: _decoracion(
+                  'Categoría a auditar',
+                  icono: Icons.category_outlined,
+                ),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: const Color(0xFF1A1A1A),
+                ),
+                hint: Text(
+                  'Elegí una categoría',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                items: ordenadas
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c.id,
+                        child: Text(
+                          c.descripcion,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: _cambiarCategoria,
               );
             },
-            loading: () => const LinearProgressIndicator(color: Color(0xFFC62828)),
-            error: (e, st) => Text('No se pudieron cargar las categorías', style: GoogleFonts.poppins(fontSize: 12, color: Colors.red)),
+            loading: () =>
+                const LinearProgressIndicator(color: Color(0xFFC62828)),
+            error: (e, st) => Text(
+              'No se pudieron cargar las categorías',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.red),
+            ),
           ),
         ),
         SizedBox(
@@ -358,12 +483,17 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           OutlinedButton.icon(
             onPressed: _reiniciarConteo,
             icon: const Icon(Icons.refresh, size: 18),
-            label: Text('Reiniciar conteo', style: GoogleFonts.poppins(fontSize: 13)),
+            label: Text(
+              'Reiniciar conteo',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF1A1A1A),
               side: const BorderSide(color: Color(0xFFB6BCC7)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -375,7 +505,11 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -386,22 +520,25 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
               numerico: false,
               titulo: 'Buscar o escanear código de barras...',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _busquedaController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Buscar o escanear código de barras...',
-                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
-                border: InputBorder.none,
-                isDense: true,
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _busquedaController,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Buscar o escanear código de barras...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade400,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onChanged: (v) => setState(() {
+                  _busqueda = v.trim();
+                  _busquedaPorCodigoBarras = false;
+                }),
               ),
-              onChanged: (v) => setState(() {
-                _busqueda = v.trim();
-                _busquedaPorCodigoBarras = false;
-              }),
-            ),
             ),
           ),
           if (_busqueda.isNotEmpty)
@@ -431,15 +568,28 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: _soloDescuadres ? const Color(0xFFC62828) : const Color(0xFFE8EAF0),
+          color: _soloDescuadres
+              ? const Color(0xFFC62828)
+              : const Color(0xFFE8EAF0),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.filter_alt_outlined, size: 17, color: _soloDescuadres ? Colors.white : Colors.grey.shade600),
+            Icon(
+              Icons.filter_alt_outlined,
+              size: 17,
+              color: _soloDescuadres ? Colors.white : Colors.grey.shade600,
+            ),
             const SizedBox(width: 8),
-            Text('Solo descuadres', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _soloDescuadres ? Colors.white : const Color(0xFF1A1A1A))),
+            Text(
+              'Solo descuadres',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _soloDescuadres ? Colors.white : const Color(0xFF1A1A1A),
+              ),
+            ),
           ],
         ),
       ),
@@ -451,12 +601,19 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.fact_check_outlined, size: 56, color: Colors.grey.shade300),
+          Icon(
+            Icons.fact_check_outlined,
+            size: 56,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 14),
           Text(
             'Elegí una categoría arriba para empezar a auditar\n(o escaneá un producto y se elige sola)',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
           ),
         ],
       ),
@@ -472,14 +629,19 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
     // de verdad hay que ir a contar físicamente al estante-; los que ya
     // están en 0 quedan al final, ordenados alfabéticamente dentro de cada
     // grupo.
-    var lista = productos.where((p) => p.idCategoria == _idCategoria && !p.esCombo).toList()
-      ..sort((a, b) {
-        final tieneStockA = a.stock > 0;
-        final tieneStockB = b.stock > 0;
-        if (tieneStockA != tieneStockB) return tieneStockA ? -1 : 1;
-        return a.nombre.compareTo(b.nombre);
-      });
-    final combosExcluidos = productos.where((p) => p.idCategoria == _idCategoria && p.esCombo).length;
+    var lista =
+        productos
+            .where((p) => p.idCategoria == _idCategoria && !p.esCombo)
+            .toList()
+          ..sort((a, b) {
+            final tieneStockA = a.stock > 0;
+            final tieneStockB = b.stock > 0;
+            if (tieneStockA != tieneStockB) return tieneStockA ? -1 : 1;
+            return a.nombre.compareTo(b.nombre);
+          });
+    final combosExcluidos = productos
+        .where((p) => p.idCategoria == _idCategoria && p.esCombo)
+        .length;
 
     if (_busqueda.isNotEmpty) {
       // Mismo criterio que Inventario: un código escaneado exige
@@ -489,7 +651,9 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       // antes, que fallaba con acentos o con el orden de las palabras.
       lista = _busquedaPorCodigoBarras
           ? lista.where((p) => _coincideExacto(p, _busqueda)).toList()
-          : lista.where((p) => coincideFuzzy(p.textoBusqueda, _busqueda)).toList();
+          : lista
+                .where((p) => coincideFuzzy(p.textoBusqueda, _busqueda))
+                .toList();
     }
 
     final auditados = lista.where((p) => _conteoDe(p.id) != null).length;
@@ -513,25 +677,52 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
           runSpacing: 8,
           children: [
             _badge('${lista.length} productos', const Color(0xFF3B82F6)),
-            _badge('Auditados $auditados/${lista.length}', const Color(0xFF64748B)),
-            _badge('Cuadran ${auditados - descuadres}', const Color(0xFF16A34A)),
-            _badge('Descuadres $descuadres', descuadres > 0 ? const Color(0xFFC62828) : Colors.grey),
-            if (combosExcluidos > 0) _badge('$combosExcluidos combo(s) no aplica (existencia depende de sus componentes)', const Color(0xFFF59E0B)),
+            _badge(
+              'Auditados $auditados/${lista.length}',
+              const Color(0xFF64748B),
+            ),
+            _badge(
+              'Cuadran ${auditados - descuadres}',
+              const Color(0xFF16A34A),
+            ),
+            _badge(
+              'Descuadres $descuadres',
+              descuadres > 0 ? const Color(0xFFC62828) : Colors.grey,
+            ),
+            if (combosExcluidos > 0)
+              _badge(
+                '$combosExcluidos combo(s) no aplica (existencia depende de sus componentes)',
+                const Color(0xFFF59E0B),
+              ),
           ],
         ),
         if (descuadres > 0) ...[
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: _ajustandoTodo ? null : () => _ajustarTodosLosDescuadres(lista),
+            onPressed: _ajustandoTodo
+                ? null
+                : () => _ajustarTodosLosDescuadres(lista),
             icon: _ajustandoTodo
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828)))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFC62828),
+                    ),
+                  )
                 : const Icon(Icons.playlist_add_check, size: 18),
-            label: Text('Ajustar los $descuadres descuadres de una vez', style: GoogleFonts.poppins(fontSize: 13)),
+            label: Text(
+              'Ajustar los $descuadres descuadres de una vez',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFC62828),
               side: const BorderSide(color: Color(0xFFC62828)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -543,18 +734,26 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 26, offset: const Offset(0, 12))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 26,
+                  offset: const Offset(0, 12),
+                ),
+              ],
             ),
             child: listaMostrar.isEmpty
                 ? Center(
                     child: Text(
-                      lista.isEmpty ? 'Esta categoría no tiene productos para auditar' : 'Sin productos con descuadre',
+                      lista.isEmpty
+                          ? 'Esta categoría no tiene productos para auditar'
+                          : 'Sin productos con descuadre',
                       style: GoogleFonts.poppins(color: Colors.grey.shade500),
                     ),
                   )
                 : esMovil
-                    ? _tarjetas(listaMostrar)
-                    : _tabla(listaMostrar),
+                ? _tarjetas(listaMostrar)
+                : _tabla(listaMostrar),
           ),
         ),
       ],
@@ -564,30 +763,67 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
   Widget _badge(String texto, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-      child: Text(texto, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        texto,
+        style: GoogleFonts.poppins(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 
   Widget _chip(String texto, Color color, Color fondo, {IconData? icono}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: fondo,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icono != null) ...[Icon(icono, size: 12, color: color), const SizedBox(width: 4)],
-          Text(texto, style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: color)),
+          if (icono != null) ...[
+            Icon(icono, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            texto,
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _chipDiferencia(double? diferencia) {
-    if (diferencia == null) return _chip('Sin contar', Colors.grey.shade500, Colors.grey.shade200);
-    if (diferencia == 0) return _chip('Cuadra', const Color(0xFF16A34A), const Color(0xFF16A34A).withOpacity(0.12), icono: Icons.check);
-    final texto = diferencia > 0 ? '+${_formatoCantidad(diferencia)}' : _formatoCantidad(diferencia);
-    return _chip(texto, const Color(0xFFC62828), const Color(0xFFC62828).withOpacity(0.12), icono: diferencia > 0 ? Icons.arrow_upward : Icons.arrow_downward);
+    if (diferencia == null)
+      return _chip('Sin contar', Colors.grey.shade500, Colors.grey.shade200);
+    if (diferencia == 0)
+      return _chip(
+        'Cuadra',
+        const Color(0xFF16A34A),
+        const Color(0xFF16A34A).withOpacity(0.12),
+        icono: Icons.check,
+      );
+    final texto = diferencia > 0
+        ? '+${_formatoCantidad(diferencia)}'
+        : _formatoCantidad(diferencia);
+    return _chip(
+      texto,
+      const Color(0xFFC62828),
+      const Color(0xFFC62828).withOpacity(0.12),
+      icono: diferencia > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+    );
   }
 
   // ---------- Tabla de escritorio ----------
@@ -615,7 +851,8 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
         Expanded(
           child: ListView.separated(
             itemCount: lista.length,
-            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+            separatorBuilder: (context, index) =>
+                Divider(height: 1, color: Colors.grey.shade200),
             itemBuilder: (context, index) => _filaTabla(lista[index]),
           ),
         ),
@@ -628,7 +865,14 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(texto, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+        child: Text(
+          texto,
+          style: GoogleFonts.poppins(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade600,
+          ),
+        ),
       ),
     );
   }
@@ -643,8 +887,8 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
         final fondo = diferencia == null
             ? Colors.transparent
             : diferencia == 0
-                ? const Color(0xFF16A34A).withOpacity(0.05)
-                : const Color(0xFFC62828).withOpacity(0.05);
+            ? const Color(0xFF16A34A).withOpacity(0.05)
+            : const Color(0xFFC62828).withOpacity(0.05);
         return Container(
           color: fondo,
           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -661,11 +905,34 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                     children: [
                       Row(
                         children: [
-                          Flexible(child: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                          if (!p.estado) ...[const SizedBox(width: 6), _chip('Inactivo', Colors.grey.shade600, Colors.grey.shade200)],
+                          Flexible(
+                            child: Text(
+                              p.nombre,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (!p.estado) ...[
+                            const SizedBox(width: 6),
+                            _chip(
+                              'Inactivo',
+                              Colors.grey.shade600,
+                              Colors.grey.shade200,
+                            ),
+                          ],
                         ],
                       ),
-                      if (p.codigo.isNotEmpty) Text('Código: ${p.codigo}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                      if (p.codigo.isNotEmpty)
+                        Text(
+                          'Código: ${p.codigo}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -674,7 +941,10 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                 flex: 2,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(_formatoCantidad(p.stock), style: GoogleFonts.poppins(fontSize: 13)),
+                  child: Text(
+                    _formatoCantidad(p.stock),
+                    style: GoogleFonts.poppins(fontSize: 13),
+                  ),
                 ),
               ),
               Expanded(
@@ -686,22 +956,35 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                     numerico: true,
                     titulo: '—',
                     child: TextField(
-                    inputFormatters: [mayusculasInputFormatter],
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    controller: controller,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: GoogleFonts.poppins(fontSize: 13),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: '—',
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFC62828))),
+                      inputFormatters: [mayusculasInputFormatter],
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      controller: controller,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: GoogleFonts.poppins(fontSize: 13),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: '—',
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFC62828),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
                   ),
                 ),
               ),
@@ -718,17 +1001,31 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   children: [
                     IconButton(
                       tooltip: 'Marcar que coincide con el sistema',
-                      icon: const Icon(Icons.check_circle_outline, size: 19, color: Color(0xFF16A34A)),
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        size: 19,
+                        color: Color(0xFF16A34A),
+                      ),
                       onPressed: () => _marcarCoincide(p),
                     ),
                     IconButton(
                       tooltip: 'Historial de existencia',
-                      icon: Icon(Icons.history, size: 19, color: Colors.grey.shade600),
+                      icon: Icon(
+                        Icons.history,
+                        size: 19,
+                        color: Colors.grey.shade600,
+                      ),
                       onPressed: () => _abrirHistorial(p),
                     ),
                     IconButton(
                       tooltip: 'Ajustar existencia',
-                      icon: Icon(Icons.tune, size: 19, color: (diferencia != null && diferencia != 0) ? const Color(0xFFC62828) : Colors.grey.shade600),
+                      icon: Icon(
+                        Icons.tune,
+                        size: 19,
+                        color: (diferencia != null && diferencia != 0)
+                            ? const Color(0xFFC62828)
+                            : Colors.grey.shade600,
+                      ),
                       onPressed: () => _abrirAjuste(p, diferencia),
                     ),
                   ],
@@ -762,11 +1059,15 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
         final fondo = diferencia == null
             ? const Color(0xFFF8F9FB)
             : diferencia == 0
-                ? const Color(0xFF16A34A).withOpacity(0.06)
-                : const Color(0xFFC62828).withOpacity(0.06);
+            ? const Color(0xFF16A34A).withOpacity(0.06)
+            : const Color(0xFFC62828).withOpacity(0.06);
         return Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+          decoration: BoxDecoration(
+            color: fondo,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFC7CBD3)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -776,15 +1077,41 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   Expanded(
                     child: Row(
                       children: [
-                        Flexible(child: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
-                        if (!p.estado) ...[const SizedBox(width: 6), _chip('Inactivo', Colors.grey.shade600, Colors.grey.shade200)],
+                        Flexible(
+                          child: Text(
+                            p.nombre,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!p.estado) ...[
+                          const SizedBox(width: 6),
+                          _chip(
+                            'Inactivo',
+                            Colors.grey.shade600,
+                            Colors.grey.shade200,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   _chipDiferencia(diferencia),
                 ],
               ),
-              if (p.codigo.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text('Código: ${p.codigo}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500))),
+              if (p.codigo.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    'Código: ${p.codigo}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -793,9 +1120,22 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('SISTEMA', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500)),
+                        Text(
+                          'SISTEMA',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text(_formatoCantidad(p.stock), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(
+                          _formatoCantidad(p.stock),
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -806,22 +1146,30 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                       numerico: true,
                       titulo: 'Conteo físico',
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: controller,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: GoogleFonts.poppins(fontSize: 13),
-                      decoration: InputDecoration(
-                        labelText: 'Conteo físico',
-                        isDense: true,
-                        labelStyle: GoogleFonts.poppins(fontSize: 11.5),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: controller,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: GoogleFonts.poppins(fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Conteo físico',
+                          isDense: true,
+                          labelStyle: GoogleFonts.poppins(fontSize: 11.5),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
                       ),
-                    ),
                     ),
                   ),
                 ],
@@ -832,22 +1180,52 @@ class _AuditoriaInventarioScreenState extends ConsumerState<AuditoriaInventarioS
                   Expanded(
                     child: TextButton.icon(
                       onPressed: () => _marcarCoincide(p),
-                      icon: const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF16A34A)),
-                      label: Text('Coincide', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF16A34A))),
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        size: 16,
+                        color: Color(0xFF16A34A),
+                      ),
+                      label: Text(
+                        'Coincide',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
                     ),
                   ),
                   Expanded(
                     child: TextButton.icon(
                       onPressed: () => _abrirHistorial(p),
-                      icon: Icon(Icons.history, size: 16, color: Colors.grey.shade600),
-                      label: Text('Historial', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                      icon: Icon(
+                        Icons.history,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      label: Text(
+                        'Historial',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                     ),
                   ),
                   Expanded(
                     child: TextButton.icon(
                       onPressed: () => _abrirAjuste(p, diferencia),
-                      icon: const Icon(Icons.tune, size: 16, color: Color(0xFFC62828)),
-                      label: Text('Ajustar', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828))),
+                      icon: const Icon(
+                        Icons.tune,
+                        size: 16,
+                        color: Color(0xFFC62828),
+                      ),
+                      label: Text(
+                        'Ajustar',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFFC62828),
+                        ),
+                      ),
                     ),
                   ),
                 ],

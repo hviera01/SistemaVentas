@@ -29,7 +29,8 @@ class FacturasOrigenDialog extends ConsumerStatefulWidget {
   const FacturasOrigenDialog({super.key, required this.credito});
 
   @override
-  ConsumerState<FacturasOrigenDialog> createState() => _FacturasOrigenDialogState();
+  ConsumerState<FacturasOrigenDialog> createState() =>
+      _FacturasOrigenDialogState();
 }
 
 class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
@@ -49,9 +50,12 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   // Misma conversión que usa DetalleVentaScreen: precioVenta/subtotal se
   // guardan sin ISV, así que hay que aplicar el 15% para mostrarlos como en
   // la factura real.
-  double _precioConIsv(ItemVentaModel item) => redondearMoneda(item.precioVenta * 1.15);
+  double _precioConIsv(ItemVentaModel item) =>
+      redondearMoneda(item.precioVenta * 1.15);
 
-  double _importeConIsv(ItemVentaModel item) => redondearMoneda(_precioConIsv(item) * item.cantidad * (1 - item.descuentoPorcentaje / 100));
+  double _importeConIsv(ItemVentaModel item) => redondearMoneda(
+    _precioConIsv(item) * item.cantidad * (1 - item.descuentoPorcentaje / 100),
+  );
 
   // Una factura "origen" puede a su vez ser el resultado de otra unión
   // anterior (unir una factura ya fusionada con una nueva) — en ese caso no
@@ -74,13 +78,17 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
       return;
     }
     try {
-      final venta = await ref.read(ventaRepositoryProvider).obtenerVentaPorId(factura.id);
+      final venta = await ref
+          .read(ventaRepositoryProvider)
+          .obtenerVentaPorId(factura.id);
       if (venta != null && venta.detalle.isNotEmpty) {
         ventas.add(venta);
         numeros.add(venta.numeroDocumento);
         return;
       }
-      final creditoOrigen = await ref.read(ventaCreditoRepositoryProvider).obtenerPorId(factura.id);
+      final creditoOrigen = await ref
+          .read(ventaCreditoRepositoryProvider)
+          .obtenerPorId(factura.id);
       if (creditoOrigen != null && creditoOrigen.facturasOrigen.isNotEmpty) {
         for (final sub in creditoOrigen.facturasOrigen) {
           await _resolverFactura(sub, ventas, sinDetalle, numeros, visitados);
@@ -106,7 +114,11 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     if (!mounted) return;
     setState(() {
       _ventasOrigen = ventas;
-      _items = [for (final v in ventas) for (final item in v.detalle) _ItemConsolidado(v.numeroDocumento, item)];
+      _items = [
+        for (final v in ventas)
+          for (final item in v.detalle)
+            _ItemConsolidado(v.numeroDocumento, item),
+      ];
       _facturasSinDetalle = sinDetalle;
       _numerosFacturasUnidas = numeros;
       _cargando = false;
@@ -115,16 +127,32 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
 
   Future<void> _imprimirPorSeparado() async {
     if (_ventasOrigen.isEmpty) return;
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
-    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    final impresora = negocio.impresoraTermicaUrl.isEmpty
+        ? null
+        : Printer(
+            url: negocio.impresoraTermicaUrl,
+            name: negocio.impresoraTermicaNombre,
+          );
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Facturas por separado',
         nombreArchivo: 'facturas_${widget.credito.numeroDocumento}.pdf',
-        generarPdf: () => VentaExportService().generarPdfFacturasPorSeparado(_ventasOrigen, negocio),
-        generarPdfConFormato: (formato) => VentaExportService().generarPdfFacturasPorSeparado(_ventasOrigen, negocio, formatoImpresora: formato),
+        generarPdf: () => VentaExportService().generarPdfFacturasPorSeparado(
+          _ventasOrigen,
+          negocio,
+        ),
+        generarPdfConFormato: (formato) =>
+            VentaExportService().generarPdfFacturasPorSeparado(
+              _ventasOrigen,
+              negocio,
+              formatoImpresora: formato,
+            ),
         impresora: impresora,
       ),
     );
@@ -137,11 +165,15 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     final porClave = <String, ItemVentaModel>{};
     for (final c in _items) {
       final item = c.item;
-      final clave = '${item.idProducto}|${item.precioVenta}|${item.descuentoPorcentaje}';
+      final clave =
+          '${item.idProducto}|${item.precioVenta}|${item.descuentoPorcentaje}';
       final existente = porClave[clave];
       porClave[clave] = existente == null
           ? item
-          : existente.copyWith(cantidad: existente.cantidad + item.cantidad, subtotal: existente.subtotal + item.subtotal);
+          : existente.copyWith(
+              cantidad: existente.cantidad + item.cantidad,
+              subtotal: existente.subtotal + item.subtotal,
+            );
     }
     return porClave.values.toList();
   }
@@ -160,7 +192,9 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     // factura), aunque no se registre una venta nueva: es solo para que
     // este documento tenga un número válido y no se repita con el de una
     // venta futura.
-    final numeroDocumento = await ref.read(ventaRepositoryProvider).reservarProximoNumeroFactura();
+    final numeroDocumento = await ref
+        .read(ventaRepositoryProvider)
+        .reservarProximoNumeroFactura();
     final usuario = ref.read(authProvider).usuario?.nombreCompleto ?? '';
     final itemsConsolidados = _consolidarItems();
     // El total sale directo del crédito (ya es el monto exacto y correcto,
@@ -189,7 +223,10 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
       fechaRegistro: DateTime.now(),
       estado: 'Activa',
       usuarioRegistro: usuario,
-      cantidadProductos: itemsConsolidados.fold<double>(0, (s, i) => s + i.cantidad),
+      cantidadProductos: itemsConsolidados.fold<double>(
+        0,
+        (s, i) => s + i.cantidad,
+      ),
       oc: '',
       regExonerado: '',
       regSag: '',
@@ -201,18 +238,32 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
 
   Future<void> _imprimirUnificado() async {
     if (_ventasOrigen.isEmpty) return;
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
     final ventaSintetica = await _obtenerVentaSintetica();
     if (!mounted) return;
-    final impresora = negocio.impresoraTermicaUrl.isEmpty ? null : Printer(url: negocio.impresoraTermicaUrl, name: negocio.impresoraTermicaNombre);
+    final impresora = negocio.impresoraTermicaUrl.isEmpty
+        ? null
+        : Printer(
+            url: negocio.impresoraTermicaUrl,
+            name: negocio.impresoraTermicaNombre,
+          );
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · ${ventaSintetica.numeroDocumento}',
         nombreArchivo: 'venta_${ventaSintetica.numeroDocumento}.pdf',
-        generarPdf: () => VentaExportService().generarPdfFactura(ventaSintetica, negocio),
-        generarPdfConFormato: (formato) => VentaExportService().generarPdfFactura(ventaSintetica, negocio, formatoImpresora: formato),
+        generarPdf: () =>
+            VentaExportService().generarPdfFactura(ventaSintetica, negocio),
+        generarPdfConFormato: (formato) =>
+            VentaExportService().generarPdfFactura(
+              ventaSintetica,
+              negocio,
+              formatoImpresora: formato,
+            ),
         impresora: impresora,
       ),
     );
@@ -223,16 +274,23 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   // descargar/compartir el PDF sin pasar por la vista de ticket térmico.
   Future<void> _descargarPdf() async {
     if (_ventasOrigen.isEmpty) return;
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
     final ventaSintetica = await _obtenerVentaSintetica();
     if (!mounted) return;
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Documento formal · ${ventaSintetica.numeroDocumento}',
-        nombreArchivo: '${ventaSintetica.tipoDocumento}_${ventaSintetica.numeroDocumento}.pdf',
-        generarPdf: () => VentaExportService().generarPdfDetalleVenta(ventaSintetica, negocio),
+        nombreArchivo:
+            '${ventaSintetica.tipoDocumento}_${ventaSintetica.numeroDocumento}.pdf',
+        generarPdf: () => VentaExportService().generarPdfDetalleVenta(
+          ventaSintetica,
+          negocio,
+        ),
       ),
     );
   }
@@ -244,7 +302,10 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     final esMovil = tamano.width < 640;
     final anchoDialog = esMovil ? tamano.width - 24 : 640.0;
     final altoDialog = tamano.height < 700 ? tamano.height - 40 : 640.0;
-    final totalItems = _items.fold<double>(0, (s, i) => s + _importeConIsv(i.item));
+    final totalItems = _items.fold<double>(
+      0,
+      (s, i) => s + _importeConIsv(i.item),
+    );
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -253,7 +314,10 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -262,26 +326,53 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.call_merge_outlined, color: Color(0xFFC62828), size: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.call_merge_outlined,
+                    color: Color(0xFFC62828),
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Detalle de Facturas Unidas', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
-                      Text('${credito.numeroDocumento} · ${credito.nombreCliente}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis),
+                      Text(
+                        'Detalle de Facturas Unidas',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${credito.numeroDocumento} · ${credito.nombreCliente}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               'Facturas unidas: ${(_numerosFacturasUnidas.isEmpty ? credito.facturasOrigen.map((f) => f.numeroDocumento) : _numerosFacturasUnidas).join(', ')}',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
             ),
             if (!_cargando && _items.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -290,16 +381,29 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
             const SizedBox(height: 14),
             Expanded(
               child: _cargando
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFC62828),
+                      ),
+                    )
                   : _items.isEmpty
-                      ? Center(child: Text('No se encontró el detalle de productos de estas facturas', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)))
-                      : _tabla(),
+                  ? Center(
+                      child: Text(
+                        'No se encontró el detalle de productos de estas facturas',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      ),
+                    )
+                  : _tabla(),
             ),
             if (_facturasSinDetalle.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 'Sin detalle disponible: ${_facturasSinDetalle.join(', ')}',
-                style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange.shade800),
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.orange.shade800,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -307,11 +411,22 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    _items.isEmpty ? '' : 'Suma de productos (c/ISV): ${formatearMoneda(totalItems)}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                    _items.isEmpty
+                        ? ''
+                        : 'Suma de productos (c/ISV): ${formatearMoneda(totalItems)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
-                Text('Total unificado: ${formatearMoneda(credito.montoTotal)}', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                Text(
+                  'Total unificado: ${formatearMoneda(credito.montoTotal)}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             if (!_cargando && _ventasOrigen.isNotEmpty) ...[
@@ -323,20 +438,61 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                   OutlinedButton.icon(
                     onPressed: _imprimirPorSeparado,
                     icon: const Icon(Icons.receipt_long_outlined, size: 17),
-                    label: Text('Imprimir factura por factura', style: GoogleFonts.poppins(fontSize: 12.5)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    label: Text(
+                      'Imprimir factura por factura',
+                      style: GoogleFonts.poppins(fontSize: 12.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1A1A1A),
+                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _descargarPdf,
                     icon: const Icon(Icons.download_outlined, size: 17),
-                    label: Text('Descargar PDF', style: GoogleFonts.poppins(fontSize: 12.5)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    label: Text(
+                      'Descargar PDF',
+                      style: GoogleFonts.poppins(fontSize: 12.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1A1A1A),
+                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   FilledButton.icon(
                     onPressed: _imprimirUnificado,
                     icon: const Icon(Icons.description_outlined, size: 17),
-                    label: Text('Imprimir todo en un solo papel', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    label: Text(
+                      'Imprimir todo en un solo papel',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFC62828),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -357,10 +513,17 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 9),
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: activo ? const Color(0xFFC62828) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: activo ? const Color(0xFFC62828) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Text(
               texto,
-              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF4B4F58)),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: activo ? Colors.white : const Color(0xFF4B4F58),
+              ),
             ),
           ),
         ),
@@ -369,22 +532,44 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
 
     return Container(
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: const Color(0xFFECEEF3), borderRadius: BorderRadius.circular(12)),
-      child: Row(children: [opcion('Por factura', false), opcion('Agrupado por producto', true)]),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECEEF3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          opcion('Por factura', false),
+          opcion('Agrupado por producto', true),
+        ],
+      ),
     );
   }
 
   Widget _tabla() {
-    final items = _vistaAgrupada ? _consolidarItems() : _items.map((c) => c.item).toList();
-    final etiquetasFactura = _vistaAgrupada ? List<String?>.filled(items.length, null) : _items.map((c) => c.numeroFacturaOrigen).toList();
-    final filas = [for (var i = 0; i < items.length; i++) _celdaProducto(items[i].nombreProducto, etiquetasFactura[i])];
+    final items = _vistaAgrupada
+        ? _consolidarItems()
+        : _items.map((c) => c.item).toList();
+    final etiquetasFactura = _vistaAgrupada
+        ? List<String?>.filled(items.length, null)
+        : _items.map((c) => c.numeroFacturaOrigen).toList();
+    final filas = [
+      for (var i = 0; i < items.length; i++)
+        _celdaProducto(items[i].nombreProducto, etiquetasFactura[i]),
+    ];
 
     return SingleChildScrollView(
       child: Table(
-        columnWidths: const {0: FlexColumnWidth(3), 1: FlexColumnWidth(1.4), 2: FlexColumnWidth(1.6), 3: FlexColumnWidth(1.6)},
+        columnWidths: const {
+          0: FlexColumnWidth(3),
+          1: FlexColumnWidth(1.4),
+          2: FlexColumnWidth(1.6),
+          3: FlexColumnWidth(1.6),
+        },
         children: [
           TableRow(
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFB6BCC7)))),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFB6BCC7))),
+            ),
             children: [
               _celdaEncabezado('PRODUCTO'),
               _celdaEncabezado('CANT.', alinear: TextAlign.right),
@@ -394,12 +579,25 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
           ),
           for (var i = 0; i < items.length; i++)
             TableRow(
-              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFECEEF3)))),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFECEEF3))),
+              ),
               children: [
                 filas[i],
-                _celda(items[i].cantidad.toStringAsFixed(items[i].cantidad % 1 == 0 ? 0 : 2), alinear: TextAlign.right),
-                _celda(formatearMoneda(_precioConIsv(items[i])), alinear: TextAlign.right),
-                _celda(formatearMoneda(_importeConIsv(items[i])), alinear: TextAlign.right),
+                _celda(
+                  items[i].cantidad.toStringAsFixed(
+                    items[i].cantidad % 1 == 0 ? 0 : 2,
+                  ),
+                  alinear: TextAlign.right,
+                ),
+                _celda(
+                  formatearMoneda(_precioConIsv(items[i])),
+                  alinear: TextAlign.right,
+                ),
+                _celda(
+                  formatearMoneda(_importeConIsv(items[i])),
+                  alinear: TextAlign.right,
+                ),
               ],
             ),
         ],
@@ -410,14 +608,26 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
   Widget _celdaEncabezado(String texto, {TextAlign alinear = TextAlign.left}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-      child: Text(texto, textAlign: alinear, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+      child: Text(
+        texto,
+        textAlign: alinear,
+        style: GoogleFonts.poppins(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: Colors.grey.shade600,
+        ),
+      ),
     );
   }
 
   Widget _celda(String texto, {TextAlign alinear = TextAlign.left}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      child: Text(texto, textAlign: alinear, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+      child: Text(
+        texto,
+        textAlign: alinear,
+        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -429,7 +639,14 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5)),
-          if (numeroFacturaOrigen != null) Text('Factura $numeroFacturaOrigen', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+          if (numeroFacturaOrigen != null)
+            Text(
+              'Factura $numeroFacturaOrigen',
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                color: Colors.grey.shade500,
+              ),
+            ),
         ],
       ),
     );

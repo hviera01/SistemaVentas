@@ -23,7 +23,12 @@ class ItemCompraConfirmado {
   final double cantidad;
   final double precioCompra;
   final double descuentoPorcentaje;
-  ItemCompraConfirmado({required this.producto, required this.cantidad, required this.precioCompra, required this.descuentoPorcentaje});
+  ItemCompraConfirmado({
+    required this.producto,
+    required this.cantidad,
+    required this.precioCompra,
+    required this.descuentoPorcentaje,
+  });
 }
 
 /// Lo que EscanearFacturaDialog devuelve al cerrarse (ver el comentario en
@@ -67,7 +72,8 @@ class EscanearFacturaDialog extends ConsumerStatefulWidget {
   const EscanearFacturaDialog({super.key});
 
   @override
-  ConsumerState<EscanearFacturaDialog> createState() => _EscanearFacturaDialogState();
+  ConsumerState<EscanearFacturaDialog> createState() =>
+      _EscanearFacturaDialogState();
 }
 
 class _FilaEscaneada {
@@ -82,15 +88,22 @@ class _FilaEscaneada {
   final TextEditingController ctrlDescuento;
 
   _FilaEscaneada(this.original, this.producto)
-      : incluida = true,
-        cantidad = original.cantidad,
-        precioUnitario = original.precioUnitario,
-        descuentoPorcentaje = original.descuentoPorcentaje,
-        ctrlCantidad = TextEditingController(text: _formatoCantidadEstatico(original.cantidad)),
-        ctrlPrecio = TextEditingController(text: original.precioUnitario.toStringAsFixed(2)),
-        ctrlDescuento = TextEditingController(text: _formatoCantidadEstatico(original.descuentoPorcentaje));
+    : incluida = true,
+      cantidad = original.cantidad,
+      precioUnitario = original.precioUnitario,
+      descuentoPorcentaje = original.descuentoPorcentaje,
+      ctrlCantidad = TextEditingController(
+        text: _formatoCantidadEstatico(original.cantidad),
+      ),
+      ctrlPrecio = TextEditingController(
+        text: original.precioUnitario.toStringAsFixed(2),
+      ),
+      ctrlDescuento = TextEditingController(
+        text: _formatoCantidadEstatico(original.descuentoPorcentaje),
+      );
 
-  static String _formatoCantidadEstatico(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
+  static String _formatoCantidadEstatico(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
 
   void dispose() {
     ctrlCantidad.dispose();
@@ -122,12 +135,17 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   }
 
   Future<void> _agregarFoto() async {
-    final resultado = await FilePicker.pickFiles(type: FileType.image, withData: true);
+    final resultado = await FilePicker.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
     if (resultado == null || resultado.files.isEmpty) return;
     final archivo = resultado.files.first;
     final bytes = archivo.bytes;
     if (bytes == null) return;
-    final mimeType = (archivo.extension?.toLowerCase() == 'png') ? 'image/png' : 'image/jpeg';
+    final mimeType = (archivo.extension?.toLowerCase() == 'png')
+        ? 'image/png'
+        : 'image/jpeg';
     setState(() => _fotos.add((bytes: bytes, mimeType: mimeType)));
   }
 
@@ -141,28 +159,46 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     });
     try {
       final servicio = FacturaScannerService();
-      final resultado = await servicio.escanear(_fotos.map((f) => FotoParaEscanear(bytes: f.bytes, mimeType: f.mimeType)).toList());
+      final resultado = await servicio.escanear(
+        _fotos
+            .map((f) => FotoParaEscanear(bytes: f.bytes, mimeType: f.mimeType))
+            .toList(),
+      );
       if (!mounted) return;
 
       final productos = ref.read(productosStreamProvider).value ?? [];
       final proveedores = ref.read(proveedoresStreamProvider).value ?? [];
 
-      final filas = resultado.items.map((item) => _FilaEscaneada(item, _buscarProductoCoincidente(item, productos))).toList();
-      final proveedorMatch = _buscarProveedorCoincidente(resultado.proveedorNombre, resultado.proveedorRtn, proveedores);
+      final filas = resultado.items
+          .map(
+            (item) => _FilaEscaneada(
+              item,
+              _buscarProductoCoincidente(item, productos),
+            ),
+          )
+          .toList();
+      final proveedorMatch = _buscarProveedorCoincidente(
+        resultado.proveedorNombre,
+        resultado.proveedorRtn,
+        proveedores,
+      );
 
       setState(() {
         _filas = filas;
         _proveedorIdMatch = proveedorMatch?.id;
         _ctrlNoFactura.text = resultado.numeroFactura ?? '';
         _fecha = resultado.fecha ?? DateTime.now();
-        _condicion = resultado.condicionVenta == 'Credito' ? 'Credito' : 'Contado';
+        _condicion = resultado.condicionVenta == 'Credito'
+            ? 'Credito'
+            : 'Contado';
         _fechaVencimiento = resultado.fechaVencimiento;
         _extraccionHecha = true;
       });
     } on EscaneoFacturaException catch (e) {
       if (mounted) setState(() => _errorProceso = e.mensaje);
     } catch (e) {
-      if (mounted) setState(() => _errorProceso = 'No se pudo leer la factura: $e');
+      if (mounted)
+        setState(() => _errorProceso = 'No se pudo leer la factura: $e');
     } finally {
       if (mounted) setState(() => _procesando = false);
     }
@@ -177,26 +213,41 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   // incorrecto -el cajero lo resuelve a mano con "Buscar"-.
   // Un combo nunca se compra directo (solo sus componentes, por separado),
   // así que una línea leída de una factura nunca debería emparejar con uno.
-  ProductoModel? _buscarProductoCoincidente(LineaFacturaEscaneada item, List<ProductoModel> productosConCombos) {
+  ProductoModel? _buscarProductoCoincidente(
+    LineaFacturaEscaneada item,
+    List<ProductoModel> productosConCombos,
+  ) {
     final productos = productosConCombos.where((p) => !p.esCombo).toList();
     final codigo = item.codigo?.trim();
     if (codigo != null && codigo.isNotEmpty) {
-      final porCodigo = productos.where((p) => p.codigo.trim().toLowerCase() == codigo.toLowerCase()).toList();
+      final porCodigo = productos
+          .where((p) => p.codigo.trim().toLowerCase() == codigo.toLowerCase())
+          .toList();
       if (porCodigo.length == 1) return porCodigo.first;
     }
     final consulta = '${item.nombre} ${item.unidad ?? ''}'.trim();
-    final porNombre = productos.where((p) => p.estado && coincideFuzzy(p.textoBusqueda, consulta)).toList();
+    final porNombre = productos
+        .where((p) => p.estado && coincideFuzzy(p.textoBusqueda, consulta))
+        .toList();
     if (porNombre.length == 1) return porNombre.first;
     return null;
   }
 
-  ProveedorModel? _buscarProveedorCoincidente(String? nombre, String? rtn, List<ProveedorModel> proveedores) {
+  ProveedorModel? _buscarProveedorCoincidente(
+    String? nombre,
+    String? rtn,
+    List<ProveedorModel> proveedores,
+  ) {
     if (rtn != null && rtn.trim().isNotEmpty) {
-      final porRtn = proveedores.where((p) => p.rtn.trim() == rtn.trim()).toList();
+      final porRtn = proveedores
+          .where((p) => p.rtn.trim() == rtn.trim())
+          .toList();
       if (porRtn.isNotEmpty) return porRtn.first;
     }
     if (nombre != null && nombre.trim().isNotEmpty) {
-      final porNombre = proveedores.where((p) => coincideFuzzy(p.razonSocial, nombre)).toList();
+      final porNombre = proveedores
+          .where((p) => coincideFuzzy(p.razonSocial, nombre))
+          .toList();
       if (porNombre.length == 1) return porNombre.first;
     }
     return null;
@@ -204,7 +255,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
 
   Future<void> _buscarManual(_FilaEscaneada fila) async {
     final producto = await Navigator.of(context).push<ProductoModel>(
-      MaterialPageRoute(fullscreenDialog: true, builder: (context) => const BuscarProductoCompraDialog()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const BuscarProductoCompraDialog(),
+      ),
     );
     if (producto == null || !mounted) return;
     setState(() => fila.producto = producto);
@@ -218,6 +272,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   // una factura.
   Future<void> _crearProductoNuevo(_FilaEscaneada fila) async {
     final producto = await showDialog<ProductoModel>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => ProductoFormDialog(
         codigoInicial: fila.original.codigo,
@@ -231,13 +286,19 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   void _confirmarTodo() {
     final incluidas = _filas.where((f) => f.incluida).toList();
     if (incluidas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay ninguna línea para agregar')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay ninguna línea para agregar')),
+      );
       return;
     }
     final sinEmparejar = incluidas.where((f) => f.producto == null).toList();
     if (sinEmparejar.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Faltan ${sinEmparejar.length} producto(s) por emparejar (tocá "Buscar" en esas filas, o destildalas)')),
+        SnackBar(
+          content: Text(
+            'Faltan ${sinEmparejar.length} producto(s) por emparejar (tocá "Buscar" en esas filas, o destildalas)',
+          ),
+        ),
       );
       return;
     }
@@ -246,7 +307,9 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     String? razonSocialProveedor;
     if (_proveedorIdMatch != null) {
       final proveedores = ref.read(proveedoresStreamProvider).value ?? [];
-      final proveedor = proveedores.where((p) => p.id == _proveedorIdMatch).toList();
+      final proveedor = proveedores
+          .where((p) => p.id == _proveedorIdMatch)
+          .toList();
       if (proveedor.isNotEmpty) {
         documentoProveedor = proveedor.first.rtn;
         razonSocialProveedor = proveedor.first.razonSocial;
@@ -275,7 +338,14 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
         condicion: _condicion,
         fechaVencimiento: _condicion == 'Credito' ? _fechaVencimiento : null,
         items: incluidas
-            .map((f) => ItemCompraConfirmado(producto: f.producto!, cantidad: f.cantidad, precioCompra: f.precioUnitario, descuentoPorcentaje: f.descuentoPorcentaje))
+            .map(
+              (f) => ItemCompraConfirmado(
+                producto: f.producto!,
+                cantidad: f.cantidad,
+                precioCompra: f.precioUnitario,
+                descuentoPorcentaje: f.descuentoPorcentaje,
+              ),
+            )
             .toList(),
       ),
     );
@@ -289,7 +359,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         foregroundColor: const Color(0xFF1A1A1A),
-        title: Text('Escanear Factura', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+        title: Text(
+          'Escanear Factura',
+          style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: _extraccionHecha ? _vistaRevision() : _vistaCaptura(),
@@ -307,13 +380,20 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
         children: [
           Text(
             'Tomá una foto por cada página de la factura, en orden. Cuando termines, tocá "Procesar factura".',
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 16),
           if (_fotos.isNotEmpty)
             Expanded(
               child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 10, mainAxisSpacing: 10),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
                 itemCount: _fotos.length,
                 itemBuilder: (context, i) => _miniaturaFoto(i),
               ),
@@ -324,9 +404,16 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey.shade300),
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 56,
+                      color: Colors.grey.shade300,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Todavía no agregaste ninguna foto', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                    Text(
+                      'Todavía no agregaste ninguna foto',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                    ),
                   ],
                 ),
               ),
@@ -336,8 +423,18 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.shade200)),
-              child: Text(_errorProceso!, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.red.shade700)),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Text(
+                _errorProceso!,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: Colors.red.shade700,
+                ),
+              ),
             ),
           ],
           SizedBox(
@@ -345,12 +442,20 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             child: OutlinedButton.icon(
               onPressed: _procesando ? null : _agregarFoto,
               icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-              label: Text(_fotos.isEmpty ? 'Tomar foto' : 'Agregar otra página', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600)),
+              label: Text(
+                _fotos.isEmpty ? 'Tomar foto' : 'Agregar otra página',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1A1A1A),
                 side: const BorderSide(color: Color(0xFFB6BCC7)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -358,15 +463,35 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: (_fotos.isEmpty || _procesando) ? null : _procesarFactura,
+              onPressed: (_fotos.isEmpty || _procesando)
+                  ? null
+                  : _procesarFactura,
               icon: _procesando
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.auto_awesome, size: 18),
               label: Text(
-                _procesando ? 'Leyendo factura, puede tardar hasta 1 minuto...' : 'Procesar factura (${_fotos.length} foto${_fotos.length == 1 ? '' : 's'})',
-                style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600),
+                _procesando
+                    ? 'Leyendo factura, puede tardar hasta 1 minuto...'
+                    : 'Procesar factura (${_fotos.length} foto${_fotos.length == 1 ? '' : 's'})',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
         ],
@@ -392,7 +517,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: _procesando ? null : () => _quitarFoto(index),
-              child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.close, size: 16, color: Colors.white)),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.close, size: 16, color: Colors.white),
+              ),
             ),
           ),
         ),
@@ -401,8 +529,18 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
           left: 4,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.55), borderRadius: BorderRadius.circular(6)),
-            child: Text('${index + 1}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.55),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '${index + 1}',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],
@@ -422,15 +560,32 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             children: [
               _tarjetaEncabezado(),
               const SizedBox(height: 14),
-              Text('Productos leídos (${_filas.length})', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+              Text(
+                'Productos leídos (${_filas.length})',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 8),
-              ..._filas.asMap().entries.map((e) => _tarjetaFila(e.key, e.value, mapaProductos)),
+              ..._filas.asMap().entries.map(
+                (e) => _tarjetaFila(e.key, e.value, mapaProductos),
+              ),
             ],
           ),
         ),
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, -4))]),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -438,8 +593,20 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               child: FilledButton.icon(
                 onPressed: _confirmarTodo,
                 icon: const Icon(Icons.playlist_add_check, size: 18),
-                label: Text('Agregar a la compra', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1A1A1A), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                  'Agregar a la compra',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A1A1A),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ),
@@ -454,33 +621,68 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Datos de la factura', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
+          Text(
+            'Datos de la factura',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Revisá y corregí lo que haga falta.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+          Text(
+            'Revisá y corregí lo que haga falta.',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
           const SizedBox(height: 14),
           proveedoresAsync.when(
             data: (proveedores) {
-              final actual = proveedores.where((p) => p.id == _proveedorIdMatch).toList();
+              final actual = proveedores
+                  .where((p) => p.id == _proveedorIdMatch)
+                  .toList();
               return DropdownButtonFormField<ProveedorModel>(
                 initialValue: actual.isNotEmpty ? actual.first : null,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: 'Proveedor${_proveedorIdMatch == null ? ' (no se encontró, elegí uno)' : ''}',
+                  labelText:
+                      'Proveedor${_proveedorIdMatch == null ? ' (no se encontró, elegí uno)' : ''}',
                   labelStyle: GoogleFonts.poppins(fontSize: 12),
                   filled: true,
                   fillColor: const Color(0xFFE8EAF0),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                items: proveedores.map((p) => DropdownMenuItem(value: p, child: Text(p.razonSocial, overflow: TextOverflow.ellipsis))).toList(),
+                items: proveedores
+                    .map(
+                      (p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(
+                          p.razonSocial,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (v) => setState(() => _proveedorIdMatch = v?.id),
               );
             },
             loading: () => const LinearProgressIndicator(),
-            error: (e, st) => Text('Error cargando proveedores', style: GoogleFonts.poppins(color: Colors.red, fontSize: 12)),
+            error: (e, st) => Text(
+              'Error cargando proveedores',
+              style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+            ),
           ),
           const SizedBox(height: 10),
           CampoTecladoCompacto(
@@ -488,19 +690,22 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             numerico: false,
             titulo: 'No. Factura',
             child: TextField(
-            inputFormatters: [mayusculasInputFormatter],
-            autocorrect: false,
-            enableSuggestions: false,
-            controller: _ctrlNoFactura,
-            style: GoogleFonts.poppins(fontSize: 13),
-            decoration: InputDecoration(
-              labelText: 'No. Factura',
-              labelStyle: GoogleFonts.poppins(fontSize: 12),
-              filled: true,
-              fillColor: const Color(0xFFE8EAF0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              inputFormatters: [mayusculasInputFormatter],
+              autocorrect: false,
+              enableSuggestions: false,
+              controller: _ctrlNoFactura,
+              style: GoogleFonts.poppins(fontSize: 13),
+              decoration: InputDecoration(
+                labelText: 'No. Factura',
+                labelStyle: GoogleFonts.poppins(fontSize: 12),
+                filled: true,
+                fillColor: const Color(0xFFE8EAF0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
             ),
-          ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -508,18 +713,36 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               Expanded(
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(context: context, initialDate: _fecha, firstDate: DateTime(2020), lastDate: DateTime(2100));
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: _fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
                     if (fecha != null) setState(() => _fecha = fecha);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 15,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(width: 8),
-                        Text(formatoFecha.format(_fecha), style: GoogleFonts.poppins(fontSize: 13)),
+                        Text(
+                          formatoFecha.format(_fecha),
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
                       ],
                     ),
                   ),
@@ -535,7 +758,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                     labelStyle: GoogleFonts.poppins(fontSize: 12),
                     filled: true,
                     fillColor: const Color(0xFFE8EAF0),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
@@ -545,7 +771,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                     if (v == null) return;
                     setState(() {
                       _condicion = v;
-                      if (v == 'Credito') _fechaVencimiento ??= _fecha.add(const Duration(days: 30));
+                      if (v == 'Credito')
+                        _fechaVencimiento ??= _fecha.add(
+                          const Duration(days: 30),
+                        );
                     });
                   },
                 ),
@@ -556,19 +785,38 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             const SizedBox(height: 10),
             InkWell(
               onTap: () async {
-                final fecha = await showDatePicker(context: context, initialDate: _fechaVencimiento ?? _fecha.add(const Duration(days: 30)), firstDate: DateTime(2020), lastDate: DateTime(2100));
+                final fecha = await showDatePicker(
+                  context: context,
+                  initialDate:
+                      _fechaVencimiento ?? _fecha.add(const Duration(days: 30)),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
                 if (fecha != null) setState(() => _fechaVencimiento = fecha);
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8EAF0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Row(
                   children: [
-                    Icon(Icons.event_outlined, size: 15, color: Colors.grey.shade500),
+                    Icon(
+                      Icons.event_outlined,
+                      size: 15,
+                      color: Colors.grey.shade500,
+                    ),
                     const SizedBox(width: 8),
-                    Text('Vence: ${_fechaVencimiento != null ? formatoFecha.format(_fechaVencimiento!) : 'Sin definir'}', style: GoogleFonts.poppins(fontSize: 13)),
+                    Text(
+                      'Vence: ${_fechaVencimiento != null ? formatoFecha.format(_fechaVencimiento!) : 'Sin definir'}',
+                      style: GoogleFonts.poppins(fontSize: 13),
+                    ),
                   ],
                 ),
               ),
@@ -579,7 +827,11 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     );
   }
 
-  Widget _tarjetaFila(int index, _FilaEscaneada fila, Map<String, ProductoModel> mapaProductos) {
+  Widget _tarjetaFila(
+    int index,
+    _FilaEscaneada fila,
+    Map<String, ProductoModel> mapaProductos,
+  ) {
     final emparejado = fila.producto != null;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -587,7 +839,9 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: fila.incluida ? const Color(0xFFC7CBD3) : Colors.grey.shade200),
+        border: Border.all(
+          color: fila.incluida ? const Color(0xFFC7CBD3) : Colors.grey.shade200,
+        ),
       ),
       child: Opacity(
         opacity: fila.incluida ? 1 : 0.5,
@@ -597,17 +851,33 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Checkbox(value: fila.incluida, onChanged: (v) => setState(() => fila.incluida = v ?? true), visualDensity: VisualDensity.compact),
+                Checkbox(
+                  value: fila.incluida,
+                  onChanged: (v) => setState(() => fila.incluida = v ?? true),
+                  visualDensity: VisualDensity.compact,
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        fila.original.nombre + (fila.original.unidad != null ? ' (${fila.original.unidad})' : ''),
-                        style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600),
+                        fila.original.nombre +
+                            (fila.original.unidad != null
+                                ? ' (${fila.original.unidad})'
+                                : ''),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       if (fila.original.codigo != null)
-                        Text('Código leído: ${fila.original.codigo}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                        Text(
+                          'Código leído: ${fila.original.codigo}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -616,33 +886,77 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             const SizedBox(height: 8),
             if (emparejado)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(color: const Color(0xFFF0FBF4), borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FBF4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, size: 14, color: Color(0xFF1E9E5A)),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: Color(0xFF1E9E5A),
+                    ),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(fila.producto!.nombre, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF1E9E5A), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                      child: Text(
+                        fila.producto!.nombre,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF1E9E5A),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () => _buscarManual(fila),
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-                      child: Text('Cambiar', style: GoogleFonts.poppins(fontSize: 11.5)),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 0),
+                      ),
+                      child: Text(
+                        'Cambiar',
+                        style: GoogleFonts.poppins(fontSize: 11.5),
+                      ),
                     ),
                   ],
                 ),
               )
             else
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(color: const Color(0xFFFCE4E4), borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFCE4E4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.error_outline, size: 14, color: Color(0xFFC62828)),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 14,
+                          color: Color(0xFFC62828),
+                        ),
                         const SizedBox(width: 6),
-                        Expanded(child: Text('Sin coincidencia en el inventario', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)))),
+                        Expanded(
+                          child: Text(
+                            'Sin coincidencia en el inventario',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFFC62828),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -657,7 +971,13 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               minimumSize: const Size(0, 0),
                             ),
-                            child: Text('Buscar existente', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                            child: Text(
+                              'Buscar existente',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -669,7 +989,14 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               minimumSize: const Size(0, 0),
                             ),
-                            child: Text('Crear nuevo', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.white)),
+                            child: Text(
+                              'Crear nuevo',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -681,15 +1008,33 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             Row(
               children: [
                 Expanded(
-                  child: _campoConEtiqueta('Cantidad', fila.ctrlCantidad, fila.cantidad, (v) => setState(() => fila.cantidad = v)),
+                  child: _campoConEtiqueta(
+                    'Cantidad',
+                    fila.ctrlCantidad,
+                    fila.cantidad,
+                    (v) => setState(() => fila.cantidad = v),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _campoConEtiqueta('Precio unit.', fila.ctrlPrecio, fila.precioUnitario, (v) => setState(() => fila.precioUnitario = v), prefijo: 'L.', dosDecimales: true),
+                  child: _campoConEtiqueta(
+                    'Precio unit.',
+                    fila.ctrlPrecio,
+                    fila.precioUnitario,
+                    (v) => setState(() => fila.precioUnitario = v),
+                    prefijo: 'L.',
+                    dosDecimales: true,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _campoConEtiqueta('Desc. %', fila.ctrlDescuento, fila.descuentoPorcentaje, (v) => setState(() => fila.descuentoPorcentaje = v), sufijo: '%'),
+                  child: _campoConEtiqueta(
+                    'Desc. %',
+                    fila.ctrlDescuento,
+                    fila.descuentoPorcentaje,
+                    (v) => setState(() => fila.descuentoPorcentaje = v),
+                    sufijo: '%',
+                  ),
                 ),
               ],
             ),
@@ -699,13 +1044,33 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
     );
   }
 
-  Widget _campoConEtiqueta(String etiqueta, TextEditingController ctrl, double valorActual, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
+  Widget _campoConEtiqueta(
+    String etiqueta,
+    TextEditingController ctrl,
+    double valorActual,
+    void Function(double) alConfirmar, {
+    String? sufijo,
+    String? prefijo,
+    bool dosDecimales = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta, style: GoogleFonts.poppins(fontSize: 9.5, color: Colors.grey.shade500)),
+        Text(
+          etiqueta,
+          style: GoogleFonts.poppins(
+            fontSize: 9.5,
+            color: Colors.grey.shade500,
+          ),
+        ),
         const SizedBox(height: 3),
-        _campoNumerico(ctrl, alConfirmar, sufijo: sufijo, prefijo: prefijo, dosDecimales: dosDecimales),
+        _campoNumerico(
+          ctrl,
+          alConfirmar,
+          sufijo: sufijo,
+          prefijo: prefijo,
+          dosDecimales: dosDecimales,
+        ),
       ],
     );
   }
@@ -716,17 +1081,31 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   // de AbsorbPointer que usan esas otras pantallas- porque este campo nunca
   // tiene que servir para tipear con teclado físico, solo para abrir el
   // diálogo.
-  Widget _campoNumerico(TextEditingController ctrl, void Function(double) alConfirmar, {String? sufijo, String? prefijo, bool dosDecimales = false}) {
+  Widget _campoNumerico(
+    TextEditingController ctrl,
+    void Function(double) alConfirmar, {
+    String? sufijo,
+    String? prefijo,
+    bool dosDecimales = false,
+  }) {
     Future<void> abrir() async {
       final texto = await showDialog<String>(
+        useRootNavigator: false,
         context: context,
-        builder: (context) => TecladoNumericoDialog(titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor', valorInicial: ctrl.text),
+        builder: (context) => TecladoNumericoDialog(
+          titulo: sufijo == '%' ? 'Descuento (%)' : 'Valor',
+          valorInicial: ctrl.text,
+        ),
       );
       if (texto == null || !mounted) return;
       final valor = double.tryParse(texto);
       if (valor == null) return;
       setState(() {
-        ctrl.text = dosDecimales ? valor.toStringAsFixed(2) : (valor == valor.roundToDouble() ? valor.toInt().toString() : valor.toStringAsFixed(2));
+        ctrl.text = dosDecimales
+            ? valor.toStringAsFixed(2)
+            : (valor == valor.roundToDouble()
+                  ? valor.toInt().toString()
+                  : valor.toStringAsFixed(2));
         alConfirmar(valor);
       });
     }
@@ -738,26 +1117,35 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
         controller: ctrl,
         numerico: false,
         child: TextField(
-        inputFormatters: [mayusculasInputFormatter],
-        autocorrect: false,
-        enableSuggestions: false,
-        controller: ctrl,
-        readOnly: true,
-        showCursor: false,
-        enableInteractiveSelection: false,
-        textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(fontSize: 12.5),
-        decoration: InputDecoration(
-          suffixText: sufijo,
-          prefixText: prefijo,
-          prefixStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
-          filled: true,
-          fillColor: const Color(0xFFE8EAF0),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          inputFormatters: [mayusculasInputFormatter],
+          autocorrect: false,
+          enableSuggestions: false,
+          controller: ctrl,
+          readOnly: true,
+          showCursor: false,
+          enableInteractiveSelection: false,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(fontSize: 12.5),
+          decoration: InputDecoration(
+            suffixText: sufijo,
+            prefixText: prefijo,
+            prefixStyle: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: Colors.grey.shade600,
+            ),
+            filled: true,
+            fillColor: const Color(0xFFE8EAF0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 10,
+            ),
+          ),
         ),
-      ),
       ),
     );
   }

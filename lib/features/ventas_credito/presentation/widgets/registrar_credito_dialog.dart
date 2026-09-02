@@ -13,10 +13,12 @@ class RegistrarCreditoDialog extends ConsumerStatefulWidget {
   const RegistrarCreditoDialog({super.key});
 
   @override
-  ConsumerState<RegistrarCreditoDialog> createState() => _RegistrarCreditoDialogState();
+  ConsumerState<RegistrarCreditoDialog> createState() =>
+      _RegistrarCreditoDialogState();
 }
 
-class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog> {
+class _RegistrarCreditoDialogState
+    extends ConsumerState<RegistrarCreditoDialog> {
   final _numeroDocumentoController = TextEditingController();
   final _clienteController = TextEditingController();
   final _rtnController = TextEditingController();
@@ -45,10 +47,15 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
     super.dispose();
   }
 
-  double _parseDouble(String texto) => double.tryParse(texto.replaceAll(',', '').trim()) ?? 0;
+  double _parseDouble(String texto) =>
+      double.tryParse(texto.replaceAll(',', '').trim()) ?? 0;
 
   Future<void> _buscarCliente() async {
-    final cliente = await showDialog<ClienteModel>(context: context, builder: (context) => const BuscarClienteDialog());
+    final cliente = await showDialog<ClienteModel>(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => const BuscarClienteDialog(),
+    );
     if (cliente == null) return;
     setState(() {
       _clienteController.text = cliente.nombreCompleto;
@@ -62,10 +69,16 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
   /// solo informa, no impide seguir registrando el crédito manual.
   Future<void> _verificarCreditoVencido(String idCliente) async {
     try {
-      final creditos = await ref.read(ventaCreditoRepositoryProvider).obtenerCreditosDeCliente(idCliente: idCliente);
-      final totalVencido = creditos.where((c) => c.vencida).fold<double>(0, (s, c) => s + c.saldoPendiente);
+      final creditos = await ref
+          .read(ventaCreditoRepositoryProvider)
+          .obtenerCreditosDeCliente(idCliente: idCliente);
+      final totalVencido = creditos
+          .where((c) => c.vencida)
+          .fold<double>(0, (s, c) => s + c.saldoPendiente);
       if (!mounted) return;
-      setState(() => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null);
+      setState(
+        () => _saldoVencidoCliente = totalVencido > 0 ? totalVencido : null,
+      );
     } catch (_) {
       // Best-effort: sin internet u otro error transitorio, no se muestra el
       // aviso esta vez.
@@ -105,14 +118,18 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
       return;
     }
     final saldoTexto = _saldoPendienteController.text.trim();
-    final saldoPendiente = saldoTexto.isEmpty ? montoTotal : _parseDouble(saldoTexto);
+    final saldoPendiente = saldoTexto.isEmpty
+        ? montoTotal
+        : _parseDouble(saldoTexto);
 
     setState(() {
       _guardando = true;
       _error = null;
     });
     try {
-      await ref.read(ventaCreditoRepositoryProvider).crearCreditoManual(
+      await ref
+          .read(ventaCreditoRepositoryProvider)
+          .crearCreditoManual(
             documentoCliente: _rtnController.text.trim(),
             nombreCliente: cliente,
             idCliente: _clienteSeleccionado?.id,
@@ -136,7 +153,10 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
@@ -152,7 +172,10 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
       child: Container(
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 640),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -163,14 +186,30 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.credit_score_outlined, color: Color(0xFFC62828)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.credit_score_outlined,
+                      color: Color(0xFFC62828),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Registrar Crédito', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text(
+                      'Registrar Crédito',
+                      style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
                   ),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),
@@ -182,21 +221,24 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                   children: [
                     Text(
                       'Usá esto para créditos que no vienen de una venta registrada en el sistema (créditos anteriores, migraciones, etc.).',
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     CampoTecladoCompacto(
                       controller: _numeroDocumentoController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _numeroDocumentoController,
-                      autofocus: true,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('No. de factura (opcional)'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _numeroDocumentoController,
+                        autofocus: true,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('No. de factura (opcional)'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -207,14 +249,14 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                             controller: _clienteController,
                             numerico: false,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _clienteController,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Cliente'),
-                            onChanged: (_) => _limpiarClienteSiEdit(),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _clienteController,
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Cliente'),
+                              onChanged: (_) => _limpiarClienteSiEdit(),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -222,7 +264,13 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                           tooltip: 'Buscar cliente registrado',
                           onPressed: _buscarCliente,
                           icon: const Icon(Icons.search),
-                          style: IconButton.styleFrom(backgroundColor: const Color(0xFFE8EAF0), padding: const EdgeInsets.all(14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFE8EAF0),
+                            padding: const EdgeInsets.all(14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -231,29 +279,44 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                       controller: _rtnController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _rtnController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('RTN / Documento (opcional)'),
-                      onChanged: (_) => _limpiarClienteSiEdit(),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _rtnController,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('RTN / Documento (opcional)'),
+                        onChanged: (_) => _limpiarClienteSiEdit(),
+                      ),
                     ),
                     if (_saldoVencidoCliente != null) ...[
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
                         child: Row(
                           children: [
-                            Icon(Icons.warning_amber_rounded, size: 20, color: Colors.orange.shade800),
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              size: 20,
+                              color: Colors.orange.shade800,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Este cliente tiene un crédito vencido de ${formatearMoneda(_saldoVencidoCliente!)} — revisá antes de continuar.',
-                                style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.orange.shade900),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange.shade900,
+                                ),
                               ),
                             ),
                           ],
@@ -268,14 +331,17 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                             controller: _montoTotalController,
                             numerico: true,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _montoTotalController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Monto total'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _montoTotalController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Monto total'),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -284,33 +350,61 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                             controller: _saldoPendienteController,
                             numerico: true,
                             child: TextField(
-                            inputFormatters: [mayusculasInputFormatter],
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            controller: _saldoPendienteController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            style: GoogleFonts.poppins(fontSize: 14),
-                            decoration: _decoracion('Saldo pendiente'),
-                          ),
+                              inputFormatters: [mayusculasInputFormatter],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              controller: _saldoPendienteController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              style: GoogleFonts.poppins(fontSize: 14),
+                              decoration: _decoracion('Saldo pendiente'),
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Text('Fecha de vencimiento', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                    Text(
+                      'Fecha de vencimiento',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: _seleccionarFecha,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8EAF0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
+                              color: Colors.grey.shade500,
+                            ),
                             const SizedBox(width: 10),
-                            Flexible(child: Text(formatoFecha.format(_fechaVencimiento), overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF1A1A1A)))),
+                            Flexible(
+                              child: Text(
+                                formatoFecha.format(_fechaVencimiento),
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.5,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -319,13 +413,22 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.poppins(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -340,19 +443,40 @@ class _RegistrarCreditoDialogState extends ConsumerState<RegistrarCreditoDialog>
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _guardando ? null : _guardar,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFC62828),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _guardando
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                        : Text('Registrar Crédito', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            'Registrar Crédito',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),

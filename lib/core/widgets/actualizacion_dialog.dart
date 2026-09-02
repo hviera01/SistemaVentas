@@ -11,8 +11,12 @@ import '../version_app.dart';
 /// ser la más nueva -a propósito, para no complicar el flujo con "no
 /// preguntar de nuevo" cuando en este negocio conviene que quede siempre al
 /// día-.
-Future<void> mostrarDialogoActualizacion(BuildContext context, ActualizacionDisponible actualizacion) {
+Future<void> mostrarDialogoActualizacion(
+  BuildContext context,
+  ActualizacionDisponible actualizacion,
+) {
   return showDialog(
+    useRootNavigator: false,
     context: context,
     builder: (context) => PopScope(
       canPop: false,
@@ -40,19 +44,17 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
       _error = null;
     });
     try {
-      await ActualizacionService.descargarEInstalar(
-        widget.actualizacion,
-        (p) {
-          if (mounted) setState(() => _progreso = p);
-        },
-      );
+      await ActualizacionService.descargarEInstalar(widget.actualizacion, (p) {
+        if (mounted) setState(() => _progreso = p);
+      });
       // Si el await termina y seguimos acá, algo falló: descargarEInstalar
       // cierra la app (exit) apenas el instalador queda lanzado.
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _descargando = false;
-        _error = 'No se pudo descargar la actualización. Probá de nuevo más tarde.';
+        _error =
+            'No se pudo descargar la actualización. Probá de nuevo más tarde.';
       });
     }
   }
@@ -61,7 +63,10 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text('Actualización disponible', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+      title: Text(
+        'Actualización disponible',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      ),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -75,21 +80,39 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
             const SizedBox(height: 4),
             Text(
               'Tenés instalada la versión v$versionApp.',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
             ),
             if (widget.actualizacion.notas.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(widget.actualizacion.notas, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+              Text(
+                widget.actualizacion.notas,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade600,
+                ),
+              ),
             ],
             if (_descargando) ...[
               const SizedBox(height: 16),
               LinearProgressIndicator(value: _progreso > 0 ? _progreso : null),
               const SizedBox(height: 6),
-              Text('Descargando...', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+              Text(
+                'Descargando...',
+                style: GoogleFonts.poppins(
+                  fontSize: 11.5,
+                  color: Colors.grey.shade500,
+                ),
+              ),
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.red)),
+              Text(
+                _error!,
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.red),
+              ),
             ],
           ],
         ),
@@ -97,9 +120,14 @@ class _ActualizacionDialogState extends State<_ActualizacionDialog> {
       actions: _descargando
           ? const []
           : [
-              TextButton(onPressed: () => Navigator.pop(context), child: Text('Después', style: GoogleFonts.poppins())),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Después', style: GoogleFonts.poppins()),
+              ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1E9E5A)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E9E5A),
+                ),
                 onPressed: _actualizar,
                 child: Text('Actualizar ahora', style: GoogleFonts.poppins()),
               ),

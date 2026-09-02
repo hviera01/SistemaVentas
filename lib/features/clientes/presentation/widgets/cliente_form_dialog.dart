@@ -48,7 +48,8 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       _activo = c.estado;
       _idReferidor = c.idReferidor;
       _esReferidor = c.esReferidor;
-    } else if (widget.nombreInicial != null && widget.nombreInicial!.trim().isNotEmpty) {
+    } else if (widget.nombreInicial != null &&
+        widget.nombreInicial!.trim().isNotEmpty) {
       _nombreController.text = widget.nombreInicial!.trim();
     }
   }
@@ -115,15 +116,27 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
 
   Future<void> _eliminar() async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar cliente', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar este cliente?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Eliminar cliente',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Seguro que querés eliminar este cliente?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -149,7 +162,10 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFE8EAF0),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
@@ -167,7 +183,9 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       data: (clientes) {
         // Un cliente no puede ser su propio referidor.
         final idPropio = widget.cliente?.id;
-        final activos = clientes.where((c) => c.esReferidor && c.estado && c.id != idPropio).toList();
+        final activos = clientes
+            .where((c) => c.esReferidor && c.estado && c.id != idPropio)
+            .toList();
         // Si el cliente ya tenía un referidor que ahora está inactivo, ya no
         // está marcado esReferidor, o ya no existe, igual se muestra en la
         // lista para no perder de vista a quién estaba asignado -si no, el
@@ -175,23 +193,38 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
         // items-.
         final idActual = _idReferidor;
         if (idActual != null && !activos.any((c) => c.id == idActual)) {
-          final referidorActual = clientes.where((c) => c.id == idActual).toList();
+          final referidorActual = clientes
+              .where((c) => c.id == idActual)
+              .toList();
           if (referidorActual.isNotEmpty) activos.add(referidorActual.first);
         }
         return DropdownButtonFormField<String?>(
           initialValue: _idReferidor,
           isExpanded: true,
           decoration: _decoracion('¿Quién lo refirió? (opcional)'),
-          style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF1A1A1A),
+          ),
           items: [
-            const DropdownMenuItem<String?>(value: null, child: Text('Ninguno')),
-            for (final c in activos) DropdownMenuItem<String?>(value: c.id, child: Text(c.nombreCompleto, overflow: TextOverflow.ellipsis)),
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Ninguno'),
+            ),
+            for (final c in activos)
+              DropdownMenuItem<String?>(
+                value: c.id,
+                child: Text(c.nombreCompleto, overflow: TextOverflow.ellipsis),
+              ),
           ],
           onChanged: (v) => setState(() => _idReferidor = v),
         );
       },
       loading: () => const SizedBox(height: 56),
-      error: (e, st) => Text('No se pudo cargar la lista de referidores', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade600)),
+      error: (e, st) => Text(
+        'No se pudo cargar la lista de referidores',
+        style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade600),
+      ),
     );
   }
 
@@ -202,13 +235,19 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
   Widget _toggleEsReferidor() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               'Es referidor (pintor/contratista que trae clientes)',
-              style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade700),
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade700,
+              ),
             ),
           ),
           Switch(
@@ -233,7 +272,10 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       child: Container(
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 640),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -244,17 +286,30 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.groups_outlined, color: Color(0xFFC62828)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.groups_outlined,
+                      color: Color(0xFFC62828),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       editando ? 'Editar Cliente' : 'Nuevo Cliente',
-                      style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A1A),
+                      ),
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),
@@ -268,53 +323,53 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                       controller: _dniController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _dniController,
-                      autofocus: true,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('DNI (opcional)'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _dniController,
+                        autofocus: true,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('DNI (opcional)'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
                       controller: _nombreController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _nombreController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Nombre completo'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _nombreController,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Nombre completo'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
                       controller: _direccionController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _direccionController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Dirección (opcional)'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _direccionController,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Dirección (opcional)'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
                       controller: _telefonoController,
                       numerico: false,
                       child: TextField(
-                      inputFormatters: [mayusculasInputFormatter],
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      controller: _telefonoController,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: _decoracion('Teléfono (opcional)'),
-                    ),
+                        inputFormatters: [mayusculasInputFormatter],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        controller: _telefonoController,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: _decoracion('Teléfono (opcional)'),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     _toggleEsReferidor(),
@@ -322,15 +377,33 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                     _selectorReferidor(),
                     const SizedBox(height: 18),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8EAF0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Row(
                         children: [
-                          Text('Estado', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+                          Text(
+                            'Estado',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
                           const Spacer(),
                           Text(
                             _activo ? 'Activo' : 'Inactivo',
-                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _activo ? const Color(0xFF16A34A) : Colors.grey.shade500),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _activo
+                                  ? const Color(0xFF16A34A)
+                                  : Colors.grey.shade500,
+                            ),
                           ),
                           Switch(
                             value: _activo,
@@ -344,13 +417,22 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.poppins(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -365,28 +447,56 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                   if (editando)
                     IconButton(
                       onPressed: _guardando ? null : _eliminar,
-                      icon: const Icon(Icons.delete_outline, color: Color(0xFFC62828)),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFC62828),
+                      ),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFC62828).withOpacity(0.08),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: const Color(
+                          0xFFC62828,
+                        ).withOpacity(0.08),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _guardando ? null : _guardar,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFC62828),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _guardando
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                        : Text('Guardar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),

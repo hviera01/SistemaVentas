@@ -12,7 +12,8 @@ class CategoriaFormDialog extends ConsumerStatefulWidget {
   const CategoriaFormDialog({super.key, this.categoria});
 
   @override
-  ConsumerState<CategoriaFormDialog> createState() => _CategoriaFormDialogState();
+  ConsumerState<CategoriaFormDialog> createState() =>
+      _CategoriaFormDialogState();
 }
 
 class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
@@ -53,7 +54,12 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
       if (widget.categoria == null) {
         await repo.crear(descripcion, _activo, controlaStock: _controlaStock);
       } else {
-        await repo.actualizar(widget.categoria!.id, descripcion, _activo, controlaStock: _controlaStock);
+        await repo.actualizar(
+          widget.categoria!.id,
+          descripcion,
+          _activo,
+          controlaStock: _controlaStock,
+        );
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -66,15 +72,27 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
 
   Future<void> _eliminar() async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar categoría', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar esta categoría?', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Eliminar categoría',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Seguro que querés eliminar esta categoría?',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -84,7 +102,9 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
     if (confirmar != true) return;
     setState(() => _guardando = true);
     try {
-      await ref.read(categoriaRepositoryProvider).eliminar(widget.categoria!.id);
+      await ref
+          .read(categoriaRepositoryProvider)
+          .eliminar(widget.categoria!.id);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -123,13 +143,20 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
                     color: const Color(0xFFC62828).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.category_outlined, color: Color(0xFFC62828)),
+                  child: const Icon(
+                    Icons.category_outlined,
+                    color: Color(0xFFC62828),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     editando ? 'Editar Categoría' : 'Nueva Categoría',
-                    style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1A1A1A),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -144,23 +171,23 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
               numerico: false,
               titulo: 'Descripción',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _descripcionController,
-              autofocus: true,
-              style: GoogleFonts.poppins(fontSize: 14),
-              decoration: InputDecoration(
-                labelText: 'Descripción',
-                labelStyle: GoogleFonts.poppins(fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFFE8EAF0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _descripcionController,
+                autofocus: true,
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Descripción',
+                  labelStyle: GoogleFonts.poppins(fontSize: 13),
+                  filled: true,
+                  fillColor: const Color(0xFFE8EAF0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
-            ),
             ),
             const SizedBox(height: 18),
             Container(
@@ -171,11 +198,23 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
               ),
               child: Row(
                 children: [
-                  Text('Estado', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+                  Text(
+                    'Estado',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                   const Spacer(),
                   Text(
                     _activo ? 'Activo' : 'Inactivo',
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: _activo ? const Color(0xFF16A34A) : Colors.grey.shade500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _activo
+                          ? const Color(0xFF16A34A)
+                          : Colors.grey.shade500,
+                    ),
                   ),
                   Switch(
                     value: _activo,
@@ -197,7 +236,10 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
                   Expanded(
                     child: Text(
                       'Controla existencia',
-                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                   Switch(
@@ -213,19 +255,31 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
               _controlaStock
                   ? 'Al vender, se descuenta del inventario y se avisa si no hay existencia suficiente.'
                   : 'No se descuenta del inventario ni se bloquea la venta por existencia 0. Usalo para servicios o productos preparados al momento (ej. pintura preparada).',
-              style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: Colors.grey.shade500,
+              ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.red.shade200),
                 ),
-                child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                child: Text(
+                  _error!,
+                  style: GoogleFonts.poppins(
+                    color: Colors.red.shade700,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
             const SizedBox(height: 24),
@@ -234,28 +288,56 @@ class _CategoriaFormDialogState extends ConsumerState<CategoriaFormDialog> {
                 if (editando)
                   IconButton(
                     onPressed: _guardando ? null : _eliminar,
-                    icon: const Icon(Icons.delete_outline, color: Color(0xFFC62828)),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFC62828),
+                    ),
                     style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFC62828).withOpacity(0.08),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: const Color(
+                        0xFFC62828,
+                      ).withOpacity(0.08),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 const Spacer(),
                 TextButton(
                   onPressed: _guardando ? null : () => Navigator.pop(context),
-                  child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                  child: Text(
+                    'Cancelar',
+                    style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 FilledButton(
                   onPressed: _guardando ? null : _guardar,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFC62828),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _guardando
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-                      : Text('Guardar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.2,
+                          ),
+                        )
+                      : Text(
+                          'Guardar',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ],
             ),

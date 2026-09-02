@@ -39,13 +39,19 @@ class EstadoCuentaProveedorDialog extends ConsumerStatefulWidget {
   final String idProveedor;
   final String nombreProveedor;
 
-  const EstadoCuentaProveedorDialog({super.key, required this.idProveedor, required this.nombreProveedor});
+  const EstadoCuentaProveedorDialog({
+    super.key,
+    required this.idProveedor,
+    required this.nombreProveedor,
+  });
 
   @override
-  ConsumerState<EstadoCuentaProveedorDialog> createState() => _EstadoCuentaProveedorDialogState();
+  ConsumerState<EstadoCuentaProveedorDialog> createState() =>
+      _EstadoCuentaProveedorDialogState();
 }
 
-class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProveedorDialog> {
+class _EstadoCuentaProveedorDialogState
+    extends ConsumerState<EstadoCuentaProveedorDialog> {
   final _servicioExport = CompraCreditoExportService();
   bool _cargando = true;
   String? _error;
@@ -103,18 +109,25 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       for (final c in compras) {
         if (c.fechaRegistro == null) continue;
         final abonosDeEsta = abonosPorCompra[c.id] ?? [];
-        abonosDeEsta.sort((x, y) => (x.fecha ?? DateTime(0)).compareTo(y.fecha ?? DateTime(0)));
-        final saldoInicial = abonosDeEsta.isNotEmpty ? abonosDeEsta.first.saldoAnterior : c.saldoPendiente;
+        abonosDeEsta.sort(
+          (x, y) => (x.fecha ?? DateTime(0)).compareTo(y.fecha ?? DateTime(0)),
+        );
+        final saldoInicial = abonosDeEsta.isNotEmpty
+            ? abonosDeEsta.first.saldoAnterior
+            : c.saldoPendiente;
         final huboPagoPrevio = c.montoTotal - saldoInicial > 0.01;
-        movimientos.add(_MovimientoCuenta(
-          fecha: c.fechaRegistro!,
-          esCargo: true,
-          titulo: 'Factura ${c.noFactura.isEmpty ? c.numeroDocumento : c.noFactura} registrada',
-          subtitulo: huboPagoPrevio
-              ? 'Documento ${c.numeroDocumento} · Factura original ${formatearMoneda(c.montoTotal)}, ya traía ${formatearMoneda(c.montoTotal - saldoInicial)} abonado antes de registrarse'
-              : 'Documento ${c.numeroDocumento}',
-          monto: saldoInicial,
-        ));
+        movimientos.add(
+          _MovimientoCuenta(
+            fecha: c.fechaRegistro!,
+            esCargo: true,
+            titulo:
+                'Factura ${c.noFactura.isEmpty ? c.numeroDocumento : c.noFactura} registrada',
+            subtitulo: huboPagoPrevio
+                ? 'Documento ${c.numeroDocumento} · Factura original ${formatearMoneda(c.montoTotal)}, ya traía ${formatearMoneda(c.montoTotal - saldoInicial)} abonado antes de registrarse'
+                : 'Documento ${c.numeroDocumento}',
+            monto: saldoInicial,
+          ),
+        );
       }
 
       final porDia = <DateTime, List<AbonoCompraModel>>{};
@@ -125,7 +138,11 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       }
       final formatoHora = DateFormat('HH:mm');
       for (final entry in porDia.entries) {
-        final lista = entry.value..sort((x, y) => (x.fecha ?? DateTime(0)).compareTo(y.fecha ?? DateTime(0)));
+        final lista = entry.value
+          ..sort(
+            (x, y) =>
+                (x.fecha ?? DateTime(0)).compareTo(y.fecha ?? DateTime(0)),
+          );
         final montoPorUsuario = <String, double>{};
         final detalle = <String>[];
         final facturas = <String>{};
@@ -133,21 +150,28 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
         for (final a in lista) {
           total += a.montoAbonado;
           final usuario = a.usuario.isEmpty ? 'Sin usuario' : a.usuario;
-          montoPorUsuario[usuario] = (montoPorUsuario[usuario] ?? 0) + a.montoAbonado;
+          montoPorUsuario[usuario] =
+              (montoPorUsuario[usuario] ?? 0) + a.montoAbonado;
           final factura = comprasPorId[a.idCompra]?.noFactura ?? a.idCompra;
           facturas.add(factura);
           final hora = a.fecha != null ? formatoHora.format(a.fecha!) : '--:--';
-          detalle.add('$hora · Factura $factura · ${formatearMoneda(a.montoAbonado)} · $usuario');
+          detalle.add(
+            '$hora · Factura $factura · ${formatearMoneda(a.montoAbonado)} · $usuario',
+          );
         }
-        movimientos.add(_MovimientoCuenta(
-          fecha: entry.key,
-          esCargo: false,
-          titulo: 'Abono',
-          subtitulo: facturas.length == 1 ? 'Factura ${facturas.first}' : 'Facturas: ${facturas.join(', ')}',
-          monto: total,
-          montoPorUsuario: montoPorUsuario,
-          detalle: detalle,
-        ));
+        movimientos.add(
+          _MovimientoCuenta(
+            fecha: entry.key,
+            esCargo: false,
+            titulo: 'Abono',
+            subtitulo: facturas.length == 1
+                ? 'Factura ${facturas.first}'
+                : 'Facturas: ${facturas.join(', ')}',
+            monto: total,
+            montoPorUsuario: montoPorUsuario,
+            detalle: detalle,
+          ),
+        );
       }
 
       movimientos.sort((a, b) => a.fecha.compareTo(b.fecha));
@@ -155,9 +179,14 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       // Mismo criterio que arriba: sumar el cargo real que entró a la cuenta
       // (no el montoTotal de la factura), para que Total Facturado - Total
       // Abonado dé siempre exactamente el Saldo Pendiente Actual.
-      final totalFacturado = movimientos.where((m) => m.esCargo).fold<double>(0, (s, m) => s + m.monto);
+      final totalFacturado = movimientos
+          .where((m) => m.esCargo)
+          .fold<double>(0, (s, m) => s + m.monto);
       final totalAbonado = abonos.fold<double>(0, (s, a) => s + a.montoAbonado);
-      final saldoActual = compras.fold<double>(0, (s, c) => s + c.saldoPendiente);
+      final saldoActual = compras.fold<double>(
+        0,
+        (s, c) => s + c.saldoPendiente,
+      );
 
       final saldosCorrientes = <double>[];
       var acumulado = 0.0;
@@ -176,7 +205,8 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo cargar el estado de cuenta');
+      if (mounted)
+        setState(() => _error = 'No se pudo cargar el estado de cuenta');
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -191,21 +221,27 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
           titulo: _movimientos[i].titulo,
           subtitulo: _movimientos[i].subtitulo,
           monto: _movimientos[i].monto,
-          usuarios: _movimientos[i].montoPorUsuario.keys.isEmpty ? '-' : _movimientos[i].montoPorUsuario.keys.join(', '),
+          usuarios: _movimientos[i].montoPorUsuario.keys.isEmpty
+              ? '-'
+              : _movimientos[i].montoPorUsuario.keys.join(', '),
           saldoDespues: _saldosCorrientes[i],
         ),
     ];
   }
 
   Future<void> _exportarPdf() async {
-    final negocio = await ref.read(negocioRepositoryProvider).obtenerNegocioActual();
+    final negocio = await ref
+        .read(negocioRepositoryProvider)
+        .obtenerNegocioActual();
     if (!mounted) return;
     final filas = _filasParaPdf();
     await showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => PdfPreviewDialog(
         titulo: 'Vista previa · Estado de Cuenta',
-        nombreArchivo: 'estado_cuenta_${widget.nombreProveedor.replaceAll(' ', '_')}.pdf',
+        nombreArchivo:
+            'estado_cuenta_${widget.nombreProveedor.replaceAll(' ', '_')}.pdf',
         generarPdf: () => _servicioExport.generarPdfEstadoCuenta(
           nombreProveedor: widget.nombreProveedor,
           filas: filas,
@@ -222,8 +258,12 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   Widget build(BuildContext context) {
     final tamano = MediaQuery.of(context).size;
     final esMovil = tamano.width < 760;
-    final anchoDialog = esMovil ? tamano.width - 16 : (tamano.width - 60).clamp(0, 1300).toDouble();
-    final altoDialog = tamano.height < 700 ? tamano.height - 24 : (tamano.height - 60).clamp(0, 860).toDouble();
+    final anchoDialog = esMovil
+        ? tamano.width - 16
+        : (tamano.width - 60).clamp(0, 1300).toDouble();
+    final altoDialog = tamano.height < 700
+        ? tamano.height - 24
+        : (tamano.height - 60).clamp(0, 860).toDouble();
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -232,7 +272,10 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 14 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -242,18 +285,39 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Estado de Cuenta', style: GoogleFonts.poppins(fontSize: esMovil ? 16 : 18, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                      Text(widget.nombreProveedor, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis),
+                      Text(
+                        'Estado de Cuenta',
+                        style: GoogleFonts.poppins(
+                          fontSize: esMovil ? 16 : 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      Text(
+                        widget.nombreProveedor,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          color: Colors.grey.shade600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
                 if (!_cargando && _error == null && _movimientos.isNotEmpty)
                   IconButton(
                     tooltip: 'Descargar PDF',
-                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 22, color: Color(0xFFC62828)),
+                    icon: const Icon(
+                      Icons.picture_as_pdf_outlined,
+                      size: 22,
+                      color: Color(0xFFC62828),
+                    ),
                     onPressed: _exportarPdf,
                   ),
-                IconButton(icon: const Icon(Icons.close, size: 22), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 22),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -261,12 +325,26 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
             const SizedBox(height: 14),
             Expanded(
               child: _cargando
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFC62828),
+                      ),
+                    )
                   : _error != null
-                      ? Center(child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red)))
-                      : _movimientos.isEmpty
-                          ? Center(child: Text('No hay movimientos para este proveedor', style: GoogleFonts.poppins(color: Colors.grey.shade500)))
-                          : (esMovil ? _listaMovil() : _tabla()),
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: GoogleFonts.poppins(color: Colors.red),
+                      ),
+                    )
+                  : _movimientos.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No hay movimientos para este proveedor',
+                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      ),
+                    )
+                  : (esMovil ? _listaMovil() : _tabla()),
             ),
           ],
         ),
@@ -277,14 +355,32 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   Widget _statChip(String etiqueta, String valor, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.85), letterSpacing: 0.5)),
+          Text(
+            etiqueta,
+            style: GoogleFonts.poppins(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.85),
+              letterSpacing: 0.5,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(valor, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(
+            valor,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -295,31 +391,65 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
       spacing: 10,
       runSpacing: 10,
       children: [
-        _statChip('TOTAL FACTURADO (HISTÓRICO)', formatearMoneda(_totalFacturado), const Color(0xFF3B4252)),
-        _statChip('TOTAL ABONADO (HISTÓRICO)', formatearMoneda(_totalAbonado), const Color(0xFF16A34A)),
-        _statChip('SALDO PENDIENTE ACTUAL', formatearMoneda(_saldoActual), const Color(0xFFC62828)),
+        _statChip(
+          'TOTAL FACTURADO (HISTÓRICO)',
+          formatearMoneda(_totalFacturado),
+          const Color(0xFF3B4252),
+        ),
+        _statChip(
+          'TOTAL ABONADO (HISTÓRICO)',
+          formatearMoneda(_totalAbonado),
+          const Color(0xFF16A34A),
+        ),
+        _statChip(
+          'SALDO PENDIENTE ACTUAL',
+          formatearMoneda(_saldoActual),
+          const Color(0xFFC62828),
+        ),
       ],
     );
   }
 
   Widget _celdaUsuarios(Map<String, double> montoPorUsuario) {
-    if (montoPorUsuario.isEmpty) return Text('-', style: GoogleFonts.poppins(fontSize: 12));
+    if (montoPorUsuario.isEmpty)
+      return Text('-', style: GoogleFonts.poppins(fontSize: 12));
     if (montoPorUsuario.length == 1) {
-      return Text(montoPorUsuario.keys.first, style: GoogleFonts.poppins(fontSize: 12), overflow: TextOverflow.ellipsis);
+      return Text(
+        montoPorUsuario.keys.first,
+        style: GoogleFonts.poppins(fontSize: 12),
+        overflow: TextOverflow.ellipsis,
+      );
     }
-    final entradas = montoPorUsuario.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final desglose = entradas.map((e) => '${e.key}: ${formatearMoneda(e.value)}').join('\n');
+    final entradas = montoPorUsuario.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final desglose = entradas
+        .map((e) => '${e.key}: ${formatearMoneda(e.value)}')
+        .join('\n');
     return Tooltip(
       message: desglose,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(color: const Color(0xFF2B6CB0).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B6CB0).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.group_outlined, size: 13, color: Color(0xFF2B6CB0)),
+            const Icon(
+              Icons.group_outlined,
+              size: 13,
+              color: Color(0xFF2B6CB0),
+            ),
             const SizedBox(width: 4),
-            Text('${entradas.length} usuarios', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF2B6CB0))),
+            Text(
+              '${entradas.length} usuarios',
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF2B6CB0),
+              ),
+            ),
           ],
         ),
       ),
@@ -327,7 +457,12 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   }
 
   Widget _celdaDetalle(_MovimientoCuenta m) {
-    final texto = Text(m.subtitulo, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis, maxLines: 2);
+    final texto = Text(
+      m.subtitulo,
+      style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 2,
+    );
     if (m.detalle.isEmpty) return texto;
     return Tooltip(message: m.detalle.join('\n'), child: texto);
   }
@@ -335,50 +470,170 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
   Widget _tabla() {
     final formatoFecha = DateFormat('dd/MM/yyyy');
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+            decoration: const BoxDecoration(
+              color: Color(0xFFECEEF3),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
             child: Row(
               children: [
-                Expanded(flex: 2, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                Expanded(flex: 4, child: Text('MOVIMIENTO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                Expanded(flex: 2, child: Text('USUARIO(S)', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                Expanded(flex: 2, child: Text('CARGO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                Expanded(flex: 2, child: Text('ABONO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                Expanded(flex: 2, child: Text('SALDO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'FECHA',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'MOVIMIENTO',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'USUARIO(S)',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'CARGO',
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'ABONO',
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'SALDO',
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           Expanded(
             child: ListView.separated(
               itemCount: _movimientos.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+              separatorBuilder: (context, index) =>
+                  Divider(height: 1, color: Colors.grey.shade200),
               itemBuilder: (context, index) {
                 final m = _movimientos[index];
                 final saldo = _saldosCorrientes[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 2, child: Text(formatoFecha.format(m.fecha), style: GoogleFonts.poppins(fontSize: 12))),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          formatoFecha.format(m.fecha),
+                          style: GoogleFonts.poppins(fontSize: 12),
+                        ),
+                      ),
                       Expanded(
                         flex: 4,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(m.titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            Text(
+                              m.titulo,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             _celdaDetalle(m),
                           ],
                         ),
                       ),
-                      Expanded(flex: 2, child: _celdaUsuarios(m.montoPorUsuario)),
-                      Expanded(flex: 2, child: Text(m.esCargo ? formatearMoneda(m.monto) : '-', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFFC62828)))),
-                      Expanded(flex: 2, child: Text(!m.esCargo ? formatearMoneda(m.monto) : '-', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF16A34A)))),
-                      Expanded(flex: 2, child: Text(formatearMoneda(saldo), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w800))),
+                      Expanded(
+                        flex: 2,
+                        child: _celdaUsuarios(m.montoPorUsuario),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          m.esCargo ? formatearMoneda(m.monto) : '-',
+                          textAlign: TextAlign.right,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFC62828),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          !m.esCargo ? formatearMoneda(m.monto) : '-',
+                          textAlign: TextAlign.right,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF16A34A),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          formatearMoneda(saldo),
+                          textAlign: TextAlign.right,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -400,14 +655,32 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
         final saldo = _saldosCorrientes[index];
         return Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FB),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFC7CBD3)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Expanded(child: Text(m.titulo, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700))),
-                  Text(formatoFecha.format(m.fecha), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                  Expanded(
+                    child: Text(
+                      m.titulo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    formatoFecha.format(m.fecha),
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -416,15 +689,30 @@ class _EstadoCuentaProveedorDialogState extends ConsumerState<EstadoCuentaProvee
               Row(
                 children: [
                   Text(
-                    m.esCargo ? 'Cargo: ${formatearMoneda(m.monto)}' : 'Abono: ${formatearMoneda(m.monto)}',
-                    style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: m.esCargo ? const Color(0xFFC62828) : const Color(0xFF16A34A)),
+                    m.esCargo
+                        ? 'Cargo: ${formatearMoneda(m.monto)}'
+                        : 'Abono: ${formatearMoneda(m.monto)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: m.esCargo
+                          ? const Color(0xFFC62828)
+                          : const Color(0xFF16A34A),
+                    ),
                   ),
                   const Spacer(),
                   _celdaUsuarios(m.montoPorUsuario),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Saldo después de este movimiento: ${formatearMoneda(saldo)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+              Text(
+                'Saldo después de este movimiento: ${formatearMoneda(saldo)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 11.5,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         );

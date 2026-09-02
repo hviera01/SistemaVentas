@@ -33,7 +33,9 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
   }
 
   void _buscar() {
-    ref.read(promocionesBusquedaProvider.notifier).actualizar(_busquedaController.text.trim());
+    ref
+        .read(promocionesBusquedaProvider.notifier)
+        .actualizar(_busquedaController.text.trim());
   }
 
   void _limpiarBusqueda() {
@@ -42,7 +44,11 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
   }
 
   void _abrirFormulario([PromocionModel? promocion]) {
-    showDialog(context: context, builder: (context) => PromocionFormDialog(promocion: promocion));
+    showDialog(
+      useRootNavigator: false,
+      context: context,
+      builder: (context) => PromocionFormDialog(promocion: promocion),
+    );
   }
 
   Future<void> _alternarActivo(PromocionModel p) async {
@@ -51,15 +57,27 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
 
   Future<void> _eliminar(PromocionModel p) async {
     final confirmar = await showDialog<bool>(
+      useRootNavigator: false,
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Eliminar promoción', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        content: Text('¿Seguro que querés eliminar "${p.nombre}"? Esta acción no se puede deshacer.', style: GoogleFonts.poppins(fontSize: 13)),
+        title: Text(
+          'Eliminar promoción',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Seguro que querés eliminar "${p.nombre}"? Esta acción no se puede deshacer.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar', style: GoogleFonts.poppins())),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: GoogleFonts.poppins()),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Eliminar', style: GoogleFonts.poppins()),
           ),
@@ -85,11 +103,21 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Descuentos y Promociones', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                Text(
+                  'Descuentos y Promociones',
+                  style: GoogleFonts.poppins(
+                    fontSize: esMovil ? 19 : 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Armá descuentos por porcentaje, precio especial, combos por cantidad o regalos. Se ofrecen solos al vender un producto con promoción vigente.',
-                  style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -97,13 +125,34 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                   runSpacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    SizedBox(width: esMovil ? constraints.maxWidth : 220, child: _selectorVista()),
-                    SizedBox(width: esMovil ? constraints.maxWidth : 320, child: _buscador(busqueda)),
+                    SizedBox(
+                      width: esMovil ? constraints.maxWidth : 220,
+                      child: _selectorVista(),
+                    ),
+                    SizedBox(
+                      width: esMovil ? constraints.maxWidth : 320,
+                      child: _buscador(busqueda),
+                    ),
                     FilledButton.icon(
                       onPressed: () => _abrirFormulario(),
                       icon: const Icon(Icons.add, size: 18),
-                      label: Text('Nueva Promoción', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      label: Text(
+                        'Nueva Promoción',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -113,7 +162,11 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                     data: (todas) {
                       var lista = todas;
                       if (busqueda.isNotEmpty) {
-                        lista = lista.where((p) => coincideFuzzy(p.textoBusqueda, busqueda)).toList();
+                        lista = lista
+                            .where(
+                              (p) => coincideFuzzy(p.textoBusqueda, busqueda),
+                            )
+                            .toList();
                       } else if (_vista == 'vigentes') {
                         lista = promocionesVigentes(lista);
                       }
@@ -122,24 +175,47 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.local_offer_outlined, size: 56, color: Colors.grey.shade300),
+                              Icon(
+                                Icons.local_offer_outlined,
+                                size: 56,
+                                color: Colors.grey.shade300,
+                              ),
                               const SizedBox(height: 12),
                               Text(
-                                _vista == 'vigentes' ? 'No hay promociones vigentes ahora mismo' : 'No hay promociones registradas',
-                                style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                                _vista == 'vigentes'
+                                    ? 'No hay promociones vigentes ahora mismo'
+                                    : 'No hay promociones registradas',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade500,
+                                ),
                               ),
                             ],
                           ),
                         );
                       }
                       return GridView.builder(
-                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 420, mainAxisExtent: 210, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 420,
+                          mainAxisExtent: 210,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
                         itemCount: lista.length,
-                        itemBuilder: (context, i) => _tarjetaPromocion(lista[i]),
+                        itemBuilder: (context, i) =>
+                            _tarjetaPromocion(lista[i]),
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                    error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFC62828),
+                      ),
+                    ),
+                    error: (e, st) => Center(
+                      child: Text(
+                        'Error: $e',
+                        style: GoogleFonts.poppins(color: Colors.red),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -154,12 +230,19 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _vista,
           isExpanded: true,
-          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: const Color(0xFF1A1A1A),
+          ),
           items: const [
             DropdownMenuItem(value: 'vigentes', child: Text('Solo vigentes')),
             DropdownMenuItem(value: 'todas', child: Text('Todas')),
@@ -174,7 +257,11 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB6BCC7)),
+      ),
       child: Row(
         children: [
           Icon(Icons.search, size: 20, color: Colors.grey.shade400),
@@ -186,18 +273,35 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               onSubmitted: (_) => _buscar(),
               titulo: 'Buscar por nombre o producto...',
               child: TextField(
-              inputFormatters: [mayusculasInputFormatter],
-              autocorrect: false,
-              enableSuggestions: false,
-              controller: _busquedaController,
-              style: GoogleFonts.poppins(fontSize: 13),
-              decoration: InputDecoration(hintText: 'Buscar por nombre o producto...', hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
-              onSubmitted: (_) => _buscar(),
-            ),
+                inputFormatters: [mayusculasInputFormatter],
+                autocorrect: false,
+                enableSuggestions: false,
+                controller: _busquedaController,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nombre o producto...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade400,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onSubmitted: (_) => _buscar(),
+              ),
             ),
           ),
-          if (busqueda.isNotEmpty) IconButton(tooltip: 'Limpiar', icon: const Icon(Icons.close, size: 18), onPressed: _limpiarBusqueda),
-          IconButton(tooltip: 'Buscar', icon: const Icon(Icons.arrow_forward, size: 18), onPressed: _buscar),
+          if (busqueda.isNotEmpty)
+            IconButton(
+              tooltip: 'Limpiar',
+              icon: const Icon(Icons.close, size: 18),
+              onPressed: _limpiarBusqueda,
+            ),
+          IconButton(
+            tooltip: 'Buscar',
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            onPressed: _buscar,
+          ),
         ],
       ),
     );
@@ -206,33 +310,78 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
   Widget _tarjetaPromocion(PromocionModel p) {
     final vigente = p.vigente(DateTime.now());
     final formatoFecha = DateFormat('dd/MM/yy');
-    final colorEstado = !p.activo ? Colors.grey.shade400 : (vigente ? const Color(0xFF16A34A) : const Color(0xFFF59E0B));
-    final textoEstado = !p.activo ? 'Inactiva' : (vigente ? 'Vigente' : 'Fuera de fecha');
+    final colorEstado = !p.activo
+        ? Colors.grey.shade400
+        : (vigente ? const Color(0xFF16A34A) : const Color(0xFFF59E0B));
+    final textoEstado = !p.activo
+        ? 'Inactiva'
+        : (vigente ? 'Vigente' : 'Fuera de fecha');
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7CBD3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  p.nombre,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               PopupMenuButton<String>(
                 tooltip: 'Más acciones',
                 padding: EdgeInsets.zero,
-                icon: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                icon: const Icon(
+                  Icons.more_vert,
+                  size: 19,
+                  color: Color(0xFF454950),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 onSelected: (v) {
                   if (v == 'editar') _abrirFormulario(p);
                   if (v == 'alternar') _alternarActivo(p);
                   if (v == 'eliminar') _eliminar(p);
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(value: 'editar', child: Text('Editar', style: GoogleFonts.poppins(fontSize: 12.5))),
-                  PopupMenuItem(value: 'alternar', child: Text(p.activo ? 'Desactivar' : 'Activar', style: GoogleFonts.poppins(fontSize: 12.5))),
-                  PopupMenuItem(value: 'eliminar', child: Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFFC62828)))),
+                  PopupMenuItem(
+                    value: 'editar',
+                    child: Text(
+                      'Editar',
+                      style: GoogleFonts.poppins(fontSize: 12.5),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'alternar',
+                    child: Text(
+                      p.activo ? 'Desactivar' : 'Activar',
+                      style: GoogleFonts.poppins(fontSize: 12.5),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'eliminar',
+                    child: Text(
+                      'Eliminar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        color: const Color(0xFFC62828),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -240,16 +389,36 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: colorEstado.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-            child: Text(textoEstado, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: colorEstado)),
+            decoration: BoxDecoration(
+              color: colorEstado.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              textoEstado,
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: colorEstado,
+              ),
+            ),
           ),
           const SizedBox(height: 10),
-          Text(p.etiquetaCorta, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+          Text(
+            p.etiquetaCorta,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFFC62828),
+            ),
+          ),
           const SizedBox(height: 4),
           Expanded(
             child: Text(
               _descripcionProductos(p),
-              style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: Colors.grey.shade600,
+              ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -261,8 +430,13 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  p.esIndefinida ? 'Desde ${formatoFecha.format(p.fechaInicio)} · sin fecha de fin' : 'Del ${formatoFecha.format(p.fechaInicio)} al ${formatoFecha.format(p.fechaFin!)}',
-                  style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500),
+                  p.esIndefinida
+                      ? 'Desde ${formatoFecha.format(p.fechaInicio)} · sin fecha de fin'
+                      : 'Del ${formatoFecha.format(p.fechaInicio)} al ${formatoFecha.format(p.fechaFin!)}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    color: Colors.grey.shade500,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -271,12 +445,19 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           const SizedBox(height: 3),
           Row(
             children: [
-              Icon(Icons.payments_outlined, size: 13, color: Colors.grey.shade400),
+              Icon(
+                Icons.payments_outlined,
+                size: 13,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   '${p.alcancePago == 'Todos' ? 'Cualquier condición' : 'Solo ${p.alcancePago}'} · ${p.metodosPagoAlcance.isEmpty ? 'cualquier método de pago' : 'solo ${p.metodosPagoAlcance.join(' o ')}'}',
-                  style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    color: Colors.grey.shade500,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

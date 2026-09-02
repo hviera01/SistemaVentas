@@ -11,6 +11,7 @@ class UsuariosScreen extends ConsumerWidget {
 
   void _abrirFormulario(BuildContext context, [UsuarioModel? usuario]) {
     showDialog(
+      useRootNavigator: false,
       context: context,
       builder: (context) => UsuarioFormDialog(usuario: usuario),
     );
@@ -33,7 +34,11 @@ class UsuariosScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: Text(
                     'Usuarios',
-                    style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                    style: GoogleFonts.poppins(
+                      fontSize: esMovil ? 19 : 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1A1A1A),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 16)),
@@ -69,7 +74,10 @@ class UsuariosScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFB6BCC7), width: 1.2),
+                  border: Border.all(
+                    color: const Color(0xFFB6BCC7),
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.13),
@@ -79,33 +87,52 @@ class UsuariosScreen extends ConsumerWidget {
                   ],
                 ),
                 child: usuariosAsync.when(
-                      data: (usuarios) {
-                        final filtrados = usuarios.where((u) {
-                          final texto = busqueda.toLowerCase();
-                          return u.nombreCompleto.toLowerCase().contains(texto) || u.documento.toLowerCase().contains(texto);
-                        }).toList();
+                  data: (usuarios) {
+                    final filtrados = usuarios.where((u) {
+                      final texto = busqueda.toLowerCase();
+                      return u.nombreCompleto.toLowerCase().contains(texto) ||
+                          u.documento.toLowerCase().contains(texto);
+                    }).toList();
 
-                        if (filtrados.isEmpty) {
-                          return Center(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.people_alt_outlined, size: 56, color: Colors.grey.shade300),
-                                  const SizedBox(height: 12),
-                                  Text('No hay usuarios', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-                                ],
+                    if (filtrados.isEmpty) {
+                      return Center(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.people_alt_outlined,
+                                size: 56,
+                                color: Colors.grey.shade300,
                               ),
-                            ),
-                          );
-                        }
+                              const SizedBox(height: 12),
+                              Text(
+                                'No hay usuarios',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
 
-                        return esMovil ? _tarjetas(context, filtrados) : _tabla(context, filtrados);
-                      },
-                      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
-                      error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
+                    return esMovil
+                        ? _tarjetas(context, filtrados)
+                        : _tabla(context, filtrados);
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  ),
+                  error: (e, st) => Center(
+                    child: Text(
+                      'Error: $e',
+                      style: GoogleFonts.poppins(color: Colors.red),
                     ),
                   ),
+                ),
+              ),
             ),
           );
         },
@@ -122,15 +149,61 @@ class UsuariosScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: const Color(0xFFF3F4F8),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
             ),
             child: Row(
               children: [
-                Expanded(flex: 3, child: Text('NOMBRE', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600, letterSpacing: 0.5))),
-                Expanded(flex: 2, child: Text('DOCUMENTO', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600, letterSpacing: 0.5))),
-                Expanded(flex: 2, child: Text('ROL', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600, letterSpacing: 0.5))),
-                Expanded(flex: 1, child: Text('ESTADO', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600, letterSpacing: 0.5))),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'NOMBRE',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'DOCUMENTO',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'ROL',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'ESTADO',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 40),
               ],
             ),
@@ -143,14 +216,20 @@ class UsuariosScreen extends ConsumerWidget {
             InkWell(
               onTap: () => _abrirFormulario(context, usuario),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       flex: 3,
                       child: Text(
                         usuario.nombreCompleto,
-                        style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5,
+                          color: const Color(0xFF1A1A1A),
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -158,7 +237,10 @@ class UsuariosScreen extends ConsumerWidget {
                       flex: 2,
                       child: Text(
                         usuario.documento,
-                        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -166,30 +248,48 @@ class UsuariosScreen extends ConsumerWidget {
                       flex: 2,
                       child: Text(
                         usuario.rol,
-                        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Expanded(
                       flex: 1,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         constraints: const BoxConstraints(maxWidth: 80),
                         decoration: BoxDecoration(
-                          color: usuario.estado ? const Color(0xFFE8F8EE) : Colors.grey.shade200,
+                          color: usuario.estado
+                              ? const Color(0xFFE8F8EE)
+                              : Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           usuario.estado ? 'Activo' : 'Inactivo',
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: usuario.estado ? const Color(0xFF16A34A) : Colors.grey.shade600),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: usuario.estado
+                                ? const Color(0xFF16A34A)
+                                : Colors.grey.shade600,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(
                       width: 30,
-                      child: Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade400),
+                      child: Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: Colors.grey.shade400,
+                      ),
                     ),
                   ],
                 ),
@@ -227,10 +327,18 @@ class UsuariosScreen extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         u.nombreCompleto,
-                        style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A),
+                        ),
                       ),
                     ),
-                    Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Colors.grey.shade400,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -241,14 +349,25 @@ class UsuariosScreen extends ConsumerWidget {
                     _chipInfo('Documento', u.documento),
                     _chipInfo('Rol', u.rol),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: u.estado ? const Color(0xFFE8F8EE) : Colors.grey.shade200,
+                        color: u.estado
+                            ? const Color(0xFFE8F8EE)
+                            : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         u.estado ? 'Activo' : 'Inactivo',
-                        style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: u.estado ? const Color(0xFF16A34A) : Colors.grey.shade600),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: u.estado
+                              ? const Color(0xFF16A34A)
+                              : Colors.grey.shade600,
+                        ),
                       ),
                     ),
                   ],
@@ -264,8 +383,17 @@ class UsuariosScreen extends ConsumerWidget {
   Widget _chipInfo(String label, String valor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(8)),
-      child: Text('$label: $valor', style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF3F434A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAF0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label: $valor',
+        style: GoogleFonts.poppins(
+          fontSize: 11.5,
+          color: const Color(0xFF3F434A),
+        ),
+      ),
     );
   }
 
@@ -290,11 +418,15 @@ class UsuariosScreen extends ConsumerWidget {
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Buscar por nombre o documento...',
-                hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                hintStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
-              onChanged: (v) => ref.read(usuarioBusquedaProvider.notifier).actualizar(v),
+              onChanged: (v) =>
+                  ref.read(usuarioBusquedaProvider.notifier).actualizar(v),
             ),
           ),
         ],
@@ -320,7 +452,10 @@ class UsuariosScreen extends ConsumerWidget {
     return FilledButton.icon(
       onPressed: () => _abrirFormulario(context),
       icon: const Icon(Icons.add, size: 18),
-      label: Text('Nuevo Usuario', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+      label: Text(
+        'Nuevo Usuario',
+        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
       style: FilledButton.styleFrom(
         backgroundColor: const Color(0xFFC62828),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
