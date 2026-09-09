@@ -2970,26 +2970,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       return;
     }
 
-    // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en web
-    // no sirve de nada) sí detecta el sistema operativo real del equipo
-    // aunque se esté usando desde el navegador: hace falta para distinguir
-    // "celular entrando por el navegador" de "PC entrando por el navegador".
-    final esMovil =
-        defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
-
-    if (kIsWeb && esMovil) {
-      // Desde el navegador del celular no hay forma de mandar el ticket a
-      // una impresora térmica: los navegadors no dan acceso a sockets
-      // crudos (lo que usa la impresora de red) ni, para una impresora
-      // térmica típica, hay un diálogo de impresión del sistema operativo
-      // que la alcance. Antes de resignarse a dejarla pendiente, se
-      // consulta si la PC principal está conectada en ese momento (envía un
-      // latido periódico, ver PresenciaImpresionRepository): si lo está, se
-      // le pide que la imprima ella sola apenas la detecte (sin que nadie
-      // tenga que confirmar nada ahí). Si no está conectada, o la consulta
-      // falla por falta de red, se cae exactamente al comportamiento de
-      // siempre: queda pendiente para reimprimir después a mano.
+    if (kIsWeb) {
+      // Desde el navegador (celular O PC: ninguno de los dos tiene forma de
+      // mandar el ticket a la impresora térmica -los navegadores no dan
+      // acceso a sockets crudos, que es lo que usa la impresora de red/USB-)
+      // no hay ESC/POS crudo posible. Antes de resignarse a dejarla
+      // pendiente (o, como pasaba antes acá, resignarse a un PDF que el
+      // dueño ya no quiere ver), se consulta si la PC principal está
+      // conectada en ese momento (envía un latido periódico, ver
+      // PresenciaImpresionRepository): si lo está, se le pide que la
+      // imprima ella sola apenas la detecte (sin que nadie tenga que
+      // confirmar nada ahí, mismo ticket ESC/POS crudo que ya usa esa PC
+      // para sus propias ventas). Si no está conectada, o la consulta falla
+      // por falta de red, se cae al comportamiento de siempre: queda
+      // pendiente para reimprimir después a mano.
       // Estas dos no dependen una de la otra, así que van juntas (no una
       // esperando a la otra) para que, si hay que pedirle a la PC que
       // imprima, esa orden salga lo antes posible.
@@ -3006,41 +3000,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         _mostrarMensaje('Se envió la orden de impresión a la caja principal');
       } else {
         _mostrarMensaje(
-          'No se puede imprimir directo desde el navegador del celular: la venta quedó pendiente de impresión',
+          'No se puede imprimir directo desde el navegador: la venta quedó pendiente de impresión',
         );
       }
       await futurePendiente;
-      return;
-    }
-
-    if (kIsWeb) {
-      // Entre que se confirma la venta y se arma el PDF pasan unos segundos
-      // en los que no aparece nada en pantalla (la ventana de impresión del
-      // navegador tarda en salir), lo que da la sensación de que se quedó
-      // pegado. Este aviso se cierra apenas esté listo, sea que la ventana
-      // de impresión abrió bien o que falló.
-      ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? preparando;
-      if (mounted) {
-        preparando = ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Preparando impresión…'),
-            duration: Duration(seconds: 30),
-          ),
-        );
-      }
-      try {
-        await Printing.layoutPdf(
-          onLayout: (formato) =>
-              _servicioExport.generarPdfFactura(venta, negocio),
-          name: 'venta_${venta.numeroDocumento}.pdf',
-        );
-        preparando?.close();
-      } catch (_) {
-        preparando?.close();
-        _mostrarMensaje(
-          'No se pudo imprimir. La venta se guardó de todas formas.',
-        );
-      }
       return;
     }
 
@@ -3096,8 +3059,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // ninguna impresora a mano- pedido explícito del dueño) no logra imprimir
   // localmente, antes de resignarse a dejarla pendiente se le pide a la PC
   // principal que la imprima ella sola apenas la detecte -mismo mecanismo
-  // que ya usa el celular por navegador (ver el bloque kIsWeb&&esMovil de
-  // arriba)-: si está conectada (envía latido periódico, ver
+  // que ya usa cualquier navegador (ver el bloque kIsWeb de arriba)-: si
+  // está conectada (envía latido periódico, ver
   // PresenciaImpresionRepository), se le manda la solicitud; si no, o si la
   // consulta falla por falta de red, cae al comportamiento de siempre
   // (queda pendiente para reimprimir después a mano).
@@ -3291,8 +3254,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   // de red configurada en este equipo, o el intento falla -lo más común: el
   // celular no está conectado a la misma red que la impresora-, antes de
   // resignarse a dejarla pendiente se prueba pedirle a la PC principal que
-  // la imprima ella sola, igual que desde el navegador del celular (ver
-  // _manejarImpresion, rama kIsWeb && esMovil): en el celular casi nunca se
+  // la imprima ella sola, igual que desde cualquier navegador (ver
+  // _manejarImpresion, rama kIsWeb): en el celular casi nunca se
   // va a poder llegar de verdad hasta la impresora física, así que este
   // respaldo es el camino más común, no la excepción.
   Future<void> _imprimirEscPosRed(

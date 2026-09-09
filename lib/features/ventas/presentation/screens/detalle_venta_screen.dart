@@ -1,6 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -291,18 +290,19 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
         return;
       }
 
-      // defaultTargetPlatform (a diferencia de Platform.isAndroid, que en
-      // web no sirve de nada) detecta el sistema operativo real aunque se
-      // esté usando desde el navegador.
-      final esMovil =
-          defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS;
-      if (kIsWeb && esMovil) {
+      // Desde CUALQUIER navegador (celular o PC: ninguno de los dos da
+      // acceso a sockets crudos, que es lo que usa la impresora de
+      // red/USB) no hay ESC/POS crudo posible -antes acá una PC entrando
+      // por el navegador caía al PDF de siempre, que el dueño ya no
+      // quiere-. En vez de eso se le pide a la PC principal que reimprima
+      // ella sola apenas la detecte (envía un latido periódico, ver
+      // PresenciaImpresionRepository), mismo ticket ESC/POS crudo que ya
+      // usa esa PC para sus propias ventas.
+      if (kIsWeb) {
         await _pedirImpresionEnVivo(
           venta,
           esCopia,
-          mensajeSinPc:
-              'No se puede reimprimir directo desde el navegador del celular',
+          mensajeSinPc: 'No se puede reimprimir directo desde el navegador',
         );
         return;
       }
