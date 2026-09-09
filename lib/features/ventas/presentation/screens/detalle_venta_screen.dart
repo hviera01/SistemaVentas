@@ -19,6 +19,7 @@ import '../../../../core/models/tab_item.dart';
 import '../../../../core/providers/tabs_provider.dart';
 import '../../../../core/services/impresora_red_service.dart';
 import '../../../../core/services/impresora_usb_windows_service.dart';
+import '../../../../core/services/impresora_webusb_service.dart';
 import '../widgets/datos_envio_dialog.dart';
 import '../../../clientes/providers/clientes_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
@@ -64,6 +65,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
   final _servicioExport = VentaExportService();
   final _servicioTicketEscPos = VentaTicketEscPosService();
   final _servicioImpresoraRed = ImpresoraRedService();
+  final _servicioWebUsb = ImpresoraWebUsbService();
   final _presencia = PresenciaImpresionRepository();
   VentaModel? _venta;
   bool _cargando = false;
@@ -290,15 +292,36 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
         return;
       }
 
-      // Desde CUALQUIER navegador (celular o PC: ninguno de los dos da
-      // acceso a sockets crudos, que es lo que usa la impresora de
-      // red/USB) no hay ESC/POS crudo posible -antes acá una PC entrando
-      // por el navegador caía al PDF de siempre, que el dueño ya no
-      // quiere-. En vez de eso se le pide a la PC principal que reimprima
-      // ella sola apenas la detecte (envía un latido periódico, ver
-      // PresenciaImpresionRepository), mismo ticket ESC/POS crudo que ya
-      // usa esa PC para sus propias ventas.
       if (kIsWeb) {
+        // Primero directo desde ESTE navegador por WebUSB -para una PC de
+        // escritorio que entra por el navegador (sin el programa de
+        // Windows abierto) pero tiene la impresora térmica conectada por
+        // USB ahí mismo: pedido explícito del dueño-. Solo funciona si ya
+        // se vinculó la impresora en este navegador (Negocio > Impresoras
+        // > "Impresora USB en este navegador") y en Chrome/Edge.
+        if (await _servicioWebUsb.hayImpresoraVinculada()) {
+          try {
+            final bytes = await _servicioTicketEscPos.generarTicket(
+              venta,
+              negocio,
+              forzarCopia: esCopia,
+            );
+            if (await _servicioWebUsb.imprimir(bytes: bytes)) {
+              _mostrarMensaje('Ticket reimpreso');
+              return;
+            }
+          } catch (_) {}
+        }
+
+        // Respaldo si lo de arriba no aplica o falló (navegador sin
+        // WebUSB, celular, o ninguna impresora vinculada en este
+        // navegador): ningún navegador tiene otra forma de mandar bytes
+        // crudos a una impresora térmica -no hay sockets crudos para la de
+        // red- -antes acá una PC entrando por el navegador caía al PDF de
+        // siempre, que el dueño ya no quiere-. En vez de eso se le pide a
+        // la PC principal que reimprima ella sola apenas la detecte (envía
+        // un latido periódico, ver PresenciaImpresionRepository), mismo
+        // ticket ESC/POS crudo que ya usa esa PC para sus propias ventas.
         await _pedirImpresionEnVivo(
           venta,
           esCopia,

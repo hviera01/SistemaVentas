@@ -39,6 +39,7 @@ import '../../../promociones/presentation/widgets/promocion_detectada_dialog.dar
 import '../../../promociones/presentation/widgets/promociones_vigentes_dialog.dart';
 import '../../../../core/services/impresora_red_service.dart';
 import '../../../../core/services/impresora_usb_windows_service.dart';
+import '../../../../core/services/impresora_webusb_service.dart';
 import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
@@ -194,6 +195,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
   final _servicioExport = VentaExportService();
   final _servicioTicketEscPos = VentaTicketEscPosService();
   final _servicioImpresoraRed = ImpresoraRedService();
+  final _servicioWebUsb = ImpresoraWebUsbService();
   bool _guardando = false;
 
   // Campo de "escanear código de barras" directo en esta pantalla (sin
@@ -2971,19 +2973,41 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     }
 
     if (kIsWeb) {
-      // Desde el navegador (celular O PC: ninguno de los dos tiene forma de
-      // mandar el ticket a la impresora térmica -los navegadores no dan
-      // acceso a sockets crudos, que es lo que usa la impresora de red/USB-)
-      // no hay ESC/POS crudo posible. Antes de resignarse a dejarla
-      // pendiente (o, como pasaba antes acá, resignarse a un PDF que el
-      // dueño ya no quiere ver), se consulta si la PC principal está
-      // conectada en ese momento (envía un latido periódico, ver
-      // PresenciaImpresionRepository): si lo está, se le pide que la
-      // imprima ella sola apenas la detecte (sin que nadie tenga que
-      // confirmar nada ahí, mismo ticket ESC/POS crudo que ya usa esa PC
-      // para sus propias ventas). Si no está conectada, o la consulta falla
-      // por falta de red, se cae al comportamiento de siempre: queda
-      // pendiente para reimprimir después a mano.
+      // Primero se intenta imprimir crudo de verdad, directo desde ESTE
+      // navegador, por WebUSB -para el caso de una PC de escritorio que
+      // entra por el navegador (sin el programa de Windows abierto) pero
+      // tiene la impresora térmica conectada por USB ahí mismo: pedido
+      // explícito del dueño, no tenía sentido pedirle a otra PC que imprima
+      // si la impresora está en ESTA-. Solo funciona si ya se vinculó la
+      // impresora en este navegador (ver "Impresora USB en este navegador"
+      // en Negocio > Impresoras, con ImpresoraWebUsbService.vincular) y en
+      // Chrome/Edge (Safari/Firefox no soportan WebUSB).
+      if (await _servicioWebUsb.hayImpresoraVinculada()) {
+        try {
+          final bytes = await _servicioTicketEscPos.generarTicket(
+            venta,
+            negocio,
+          );
+          if (await _servicioWebUsb.imprimir(bytes: bytes)) {
+            _mostrarMensaje('Ticket impreso');
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // Respaldo si lo de arriba no aplica o falló (navegador sin WebUSB,
+      // celular, o ninguna impresora vinculada en este navegador): ningún
+      // navegador tiene otra forma de mandar bytes crudos a una impresora
+      // térmica -no hay sockets crudos para la de red-, así que en vez de
+      // resignarse a dejarla pendiente (o, como pasaba antes acá,
+      // resignarse a un PDF que el dueño ya no quiere ver), se consulta si
+      // la PC principal está conectada en ese momento (envía un latido
+      // periódico, ver PresenciaImpresionRepository): si lo está, se le
+      // pide que la imprima ella sola apenas la detecte (sin que nadie
+      // tenga que confirmar nada ahí, mismo ticket ESC/POS crudo que ya usa
+      // esa PC para sus propias ventas). Si no está conectada, o la
+      // consulta falla por falta de red, se cae al comportamiento de
+      // siempre: queda pendiente para reimprimir después a mano.
       // Estas dos no dependen una de la otra, así que van juntas (no una
       // esperando a la otra) para que, si hay que pedirle a la PC que
       // imprima, esa orden salga lo antes posible.

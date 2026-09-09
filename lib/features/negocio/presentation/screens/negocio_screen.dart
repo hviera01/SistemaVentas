@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/impresora_red_service.dart';
+import '../../../../core/services/impresora_webusb_service.dart';
 import '../../../../core/utils/face_id_storage.dart';
 import '../../../../core/utils/webauthn.dart';
 import '../../../../core/widgets/face_id_icon.dart';
@@ -98,6 +99,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   final _puertoRedController = TextEditingController();
   final _ctrlProximoFactura = TextEditingController();
   final _servicioImpresoraRed = ImpresoraRedService();
+  final _servicioWebUsb = ImpresoraWebUsbService();
 
   DateTime? _fechaLimite;
   late Map<String, bool> _permisos;
@@ -117,6 +119,15 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   // async porque SharedPreferences no es síncrono la primera vez.
   String? _credencialFaceId;
   bool _cargandoFaceId = true;
+
+  // Impresora vinculada por WebUSB en ESTE navegador (ver _tarjetaImpresoras
+  // más abajo): a diferencia de las de arriba, no vive en Negocio/Firestore
+  // -es un permiso que el navegador guarda localmente por dispositivo-, así
+  // que hay que consultarlo de nuevo cada vez que se abre esta pantalla.
+  String? _impresoraWebUsbNombre;
+  bool _cargandoWebUsb = true;
+  bool _webUsbSoportado = false;
+  bool _vinculandoWebUsb = false;
   // El propio diálogo de _activarFaceId ya se bloquea solo mientras
   // procesa (ver "procesando" ahí adentro); esto solo evita un segundo
   // toque en el botón de la tarjeta mientras ese diálogo está abierto.
@@ -129,6 +140,11 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       _cargarEstadoFaceId();
     } else {
       _cargandoFaceId = false;
+    }
+    if (kIsWeb) {
+      _cargarEstadoWebUsb();
+    } else {
+      _cargandoWebUsb = false;
     }
     final m = widget.modelo;
     _nombreController.text = m.nombre;
@@ -155,6 +171,50 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         _credencialFaceId = credencial;
         _cargandoFaceId = false;
       });
+  }
+
+  Future<void> _cargarEstadoWebUsb() async {
+    final soportado = await _servicioWebUsb.soportado();
+    final nombre = soportado
+        ? await _servicioWebUsb.nombreImpresoraVinculada()
+        : null;
+    if (mounted) {
+      setState(() {
+        _webUsbSoportado = soportado;
+        _impresoraWebUsbNombre = nombre;
+        _cargandoWebUsb = false;
+      });
+    }
+  }
+
+  // OJO: esto tiene que llamarse directo desde el onPressed de un botón
+  // (sin ningún await antes) para que el navegador cuente el clic como
+  // "activación de usuario" reciente y muestre el selector de dispositivo
+  // -si no, requestDevice lo rechaza en silencio-.
+  Future<void> _vincularImpresoraWebUsb() async {
+    setState(() => _vinculandoWebUsb = true);
+    try {
+      final ok = await _servicioWebUsb.vincular();
+      if (!mounted) return;
+      if (ok) {
+        await _cargarEstadoWebUsb();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se vinculó ninguna impresora (se cerró el selector, o no hay ningún dispositivo USB disponible)',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _vinculandoWebUsb = false);
+    }
+  }
+
+  Future<void> _desvincularImpresoraWebUsb() async {
+    await _servicioWebUsb.desvincular();
+    if (mounted) setState(() => _impresoraWebUsbNombre = null);
   }
 
   // A diferencia del intento original en LoginScreen (donde se ofrecía
@@ -1145,7 +1205,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           _filaSwitchFactura(
             titulo: 'Imprimir directo, sin preguntar',
             descripcion:
-                'Al confirmar una venta facturable se imprime directo, sin mostrar el diálogo de vista previa/descargar. En el programa de escritorio sale directo de la impresora elegida arriba, sin ningún clic. En el navegador (web) salta directo al diálogo de impresión del navegador (ese cartel no se puede evitar, es del navegador, no de esta app). En el celular usa la impresora de red de abajo. Si no hay impresora configurada, la venta se guarda igual y no se bloquea nada.',
+                'Al confirmar una venta facturable se imprime directo, sin mostrar el diálogo de vista previa/descargar. En el programa de escritorio sale directo de la impresora elegida arriba, sin ningún clic. En el navegador (web), si vinculaste una impresora USB en este navegador (ver más abajo) sale directo por ahí; si no, le pide a la PC principal que la imprima ella sola. En el celular usa la impresora de red de abajo (o le pide a la PC principal si no hay). Si no hay ninguna vía disponible, la venta se guarda igual y queda pendiente de impresión, sin bloquear nada.',
             valor: widget.modelo.modoImpresion == ModoImpresion.directo,
             onChanged: (v) => ref
                 .read(negocioRepositoryProvider)
@@ -1153,6 +1213,12 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   v ? ModoImpresion.directo : ModoImpresion.preguntar,
                 ),
           ),
+          if (kIsWeb) ...[
+            const SizedBox(height: 20),
+            Divider(color: Colors.grey.shade200),
+            const SizedBox(height: 14),
+            _tarjetaImpresoraWebUsb(),
+          ],
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade200),
           const SizedBox(height: 14),
@@ -1295,6 +1361,86 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             ),
         ],
       ),
+    );
+  }
+
+  // Vínculo WebUSB con una impresora térmica USB conectada a ESTA PC/este
+  // navegador -para cuando se entra por el navegador (sin el programa de
+  // Windows abierto) pero la impresora física está ahí mismo, pedido
+  // explícito del dueño: "que no necesite impresión remota sino directa
+  // desde la web"-. A diferencia de la impresora elegida arriba, esto NO
+  // se guarda en Negocio/Firestore ni se comparte con otras PCs: es un
+  // permiso que cada navegador otorga y recuerda por su cuenta, así que hay
+  // que vincularla en cada equipo/navegador donde se quiera usar.
+  Widget _tarjetaImpresoraWebUsb() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Impresora USB en este navegador',
+          style: GoogleFonts.poppins(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Si esta PC entra por el navegador (sin abrir el programa de Windows) pero la impresora térmica está conectada acá mismo por USB, vinculala para que imprima directo sin pedirle nada a la PC principal. Es un permiso propio de este navegador: no se comparte con otras PCs ni celulares, hay que repetirlo en cada uno.',
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 12),
+        if (_cargandoWebUsb)
+          const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else if (!_webUsbSoportado)
+          Text(
+            'Este navegador no soporta esta función (WebUSB). Usá Chrome o Edge de escritorio.',
+            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+          )
+        else if (_impresoraWebUsbNombre != null)
+          Row(
+            children: [
+              const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Vinculada: ${_impresoraWebUsbNombre!}',
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+              TextButton(
+                onPressed: _desvincularImpresoraWebUsb,
+                child: Text('Quitar', style: GoogleFonts.poppins(fontSize: 13)),
+              ),
+            ],
+          )
+        else
+          SizedBox(
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: _vinculandoWebUsb ? null : _vincularImpresoraWebUsb,
+              icon: _vinculandoWebUsb
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.usb, size: 18),
+              label: Text(
+                _vinculandoWebUsb ? 'Abriendo selector...' : 'Vincular impresora USB',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
