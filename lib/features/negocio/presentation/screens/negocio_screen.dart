@@ -1205,7 +1205,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           _filaSwitchFactura(
             titulo: 'Imprimir directo, sin preguntar',
             descripcion:
-                'Al confirmar una venta facturable se imprime directo, sin mostrar el diálogo de vista previa/descargar. En el programa de escritorio sale directo de la impresora elegida arriba, sin ningún clic. En el navegador (web), si vinculaste una impresora USB en este navegador (ver más abajo) sale directo por ahí; si no, le pide a la PC principal que la imprima ella sola. En el celular usa la impresora de red de abajo (o le pide a la PC principal si no hay). Si no hay ninguna vía disponible, la venta se guarda igual y queda pendiente de impresión, sin bloquear nada.',
+                'Al confirmar una venta facturable se imprime directo, sin mostrar el diálogo de vista previa/descargar. En el programa de escritorio sale directo de la impresora elegida arriba, sin ningún clic. En el navegador (web) de una PC, si vinculaste una impresora USB en este navegador (ver más abajo) sale directo por ahí; si no, salta al diálogo de impresión del navegador con las impresoras que tenga Windows (ese cartel no se puede evitar, es del navegador, no de esta app). En el celular usa la impresora de red de abajo, o si no hay, le pide a la PC principal. Si no hay ninguna vía disponible, la venta se guarda igual y no se bloquea nada.',
             valor: widget.modelo.modoImpresion == ModoImpresion.directo,
             onChanged: (v) => ref
                 .read(negocioRepositoryProvider)
