@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
@@ -22,9 +23,26 @@ class ImpresoraUsbWindowsService {
   /// Nunca lanza: devuelve `false` ante cualquier error (impresora
   /// desconectada, nombre inválido, spooler ocupado, etc.) para que quien
   /// llama decida qué hacer sin bloquear el flujo de la venta.
-  bool imprimir({required String nombreImpresora, required List<int> bytes}) {
-    if (nombreImpresora.trim().isEmpty || bytes.isEmpty) return false;
+  ///
+  /// `OpenPrinter`/`StartDocPrinter`/`WritePrinter` son llamadas Win32
+  /// SINCRÓNICAS: si el spooler tarda en responder (impresora apagada,
+  /// desconectada, o con un trabajo atorado) se quedan esperando ahí mismo.
+  /// Correrlas en el isolate principal congela TODA la app -no solo la
+  /// pantalla donde se imprime, sino cualquier otra pestaña abierta, porque
+  /// es el mismo hilo de UI- hasta que Windows la marca "no responde".
+  /// Por eso corren en un isolate aparte (Isolate.run): si se cuelga, se
+  /// cuelga solo, sin trabar la interfaz.
+  Future<bool> imprimir({
+    required String nombreImpresora,
+    required List<int> bytes,
+  }) {
+    if (nombreImpresora.trim().isEmpty || bytes.isEmpty) {
+      return Future.value(false);
+    }
+    return Isolate.run(() => _imprimirEnIsolate(nombreImpresora, bytes));
+  }
 
+  static bool _imprimirEnIsolate(String nombreImpresora, List<int> bytes) {
     final phPrinter = calloc<IntPtr>();
     final nombrePtr = nombreImpresora.toNativeUtf16();
     var hPrinter = 0;

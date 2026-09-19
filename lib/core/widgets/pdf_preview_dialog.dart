@@ -78,7 +78,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
     try {
       if (_usaEscPosEnWindows) {
         final bytes = await widget.generarTicketEscPos!();
-        final ok = ImpresoraUsbWindowsService().imprimir(
+        final ok = await ImpresoraUsbWindowsService().imprimir(
           nombreImpresora: widget.nombreImpresoraWindows!,
           bytes: bytes,
         );

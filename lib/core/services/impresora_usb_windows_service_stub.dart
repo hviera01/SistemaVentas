@@ -5,5 +5,5 @@
 /// `!kIsWeb && Platform.isWindows` (ver pdf_preview_dialog.dart y los
 /// servicios de impresión de ventas). Ver impresora_usb_windows_service.dart.
 class ImpresoraUsbWindowsService {
-  bool imprimir({required String nombreImpresora, required List<int> bytes}) => false;
+  Future<bool> imprimir({required String nombreImpresora, required List<int> bytes}) async => false;
 }

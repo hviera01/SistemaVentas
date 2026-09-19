@@ -3096,7 +3096,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     if (!kIsWeb && Platform.isWindows) {
       try {
         final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-        final ok = ImpresoraUsbWindowsService().imprimir(
+        final ok = await ImpresoraUsbWindowsService().imprimir(
           nombreImpresora: negocio.impresoraTermicaNombre,
           bytes: bytes,
         );
@@ -3203,7 +3203,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           );
           return;
         }
-        final ok = ImpresoraUsbWindowsService().imprimir(
+        final ok = await ImpresoraUsbWindowsService().imprimir(
           nombreImpresora: negocio.impresoraTermicaNombre,
           bytes: bytes,
         );

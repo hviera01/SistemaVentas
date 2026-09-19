@@ -561,7 +561,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           );
           return;
         }
-        final ok = ImpresoraUsbWindowsService().imprimir(
+        final ok = await ImpresoraUsbWindowsService().imprimir(
           nombreImpresora: negocio.impresoraTermicaNombre,
           bytes: bytes,
         );

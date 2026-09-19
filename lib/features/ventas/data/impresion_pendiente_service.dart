@@ -124,7 +124,7 @@ class ImpresionPendienteService {
     if (!kIsWeb && Platform.isWindows) {
       try {
         final bytes = await _servicioTicketEscPos.generarTicket(venta, negocio);
-        final ok = ImpresoraUsbWindowsService().imprimir(
+        final ok = await ImpresoraUsbWindowsService().imprimir(
           nombreImpresora: negocio.impresoraTermicaNombre,
           bytes: bytes,
         );
