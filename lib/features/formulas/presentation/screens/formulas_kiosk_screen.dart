@@ -5,6 +5,7 @@ import '../../../colores/data/color_model.dart';
 import '../../../colores/providers/colores_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
 import 'buscar_formula_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// App de consulta rápida sin login -pensada para que quede como acceso
 /// directo en la pantalla de inicio del celular/tablet (ver el link con
@@ -41,7 +42,7 @@ class _FormulasKioskScreenState extends State<FormulasKioskScreen> with SingleTi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(
         child: Column(
           children: [
@@ -124,7 +125,7 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
           _campoBusqueda(_ctrl, 'Código, cliente, descripción o ubicación...', _buscar),
           const SizedBox(height: 12),
           coloresAsync.when(
-            loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+            loading: () => Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: AppColors.rojo))),
             error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
             data: (colores) {
               if (_busqueda.isEmpty) return _estadoVacio('Escribí para buscar en Registro de Colores');
@@ -149,15 +150,15 @@ class _BuscarColoresKioskState extends ConsumerState<_BuscarColoresKiosk> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.bordeSuave)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(c.codigo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFFC62828))),
+          Text(c.codigo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.rojo)),
           if (c.descripcion.isNotEmpty) Text(c.descripcion, style: GoogleFonts.poppins(fontSize: 13)),
-          if (c.cliente.isNotEmpty) Text('Cliente: ${c.cliente}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-          if (c.ubicacionFisica.isNotEmpty) Text('Ubicación: ${c.ubicacionFisica}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
-          if (c.pagina.isNotEmpty) Text('Página: ${c.pagina}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+          if (c.cliente.isNotEmpty) Text('Cliente: ${c.cliente}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
+          if (c.ubicacionFisica.isNotEmpty) Text('Ubicación: ${c.ubicacionFisica}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
+          if (c.pagina.isNotEmpty) Text('Página: ${c.pagina}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
         ],
       ),
     );
@@ -173,17 +174,17 @@ Widget _campoBusqueda(TextEditingController ctrl, String hint, VoidCallback onBu
         child: Container(
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+          decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.borde)),
           child: Row(
             children: [
-              Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+              Icon(Icons.search, size: 20, color: AppColors.gris400),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: ctrl,
                   style: GoogleFonts.poppins(fontSize: 14),
                   textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
+                  decoration: InputDecoration(hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris400), border: InputBorder.none, isDense: true),
                   onSubmitted: (_) => onBuscar(),
                 ),
               ),
@@ -210,9 +211,9 @@ Widget _estadoVacio(String texto) {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.search, size: 48, color: Colors.grey.shade300),
+        Icon(Icons.search, size: 48, color: AppColors.gris300),
         const SizedBox(height: 10),
-        Text(texto, style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+        Text(texto, style: GoogleFonts.poppins(color: AppColors.gris500)),
       ],
     ),
   );

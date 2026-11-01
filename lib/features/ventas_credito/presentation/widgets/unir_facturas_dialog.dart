@@ -7,6 +7,7 @@ import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class UnirFacturasDialog extends ConsumerStatefulWidget {
   final List<VentaCreditoModel> facturas;
@@ -84,7 +85,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -101,7 +102,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
       child: Container(
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 700),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -113,11 +114,11 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.call_merge_outlined, color: Color(0xFFC62828)),
+                    child: Icon(Icons.call_merge_outlined, color: AppColors.rojo),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Unir Facturas de Crédito', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text('Unir Facturas de Crédito', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.texto)),
                   ),
                   IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
                 ],
@@ -130,17 +131,17 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.borde), borderRadius: BorderRadius.circular(12)),
                       child: Column(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                            decoration: BoxDecoration(color: AppColors.fondoSuave, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                             child: Row(
                               children: [
-                                Expanded(flex: 2, child: Text('FACTURA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                                Expanded(flex: 3, child: Text('CLIENTE', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                                Expanded(flex: 2, child: Text('SALDO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                                Expanded(flex: 2, child: Text('FACTURA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                                Expanded(flex: 3, child: Text('CLIENTE', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                                Expanded(flex: 2, child: Text('SALDO', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
                               ],
                             ),
                           ),
@@ -191,19 +192,19 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Fecha de vencimiento', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                              Text('Fecha de vencimiento', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
                               const SizedBox(height: 6),
                               InkWell(
                                 onTap: _seleccionarFecha,
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                  decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                                  decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade500),
+                                      Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.gris500),
                                       const SizedBox(width: 10),
-                                      Text(formatoFecha.format(_fechaVencimiento), style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF1A1A1A))),
+                                      Text(formatoFecha.format(_fechaVencimiento), style: GoogleFonts.poppins(fontSize: 13.5, color: AppColors.texto)),
                                     ],
                                   ),
                                 ),
@@ -216,12 +217,12 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Total unificado', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                              Text('Total unificado', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
                               const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
-                                child: Text(formatearMoneda(_totalUnificado), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                                decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
+                                child: Text(formatearMoneda(_totalUnificado), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto)),
                               ),
                             ],
                           ),
@@ -234,11 +235,11 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: AppColors.rojoSuave5,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.red.shade200),
+                          border: Border.all(color: AppColors.rojoBorde),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(_error!, style: GoogleFonts.poppins(color: AppColors.rojo700, fontSize: 12)),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -253,7 +254,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700)),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(

@@ -7,6 +7,7 @@ import '../../data/historial_stock_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../../compras/presentation/screens/detalle_compra_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class HistorialStockDialog extends ConsumerStatefulWidget {
   final ProductoModel producto;
@@ -104,7 +105,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -130,12 +131,12 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
             const SizedBox(height: 14),
             Expanded(
               child: historialAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+                loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
                 error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
                 data: (data) {
                   final registros = _filtrar(data);
                   if (registros.isEmpty) {
-                    return Center(child: Text('Sin movimientos en el rango seleccionado', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+                    return Center(child: Text('Sin movimientos en el rango seleccionado', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: AppColors.gris500)));
                   }
                   if (esMovil) {
                     return ListView.separated(
@@ -146,14 +147,14 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                         final subio = r.stockNuevo >= r.stockAnterior;
                         final numeroDocumento = _numeroDocumentoDesde(r);
                         return Material(
-                          color: const Color(0xFFF8F9FB),
+                          color: AppColors.fondoSuave2,
                           borderRadius: BorderRadius.circular(14),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(14),
                             onTap: numeroDocumento == null ? null : () => _abrirDetalle(r),
                             child: Container(
                               padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.bordeSuave)),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -161,26 +162,26 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                     children: [
                                       _chipTipo(r.tipo),
                                       const Spacer(),
-                                      Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
-                                      if (numeroDocumento != null) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, size: 16, color: Colors.grey.shade400)],
+                                      Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris500)),
+                                      if (numeroDocumento != null) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, size: 16, color: AppColors.gris400)],
                                     ],
                                   ),
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 15, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                                      Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 15, color: subio ? const Color(0xFF16A34A) : AppColors.rojo),
                                       const SizedBox(width: 6),
                                       Text('${r.stockAnterior} → ${r.stockNuevo}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
                                       const SizedBox(width: 8),
-                                      Text('(${subio ? '+' : ''}${r.delta.toStringAsFixed(r.delta == r.delta.roundToDouble() ? 0 : 2)})', style: GoogleFonts.poppins(fontSize: 12, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828))),
+                                      Text('(${subio ? '+' : ''}${r.delta.toStringAsFixed(r.delta == r.delta.roundToDouble() ? 0 : 2)})', style: GoogleFonts.poppins(fontSize: 12, color: subio ? const Color(0xFF16A34A) : AppColors.rojo)),
                                     ],
                                   ),
                                   if (r.motivo.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    Text(r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                                    Text(r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris700)),
                                   ],
                                   const SizedBox(height: 6),
-                                  Text(r.usuario, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                                  Text(r.usuario, style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                                 ],
                               ),
                             ),
@@ -190,28 +191,28 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                     );
                   }
                   return Container(
-                    decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(border: Border.all(color: AppColors.borde), borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                          decoration: BoxDecoration(color: AppColors.fondoSuave, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                           child: Row(
                             children: [
-                              Expanded(flex: 2, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 2, child: Text('TIPO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 1, child: Text('ANTERIOR', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 1, child: Text('NUEVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 1, child: Text('CAMBIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 5, child: Text('MOTIVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
-                              Expanded(flex: 2, child: Text('USUARIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600))),
+                              Expanded(flex: 2, child: Text('FECHA', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 2, child: Text('TIPO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 1, child: Text('ANTERIOR', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 1, child: Text('NUEVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 1, child: Text('CAMBIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 5, child: Text('MOTIVO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
+                              Expanded(flex: 2, child: Text('USUARIO', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600))),
                             ],
                           ),
                         ),
                         Expanded(
                           child: ListView.separated(
                             itemCount: registros.length,
-                            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divisor),
                             itemBuilder: (context, index) {
                               final r = registros[index];
                               final subio = r.stockNuevo >= r.stockAnterior;
@@ -227,7 +228,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                         child: Row(
                                           children: [
                                             Flexible(child: Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 12))),
-                                            if (numeroDocumento != null) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, size: 15, color: Colors.grey.shade400)],
+                                            if (numeroDocumento != null) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, size: 15, color: AppColors.gris400)],
                                           ],
                                         ),
                                       ),
@@ -237,7 +238,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                         flex: 1,
                                         child: Row(
                                           children: [
-                                            Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                                            Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : AppColors.rojo),
                                             const SizedBox(width: 4),
                                             Text(r.stockNuevo.toString(), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                                           ],
@@ -247,10 +248,10 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
                                         flex: 1,
                                         child: Text(
                                           '${subio ? '+' : ''}${r.delta.toStringAsFixed(r.delta == r.delta.roundToDouble() ? 0 : 2)}',
-                                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: subio ? const Color(0xFF16A34A) : AppColors.rojo),
                                         ),
                                       ),
-                                      Expanded(flex: 5, child: Text(r.motivo.isEmpty ? '-' : r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis, maxLines: 3)),
+                                      Expanded(flex: 5, child: Text(r.motivo.isEmpty ? '-' : r.motivo, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600), overflow: TextOverflow.ellipsis, maxLines: 3)),
                                       Expanded(flex: 2, child: Text(r.usuario, style: GoogleFonts.poppins(fontSize: 12), overflow: TextOverflow.ellipsis)),
                                     ],
                                   ),
@@ -301,13 +302,13 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB6BCC7))),
+        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.borde)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 15, color: Color(0xFF6B7280)),
+            Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.texto7),
             const SizedBox(width: 8),
-            Text(fecha != null ? '$label: ${formato.format(fecha)}' : label, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+            Text(fecha != null ? '$label: ${formato.format(fecha)}' : label, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.texto)),
           ],
         ),
       ),

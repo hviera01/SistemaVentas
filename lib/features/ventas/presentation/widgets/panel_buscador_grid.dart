@@ -7,6 +7,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
 import 'buscar_producto_dialog.dart' show ProductoConPrecio;
+import '../../../../core/theme/app_colors.dart';
 
 /// Buscador de producto embebido (Vista "dividida" de Registrar Venta,
 /// pedido explícito del dueño) — a diferencia de BuscarProductoDialog (una
@@ -94,7 +95,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
               hintText: 'Buscar producto y Enter...',
               hintStyle: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
               prefixIcon: const Icon(Icons.search, size: 20),
               suffixIcon: _busqueda.isEmpty
@@ -107,7 +108,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                       },
                     ),
               filled: true,
-              fillColor: const Color(0xFFE8EAF0),
+              fillColor: AppColors.campo,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 12,
@@ -127,7 +128,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                     'Escribí para buscar un producto',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 )
@@ -137,7 +138,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                     'Sin resultados para "$consulta"',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 )
@@ -171,12 +172,12 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+          color: seleccionada ? AppColors.rojoSuave : AppColors.superficie,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: seleccionada
                 ? const Color(0xFFC62828)
-                : const Color(0xFFE0E2E8),
+                : AppColors.bordeTenue2,
             width: seleccionada ? 1.6 : 1,
           ),
         ),
@@ -187,10 +188,10 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
             Expanded(
               child: p.imagenUrl.isEmpty
                   ? Container(
-                      color: const Color(0xFFF3F4F6),
+                      color: AppColors.fondoSuave3,
                       child: Icon(
                         Icons.inventory_2_outlined,
-                        color: Colors.grey.shade400,
+                        color: AppColors.gris400,
                         size: 32,
                       ),
                     )
@@ -213,7 +214,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -222,7 +223,7 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   ),
                   if (!p.esCombo) ...[
@@ -231,10 +232,10 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (bajoStock)
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             size: 12,
-                            color: Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         if (bajoStock) const SizedBox(width: 3),
                         Flexible(
@@ -244,8 +245,8 @@ class _PanelBuscadorGridState extends ConsumerState<PanelBuscadorGrid> {
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               color: bajoStock
-                                  ? const Color(0xFFC62828)
-                                  : Colors.grey.shade500,
+                                  ? AppColors.rojo
+                                  : AppColors.gris500,
                             ),
                           ),
                         ),

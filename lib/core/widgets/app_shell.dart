@@ -19,6 +19,7 @@ import '../utils/device_id.dart';
 import '../../features/ventas/data/impresion_en_vivo_service.dart';
 import '../../features/ventas/data/venta_model.dart';
 import '../../features/ventas/providers/ventas_provider.dart';
+import '../theme/app_colors.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -251,7 +252,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: Stack(
         children: [
           Column(
@@ -316,9 +317,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          color: AppColors.superficie,
                         ),
                         child: ClipOval(
                           child: Padding(
@@ -418,7 +419,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget _barraPestanas(TabsState tabsState) {
     return Container(
       height: 44,
-      color: Colors.white,
+      color: AppColors.superficie,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -432,7 +433,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               margin: const EdgeInsets.only(right: 6, top: 6),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: activo ? const Color(0xFFFCE9E9) : Colors.transparent,
+                color: activo ? AppColors.rojoSuave3 : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: activo
                     ? Border.all(
@@ -447,8 +448,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                     tab.icono,
                     size: 16,
                     color: activo
-                        ? const Color(0xFFC62828)
-                        : Colors.grey.shade500,
+                        ? AppColors.rojo
+                        : AppColors.gris500,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -456,8 +457,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
                       color: activo
-                          ? const Color(0xFFC62828)
-                          : Colors.grey.shade600,
+                          ? AppColors.rojo
+                          : AppColors.gris600,
                       fontWeight: activo ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
@@ -469,7 +470,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                       child: Icon(
                         Icons.close,
                         size: 14,
-                        color: Colors.grey.shade400,
+                        color: AppColors.gris400,
                       ),
                     ),
                   ],

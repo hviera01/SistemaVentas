@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_model.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Lo que devuelve [ExportarInventarioOpcionesDialog] al confirmar: la
 /// lista final de productos a incluir (subconjunto de los que se le pasó,
@@ -71,14 +72,14 @@ class _ExportarInventarioOpcionesDialogState extends State<ExportarInventarioOpc
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 640),
         padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
-            Text('Elegí qué columnas y qué productos incluir', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+            Text('Elegí qué columnas y qué productos incluir', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
             const SizedBox(height: 14),
             Text('Columnas', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
@@ -90,7 +91,7 @@ class _ExportarInventarioOpcionesDialogState extends State<ExportarInventarioOpc
                   FilterChip(
                     label: Text(etiqueta, style: GoogleFonts.poppins(fontSize: 12)),
                     selected: _columnasSeleccionadas.contains(key),
-                    selectedColor: const Color(0xFFF8D7D7),
+                    selectedColor: AppColors.rojoSuave6,
                     checkmarkColor: const Color(0xFFC62828),
                     onSelected: (v) {
                       setState(() {
@@ -109,20 +110,20 @@ class _ExportarInventarioOpcionesDialogState extends State<ExportarInventarioOpc
               children: [
                 Text('Productos', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
                 const SizedBox(width: 8),
-                Text('(${_productosSeleccionados.length} de ${widget.productos.length})', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                Text('(${_productosSeleccionados.length} de ${widget.productos.length})', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
                 const Spacer(),
                 TextButton(
                   onPressed: () => setState(() {
                     _productosSeleccionados = _todosMarcados ? {} : widget.productos.map((p) => p.id).toSet();
                   }),
-                  child: Text(_todosMarcados ? 'Ninguno' : 'Todos', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+                  child: Text(_todosMarcados ? 'Ninguno' : 'Todos', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.rojo)),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Flexible(
               child: Container(
-                decoration: BoxDecoration(border: Border.all(color: const Color(0xFFE0E2E8)), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.bordeTenue2), borderRadius: BorderRadius.circular(10)),
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: widget.productos.length,
@@ -134,7 +135,7 @@ class _ExportarInventarioOpcionesDialogState extends State<ExportarInventarioOpc
                       controlAffinity: ListTileControlAffinity.leading,
                       activeColor: const Color(0xFFC62828),
                       title: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: Text('${p.codigo} · ${widget.mapaCategorias[p.idCategoria] ?? '-'}', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+                      subtitle: Text('${p.codigo} · ${widget.mapaCategorias[p.idCategoria] ?? '-'}', style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris500)),
                       onChanged: (v) {
                         setState(() {
                           if (v == true) {
@@ -153,7 +154,7 @@ class _ExportarInventarioOpcionesDialogState extends State<ExportarInventarioOpc
             Row(
               children: [
                 const Spacer(),
-                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700))),
                 const SizedBox(width: 10),
                 FilledButton(
                   onPressed: _productosSeleccionados.isEmpty || _columnasSeleccionadas.isEmpty

@@ -4,6 +4,7 @@ import '../../data/producto_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
 import '../../../../core/widgets/imagen_producto_network.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Card de solo lectura con toda la info de un producto, para consultar
 /// rápido sin editar nada. Se abre con doble toque/doble clic sobre un
@@ -38,7 +39,7 @@ class DetalleProductoDialog extends StatelessWidget {
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 640),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -59,7 +60,7 @@ class DetalleProductoDialog extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ),
@@ -81,7 +82,7 @@ class DetalleProductoDialog extends StatelessWidget {
                         producto.descripcion,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -154,7 +155,7 @@ class DetalleProductoDialog extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade600,
+            color: AppColors.gris600,
           ),
         ),
         const SizedBox(height: 8),
@@ -172,7 +173,7 @@ class DetalleProductoDialog extends StatelessWidget {
                     nombre,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -181,7 +182,7 @@ class DetalleProductoDialog extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFC62828),
+                    color: AppColors.rojo,
                   ),
                 ),
                 if (stockComponente != null) ...[
@@ -190,7 +191,7 @@ class DetalleProductoDialog extends StatelessWidget {
                     '(hay ${_formatearCantidad(stockComponente)})',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 ],
@@ -233,7 +234,7 @@ class DetalleProductoDialog extends StatelessWidget {
               etiqueta,
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             ),
           ),
@@ -243,7 +244,7 @@ class DetalleProductoDialog extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.texto,
               ),
             ),
           ),

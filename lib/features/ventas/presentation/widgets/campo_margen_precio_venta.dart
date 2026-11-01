@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Par de campos "Margen % <-> Precio de venta" sincronizados en ambos
 /// sentidos -MISMA fórmula y MISMO mecanismo de sincronización que ya usa
@@ -178,9 +179,9 @@ class CampoMargenPrecioVentaState extends State<CampoMargenPrecioVenta> {
           labelStyle: GoogleFonts.poppins(fontSize: 11.5),
           suffixText: sufijo,
           prefixText: prefijo,
-          prefixStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+          prefixStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris600),
           filled: true,
-          fillColor: const Color(0xFFF2F3F7),
+          fillColor: AppColors.fondo,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

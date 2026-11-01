@@ -8,6 +8,7 @@ import '../../providers/ventas_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../screens/detalle_venta_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Lista de ventas guardadas pero sin imprimir (típicamente hechas desde el
 /// celular sin la impresora térmica a mano). Tocar una abre su detalle,
@@ -69,7 +70,7 @@ class _VentasPendientesImpresionDialogState extends ConsumerState<VentasPendient
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -88,9 +89,9 @@ class _VentasPendientesImpresionDialogState extends ConsumerState<VentasPendient
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.print_outlined, size: 48, color: Colors.grey.shade300),
+                          Icon(Icons.print_outlined, size: 48, color: AppColors.gris300),
                           const SizedBox(height: 10),
-                          Text('No hay ventas pendientes de impresión', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                          Text('No hay ventas pendientes de impresión', style: GoogleFonts.poppins(color: AppColors.gris500)),
                         ],
                       ),
                     );
@@ -111,7 +112,7 @@ class _VentasPendientesImpresionDialogState extends ConsumerState<VentasPendient
                         },
                         child: Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(color: const Color(0xFFFFF8EC), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE0A63C))),
+                          decoration: BoxDecoration(color: AppColors.ambarSuave6, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE0A63C))),
                           child: Row(
                             children: [
                               Icon(Icons.print_disabled_outlined, size: 20, color: Colors.amber.shade800),
@@ -127,26 +128,26 @@ class _VentasPendientesImpresionDialogState extends ConsumerState<VentasPendient
                                     const SizedBox(height: 2),
                                     Text(
                                       '${venta.tipoDocumento} · ${venta.numeroDocumento} · ${formatearMoneda(venta.totalAPagar)}',
-                                      style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                                      style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600),
                                     ),
                                     if (venta.fechaRegistro != null) ...[
                                       const SizedBox(height: 2),
-                                      Text(formatoFecha.format(venta.fechaRegistro!), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400)),
+                                      Text(formatoFecha.format(venta.fechaRegistro!), style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris400)),
                                     ],
                                   ],
                                 ),
                               ),
                               imprimiendo
-                                  ? const Padding(
+                                  ? Padding(
                                       padding: EdgeInsets.symmetric(horizontal: 12),
-                                      child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828))),
+                                      child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.rojo)),
                                     )
                                   : IconButton(
                                       tooltip: 'Imprimir',
                                       icon: Icon(Icons.print_outlined, color: Colors.amber.shade800),
                                       onPressed: () => _imprimir(venta),
                                     ),
-                              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                              Icon(Icons.chevron_right, color: AppColors.gris400),
                             ],
                           ),
                         ),
@@ -154,7 +155,7 @@ class _VentasPendientesImpresionDialogState extends ConsumerState<VentasPendient
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+                loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
                 error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../data/escaneo_remoto_repository.dart';
 import '../../../../core/utils/beep.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Pantalla que abre el celular al escanear el QR que muestra la PC (ver
 /// EscanearRemotoDialog): no pide iniciar sesión (se llega acá directo desde
@@ -203,7 +204,7 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _confirmarEnviado,
-                          style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF2E7D32), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          style: FilledButton.styleFrom(backgroundColor: AppColors.superficie, foregroundColor: const Color(0xFF2E7D32), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                           child: Text('OK, seguir escaneando', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
                         ),
                       ),
@@ -234,7 +235,7 @@ class _EscaneoRemotoScreenState extends State<EscaneoRemotoScreen> {
                       child: Text('✓ Enviado: $_ultimoEnviado', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
                     ),
                   const SizedBox(height: 6),
-                  Text('$_enviados código(s) enviado(s) a la caja', style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 11.5)),
+                  Text('$_enviados código(s) enviado(s) a la caja', style: GoogleFonts.poppins(color: AppColors.gris400, fontSize: 11.5)),
                 ],
               ),
             ),

@@ -9,6 +9,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class RegistrarAbonoDialog extends ConsumerStatefulWidget {
   final VentaCreditoModel credito;
@@ -114,7 +115,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -123,12 +124,12 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris600)),
           const Spacer(),
-          Text(valor, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+          Text(valor, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto)),
         ],
       ),
     );
@@ -146,7 +147,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
       child: Container(
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: altoMaximo),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -158,13 +159,13 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.payments_outlined, color: Color(0xFFC62828)),
+                    child: Icon(Icons.payments_outlined, color: AppColors.rojo),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       'Registrar Abono · ${widget.credito.numeroDocumento}',
-                      style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.texto),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -176,7 +177,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
               padding: const EdgeInsets.fromLTRB(28, 4, 28, 0),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(widget.credito.nombreCliente, style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+                child: Text(widget.credito.nombreCliente, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)),
               ),
             ),
             Flexible(
@@ -226,14 +227,14 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                            Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.gris600),
                             const SizedBox(width: 10),
-                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris600)),
                             const Spacer(),
-                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto)),
                           ],
                         ),
                       ),
@@ -242,7 +243,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                     DropdownButtonFormField<String>(
                       initialValue: _metodoPago,
                       decoration: _decoracion('Método de pago'),
-                      style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(fontSize: 14, color: AppColors.texto),
                       items: _metodosPago.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       onChanged: (v) {
                         if (v == null) return;
@@ -270,11 +271,11 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: AppColors.rojoSuave5,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.red.shade200),
+                          border: Border.all(color: AppColors.rojoBorde),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(_error!, style: GoogleFonts.poppins(color: AppColors.rojo700, fontSize: 12)),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -289,7 +290,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700)),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(

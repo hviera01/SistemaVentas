@@ -10,6 +10,7 @@ import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../reportes/data/historico_venta_service.dart';
 import 'detalle_venta_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// "Ver Facturas" -pedido explícito del dueño: reemplaza al viejo botón
 /// "Ver Detalle" (que solo dejaba buscar UNA venta por número). Arranca
@@ -126,7 +127,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                 children: [
                   Text(
                     '${venta.nombreCliente} · ${venta.condicion}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: AppColors.grisBase),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -163,7 +164,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                     'Venta del sistema anterior — solo consulta.',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -234,7 +235,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   Widget build(BuildContext context) {
     final lista = _listaFiltrada;
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -252,7 +253,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: esMovil ? 19 : 22,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                         ),
@@ -294,8 +295,8 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                             style: GoogleFonts.poppins(fontSize: 13),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1A1A1A),
-                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            foregroundColor: AppColors.texto,
+                            side: BorderSide(color: AppColors.borde),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
                               vertical: 14,
@@ -313,8 +314,8 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                             style: GoogleFonts.poppins(fontSize: 13),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1A1A1A),
-                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            foregroundColor: AppColors.texto,
+                            side: BorderSide(color: AppColors.borde),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
                               vertical: 14,
@@ -358,10 +359,10 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                 ],
                 body: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFAEB4C0),
+                      color: AppColors.bordeFuerte,
                       width: 1.3,
                     ),
                     boxShadow: [
@@ -373,9 +374,9 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                     ],
                   ),
                   child: _cargando
-                      ? const Center(
+                      ? Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         )
                       : _error != null
@@ -393,14 +394,14 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                               Icon(
                                 Icons.receipt_long_outlined,
                                 size: 56,
-                                color: Colors.grey.shade300,
+                                color: AppColors.gris300,
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 'No se encontraron facturas',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade500,
+                                  color: AppColors.gris500,
                                 ),
                               ),
                             ],
@@ -431,9 +432,9 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.superficie,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFB6BCC7)),
+            border: Border.all(color: AppColors.borde),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -441,7 +442,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
               Icon(
                 Icons.calendar_today_outlined,
                 size: 15,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
               const SizedBox(width: 8),
               Flexible(
@@ -451,7 +452,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                   maxLines: 1,
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
               ),
@@ -472,9 +473,9 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -484,12 +485,12 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
             etiqueta,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: [
             DropdownMenuItem<String?>(
@@ -517,13 +518,13 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -541,7 +542,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                   hintText: 'Buscar por número, cliente, método de pago...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -565,7 +566,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: esCotizacion ? const Color(0xFFFFF6D8) : const Color(0xFFEFF4FF),
+        color: esCotizacion ? AppColors.ambarSuave2 : AppColors.azulSuave,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -574,7 +575,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: esCotizacion
-              ? const Color(0xFF92720B)
+              ? AppColors.ambar4
               : const Color(0xFF3B82F6),
         ),
       ),
@@ -586,7 +587,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: anulada ? const Color(0xFFFCE4E4) : const Color(0xFFE8F8EE),
+        color: anulada ? AppColors.rojoSuave2 : AppColors.verdeSuave,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -594,7 +595,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
         style: GoogleFonts.poppins(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: anulada ? const Color(0xFFC62828) : const Color(0xFF16A34A),
+          color: anulada ? AppColors.rojo : const Color(0xFF16A34A),
         ),
       ),
     );
@@ -616,12 +617,12 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECEEF3),
+                  color: AppColors.fondoSuave,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: AppColors.divisorFuerte),
                   ),
                 ),
                 child: Row(
@@ -642,7 +643,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
             final v = lista[index - 1];
             return Column(
               children: [
-                if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
+                if (index > 1) Divider(height: 1, color: AppColors.divisor),
                 InkWell(
                   onTap: () => _verDetalle(v),
                   child: Padding(
@@ -707,7 +708,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.3,
         ),
       ),
@@ -731,7 +732,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),
@@ -752,9 +753,9 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFC7CBD3)),
+              border: Border.all(color: AppColors.bordeSuave),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -773,14 +774,14 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                           Text(
                             'Doc. ${v.numeroDocumento}',
                             style: GoogleFonts.poppins(
                               fontSize: 11.5,
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -791,7 +792,7 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ],
@@ -817,9 +818,9 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
+                          color: AppColors.ambarSuave7,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.amber.shade200),
+                          border: Border.all(color: AppColors.ambarBorde2),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -854,14 +855,14 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );

@@ -21,6 +21,8 @@ import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/utils/tablet_utils_stub.dart'
     if (dart.library.html) '../../../../core/utils/tablet_utils_web.dart'
     as tactil;
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/tema_app.dart';
 
 // Específicamente el navegador de un celular/tablet (no la PC, no la app de
 // escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID/Touch ID que
@@ -57,11 +59,11 @@ class NegocioScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final negocioAsync = ref.watch(negocioStreamProvider);
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: negocioAsync.when(
         data: (modelo) => _NegocioForm(modelo: modelo),
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC62828)),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppColors.rojo),
         ),
         error: (e, st) => Center(
           child: Text(
@@ -279,7 +281,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     decoration: InputDecoration(
                       labelText: 'Código de acceso',
                       filled: true,
-                      fillColor: const Color(0xFFE8EAF0),
+                      fillColor: AppColors.campo,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -295,7 +297,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     filled: true,
-                    fillColor: const Color(0xFFE8EAF0),
+                    fillColor: AppColors.campo,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -685,7 +687,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                         style: GoogleFonts.poppins(
                           fontSize: esMovil ? 19 : 22,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                     ),
@@ -697,8 +699,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                         style: GoogleFonts.poppins(fontSize: 13),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFB6BCC7)),
+                        foregroundColor: AppColors.texto,
+                        side: BorderSide(color: AppColors.borde),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -719,6 +721,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               SliverToBoxAdapter(child: _tarjetaImpresoras(esMovil)),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaFactura()),
+              SliverToBoxAdapter(child: const SizedBox(height: 18)),
+              SliverToBoxAdapter(child: _tarjetaApariencia()),
               SliverToBoxAdapter(child: const SizedBox(height: 18)),
               SliverToBoxAdapter(child: _tarjetaTecladoCompacto()),
               if (_puedeEnviarReporteWhatsapp) ...[
@@ -742,9 +746,9 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -760,14 +764,14 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   Widget _tituloSeccion(String texto, IconData icono) {
     return Row(
       children: [
-        Icon(icono, size: 19, color: const Color(0xFFC62828)),
+        Icon(icono, size: 19, color: AppColors.rojo),
         const SizedBox(width: 8),
         Text(
           texto,
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],
@@ -779,7 +783,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -858,7 +862,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               _error!,
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: const Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
             ),
             const SizedBox(height: 12),
@@ -908,7 +912,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Rango autorizado',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 6),
@@ -952,7 +956,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
               const SizedBox(width: 8),
@@ -986,7 +990,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       children: [
         Text(
           'Fecha límite de emisión',
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
         ),
         const SizedBox(height: 6),
         InkWell(
@@ -995,7 +999,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EAF0),
+              color: AppColors.campo,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -1003,7 +1007,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 Icon(
                   Icons.calendar_today_outlined,
                   size: 16,
-                  color: Colors.grey.shade500,
+                  color: AppColors.gris500,
                 ),
                 const SizedBox(width: 10),
                 Flexible(
@@ -1014,7 +1018,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: 13.5,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -1037,7 +1041,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Definí una clave que se pedirá antes de realizar ciertas acciones sensibles. Es opcional: activá solo lo que necesites.',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 18),
@@ -1064,7 +1068,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 child: FilledButton(
                   onPressed: _guardandoClave ? null : _guardarClave,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A1A1A),
+                    backgroundColor: AppColors.botonOscuro,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 14,
@@ -1088,8 +1092,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   child: OutlinedButton(
                     onPressed: _guardandoClave ? null : _quitarClave,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
-                      side: const BorderSide(color: Color(0xFFF3B9B9)),
+                      foregroundColor: AppColors.rojo,
+                      side: BorderSide(color: AppColors.rojoBorde2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 14,
@@ -1114,7 +1118,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 size: 15,
                 color: tieneClave
                     ? const Color(0xFF16A34A)
-                    : Colors.grey.shade500,
+                    : AppColors.gris500,
               ),
               const SizedBox(width: 6),
               Text(
@@ -1125,20 +1129,20 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   fontSize: 12,
                   color: tieneClave
                       ? const Color(0xFF16A34A)
-                      : Colors.grey.shade500,
+                      : AppColors.gris500,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Divider(color: Colors.grey.shade200),
+          Divider(color: AppColors.divisor),
           const SizedBox(height: 12),
           Text(
             '¿Dónde pedir la clave?',
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A1A),
+              color: AppColors.texto,
             ),
           ),
           const SizedBox(height: 6),
@@ -1166,7 +1170,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Elegí qué impresora usar para los recibos térmicos y para las etiquetas de productos. Se usarán en todo el sistema.',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 18),
@@ -1200,7 +1204,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             ],
           ),
           const SizedBox(height: 20),
-          Divider(color: Colors.grey.shade200),
+          Divider(color: AppColors.divisor),
           const SizedBox(height: 14),
           _filaSwitchFactura(
             titulo: 'Imprimir directo, sin preguntar',
@@ -1215,19 +1219,19 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           ),
           if (kIsWeb) ...[
             const SizedBox(height: 20),
-            Divider(color: Colors.grey.shade200),
+            Divider(color: AppColors.divisor),
             const SizedBox(height: 14),
             _tarjetaImpresoraWebUsb(),
           ],
           const SizedBox(height: 20),
-          Divider(color: Colors.grey.shade200),
+          Divider(color: AppColors.divisor),
           const SizedBox(height: 14),
           Text(
             'Impresora térmica de red (para celular)',
             style: GoogleFonts.poppins(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A1A),
+              color: AppColors.texto,
             ),
           ),
           const SizedBox(height: 4),
@@ -1235,7 +1239,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'En el celular no se pueden listar las impresoras del sistema. Si tu impresora térmica está conectada a la misma red WiFi, ingresá su IP acá: la venta se manda a imprimir directo por esa dirección.',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 12),
@@ -1244,7 +1248,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
               'No disponible en la versión web (el navegador no permite esta conexión directa).',
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             )
           else
@@ -1270,7 +1274,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                         labelText: 'IP de la impresora',
                         hintText: '192.168.1.50',
                         filled: true,
-                        fillColor: const Color(0xFFE8EAF0),
+                        fillColor: AppColors.campo,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -1295,7 +1299,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                       decoration: InputDecoration(
                         labelText: 'Puerto',
                         filled: true,
-                        fillColor: const Color(0xFFE8EAF0),
+                        fillColor: AppColors.campo,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -1381,13 +1385,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
           style: GoogleFonts.poppins(
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Si esta PC entra por el navegador (sin abrir el programa de Windows) pero la impresora térmica está conectada acá mismo por USB, vinculala para que imprima directo sin pedirle nada a la PC principal. Es un permiso propio de este navegador: no se comparte con otras PCs ni celulares, hay que repetirlo en cada uno.',
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
         ),
         const SizedBox(height: 12),
         if (_cargandoWebUsb)
@@ -1399,7 +1403,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         else if (!_webUsbSoportado)
           Text(
             'Este navegador no soporta esta función (WebUSB). Usá Chrome o Edge de escritorio.',
-            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500),
           )
         else if (_impresoraWebUsbNombre != null)
           Row(
@@ -1459,7 +1463,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Estos botones lo mandan al toque, sin esperar al horario programado -por ejemplo, si el envío automático falló-.',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 16),
@@ -1483,8 +1487,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1510,8 +1514,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1539,7 +1543,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Configuración de lo que se imprime en el ticket de venta.',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 14),
@@ -1552,7 +1556,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 .read(negocioRepositoryProvider)
                 .establecerFacturaImprimirCopia(v),
           ),
-          Divider(color: Colors.grey.shade200, height: 28),
+          Divider(color: AppColors.divisor, height: 28),
           _filaSwitchFactura(
             titulo: 'Mostrar precios con ISV incluido',
             descripcion:
@@ -1562,13 +1566,13 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 .read(negocioRepositoryProvider)
                 .establecerFacturaPreciosConIsv(v),
           ),
-          Divider(color: Colors.grey.shade200, height: 28),
+          Divider(color: AppColors.divisor, height: 28),
           Text(
             'Numeración de facturas',
             style: GoogleFonts.poppins(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A1A),
+              color: AppColors.texto,
             ),
           ),
           const SizedBox(height: 3),
@@ -1576,7 +1580,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'El número que le va a tocar a la próxima Factura o Boleta que registrés. Sirve para continuar la numeración de un talonario físico en vez de arrancar siempre desde 1 (por ejemplo, después de vaciar los datos de prueba).',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 12),
@@ -1611,10 +1615,10 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                             : null,
                         helperStyle: GoogleFonts.poppins(
                           fontSize: 11.5,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFE8EAF0),
+                        fillColor: AppColors.campo,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -1662,6 +1666,84 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     );
   }
 
+  Widget _tarjetaApariencia() {
+    final modo = ref.watch(modoTemaProvider);
+    Widget opcion(ModoTema valor, String texto, IconData icono) {
+      final seleccionada = modo == valor;
+      return InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => ref.read(modoTemaProvider.notifier).establecer(valor),
+        child: Container(
+          width: 150,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: seleccionada ? AppColors.rojoSuave : AppColors.campo,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: seleccionada ? const Color(0xFFC62828) : AppColors.borde,
+              width: seleccionada ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icono,
+                size: 18,
+                color: seleccionada ? AppColors.rojo : AppColors.gris600,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                texto,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: seleccionada ? FontWeight.w700 : FontWeight.w500,
+                  color: AppColors.texto,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return _tarjeta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion('Apariencia', Icons.contrast),
+          const SizedBox(height: 6),
+          Text(
+            'Tema claro u oscuro. Se guarda solo en este equipo (cada PC o celular elige el suyo).',
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              color: AppColors.gris600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              opcion(ModoTema.claro, 'Claro', Icons.light_mode_outlined),
+              opcion(ModoTema.oscuro, 'Oscuro', Icons.dark_mode_outlined),
+              opcion(ModoTema.sistema, 'Automático', Icons.brightness_auto_outlined),
+            ],
+          ),
+          if (modo == ModoTema.sistema) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Automático sigue el tema que tenga configurado el sistema operativo del equipo.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppColors.gris500,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _tarjetaTecladoCompacto() {
     return _tarjeta(
       child: Column(
@@ -1673,7 +1755,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Solo afecta a tablet (no a celular ni a PC/escritorio).',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 14),
@@ -1698,14 +1780,14 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         children: [
           Row(
             children: [
-              const FaceIdIcon(size: 19, color: Color(0xFFC62828)),
+              FaceIdIcon(size: 19, color: AppColors.rojo),
               const SizedBox(width: 8),
               Text(
                 'Face ID en este celular',
                 style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
             ],
@@ -1715,7 +1797,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             'Activá Face ID en este celular para entrar a esta cuenta sin escribir código y contraseña cada vez. Es por celular y por cuenta: si otra persona usa este mismo teléfono, tiene que activar el suyo por separado.',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 16),
@@ -1747,8 +1829,8 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 OutlinedButton(
                   onPressed: _olvidarFaceId,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFC62828),
-                    side: const BorderSide(color: Color(0xFFF3B9B9)),
+                    foregroundColor: AppColors.rojo,
+                    side: BorderSide(color: AppColors.rojoBorde2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1805,7 +1887,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 style: GoogleFonts.poppins(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
               const SizedBox(height: 3),
@@ -1813,7 +1895,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                 descripcion,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -1850,7 +1932,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1858,7 +1940,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
                   descripcion,
                   style: GoogleFonts.poppins(
                     fontSize: 11.5,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                 ),
               ],

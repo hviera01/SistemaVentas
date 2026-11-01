@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/formula_colortrend_model.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Muestra el detalle completo de una fórmula del Color Codex: código,
 /// nombre, base, página del libro físico, y las cantidades agrupadas por
@@ -58,7 +59,7 @@ class FormulaDetalleCard extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480, maxHeight: 620),
           child: Material(
-            color: Colors.white,
+            color: AppColors.superficie,
             borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.all(22),
@@ -73,7 +74,7 @@ class FormulaDetalleCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -82,7 +83,7 @@ class FormulaDetalleCard extends StatelessWidget {
                           formula.nombre,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: Colors.grey.shade600,
+                            color: AppColors.gris600,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -99,7 +100,7 @@ class FormulaDetalleCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F1B3D),
+                      color: AppColors.marino,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -126,8 +127,8 @@ class FormulaDetalleCard extends StatelessWidget {
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
                                       color: esEstimado
-                                          ? const Color(0xFFB45309)
-                                          : const Color(0xFFC62828),
+                                          ? AppColors.ambar
+                                          : AppColors.rojo,
                                     ),
                                   ),
                                 ],
@@ -153,9 +154,9 @@ class FormulaDetalleCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -179,7 +180,7 @@ class FormulaDetalleCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ),
                     Text(
@@ -187,7 +188,7 @@ class FormulaDetalleCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ],
@@ -218,7 +219,7 @@ class FormulaDetalleCard extends StatelessWidget {
             'Libro físico: página ${f.pagina}',
             style: GoogleFonts.poppins(
               fontSize: 11.5,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           const SizedBox(height: 12),
@@ -228,10 +229,10 @@ class FormulaDetalleCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
                     size: 14,
-                    color: Color(0xFFB45309),
+                    color: AppColors.ambar,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -239,7 +240,7 @@ class FormulaDetalleCard extends StatelessWidget {
                       'El libro no trae fórmula de Cuarto para este color. El Cuarto de abajo es un estimado (Galón ÷ 4), no un valor impreso.',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: const Color(0xFFB45309),
+                        color: AppColors.ambar,
                       ),
                     ),
                   ),
@@ -314,9 +315,9 @@ class FormulaDetalleCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FB),
+          color: AppColors.fondoSuave2,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0E2E8)),
+          border: Border.all(color: AppColors.bordeTenue2),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,12 +331,12 @@ class FormulaDetalleCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F1B3D),
+                      color: AppColors.marino,
                       letterSpacing: 0.3,
                     ),
                   ),
                 ),
-                Icon(Icons.open_in_full, size: 14, color: Colors.grey.shade400),
+                Icon(Icons.open_in_full, size: 14, color: AppColors.gris400),
               ],
             ),
             const SizedBox(height: 8),
@@ -359,8 +360,8 @@ class FormulaDetalleCard extends StatelessWidget {
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                           color: esEstimado
-                              ? const Color(0xFFB45309)
-                              : const Color(0xFF1A1A1A),
+                              ? AppColors.ambar
+                              : AppColors.texto,
                         ),
                       ),
                     ),

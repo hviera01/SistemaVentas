@@ -12,6 +12,7 @@ import '../../../../core/utils/exportador.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class IngresosEgresosScreen extends ConsumerStatefulWidget {
   const IngresosEgresosScreen({super.key});
@@ -282,7 +283,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     final totales = TotalesLibro.desde(lista);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 900;
@@ -350,7 +351,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         OutlinedButton.icon(
@@ -358,8 +359,8 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           icon: const Icon(Icons.grid_on_outlined, size: 18),
           label: Text('Excel', style: GoogleFonts.poppins(fontSize: 13)),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -371,8 +372,8 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
           label: Text('PDF', style: GoogleFonts.poppins(fontSize: 13)),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -388,9 +389,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,8 +469,8 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                     style: GoogleFonts.poppins(fontSize: 12.5),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFC62828),
-                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    foregroundColor: AppColors.rojo,
+                    side: BorderSide(color: AppColors.borde),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -579,7 +580,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           const Color(0xFFC62828),
         ),
         _statChip('Gastos casa', totales.gastosCasa, const Color(0xFF8B5CF6)),
-        _statChip('Utilidad', totales.utilidad, const Color(0xFF1A1A1A)),
+        _statChip('Utilidad', totales.utilidad, AppColors.texto),
       ],
     );
   }
@@ -588,9 +589,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,7 +602,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
             style: GoogleFonts.poppins(
               fontSize: 9.5,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
               letterSpacing: 0.4,
             ),
           ),
@@ -620,8 +621,8 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
 
   Widget _lista(List<MovimientoFinanciero> lista) {
     if (_cargando)
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFC62828)),
+      return Center(
+        child: CircularProgressIndicator(color: AppColors.rojo),
       );
     if (lista.isEmpty) {
       return Center(
@@ -631,12 +632,12 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
             Icon(
               Icons.swap_vert_outlined,
               size: 56,
-              color: Colors.grey.shade300,
+              color: AppColors.gris300,
             ),
             const SizedBox(height: 12),
             Text(
               'No se encontraron movimientos',
-              style: GoogleFonts.poppins(color: Colors.grey.shade500),
+              style: GoogleFonts.poppins(color: AppColors.gris500),
             ),
           ],
         ),
@@ -645,22 +646,22 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: ListView.separated(
         padding: const EdgeInsets.all(8),
         itemCount: lista.length,
         separatorBuilder: (context, index) =>
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: AppColors.divisor),
         itemBuilder: (context, index) {
           final m = lista[index];
           final seleccionado = m.esEgresoManual && m.idEgreso == _idEditando;
           return InkWell(
             onTap: () => _seleccionarMovimiento(m),
             child: Container(
-              color: seleccionado ? const Color(0xFFFBEAEA) : null,
+              color: seleccionado ? AppColors.rojoSuave : null,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
@@ -670,7 +671,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                       formatoFecha.format(m.fecha),
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                     ),
                   ),
@@ -709,7 +710,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                       m.egreso == 0 ? '' : formatearMoneda(m.egreso),
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: const Color(0xFFC62828),
+                        color: AppColors.rojo,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -720,7 +721,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                       m.metodoPago,
                       style: GoogleFonts.poppins(
                         fontSize: 11.5,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                     ),
                   ),
@@ -752,7 +753,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           labelText: etiqueta,
           labelStyle: GoogleFonts.poppins(fontSize: 12),
           filled: true,
-          fillColor: const Color(0xFFE8EAF0),
+          fillColor: AppColors.campo,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -771,7 +772,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -779,7 +780,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           Icon(
             Icons.calendar_today_outlined,
             size: 14,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
           ),
           const SizedBox(width: 8),
           Text('$etiqueta: $valor', style: GoogleFonts.poppins(fontSize: 12.5)),
@@ -797,7 +798,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
@@ -806,7 +807,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: opciones
               .map((o) => DropdownMenuItem(value: o, child: Text(o)))
@@ -825,9 +826,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFB6BCC7)),
+          border: Border.all(color: AppColors.borde),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -835,14 +836,14 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
             Icon(
               Icons.calendar_today_outlined,
               size: 15,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
             const SizedBox(width: 8),
             Text(
               '$label: ${formato.format(fecha)}',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.texto,
               ),
             ),
           ],
@@ -861,9 +862,9 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -873,12 +874,12 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
             etiqueta,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: [
             DropdownMenuItem<String?>(
@@ -906,13 +907,13 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -929,7 +930,7 @@ class _IngresosEgresosScreenState extends ConsumerState<IngresosEgresosScreen> {
                   hintText: 'Buscar...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,

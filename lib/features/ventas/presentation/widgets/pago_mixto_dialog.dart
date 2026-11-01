@@ -4,6 +4,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../data/pago_detalle_model.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Diálogo para repartir el total de una venta entre varios métodos de pago
 /// (por ejemplo, parte en Efectivo y el resto en Transferencia). Devuelve la
@@ -91,7 +92,7 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: tamano.height * 0.85),
         padding: const EdgeInsets.all(26),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -102,12 +103,12 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(color: const Color(0xFFFBEAEA), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: AppColors.rojoSuave, borderRadius: BorderRadius.circular(14)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFC62828), letterSpacing: 0.5)),
-                    Text(formatearMoneda(widget.total), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFFC62828))),
+                    Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.rojo, letterSpacing: 0.5)),
+                    Text(formatearMoneda(widget.total), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.rojo)),
                   ],
                 ),
               ),
@@ -122,10 +123,10 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                         child: DropdownButtonFormField<String>(
                           initialValue: _renglones[i].metodo,
                           isExpanded: true,
-                          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.texto),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: const Color(0xFFE8EAF0),
+                            fillColor: AppColors.campo,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
@@ -155,7 +156,7 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                             labelText: 'Monto',
                             labelStyle: GoogleFonts.poppins(fontSize: 12),
                             filled: true,
-                            fillColor: const Color(0xFFE8EAF0),
+                            fillColor: AppColors.campo,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
@@ -165,7 +166,7 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                       IconButton(
                         onPressed: _renglones.length > 1 ? () => _quitarRenglon(i) : null,
                         icon: const Icon(Icons.close, size: 18),
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ],
                   ),
@@ -175,13 +176,13 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
                 onPressed: _agregarRenglon,
                 icon: const Icon(Icons.add, size: 18),
                 label: Text('Agregar método', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                style: TextButton.styleFrom(foregroundColor: const Color(0xFFC62828)),
+                style: TextButton.styleFrom(foregroundColor: AppColors.rojo),
               ),
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.azulSuave, borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     Text(_falta.abs() <= 0.01 ? 'Completo' : (_falta > 0 ? 'Falta' : 'Sobra'), style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF3B82F6))),
@@ -198,7 +199,7 @@ class _PagoMixtoDialogState extends State<PagoMixtoDialog> {
               Row(
                 children: [
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700))),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700))),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _confirmar,

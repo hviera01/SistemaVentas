@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/color_import_service.dart';
 import '../../providers/colores_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ImportarColoresDialog extends ConsumerStatefulWidget {
   const ImportarColoresDialog({super.key});
@@ -81,7 +82,7 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
       child: Container(
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: tamano.height - 80),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -93,11 +94,11 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.upload_file_outlined, color: Color(0xFFC62828)),
+                    child: Icon(Icons.upload_file_outlined, color: AppColors.rojo),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Importar Registro de Colores desde Excel', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text('Importar Registro de Colores desde Excel', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
                   ),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ],
@@ -126,7 +127,7 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
       children: [
         Text(
           'Funciona con el libro histórico de colores y con el informe que exporta el sistema anterior (los encabezados pueden venir en cualquiera de los dos formatos). Cada fila del archivo se agrega como un registro nuevo; no reemplaza los que ya existen.',
-          style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600),
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
@@ -135,18 +136,18 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.description_outlined, size: 18),
           label: Text(_cargando ? 'Leyendo...' : (_nombreArchivo == null ? 'Elegir archivo .xlsx' : 'Elegir otro archivo'), style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: AppColors.texto, side: BorderSide(color: AppColors.borde), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
         if (_nombreArchivo != null && !_cargando) ...[
           const SizedBox(height: 8),
-          Text(_nombreArchivo!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+          Text(_nombreArchivo!, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
         ],
         if (_error != null) ...[
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFFCE9E9), borderRadius: BorderRadius.circular(10)),
-            child: Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFFC62828))),
+            decoration: BoxDecoration(color: AppColors.rojoSuave3, borderRadius: BorderRadius.circular(10)),
+            child: Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.rojo)),
           ),
         ],
         if (_filas != null) ...[
@@ -172,11 +173,11 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
     final formatoFecha = DateFormat('dd/MM/yyyy');
     return Container(
       constraints: const BoxConstraints(maxHeight: 320),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.bordeSuave)),
       child: ListView.separated(
         shrinkWrap: true,
         itemCount: filas.length,
-        separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+        separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divisor),
         itemBuilder: (context, index) {
           final f = filas[index];
           return Padding(
@@ -192,11 +193,11 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
                     children: [
                       Text(
                         'Fila ${f.numeroFila} · ${f.cliente.isEmpty ? '(sin cliente)' : f.cliente}',
-                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.texto),
                       ),
                       Text(
                         'Código: ${f.codigo.isEmpty ? '-' : f.codigo} · ${f.descripcion.isEmpty ? '(sin descripción)' : f.descripcion} · Fecha: ${f.fechaRegistro != null ? formatoFecha.format(f.fechaRegistro!) : '-'}',
-                        style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                        style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600),
                       ),
                     ],
                   ),
@@ -227,7 +228,7 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Registros creados', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+              Text('Registros creados', style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris700)),
               Text('$creados', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
             ],
           ),
@@ -252,7 +253,7 @@ class _ImportarColoresDialogState extends ConsumerState<ImportarColoresDialog> {
         Expanded(
           child: OutlinedButton(
             onPressed: _importando ? null : () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.texto, side: BorderSide(color: AppColors.borde), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: Text('Cancelar', style: GoogleFonts.poppins(fontSize: 13.5)),
           ),
         ),

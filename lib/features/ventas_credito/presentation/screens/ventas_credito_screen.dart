@@ -25,6 +25,7 @@ import '../widgets/importar_creditos_venta_dialog.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class VentasCreditoScreen extends ConsumerStatefulWidget {
   const VentasCreditoScreen({super.key});
@@ -378,7 +379,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
             children: [
               Text(
                 credito.nombreCliente,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.grisBase),
               ),
               const SizedBox(height: 4),
               Text(
@@ -410,7 +411,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                 'Venta del sistema anterior — solo consulta.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -487,13 +488,13 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       height: 42,
       child: Row(
         children: [
-          Icon(icono, size: 18, color: const Color(0xFF4B4F58)),
+          Icon(icono, size: 18, color: AppColors.texto5),
           const SizedBox(width: 10),
           Text(
             texto,
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: const Color(0xFF25272B),
+              color: AppColors.texto2,
             ),
           ),
         ],
@@ -548,7 +549,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     }
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 760;
@@ -567,7 +568,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: esMovil ? 19 : 22,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                       if (listaFiltrada != null)
@@ -598,8 +599,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -617,8 +618,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -636,8 +637,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -658,8 +659,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -681,8 +682,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -720,10 +721,10 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
               ],
               body: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFAEB4C0),
+                    color: AppColors.bordeFuerte,
                     width: 1.3,
                   ),
                   boxShadow: [
@@ -746,14 +747,14 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                             Icon(
                               Icons.credit_score_outlined,
                               size: 56,
-                              color: Colors.grey.shade300,
+                              color: AppColors.gris300,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No hay créditos para mostrar',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           ],
@@ -763,8 +764,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
 
                     return esMovil ? _tarjetas(lista) : _tabla(lista);
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   ),
                   error: (e, st) => Center(
                     child: Text(
@@ -838,9 +839,9 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -848,7 +849,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: const [
             DropdownMenuItem(value: 'debe', child: Text('Deben')),
@@ -869,13 +870,13 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -893,7 +894,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                   hintText: 'Buscar por factura o cliente...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -923,7 +924,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F8EE),
+          color: AppColors.verdeSuave,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -943,7 +944,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF4FF),
+            color: AppColors.azulSuave,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -959,7 +960,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFFFCE4E4),
+              color: AppColors.rojoSuave2,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -967,7 +968,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
             ),
           ),
@@ -991,12 +992,12 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECEEF3),
+                  color: AppColors.fondoSuave,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: AppColors.divisorFuerte),
                   ),
                 ),
                 child: Row(
@@ -1019,15 +1020,15 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
             final marcado = _seleccionadosParaUnir.contains(credito.id);
             return Column(
               children: [
-                if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
+                if (index > 1) Divider(height: 1, color: AppColors.divisor),
                 InkWell(
                   onTap: () => setState(
                     () => _filaSeleccionada = seleccionada ? null : credito.id,
                   ),
                   child: Container(
                     color: seleccionada
-                        ? const Color(0xFFFBEAEA)
-                        : Colors.white,
+                        ? AppColors.rojoSuave
+                        : AppColors.superficie,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -1099,7 +1100,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.3,
         ),
       ),
@@ -1134,7 +1135,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                     credito.nombreCliente,
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -1142,12 +1143,12 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                   Tooltip(
                     message:
                         'Aviso de WhatsApp falló: ${credito.errorAvisoWhatsApp}',
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.only(left: 4),
                       child: Icon(
                         Icons.error_outline,
                         size: 14,
-                        color: Color(0xFFB91C1C),
+                        color: AppColors.rojoB91C1C,
                       ),
                     ),
                   ),
@@ -1162,8 +1163,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
                   color: sinTelefono
-                      ? const Color(0xFFB91C1C)
-                      : Colors.grey.shade500,
+                      ? AppColors.rojoB91C1C
+                      : AppColors.gris500,
                 ),
               ),
             ),
@@ -1190,7 +1191,7 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),
@@ -1205,11 +1206,11 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+          color: AppColors.fondoSuave3,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: const Color(0xFFDFE1E6)),
+          border: Border.all(color: AppColors.bordeTenue),
         ),
-        child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
+        child: Icon(Icons.more_vert, size: 19, color: AppColors.texto4),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
@@ -1237,12 +1238,12 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+              color: seleccionada ? AppColors.rojoSuave : AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: seleccionada
                     ? const Color(0xFFC62828)
-                    : const Color(0xFFC7CBD3),
+                    : AppColors.bordeSuave,
               ),
             ),
             child: Column(
@@ -1268,14 +1269,14 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                           Text(
                             'Factura ${credito.numeroDocumento}',
                             style: GoogleFonts.poppins(
                               fontSize: 11.5,
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -1327,21 +1328,21 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCEAEA),
+        color: AppColors.rojoSuave4,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFB91C1C).withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 15, color: Color(0xFFB91C1C)),
+          Icon(Icons.error_outline, size: 15, color: AppColors.rojoB91C1C),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               'Aviso de WhatsApp falló: $error',
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: const Color(0xFFB91C1C),
+                color: AppColors.rojoB91C1C,
               ),
             ),
           ),
@@ -1363,8 +1364,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: sinTelefono
-              ? const Color(0xFFFCEAEA)
-              : const Color(0xFFE8EAF0),
+              ? AppColors.rojoSuave4
+              : AppColors.campo,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -1374,8 +1375,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
               Icons.phone_outlined,
               size: 13,
               color: sinTelefono
-                  ? const Color(0xFFB91C1C)
-                  : const Color(0xFF3F434A),
+                  ? AppColors.rojoB91C1C
+                  : AppColors.texto3,
             ),
             const SizedBox(width: 5),
             Text(
@@ -1383,8 +1384,8 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 color: sinTelefono
-                    ? const Color(0xFFB91C1C)
-                    : const Color(0xFF3F434A),
+                    ? AppColors.rojoB91C1C
+                    : AppColors.texto3,
               ),
             ),
           ],
@@ -1397,14 +1398,14 @@ class _VentasCreditoScreenState extends ConsumerState<VentasCreditoScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );

@@ -6,6 +6,7 @@ import '../../data/color_model.dart';
 import '../../providers/colores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ColorFormDialog extends ConsumerStatefulWidget {
   final ColorModel? color;
@@ -157,7 +158,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -180,7 +181,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
         width: anchoDialog,
         constraints: const BoxConstraints(maxHeight: 680),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -197,9 +198,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       color: const Color(0xFFC62828).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.palette_outlined,
-                      color: Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -209,7 +210,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       style: GoogleFonts.poppins(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ),
@@ -313,7 +314,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                       'Fecha de registro',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -327,7 +328,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8EAF0),
+                          color: AppColors.campo,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -335,7 +336,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                             Icon(
                               Icons.calendar_today_outlined,
                               size: 16,
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                             const SizedBox(width: 10),
                             Flexible(
@@ -346,7 +347,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
                                   fontSize: 13.5,
-                                  color: const Color(0xFF1A1A1A),
+                                  color: AppColors.texto,
                                 ),
                               ),
                             ),
@@ -377,14 +378,14 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: AppColors.rojoSuave5,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.red.shade200),
+                          border: Border.all(color: AppColors.rojoBorde),
                         ),
                         child: Text(
                           _error!,
                           style: GoogleFonts.poppins(
-                            color: Colors.red.shade700,
+                            color: AppColors.rojo700,
                             fontSize: 12,
                           ),
                         ),
@@ -402,9 +403,9 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                   if (editando)
                     IconButton(
                       onPressed: _guardando ? null : _eliminar,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.delete_outline,
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(
@@ -420,7 +421,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
                     onPressed: _guardando ? null : () => Navigator.pop(context),
                     child: Text(
                       'Cancelar',
-                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                      style: GoogleFonts.poppins(color: AppColors.gris700),
                     ),
                   ),
                   const SizedBox(width: 10),

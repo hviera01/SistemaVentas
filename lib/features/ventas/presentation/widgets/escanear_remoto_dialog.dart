@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// URL fija del sitio publicado en GitHub Pages: el QR siempre tiene que
 /// apuntar ahí (la página que sabe leer el parámetro `?escanear=` y mostrar
@@ -54,7 +55,7 @@ class _EscanearRemotoDialogState extends State<EscanearRemotoDialog> {
       child: Container(
         width: 340,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -68,13 +69,13 @@ class _EscanearRemotoDialogState extends State<EscanearRemotoDialog> {
             Text(
               'Apuntá la cámara del celular a este código QR (no hace falta ninguna app, se abre directo en el navegador). Esta ventana se cierra sola apenas el celular se conecte.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600),
             ),
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(16)),
-              child: QrImageView(data: url, size: 200, backgroundColor: Colors.white),
+              decoration: BoxDecoration(color: AppColors.fondo, borderRadius: BorderRadius.circular(16)),
+              child: QrImageView(data: url, size: 200, backgroundColor: AppColors.superficie),
             ),
             const SizedBox(height: 14),
             Text('Código: ${widget.codigo}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
@@ -103,7 +104,7 @@ class EscaneoActivoDialog extends StatelessWidget {
       child: Container(
         width: 320,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -123,7 +124,7 @@ class EscaneoActivoDialog extends StatelessWidget {
                 return Text(
                   'Hay un celular conectado y escaneando ($total código(s) recibido(s)).',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+                  style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris700),
                 );
               },
             ),
@@ -135,8 +136,8 @@ class EscaneoActivoDialog extends StatelessWidget {
                 icon: const Icon(Icons.qr_code_scanner, size: 18),
                 label: Text('Escanear con otro celular', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -150,7 +151,7 @@ class EscaneoActivoDialog extends StatelessWidget {
                 icon: const Icon(Icons.stop_circle_outlined, size: 18),
                 label: Text('Finalizar escaneo', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFC62828),
+                  foregroundColor: AppColors.rojo,
                   side: const BorderSide(color: Color(0xFFC62828)),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

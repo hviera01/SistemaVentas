@@ -70,6 +70,7 @@ import '../../data/tipos_documento.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const _metodosPago = [
   'Efectivo',
@@ -731,7 +732,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 shrinkWrap: true,
                 itemCount: _sugerenciasClienteActuales.length,
                 separatorBuilder: (_, _) =>
-                    Divider(height: 1, color: Colors.grey.shade200),
+                    Divider(height: 1, color: AppColors.divisor),
                 itemBuilder: (context, i) {
                   final c = _sugerenciasClienteActuales[i];
                   return InkWell(
@@ -756,7 +757,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               'DNI: ${c.dni}',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                         ],
@@ -814,7 +815,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F8EE),
+            color: AppColors.verdeSuave,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: const Color(0xFF16A34A).withOpacity(0.45),
@@ -836,7 +837,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF14532D),
+                    color: AppColors.verdeOscuro,
                   ),
                 ),
               ),
@@ -844,7 +845,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               Icon(
                 Icons.close,
                 size: 16,
-                color: const Color(0xFF14532D).withOpacity(0.7),
+                color: AppColors.verdeOscuro.withOpacity(0.7),
               ),
             ],
           ),
@@ -978,16 +979,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: AppColors.ambarSuave,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: AppColors.ambarBorde),
       ),
       child: Row(
         children: [
           Icon(
             Icons.warning_amber_rounded,
             size: 20,
-            color: Colors.orange.shade800,
+            color: AppColors.naranja800,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1321,7 +1322,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: activo ? Colors.white : const Color(0xFF666A72),
+                    color: activo ? Colors.white : AppColors.texto6,
                   ),
                 ),
               ),
@@ -1347,7 +1348,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   Container(
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF2F3F7),
+                      color: AppColors.fondo,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1364,14 +1365,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     ),
                     if (onzas > 0 && costoPorOnza > 0) ...[
                       const SizedBox(height: 16),
-                      Divider(height: 1, color: Colors.grey.shade300),
+                      Divider(height: 1, color: AppColors.divisorFuerte),
                       const SizedBox(height: 12),
                       Text(
                         '¿A cuánto se vende la onza?',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1386,7 +1387,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       'Se agrega el cuarto completo a su precio normal, sin conversión a onzas.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                     ),
                 ],
@@ -1996,7 +1997,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           child: Icon(
             Icons.hourglass_bottom,
             size: 18,
-            color: Colors.grey.shade200,
+            color: AppColors.gris200,
           ),
         ),
       );
@@ -2011,7 +2012,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         icon: Icon(
           Icons.hourglass_bottom,
           size: 18,
-          color: activo ? const Color(0xFFF59E0B) : Colors.grey.shade400,
+          color: activo ? const Color(0xFFF59E0B) : AppColors.gris400,
         ),
         onPressed: () => _alternarPendienteCompra(index),
       ),
@@ -2038,8 +2039,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           icono,
           size: 16,
           color: onPressed == null
-              ? Colors.grey.shade300
-              : Colors.grey.shade700,
+              ? AppColors.gris300
+              : AppColors.gris700,
         ),
       ),
     );
@@ -2544,8 +2545,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF1565C0),
-          side: const BorderSide(color: Color(0xFF1565C0)),
+          foregroundColor: AppColors.azul,
+          side: BorderSide(color: AppColors.azulBorde),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -2558,11 +2559,11 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1565C0).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF1565C0)),
+        border: Border.all(color: AppColors.azulBorde),
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_shipping, size: 17, color: Color(0xFF1565C0)),
+          Icon(Icons.local_shipping, size: 17, color: AppColors.azul),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -2570,7 +2571,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1565C0),
+                color: AppColors.azul,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -2585,7 +2586,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               'Quitar',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: const Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
             ),
           ),
@@ -3445,7 +3446,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       canRequestFocus: true,
       skipTraversal: true,
       child: Container(
-        color: const Color(0xFFF2F3F7),
+        color: AppColors.fondo,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final esMovil = constraints.maxWidth < 900;
@@ -3680,7 +3681,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: activo ? const Color(0xFFC62828) : const Color(0xFFE8EAF0),
+          color: activo ? const Color(0xFFC62828) : AppColors.campo,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -3689,7 +3690,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Icon(
               icono,
               size: 16,
-              color: activo ? Colors.white : const Color(0xFF4B4F58),
+              color: activo ? Colors.white : AppColors.texto5,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -3699,7 +3700,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: activo ? Colors.white : const Color(0xFF25272B),
+                  color: activo ? Colors.white : AppColors.texto2,
                 ),
               ),
             ),
@@ -3751,7 +3752,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         child: Text(
           'Todavía no agregaste productos.\nUsá "Agregar Producto" para buscar del inventario.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(color: AppColors.gris500),
         ),
       ),
     );
@@ -3768,14 +3769,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _encabezadoTablaCarrito(),
-        Divider(height: 18, color: Colors.grey.shade300),
+        Divider(height: 18, color: AppColors.divisorFuerte),
         Expanded(
           child: carrito.items.isEmpty
               ? _sinProductosEnCarrito()
               : ListView.separated(
                   itemCount: carrito.items.length,
                   separatorBuilder: (context, i) =>
-                      Divider(height: 1, color: Colors.grey.shade200),
+                      Divider(height: 1, color: AppColors.divisor),
                   itemBuilder: (context, i) => _filaCarritoTabla(
                     i,
                     carrito.items[i],
@@ -3796,7 +3797,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return ListView.separated(
       itemCount: carrito.items.length,
       separatorBuilder: (context, i) =>
-          Divider(height: 1, color: Colors.grey.shade200),
+          Divider(height: 1, color: AppColors.divisor),
       itemBuilder: (context, i) => _filaCarritoMovil(
         i,
         carrito.items[i],
@@ -3831,14 +3832,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           vertical: esMovil ? 6 : 8,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: const Color(0xFFDFE1E6)),
+          border: Border.all(color: AppColors.bordeTenue),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.tune, size: 13, color: Colors.grey.shade600),
+            Icon(Icons.tune, size: 13, color: AppColors.gris600),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
@@ -4000,10 +4001,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
       ),
       style: OutlinedButton.styleFrom(
-        foregroundColor: destacado ? Colors.white : const Color(0xFF1A1A1A),
-        backgroundColor: destacado ? const Color(0xFFC62828) : Colors.white,
+        foregroundColor: destacado ? Colors.white : AppColors.texto,
+        backgroundColor: destacado ? const Color(0xFFC62828) : AppColors.superficie,
         side: BorderSide(
-          color: destacado ? const Color(0xFFC62828) : const Color(0xFFDFE1E6),
+          color: destacado ? const Color(0xFFC62828) : AppColors.bordeTenue,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         minimumSize: Size.zero,
@@ -4025,10 +4026,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       message: tooltip,
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icono, size: 17, color: color ?? Colors.grey.shade600),
+        icon: Icon(icono, size: 17, color: color ?? AppColors.gris600),
         style: IconButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Color(0xFFDFE1E6)),
+          backgroundColor: AppColors.superficie,
+          side: BorderSide(color: AppColors.bordeTenue),
           padding: EdgeInsets.zero,
           minimumSize: const Size(32, 32),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
@@ -4048,7 +4049,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     Widget item(IconData icono, String texto) {
       return Row(
         children: [
-          Icon(icono, size: 18, color: const Color(0xFF4B4F58)),
+          Icon(icono, size: 18, color: AppColors.texto5),
           const SizedBox(width: 10),
           Text(texto, style: GoogleFonts.poppins(fontSize: 12.5)),
         ],
@@ -4061,7 +4062,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       isLabelVisible: _cantidadPendientesImpresion > 0,
       child: PopupMenuButton<String>(
         tooltip: 'Más acciones',
-        icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF4B4F58)),
+        icon: Icon(Icons.more_vert, size: 20, color: AppColors.texto5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onSelected: (valor) {
           switch (valor) {
@@ -4140,13 +4141,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDFE1E6)),
+        border: Border.all(color: AppColors.bordeTenue),
       ),
       child: Row(
         children: [
-          Icon(Icons.person_outline, size: 15, color: Colors.grey.shade500),
+          Icon(Icons.person_outline, size: 15, color: AppColors.gris500),
           const SizedBox(width: 5),
           Expanded(
             child: Text(
@@ -4188,7 +4189,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -4196,7 +4197,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );
@@ -4310,9 +4311,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.receipt_long_outlined,
-                              color: Color(0xFFC62828),
+                              color: AppColors.rojo,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -4331,7 +4332,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                   'Cliente, documento y condición de pago',
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                    color: AppColors.gris600,
                                   ),
                                 ),
                               ],
@@ -4418,7 +4419,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             : IconButton(
                 tooltip: 'Escanear con cámara',
                 onPressed: _escanearConCamara,
-                icon: Icon(Icons.qr_code_scanner, color: Colors.grey.shade600),
+                icon: Icon(Icons.qr_code_scanner, color: AppColors.gris600),
               ),
       // "Escanear con celular" (QR para emparejar un celular COMO EQUIPO
       // APARTE) solo tiene sentido cuando ESTE equipo no tiene su propia
@@ -4447,7 +4448,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       : Icons.qr_code_scanner,
                   color: _escaneoRemotoConectado
                       ? Colors.green.shade600
-                      : Colors.grey.shade600,
+                      : AppColors.gris600,
                 ),
               ),
       compacta
@@ -4461,7 +4462,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               onPressed: _abrirPromocionesVigentes,
               icon: Icon(
                 Icons.local_offer_outlined,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
       compacta
@@ -4473,7 +4474,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           : IconButton(
               tooltip: 'Consultar costo de un color',
               onPressed: _abrirConsultarCosto,
-              icon: Icon(Icons.calculate_outlined, color: Colors.grey.shade600),
+              icon: Icon(Icons.calculate_outlined, color: AppColors.gris600),
             ),
       compacta
           ? _botonAccionChico(
@@ -4484,7 +4485,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           : IconButton(
               tooltip: 'Calculadora de pintura',
               onPressed: () => _calculadoraRendimiento.abrir(context),
-              icon: Icon(Icons.straighten, color: Colors.grey.shade600),
+              icon: Icon(Icons.straighten, color: AppColors.gris600),
             ),
       _selectorPrecioIsvCarrito(compacto: compacta),
     ];
@@ -4512,7 +4513,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       message: tooltip,
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icono, size: 16, color: color ?? Colors.grey.shade600),
+        icon: Icon(icono, size: 16, color: color ?? AppColors.gris600),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
         visualDensity: VisualDensity.compact,
@@ -4534,9 +4535,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.superficie,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFDFE1E6)),
+            border: Border.all(color: AppColors.bordeTenue),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.15),
@@ -4545,10 +4546,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.dashboard_customize_outlined,
             size: 19,
-            color: Color(0xFF4B4F58),
+            color: AppColors.texto5,
           ),
         ),
         onSelected: (valor) =>
@@ -4591,7 +4592,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           Icon(
             icono,
             size: 18,
-            color: activo ? const Color(0xFFC62828) : const Color(0xFF4B4F58),
+            color: activo ? AppColors.rojo : AppColors.texto5,
           ),
           const SizedBox(width: 10),
           Text(
@@ -4599,12 +4600,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             style: GoogleFonts.poppins(
               fontSize: 12.5,
               fontWeight: activo ? FontWeight.w700 : FontWeight.w400,
-              color: activo ? const Color(0xFFC62828) : const Color(0xFF25272B),
+              color: activo ? AppColors.rojo : AppColors.texto2,
             ),
           ),
           if (activo) ...[
             const SizedBox(width: 8),
-            const Icon(Icons.check, size: 16, color: Color(0xFFC62828)),
+            Icon(Icons.check, size: 16, color: AppColors.rojo),
           ],
         ],
       ),
@@ -4625,7 +4626,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           elevation: 12,
           shadowColor: Colors.black.withOpacity(0.35),
           borderRadius: BorderRadius.circular(18),
-          color: const Color(0xFF1A1A1A),
+          color: AppColors.botonOscuro,
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
             onTap: _guardando ? null : _confirmarVenta,
@@ -4706,7 +4707,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: esMovil ? 19 : 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         _chipUsuarioVenta(),
@@ -4781,7 +4782,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: esOverride ? const Color(0xFFFFF3E0) : const Color(0xFFE8EAF0),
+        color: esOverride ? AppColors.ambarSuave5 : AppColors.campo,
         borderRadius: BorderRadius.circular(12),
         border: esOverride ? Border.all(color: const Color(0xFFE0A63C)) : null,
       ),
@@ -4792,8 +4793,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Icons.person_outline,
             size: 18,
             color: esOverride
-                ? const Color(0xFF9A6A00)
-                : const Color(0xFF1A1A1A),
+                ? AppColors.ambar2
+                : AppColors.texto,
           ),
           const SizedBox(width: 6),
           Text(
@@ -4802,8 +4803,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
               color: esOverride
-                  ? const Color(0xFF9A6A00)
-                  : const Color(0xFF1A1A1A),
+                  ? AppColors.ambar2
+                  : AppColors.texto,
             ),
           ),
           if (esOverride) ...[
@@ -4811,9 +4812,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             InkWell(
               onTap: _quitarUsuarioVenta,
               borderRadius: BorderRadius.circular(20),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(4),
-                child: Icon(Icons.undo, size: 16, color: Color(0xFF9A6A00)),
+                child: Icon(Icons.undo, size: 16, color: AppColors.ambar2),
               ),
             ),
           ],
@@ -4827,8 +4828,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 Icons.swap_horiz,
                 size: 16,
                 color: esOverride
-                    ? const Color(0xFF9A6A00)
-                    : const Color(0xFF1A1A1A),
+                    ? AppColors.ambar2
+                    : AppColors.texto,
               ),
             ),
           ),
@@ -4861,8 +4862,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
 
   ButtonStyle _estiloBotonSecundario() {
     return OutlinedButton.styleFrom(
-      foregroundColor: const Color(0xFF1A1A1A),
-      side: const BorderSide(color: Color(0xFFB6BCC7)),
+      foregroundColor: AppColors.texto,
+      side: BorderSide(color: AppColors.borde),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
@@ -4873,9 +4874,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -4893,7 +4894,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -4916,23 +4917,23 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3E5EA)),
+        border: Border.all(color: AppColors.bordeTenue3),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icono, size: 16, color: const Color(0xFFC62828)),
+              Icon(icono, size: 16, color: AppColors.rojo),
               const SizedBox(width: 8),
               Text(
                 titulo,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF4B4F58),
+                  color: AppColors.texto5,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -5028,7 +5029,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                       hintText: 'Vacío = Consumidor Final',
                                       hintStyle: GoogleFonts.poppins(
                                         fontSize: 11.5,
-                                        color: Colors.grey.shade400,
+                                        color: AppColors.gris400,
                                       ),
                                     ),
                                     // Si el cajero tipea acá directo (no usó
@@ -5059,7 +5060,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       onPressed: _buscarCliente,
                       icon: const Icon(Icons.search),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFE8EAF0),
+                        backgroundColor: AppColors.campo,
                         padding: const EdgeInsets.all(14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -5077,7 +5078,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         onPressed: _completarDatosCliente,
                         icon: const Icon(Icons.person_add_alt_1_outlined),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8EAF0),
+                          backgroundColor: AppColors.campo,
                           padding: const EdgeInsets.all(14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -5139,16 +5140,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.superficie,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFDFE1E6)),
+                      border: Border.all(color: AppColors.bordeTenue),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 16,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                         const SizedBox(width: 10),
                         Flexible(
@@ -5157,7 +5158,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                         ),
@@ -5174,7 +5175,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   decoration: _decoracion('Tipo de documento'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: tiposDocumento.entries
                       .map(
@@ -5200,7 +5201,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   decoration: _decoracion('Condición'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
@@ -5227,7 +5228,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     decoration: _decoracion('Método de pago'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                     items: _metodosPago
                         .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -5272,16 +5273,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         vertical: 14,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.superficie,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFDFE1E6)),
+                        border: Border.all(color: AppColors.bordeTenue),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.event_outlined,
                             size: 16,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                           const SizedBox(width: 10),
                           Flexible(
@@ -5290,7 +5291,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: const Color(0xFF1A1A1A),
+                                color: AppColors.texto,
                               ),
                             ),
                           ),
@@ -5485,7 +5486,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EAF0),
+                      color: AppColors.campo,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -5493,7 +5494,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 16,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                         const SizedBox(width: 10),
                         Flexible(
@@ -5502,7 +5503,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                         ),
@@ -5519,7 +5520,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   decoration: _decoracion('Tipo de documento'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: tiposDocumento.entries
                       .map(
@@ -5591,7 +5592,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                       hintText: 'Vacío = Consumidor Final',
                                       hintStyle: GoogleFonts.poppins(
                                         fontSize: 11.5,
-                                        color: Colors.grey.shade400,
+                                        color: AppColors.gris400,
                                       ),
                                     ),
                                     // Si el cajero tipea acá directo (no usó
@@ -5622,7 +5623,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       onPressed: _buscarCliente,
                       icon: const Icon(Icons.search),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFE8EAF0),
+                        backgroundColor: AppColors.campo,
                         padding: const EdgeInsets.all(14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -5640,7 +5641,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         onPressed: _completarDatosCliente,
                         icon: const Icon(Icons.person_add_alt_1_outlined),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8EAF0),
+                          backgroundColor: AppColors.campo,
                           padding: const EdgeInsets.all(14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -5681,7 +5682,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   decoration: _decoracion('Condición'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
@@ -5708,7 +5709,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     decoration: _decoracion('Método de pago'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                     items: _metodosPago
                         .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -5738,7 +5739,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                       Icon(
@@ -5746,7 +5747,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             ? Icons.expand_less
                             : Icons.expand_more,
                         size: 20,
-                        color: const Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ],
                   ),
@@ -5769,13 +5770,13 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Divider(color: Colors.grey.shade200),
+                        Divider(color: AppColors.divisor),
                         const SizedBox(height: 14),
                         Text(
                           'Descuento y campos fiscales de uso poco frecuente',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -5811,7 +5812,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                       vertical: 14,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE8EAF0),
+                                      color: AppColors.campo,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
@@ -5819,7 +5820,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                         Icon(
                                           Icons.event_outlined,
                                           size: 16,
-                                          color: Colors.grey.shade500,
+                                          color: AppColors.gris500,
                                         ),
                                         const SizedBox(width: 10),
                                         Flexible(
@@ -5828,7 +5829,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
-                                              color: const Color(0xFF1A1A1A),
+                                              color: AppColors.texto,
                                             ),
                                           ),
                                         ),
@@ -6060,9 +6061,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -6136,8 +6137,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF1A1A1A),
-                              side: const BorderSide(color: Color(0xFFB6BCC7)),
+                              foregroundColor: AppColors.texto,
+                              side: BorderSide(color: AppColors.borde),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 13,
@@ -6156,20 +6157,20 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             Icons.local_offer_outlined,
                             size: 20,
                           ),
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                         IconButton(
                           tooltip: 'Consultar costo de un color',
                           onPressed: _abrirConsultarCosto,
                           icon: const Icon(Icons.calculate_outlined, size: 20),
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                         IconButton(
                           tooltip: 'Calculadora de pintura',
                           onPressed: () =>
                               _calculadoraRendimiento.abrir(context),
                           icon: const Icon(Icons.straighten, size: 20),
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ],
                     ),
@@ -6195,25 +6196,25 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       tooltip: 'Ver la tabla más grande',
                       onPressed: _expandirTablaProductos,
                       icon: const Icon(Icons.open_in_full, size: 18),
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                     IconButton(
                       tooltip: 'Ver promociones vigentes',
                       onPressed: _abrirPromocionesVigentes,
                       icon: const Icon(Icons.local_offer_outlined, size: 18),
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                     IconButton(
                       tooltip: 'Consultar costo de un color',
                       onPressed: _abrirConsultarCosto,
                       icon: const Icon(Icons.calculate_outlined, size: 18),
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                     IconButton(
                       tooltip: 'Calculadora de pintura',
                       onPressed: () => _calculadoraRendimiento.abrir(context),
                       icon: const Icon(Icons.straighten, size: 18),
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                     const Spacer(),
                     // Escanear con la cámara de este mismo equipo: solo tiene
@@ -6236,8 +6237,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 13,
@@ -6274,16 +6275,16 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: _escaneoRemotoConectado
-                                ? Colors.green.shade700
+                                ? AppColors.verde700
                                 : null,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
+                          foregroundColor: AppColors.texto,
                           side: BorderSide(
                             color: _escaneoRemotoConectado
                                 ? Colors.green.shade400
-                                : const Color(0xFFB6BCC7),
+                                : AppColors.borde,
                           ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -6331,7 +6332,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   'Precio unitario:',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -6342,7 +6343,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           const SizedBox(height: 14),
           if (!esMovil) ...[
             _encabezadoTablaCarrito(),
-            Divider(height: 18, color: Colors.grey.shade300),
+            Divider(height: 18, color: AppColors.divisorFuerte),
           ],
           if (carrito.items.isEmpty)
             Center(
@@ -6351,7 +6352,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 child: Text(
                   'Todavía no agregaste productos.\nUsá "Agregar Producto" para buscar del inventario.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(color: AppColors.gris500),
                 ),
               ),
             )
@@ -6366,7 +6367,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Column(
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                  if (i > 0) Divider(height: 1, color: AppColors.divisor),
                   _filaCarritoMovil(
                     i,
                     carrito.items[i],
@@ -6386,7 +6387,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               child: Center(
                 child: Text(
                   'Viendo la tabla ampliada…',
-                  style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                  style: GoogleFonts.poppins(color: AppColors.gris400),
                 ),
               ),
             )
@@ -6406,7 +6407,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 shrinkWrap: true,
                 itemCount: carrito.items.length,
                 separatorBuilder: (context, i) =>
-                    Divider(height: 1, color: Colors.grey.shade200),
+                    Divider(height: 1, color: AppColors.divisor),
                 itemBuilder: (context, i) => _filaCarritoTabla(
                   i,
                   carrito.items[i],
@@ -6428,7 +6429,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Column(
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                  if (i > 0) Divider(height: 1, color: AppColors.divisor),
                   _filaCarritoTabla(
                     i,
                     carrito.items[i],
@@ -6474,7 +6475,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             style: GoogleFonts.poppins(
               fontSize: compacto ? 10.5 : 12,
               fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
+              color: activo ? Colors.white : AppColors.texto6,
             ),
           ),
         ),
@@ -6484,9 +6485,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -6524,7 +6525,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             height: tamano.height - 16,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(14),
             ),
             child: StatefulBuilder(
@@ -6573,8 +6574,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1A1A1A),
-                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            foregroundColor: AppColors.texto,
+                            side: BorderSide(color: AppColors.borde),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
@@ -6594,14 +6595,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     ),
                     const SizedBox(height: 14),
                     _encabezadoTablaCarrito(),
-                    Divider(height: 18, color: Colors.grey.shade300),
+                    Divider(height: 18, color: AppColors.divisorFuerte),
                     Expanded(
                       child: carrito.items.isEmpty
                           ? Center(
                               child: Text(
                                 'Todavía no agregaste productos.',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade500,
+                                  color: AppColors.gris500,
                                 ),
                               ),
                             )
@@ -6609,7 +6610,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                               itemCount: carrito.items.length,
                               separatorBuilder: (context, i) => Divider(
                                 height: 1,
-                                color: Colors.grey.shade200,
+                                color: AppColors.divisor,
                               ),
                               itemBuilder: (context, i) => _filaCarritoTabla(
                                 i,
@@ -6664,7 +6665,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             style: GoogleFonts.poppins(
               fontSize: 9,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
               letterSpacing: 0.3,
             ),
           ),
@@ -6674,8 +6675,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               fontSize: destacado ? 15 : 12.5,
               fontWeight: FontWeight.w800,
               color: destacado
-                  ? const Color(0xFFC62828)
-                  : const Color(0xFF1A1A1A),
+                  ? AppColors.rojo
+                  : AppColors.texto,
             ),
           ),
         ],
@@ -6687,7 +6688,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F3F7),
+        color: AppColors.fondo,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -6707,7 +6708,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.botonOscuro,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -6743,7 +6744,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: destacarTotal
                     ? const Color(0xFFC62828)
-                    : const Color(0xFF1A1A1A),
+                    : AppColors.botonOscuro,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -6777,7 +6778,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     final estilo = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Row(
       children: [
@@ -6947,10 +6948,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           prefixText: prefijo,
           prefixStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade600,
+            color: AppColors.gris600,
           ),
           filled: true,
-          fillColor: const Color(0xFFE8EAF0),
+          fillColor: AppColors.campo,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
@@ -7001,7 +7002,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       children: [
         Text(
           etiqueta,
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 10, color: AppColors.gris500),
         ),
         const SizedBox(height: 4),
         _campoInlineNumero(
@@ -7103,7 +7104,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             'Reembasado',
             style: GoogleFonts.poppins(
               fontSize: 10.5,
-              color: Colors.grey.shade400,
+              color: AppColors.gris400,
             ),
           ),
         // Para una línea de tinte suelto, se aclara acá "X onzas × L Y.YY/oz"
@@ -7127,7 +7128,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 '${_formatoCantidad(onzas)} oz × ${formatearMoneda(precioPorOnza)}/oz',
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
-                  color: Colors.grey.shade500,
+                  color: AppColors.gris500,
                 ),
               );
             },
@@ -7201,7 +7202,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: tieneAlgo ? const Color(0xFFFBEAEA) : const Color(0xFFE8EAF0),
+          color: tieneAlgo ? AppColors.rojoSuave : AppColors.campo,
           borderRadius: BorderRadius.circular(8),
           border: tieneAlgo
               ? Border.all(color: const Color(0xFFC62828).withOpacity(0.35))
@@ -7213,7 +7214,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             Icon(
               Icons.palette_outlined,
               size: 14,
-              color: tieneAlgo ? const Color(0xFFC62828) : Colors.grey.shade500,
+              color: tieneAlgo ? AppColors.rojo : AppColors.gris500,
             ),
             const SizedBox(width: 5),
             Flexible(
@@ -7224,8 +7225,8 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: tieneAlgo
-                      ? const Color(0xFFC62828)
-                      : Colors.grey.shade600,
+                      ? AppColors.rojo
+                      : AppColors.gris600,
                 ),
               ),
             ),
@@ -7310,14 +7311,14 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                     ),
                     if (costoPorOnza > 0) ...[
                       const SizedBox(height: 16),
-                      Divider(height: 1, color: Colors.grey.shade300),
+                      Divider(height: 1, color: AppColors.divisorFuerte),
                       const SizedBox(height: 12),
                       Text(
                         '¿A cuánto se vende la onza?',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -7384,7 +7385,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8EAF0),
+          color: AppColors.campo,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -7405,7 +7406,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       children: [
         Text(
           'Onzas',
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 10, color: AppColors.gris500),
         ),
         const SizedBox(height: 4),
         _campoCantidadTintaInline(index, item, producto),
@@ -7460,7 +7461,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               producto?.codigo ?? '-',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
           ),
@@ -7541,10 +7542,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           SizedBox(
             width: 40,
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
                 size: 18,
-                color: Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
               onPressed: () => _quitarItem(index),
             ),
@@ -7593,9 +7594,9 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7613,7 +7614,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                       producto?.codigo ?? '-',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                     if (_esCategoriaPintura(item.idCategoria as String)) ...[
@@ -7625,10 +7626,10 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
               ),
               _botonPendienteCompra(index, item as ItemVentaModel),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline,
                   size: 18,
-                  color: Color(0xFFC62828),
+                  color: AppColors.rojo,
                 ),
                 onPressed: () => _quitarItem(index),
               ),
@@ -7767,7 +7768,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarVenta,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A1A),
+                backgroundColor: AppColors.botonOscuro,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -7806,7 +7807,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -7815,7 +7816,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],
@@ -7831,7 +7832,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -7840,7 +7841,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],

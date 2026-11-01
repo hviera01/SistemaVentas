@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/negocio_repository.dart';
 import '../../providers/negocio_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Si el permiso [permisoKey] está activado y hay una clave especial configurada,
 /// pide la clave antes de continuar. Si no está activado (o no hay clave configurada),
@@ -80,7 +81,7 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
         width: esMovil ? tamano.width - 48 : 380,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -92,12 +93,12 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBEAEA),
+                    color: AppColors.rojoSuave,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_outline,
-                    color: Color(0xFFC62828),
+                    color: AppColors.rojo,
                     size: 22,
                   ),
                 ),
@@ -108,7 +109,7 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -119,7 +120,7 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
               'Esta acción está protegida. Ingresá la clave especial para continuar.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 18),
@@ -133,11 +134,11 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                 hintText: 'Clave especial',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: Colors.grey.shade400,
+                  color: AppColors.gris400,
                 ),
                 errorText: _error,
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -155,8 +156,8 @@ class _ClaveEspecialDialogState extends State<_ClaveEspecialDialog> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      foregroundColor: AppColors.texto,
+                      side: BorderSide(color: AppColors.borde),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

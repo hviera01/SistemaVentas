@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class PlaceholderScreen extends StatelessWidget {
   final String titulo;
@@ -9,19 +10,19 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icono, size: 64, color: Colors.grey.shade300),
+            Icon(icono, size: 64, color: AppColors.gris300),
             const SizedBox(height: 16),
             Text(
               titulo,
-              style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, color: AppColors.gris500, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
-            Text('Pantalla en construcción', style: TextStyle(color: Colors.grey.shade400)),
+            Text('Pantalla en construcción', style: TextStyle(color: AppColors.gris400)),
           ],
         ),
       ),

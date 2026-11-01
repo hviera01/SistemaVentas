@@ -5,6 +5,7 @@ import '../../data/formula_colortrend_model.dart';
 import '../../providers/formulas_colortrend_provider.dart';
 import '../widgets/formula_detalle_card.dart';
 import '../../../../core/utils/texto_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Buscador de fórmulas del libro físico "Color Codex Formulas" (Colortrend):
 /// por código, nombre o base. Se puede abrir embebido desde Registro de
@@ -66,11 +67,11 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                   ],
                 )
               else
-                Text('Buscar Fórmula', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                Text('Buscar Fórmula', style: GoogleFonts.poppins(fontSize: esMovil ? 19 : 22, fontWeight: FontWeight.w700, color: AppColors.texto)),
               const SizedBox(height: 6),
               Text(
                 'Libro Color Codex Formulas (Colortrend) — buscá por código, nombre o base y apretá Enter o Buscar.',
-                style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600),
               ),
               const SizedBox(height: 14),
               Row(
@@ -79,10 +80,10 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                     child: Container(
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFB6BCC7))),
+                      decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.borde)),
                       child: Row(
                         children: [
-                          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+                          Icon(Icons.search, size: 20, color: AppColors.gris400),
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
@@ -92,7 +93,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                               textInputAction: TextInputAction.search,
                               decoration: InputDecoration(
                                 hintText: 'Código, nombre o base del color...',
-                                hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                                hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris400),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -127,7 +128,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
               ),
               const SizedBox(height: 16),
               formulasAsync.when(
-                loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+                loading: () => Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator(color: AppColors.rojo))),
                 error: (e, st) => Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
@@ -153,9 +154,9 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.menu_book_outlined, size: 56, color: Colors.grey.shade300),
+                            Icon(Icons.menu_book_outlined, size: 56, color: AppColors.gris300),
                             const SizedBox(height: 12),
-                            Text('Escribí un código, nombre o base y apretá Enter o Buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500)),
+                            Text('Escribí un código, nombre o base y apretá Enter o Buscar', style: GoogleFonts.poppins(color: AppColors.gris500)),
                           ],
                         ),
                       ),
@@ -167,7 +168,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                   if (resultados.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: Colors.grey.shade500))),
+                      child: Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: AppColors.gris500))),
                     );
                   }
 
@@ -195,7 +196,7 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _seleccionada == null
-                            ? Padding(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('Elegí un color de la lista', style: GoogleFonts.poppins(color: Colors.grey.shade400))))
+                            ? Padding(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('Elegí un color de la lista', style: GoogleFonts.poppins(color: AppColors.gris400))))
                             : FormulaDetalleCard(formula: _seleccionada!),
                       ),
                     ],
@@ -209,26 +210,26 @@ class _BuscarFormulaScreenState extends ConsumerState<BuscarFormulaScreen> {
     );
 
     if (widget.esDialogo) {
-      return Scaffold(backgroundColor: const Color(0xFFF2F3F7), body: SafeArea(child: contenido));
+      return Scaffold(backgroundColor: AppColors.fondo, body: SafeArea(child: contenido));
     }
-    return Container(color: const Color(0xFFF2F3F7), child: contenido);
+    return Container(color: AppColors.fondo, child: contenido);
   }
 
   // Column simple, sin ListView propio: vive dentro del scroll único de la
   // pantalla completa (ver el comentario grande arriba de la clase).
   Widget _listaResultados(List<FormulaColortrendModel> resultados) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.bordeSuave)),
       child: Column(
         children: [
           for (var i = 0; i < resultados.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+            if (i > 0) Divider(height: 1, color: AppColors.divisor),
             ListTile(
               dense: true,
               selected: identical(resultados[i], _seleccionada),
-              selectedTileColor: const Color(0xFFFCE9E9),
+              selectedTileColor: AppColors.rojoSuave3,
               title: Text('${resultados[i].codigo}  ·  ${resultados[i].nombre}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: Text('${resultados[i].base} · pág. ${resultados[i].pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+              subtitle: Text('${resultados[i].base} · pág. ${resultados[i].pagina}', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
               trailing: const Icon(Icons.chevron_right, size: 18),
               onTap: () => setState(() => _seleccionada = resultados[i]),
             ),

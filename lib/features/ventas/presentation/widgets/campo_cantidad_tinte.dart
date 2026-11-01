@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Entrada estructurada de cantidad de tinte en la notación real de la
 /// máquina tintométrica del negocio -pedido explícito del dueño-: el dial
@@ -89,7 +90,7 @@ class _CampoCantidadTinteState extends State<CampoCantidadTinte> {
         labelText: etiqueta,
         labelStyle: GoogleFonts.poppins(fontSize: 12.5),
         filled: true,
-        fillColor: const Color(0xFFF2F3F7),
+        fillColor: AppColors.fondo,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

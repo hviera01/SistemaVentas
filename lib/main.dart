@@ -14,6 +14,8 @@ import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 import 'features/formulas/presentation/screens/formulas_kiosk_screen.dart';
 import 'features/formulas/presentation/screens/consultar_costo_kiosk_screen.dart';
 import 'core/utils/kiosk_identidad.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/tema_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +23,7 @@ Future<void> main() async {
   // completamente en blanco (en release Flutter oculta el detalle);
   // con esto al menos se ve un mensaje en vez de un blanco silencioso.
   ErrorWidget.builder = (details) => Container(
-        color: Colors.white,
+        color: AppColors.superficie,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(16),
         child: Text(
@@ -46,14 +48,52 @@ Future<void> main() async {
   // el usuario abra no tenga que pagar el costo de la primera conexión
   // (la más lenta: resolver el dominio + saludo de seguridad).
   ImagenProductoNetwork.precalentar();
+  // Tiene que cargarse ANTES del primer frame: AppColors lee un flag global,
+  // así que si se cargara después la app arrancaría un instante en claro y
+  // recién ahí pasaría a oscuro.
+  await cargarModoTema();
   runApp(const ProviderScope(child: SistemaVentasApp()));
 }
 
-class SistemaVentasApp extends StatelessWidget {
+class SistemaVentasApp extends ConsumerStatefulWidget {
   const SistemaVentasApp({super.key});
 
   @override
+  ConsumerState<SistemaVentasApp> createState() => _SistemaVentasAppState();
+}
+
+class _SistemaVentasAppState extends ConsumerState<SistemaVentasApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (ref.read(modoTemaProvider) == ModoTema.sistema) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final oscuro = resolverOscuro(ref.watch(modoTemaProvider));
+    // AppColors es un flag global (los colores fijos del código no tienen
+    // acceso a un BuildContext), así que cambiar de tema no reconstruye por
+    // sí solo los widgets const ni los que no dependen de Theme: hay que
+    // forzar la reconstrucción de todo el árbol una vez que el flag cambió.
+    if (AppColors.oscuro != oscuro) {
+      AppColors.oscuro = oscuro;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => reconstruirTodoElArbol(),
+      );
+    }
     // El QR que muestra la PC para usar el celular como lector de código de
     // barras (ver EscanearRemotoDialog) apunta a esta misma URL con
     // "?escanear=CODIGO". Si viene ese parámetro, se salta el login por
@@ -77,10 +117,10 @@ class SistemaVentasApp extends StatelessWidget {
     return MaterialApp(
       title: esKioskFormulas ? 'Fórmulas · Super Color' : (esKioskCostos ? 'Consultar Costo · Super Color' : 'Sistema Ventas'),
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF0F1B3D),
-        useMaterial3: true,
-      ),
+      theme: temaClaro(),
+      darkTheme: temaOscuro(),
+      themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+      themeAnimationDuration: Duration.zero,
       locale: const Locale('es'),
       supportedLocales: const [Locale('es')],
       localizationsDelegates: const [

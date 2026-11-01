@@ -8,6 +8,7 @@ import '../../../auth/providers/auth_provider.dart';
 import 'seleccionar_productos_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const _opcionesMetodoPago = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
 
@@ -311,7 +312,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         constraints: BoxConstraints(maxHeight: tamano.height - 40),
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Form(
@@ -384,14 +385,14 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                               height: 48,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF2F3F7),
+                                color: AppColors.fondo,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Indefinida',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12.5,
-                                  color: Colors.grey.shade600,
+                                  color: AppColors.gris600,
                                 ),
                               ),
                             )
@@ -429,7 +430,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                   'Los dos filtros de arriba son independientes: tienen que cumplirse ambos para que la promoción aplique.',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -449,7 +450,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
                     'Si se desactiva, no se ofrece aunque esté dentro de su vigencia.',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 ),
@@ -494,7 +495,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
   TextStyle _etiqueta() => GoogleFonts.poppins(
     fontSize: 12,
     fontWeight: FontWeight.w700,
-    color: Colors.grey.shade600,
+    color: AppColors.gris600,
   );
 
   InputDecoration _decoracion(String label) {
@@ -502,10 +503,10 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(
         fontSize: 12.5,
-        color: Colors.grey.shade500,
+        color: AppColors.gris500,
       ),
       filled: true,
-      fillColor: const Color(0xFFF2F3F7),
+      fillColor: AppColors.fondo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -525,7 +526,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: activo ? const Color(0xFFC62828) : const Color(0xFFF2F3F7),
+              color: activo ? const Color(0xFFC62828) : AppColors.fondo,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -534,7 +535,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: activo ? Colors.white : const Color(0xFF4B4F58),
+                color: activo ? Colors.white : AppColors.texto5,
               ),
             ),
           ),
@@ -575,7 +576,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: activo ? const Color(0xFF3B82F6) : const Color(0xFFF2F3F7),
+              color: activo ? const Color(0xFF3B82F6) : AppColors.fondo,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -584,7 +585,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: activo ? Colors.white : const Color(0xFF4B4F58),
+                color: activo ? Colors.white : AppColors.texto5,
               ),
             ),
           ),
@@ -627,7 +628,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: activo ? const Color(0xFF16A34A) : const Color(0xFFF2F3F7),
+              color: activo ? const Color(0xFF16A34A) : AppColors.fondo,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -636,7 +637,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: activo ? Colors.white : const Color(0xFF4B4F58),
+                color: activo ? Colors.white : AppColors.texto5,
               ),
             ),
           ),
@@ -653,7 +654,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
           'Podés elegir varios métodos a la vez (ej. Efectivo y Transferencia).',
           style: GoogleFonts.poppins(
             fontSize: 10.5,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
           ),
         ),
       ],
@@ -673,22 +674,22 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F3F7),
+          color: AppColors.fondo,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.calendar_today_outlined,
               size: 15,
-              color: Color(0xFF6B7280),
+              color: AppColors.texto7,
             ),
             const SizedBox(width: 8),
             Text(
               '$label: ${formato.format(fecha)}',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.texto,
               ),
             ),
           ],
@@ -741,8 +742,8 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             style: GoogleFonts.poppins(fontSize: 12.5),
           ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(vertical: 13),
             minimumSize: const Size(double.infinity, 0),
           ),
@@ -820,7 +821,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         const SizedBox(height: 6),
         Text(
           'Ej. "Llevando 3 unidades, se pagan L.100 en total" en vez del precio normal.',
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500),
         ),
       ],
     );
@@ -840,8 +841,8 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             style: GoogleFonts.poppins(fontSize: 12.5),
           ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(vertical: 13),
             minimumSize: const Size(double.infinity, 0),
           ),
@@ -880,7 +881,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         const SizedBox(height: 6),
         Text(
           'Ej. "Llevando 1 de cada producto elegido arriba, el paquete completo se paga L.250" en vez de la suma de precios normales. Se ofrece solo cuando ya están los productos completos en el carrito.',
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500),
         ),
       ],
     );
@@ -920,8 +921,8 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
             style: GoogleFonts.poppins(fontSize: 12.5),
           ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(vertical: 13),
             minimumSize: const Size(double.infinity, 0),
           ),
@@ -959,7 +960,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         const SizedBox(height: 6),
         Text(
           'Ej. "Si lleva 2 unidades, se regala 1 de cada producto elegido" (pueden ser del mismo producto llevado o de otros).',
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500),
         ),
       ],
     );
@@ -975,8 +976,8 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
         style: GoogleFonts.poppins(fontSize: 12.5),
       ),
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF1A1A1A),
-        side: const BorderSide(color: Color(0xFFB6BCC7)),
+        foregroundColor: AppColors.texto,
+        side: BorderSide(color: AppColors.borde),
         padding: const EdgeInsets.symmetric(vertical: 13),
         minimumSize: const Size(double.infinity, 0),
         alignment: Alignment.centerLeft,

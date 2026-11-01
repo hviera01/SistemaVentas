@@ -18,6 +18,7 @@ import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Resultado de elegir un producto (y el nivel de precio con el que se va a
 /// vender) desde el buscador.
@@ -432,7 +433,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     final esMovil = tamano.width < 720;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(esMovil ? 14 : 24),
@@ -464,7 +465,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   'Enter en el buscador busca · doble clic o Enter en la lista agrega el producto resaltado',
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 11.5 : 12.5,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                 ),
               ),
@@ -480,16 +481,16 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.superficie,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFB6BCC7)),
+                        border: Border.all(color: AppColors.borde),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.search,
                             size: 20,
-                            color: Colors.grey.shade400,
+                            color: AppColors.gris400,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -510,7 +511,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                                       'Escribí y presioná Enter para buscar...',
                                   hintStyle: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.grey.shade400,
+                                    color: AppColors.gris400,
                                   ),
                                   border: InputBorder.none,
                                   isDense: true,
@@ -544,8 +545,8 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                         style: GoogleFonts.poppins(fontSize: 13),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFB6BCC7)),
+                        foregroundColor: AppColors.texto,
+                        side: BorderSide(color: AppColors.borde),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
@@ -563,7 +564,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                       style: GoogleFonts.poppins(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
+                      foregroundColor: AppColors.rojo,
                       side: const BorderSide(color: Color(0xFFC62828)),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -582,9 +583,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFC7CBD3)),
+                    border: Border.all(color: AppColors.bordeSuave),
                   ),
                   child: Focus(
                     focusNode: _focusNodeLista,
@@ -603,13 +604,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                                 Icon(
                                   Icons.search,
                                   size: 48,
-                                  color: Colors.grey.shade300,
+                                  color: AppColors.gris300,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Escribí algo y presioná Enter para buscar',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.gris500,
                                   ),
                                 ),
                               ],
@@ -626,7 +627,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                                   ? 'No hay combos que coincidan'
                                   : 'No se encontraron productos',
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           );
@@ -637,14 +638,14 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                             if (!esMovil) ...[
                               _encabezadoTabla(),
                               const SizedBox(height: 10),
-                              Divider(height: 1, color: Colors.grey.shade300),
+                              Divider(height: 1, color: AppColors.divisorFuerte),
                             ],
                             Expanded(
                               child: ListView.separated(
                                 itemCount: lista.length,
                                 separatorBuilder: (context, i) => Divider(
                                   height: 1,
-                                  color: Colors.grey.shade200,
+                                  color: AppColors.divisor,
                                 ),
                                 itemBuilder: (context, i) {
                                   final p = lista[i];
@@ -669,9 +670,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                           ],
                         );
                       },
-                      loading: () => const Center(
+                      loading: () => Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                       error: (e, st) => Center(
@@ -716,7 +717,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
+              color: activo ? Colors.white : AppColors.texto6,
             ),
           ),
         ),
@@ -727,9 +728,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       height: 50,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -756,7 +757,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
+              color: activo ? Colors.white : AppColors.texto6,
             ),
           ),
         ),
@@ -767,9 +768,9 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       height: 50,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -786,7 +787,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     final estilo = GoogleFonts.poppins(
       fontSize: 12,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -837,7 +838,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                 ? (_ordenAscendente ? Icons.arrow_upward : Icons.arrow_downward)
                 : Icons.unfold_more,
             size: 14,
-            color: activo ? const Color(0xFFC62828) : Colors.grey.shade400,
+            color: activo ? AppColors.rojo : AppColors.gris400,
           ),
         ],
       ),
@@ -884,7 +885,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
     if (precio == null) {
       return Text(
         '—',
-        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+        style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris400),
       );
     }
     return Column(
@@ -896,7 +897,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF2B6CB0),
+            color: AppColors.azul2,
           ),
         ),
         if (precio.nivel != _nivelActivo)
@@ -904,7 +905,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
             'Nivel ${precio.nivel}',
             style: GoogleFonts.poppins(
               fontSize: 10.5,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
       ],
@@ -932,7 +933,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
-            color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
+            color: seleccionada ? AppColors.rojoSuave : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: seleccionada
                 ? Border.all(color: const Color(0xFFC62828), width: 1.4)
@@ -947,7 +948,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   p.codigo,
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
               ),
@@ -985,7 +986,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     softWrap: true,
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -1007,8 +1008,8 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     ),
                     decoration: BoxDecoration(
                       color: bajoStock
-                          ? const Color(0xFFFCE4E4)
-                          : const Color(0xFFF0FBF4),
+                          ? AppColors.rojoSuave2
+                          : AppColors.verdeSuave2,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1019,7 +1020,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: bajoStock
-                            ? const Color(0xFFC62828)
+                            ? AppColors.rojo
                             : const Color(0xFF1E9E5A),
                       ),
                     ),
@@ -1031,10 +1032,10 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   width: 40,
                   child: IconButton(
                     tooltip: 'Ver qué incluye',
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.list_alt_outlined,
                       size: 18,
-                      color: Color(0xFF6A1B9A),
+                      color: AppColors.violeta,
                     ),
                     onPressed: () =>
                         _verComponentes(p, mapaCategorias, mapaProductos),
@@ -1047,7 +1048,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   icon: Icon(
                     Icons.edit_outlined,
                     size: 18,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                   onPressed: () => _editarProducto(p),
                 ),
@@ -1058,10 +1059,10 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     ? null
                     : IconButton(
                         tooltip: 'Ver foto',
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.photo_outlined,
                           size: 18,
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                         onPressed: () => _verFoto(p),
                       ),
@@ -1095,7 +1096,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
+            color: seleccionada ? AppColors.rojoSuave : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
             border: seleccionada
                 ? Border.all(color: const Color(0xFFC62828), width: 1.4)
@@ -1135,7 +1136,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                           softWrap: true,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       ],
@@ -1148,8 +1149,8 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     ),
                     decoration: BoxDecoration(
                       color: bajoStock
-                          ? const Color(0xFFFCE4E4)
-                          : const Color(0xFFF0FBF4),
+                          ? AppColors.rojoSuave2
+                          : AppColors.verdeSuave2,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1158,7 +1159,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                         color: bajoStock
-                            ? const Color(0xFFC62828)
+                            ? AppColors.rojo
                             : const Color(0xFF1E9E5A),
                       ),
                     ),
@@ -1172,20 +1173,20 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                   if (p.imagenUrl.isNotEmpty)
                     IconButton(
                       tooltip: 'Ver foto',
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.photo_outlined,
                         size: 18,
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                       onPressed: () => _verFoto(p),
                     ),
                   if (p.esCombo)
                     IconButton(
                       tooltip: 'Ver qué incluye',
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.list_alt_outlined,
                         size: 18,
-                        color: Color(0xFF6A1B9A),
+                        color: AppColors.violeta,
                       ),
                       onPressed: () =>
                           _verComponentes(p, mapaCategorias, mapaProductos),
@@ -1195,7 +1196,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                     icon: Icon(
                       Icons.edit_outlined,
                       size: 18,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                     onPressed: () => _editarProducto(p),
                   ),

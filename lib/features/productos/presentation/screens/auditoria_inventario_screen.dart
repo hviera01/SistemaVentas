@@ -13,6 +13,7 @@ import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Auditoría de Inventario: el usuario elige una categoría, va anotando el
 /// conteo físico real de cada producto (sin que eso toque Firestore para
@@ -300,7 +301,7 @@ class _AuditoriaInventarioScreenState
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE4E4),
+        color: AppColors.rojoSuave2,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -308,7 +309,7 @@ class _AuditoriaInventarioScreenState
         style: GoogleFonts.poppins(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFFC62828),
+          color: AppColors.rojo,
         ),
       ),
     );
@@ -320,7 +321,7 @@ class _AuditoriaInventarioScreenState
       prefixIcon: icono == null ? null : Icon(icono, size: 19),
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -334,7 +335,7 @@ class _AuditoriaInventarioScreenState
     final productosAsync = ref.watch(productosStreamProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
@@ -353,9 +354,9 @@ class _AuditoriaInventarioScreenState
                       : productosAsync.when(
                           data: (productos) =>
                               _contenidoCategoria(productos, esMovil),
-                          loading: () => const Center(
+                          loading: () => Center(
                             child: CircularProgressIndicator(
-                              color: Color(0xFFC62828),
+                              color: AppColors.rojo,
                             ),
                           ),
                           error: (e, st) => Center(
@@ -399,14 +400,14 @@ class _AuditoriaInventarioScreenState
                 style: GoogleFonts.poppins(
                   fontSize: esMovil ? 19 : 22,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
               Text(
                 'Elegí una categoría, contá lo que hay físicamente y compará contra el sistema.',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -443,13 +444,13 @@ class _AuditoriaInventarioScreenState
                 ),
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
                 hint: Text(
                   'Elegí una categoría',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
                 items: ordenadas
@@ -467,7 +468,7 @@ class _AuditoriaInventarioScreenState
               );
             },
             loading: () =>
-                const LinearProgressIndicator(color: Color(0xFFC62828)),
+                LinearProgressIndicator(color: AppColors.rojo),
             error: (e, st) => Text(
               'No se pudieron cargar las categorías',
               style: GoogleFonts.poppins(fontSize: 12, color: Colors.red),
@@ -488,8 +489,8 @@ class _AuditoriaInventarioScreenState
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1A1A1A),
-              side: const BorderSide(color: Color(0xFFB6BCC7)),
+              foregroundColor: AppColors.texto,
+              side: BorderSide(color: AppColors.borde),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -506,13 +507,13 @@ class _AuditoriaInventarioScreenState
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -529,7 +530,7 @@ class _AuditoriaInventarioScreenState
                   hintText: 'Buscar o escanear código de barras...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -570,7 +571,7 @@ class _AuditoriaInventarioScreenState
         decoration: BoxDecoration(
           color: _soloDescuadres
               ? const Color(0xFFC62828)
-              : const Color(0xFFE8EAF0),
+              : AppColors.campo,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -579,7 +580,7 @@ class _AuditoriaInventarioScreenState
             Icon(
               Icons.filter_alt_outlined,
               size: 17,
-              color: _soloDescuadres ? Colors.white : Colors.grey.shade600,
+              color: _soloDescuadres ? Colors.white : AppColors.gris600,
             ),
             const SizedBox(width: 8),
             Text(
@@ -587,7 +588,7 @@ class _AuditoriaInventarioScreenState
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: _soloDescuadres ? Colors.white : const Color(0xFF1A1A1A),
+                color: _soloDescuadres ? Colors.white : AppColors.texto,
               ),
             ),
           ],
@@ -604,7 +605,7 @@ class _AuditoriaInventarioScreenState
           Icon(
             Icons.fact_check_outlined,
             size: 56,
-            color: Colors.grey.shade300,
+            color: AppColors.gris300,
           ),
           const SizedBox(height: 14),
           Text(
@@ -612,7 +613,7 @@ class _AuditoriaInventarioScreenState
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
         ],
@@ -687,7 +688,7 @@ class _AuditoriaInventarioScreenState
             ),
             _badge(
               'Descuadres $descuadres',
-              descuadres > 0 ? const Color(0xFFC62828) : Colors.grey,
+              descuadres > 0 ? const Color(0xFFC62828) : AppColors.gris500,
             ),
             if (combosExcluidos > 0)
               _badge(
@@ -703,12 +704,12 @@ class _AuditoriaInventarioScreenState
                 ? null
                 : () => _ajustarTodosLosDescuadres(lista),
             icon: _ajustandoTodo
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   )
                 : const Icon(Icons.playlist_add_check, size: 18),
@@ -717,7 +718,7 @@ class _AuditoriaInventarioScreenState
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFC62828),
+              foregroundColor: AppColors.rojo,
               side: const BorderSide(color: Color(0xFFC62828)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               shape: RoundedRectangleBorder(
@@ -731,9 +732,9 @@ class _AuditoriaInventarioScreenState
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFAEB4C0), width: 1.3),
+              border: Border.all(color: AppColors.bordeFuerte, width: 1.3),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.14),
@@ -748,7 +749,7 @@ class _AuditoriaInventarioScreenState
                       lista.isEmpty
                           ? 'Esta categoría no tiene productos para auditar'
                           : 'Sin productos con descuadre',
-                      style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      style: GoogleFonts.poppins(color: AppColors.gris500),
                     ),
                   )
                 : esMovil
@@ -807,7 +808,7 @@ class _AuditoriaInventarioScreenState
 
   Widget _chipDiferencia(double? diferencia) {
     if (diferencia == null)
-      return _chip('Sin contar', Colors.grey.shade500, Colors.grey.shade200);
+      return _chip('Sin contar', AppColors.gris500, AppColors.gris200Fondo);
     if (diferencia == 0)
       return _chip(
         'Cuadra',
@@ -834,9 +835,9 @@ class _AuditoriaInventarioScreenState
         Container(
           height: 46,
           decoration: BoxDecoration(
-            color: const Color(0xFFECEEF3),
+            color: AppColors.fondoSuave,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+            border: Border(bottom: BorderSide(color: AppColors.divisorFuerte)),
           ),
           child: Row(
             children: [
@@ -852,7 +853,7 @@ class _AuditoriaInventarioScreenState
           child: ListView.separated(
             itemCount: lista.length,
             separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey.shade200),
+                Divider(height: 1, color: AppColors.divisor),
             itemBuilder: (context, index) => _filaTabla(lista[index]),
           ),
         ),
@@ -870,7 +871,7 @@ class _AuditoriaInventarioScreenState
           style: GoogleFonts.poppins(
             fontSize: 10.5,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade600,
+            color: AppColors.gris600,
           ),
         ),
       ),
@@ -919,8 +920,8 @@ class _AuditoriaInventarioScreenState
                             const SizedBox(width: 6),
                             _chip(
                               'Inactivo',
-                              Colors.grey.shade600,
-                              Colors.grey.shade200,
+                              AppColors.gris600,
+                              AppColors.gris200Fondo,
                             ),
                           ],
                         ],
@@ -930,7 +931,7 @@ class _AuditoriaInventarioScreenState
                           'Código: ${p.codigo}',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                     ],
@@ -968,14 +969,14 @@ class _AuditoriaInventarioScreenState
                         isDense: true,
                         hintText: '—',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.superficie,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 10,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: AppColors.divisorFuerte),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -1013,7 +1014,7 @@ class _AuditoriaInventarioScreenState
                       icon: Icon(
                         Icons.history,
                         size: 19,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                       onPressed: () => _abrirHistorial(p),
                     ),
@@ -1023,8 +1024,8 @@ class _AuditoriaInventarioScreenState
                         Icons.tune,
                         size: 19,
                         color: (diferencia != null && diferencia != 0)
-                            ? const Color(0xFFC62828)
-                            : Colors.grey.shade600,
+                            ? AppColors.rojo
+                            : AppColors.gris600,
                       ),
                       onPressed: () => _abrirAjuste(p, diferencia),
                     ),
@@ -1066,7 +1067,7 @@ class _AuditoriaInventarioScreenState
           decoration: BoxDecoration(
             color: fondo,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFC7CBD3)),
+            border: Border.all(color: AppColors.bordeSuave),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1091,8 +1092,8 @@ class _AuditoriaInventarioScreenState
                           const SizedBox(width: 6),
                           _chip(
                             'Inactivo',
-                            Colors.grey.shade600,
-                            Colors.grey.shade200,
+                            AppColors.gris600,
+                            AppColors.gris200Fondo,
                           ),
                         ],
                       ],
@@ -1108,7 +1109,7 @@ class _AuditoriaInventarioScreenState
                     'Código: ${p.codigo}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 ),
@@ -1125,7 +1126,7 @@ class _AuditoriaInventarioScreenState
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -1159,14 +1160,14 @@ class _AuditoriaInventarioScreenState
                           isDense: true,
                           labelStyle: GoogleFonts.poppins(fontSize: 11.5),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.superficie,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 10,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
+                            borderSide: BorderSide(color: AppColors.divisorFuerte),
                           ),
                         ),
                       ),
@@ -1200,13 +1201,13 @@ class _AuditoriaInventarioScreenState
                       icon: Icon(
                         Icons.history,
                         size: 16,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                       label: Text(
                         'Historial',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ),
                     ),
@@ -1214,16 +1215,16 @@ class _AuditoriaInventarioScreenState
                   Expanded(
                     child: TextButton.icon(
                       onPressed: () => _abrirAjuste(p, diferencia),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.tune,
                         size: 16,
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                       label: Text(
                         'Ajustar',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: const Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                     ),

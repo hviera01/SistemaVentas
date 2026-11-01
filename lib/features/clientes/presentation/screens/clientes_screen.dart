@@ -8,6 +8,7 @@ import '../widgets/cliente_form_dialog.dart';
 import 'detalle_cliente_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ClientesScreen extends ConsumerStatefulWidget {
   const ClientesScreen({super.key});
@@ -143,13 +144,13 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       height: 42,
       child: Row(
         children: [
-          Icon(icono, size: 18, color: const Color(0xFF4B4F58)),
+          Icon(icono, size: 18, color: AppColors.texto5),
           const SizedBox(width: 10),
           Text(
             texto,
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: const Color(0xFF25272B),
+              color: AppColors.texto2,
             ),
           ),
         ],
@@ -164,7 +165,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     final vista = ref.watch(clientesVistaProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
@@ -178,7 +179,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 19 : 22,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -204,8 +205,8 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -243,10 +244,10 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
               ],
               body: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFAEB4C0),
+                    color: AppColors.bordeFuerte,
                     width: 1.3,
                   ),
                   boxShadow: [
@@ -290,7 +291,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                             Icon(
                               Icons.groups_outlined,
                               size: 56,
-                              color: Colors.grey.shade300,
+                              color: AppColors.gris300,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -299,7 +300,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                                   : 'No hay clientes encontrados',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           ],
@@ -318,8 +319,8 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                             mostrarConteoReferidos ? conteoPorReferidor : null,
                           );
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   ),
                   error: (e, st) => Center(
                     child: Text(
@@ -341,9 +342,9 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -351,7 +352,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: const [
             DropdownMenuItem(
@@ -375,13 +376,13 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -399,7 +400,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   hintText: 'Buscar por DNI, nombre, dirección o teléfono...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -440,12 +441,12 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECEEF3),
+                  color: AppColors.fondoSuave,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: AppColors.divisorFuerte),
                   ),
                 ),
                 child: Row(
@@ -466,15 +467,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
             final seleccionada = _filaSeleccionada == cliente.id;
             return Column(
               children: [
-                if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
+                if (index > 1) Divider(height: 1, color: AppColors.divisor),
                 InkWell(
                   onTap: () => setState(
                     () => _filaSeleccionada = seleccionada ? null : cliente.id,
                   ),
                   child: Container(
                     color: seleccionada
-                        ? const Color(0xFFFBEAEA)
-                        : Colors.white,
+                        ? AppColors.rojoSuave
+                        : AppColors.superficie,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -505,7 +506,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(
                                       fontSize: 12.5,
-                                      color: const Color(0xFF1A1A1A),
+                                      color: AppColors.texto,
                                     ),
                                   ),
                                 ),
@@ -575,7 +576,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.35,
         ),
       ),
@@ -599,7 +600,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),
@@ -612,7 +613,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: activo ? const Color(0xFFE8F8EE) : Colors.grey.shade200,
+          color: activo ? AppColors.verdeSuave : AppColors.gris200Fondo,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -620,7 +621,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           style: GoogleFonts.poppins(
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: activo ? const Color(0xFF16A34A) : Colors.grey.shade600,
+            color: activo ? const Color(0xFF16A34A) : AppColors.gris600,
           ),
         ),
       ),
@@ -635,11 +636,11 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+          color: AppColors.fondoSuave3,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: const Color(0xFFDFE1E6)),
+          border: Border.all(color: AppColors.bordeTenue),
         ),
-        child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
+        child: Icon(Icons.more_vert, size: 19, color: AppColors.texto4),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
@@ -668,12 +669,12 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+              color: seleccionada ? AppColors.rojoSuave : AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: seleccionada
                     ? const Color(0xFFC62828)
-                    : const Color(0xFFC7CBD3),
+                    : AppColors.bordeSuave,
               ),
             ),
             child: Column(
@@ -694,7 +695,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                     ),
@@ -731,14 +732,14 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );

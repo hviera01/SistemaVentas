@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Teclado numérico en pantalla para cambiar cantidad/precio/descuento a
 /// clics de mouse, pensado para escritorio (Windows y web en computadora).
@@ -145,7 +146,7 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
         child: AspectRatio(
           aspectRatio: 1.3,
           child: Material(
-            color: const Color(0xFFE8EAF0),
+            color: AppColors.campo,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
@@ -186,7 +187,7 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                   width: _ancho,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
                   ),
@@ -201,7 +202,7 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                         }),
                         child: Row(
                           children: [
-                            Icon(Icons.drag_indicator, size: 18, color: Colors.grey.shade400),
+                            Icon(Icons.drag_indicator, size: 18, color: AppColors.gris400),
                             const SizedBox(width: 6),
                             Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
                             IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
@@ -212,7 +213,7 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                         child: Text(_texto, textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w700)),
                       ),
                       const SizedBox(height: 14),
@@ -227,8 +228,8 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                             child: OutlinedButton(
                               onPressed: _limpiar,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF1A1A1A),
-                                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                                foregroundColor: AppColors.texto,
+                                side: BorderSide(color: AppColors.borde),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),

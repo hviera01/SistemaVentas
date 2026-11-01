@@ -7,6 +7,7 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import 'estado_cuenta_proveedor_dialog.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class _FilaResumen {
   final DateTime? dia;
@@ -205,7 +206,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -219,7 +220,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 16 : 18,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -285,8 +286,8 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(fontSize: 13),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1A1A1A),
-                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    foregroundColor: AppColors.texto,
+                    side: BorderSide(color: AppColors.borde),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 14,
@@ -305,8 +306,8 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(fontSize: 13),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1A1A1A),
-                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    foregroundColor: AppColors.texto,
+                    side: BorderSide(color: AppColors.borde),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 14,
@@ -370,9 +371,9 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
             const SizedBox(height: 16),
             Expanded(
               child: _cargando
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     )
                   : _error != null
@@ -386,7 +387,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                   ? Center(
                       child: Text(
                         'No hay abonos en el rango seleccionado',
-                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(color: AppColors.gris500),
                       ),
                     )
                   : _tabla(filas),
@@ -412,9 +413,9 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EAF0),
+            color: AppColors.campo,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFB6BCC7)),
+            border: Border.all(color: AppColors.borde),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -422,7 +423,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
               Icon(
                 Icons.calendar_today_outlined,
                 size: 15,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
               const SizedBox(width: 8),
               Flexible(
@@ -432,7 +433,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                   maxLines: 1,
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
               ),
@@ -448,9 +449,9 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -462,7 +463,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
           ),
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: [
             DropdownMenuItem<String?>(
@@ -493,9 +494,9 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -503,7 +504,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: const [
             DropdownMenuItem(
@@ -529,15 +530,15 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
     final mostrarDia = _vista == 'dia_proveedor';
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFECEEF3),
+            decoration: BoxDecoration(
+              color: AppColors.fondoSuave,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -550,7 +551,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                       style: GoogleFonts.poppins(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade600,
+                        color: AppColors.gris600,
                       ),
                     ),
                   ),
@@ -561,7 +562,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -572,7 +573,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -584,7 +585,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -596,7 +597,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -607,7 +608,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
             child: ListView.separated(
               itemCount: filas.length,
               separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: Colors.grey.shade200),
+                  Divider(height: 1, color: AppColors.divisor),
               itemBuilder: (context, index) {
                 final f = filas[index];
                 return Padding(
@@ -699,10 +700,10 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.group_outlined,
               size: 13,
-              color: Color(0xFF2B6CB0),
+              color: AppColors.azul2,
             ),
             const SizedBox(width: 4),
             Text(
@@ -710,7 +711,7 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF2B6CB0),
+                color: AppColors.azul2,
               ),
             ),
           ],

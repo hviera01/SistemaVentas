@@ -6,6 +6,7 @@ import '../../data/venta_en_espera_model.dart';
 import '../../providers/ventas_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Mismo diálogo sirve para las dos pantallas -pedido explícito del dueño:
 /// separar "Ver en Espera" (lo que el cajero pone en espera A PROPÓSITO,
@@ -82,7 +83,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -111,7 +112,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                 'Ventas que quedaron a medias (se cerró antes de confirmarlas o descartarlas). No tienen stock reservado.',
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -129,7 +130,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                 ? Icons.find_in_page_outlined
                                 : Icons.pause_circle_outline,
                             size: 48,
-                            color: Colors.grey.shade300,
+                            color: AppColors.gris300,
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -137,7 +138,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                 ? 'No hay facturas perdidas'
                                 : 'No hay ventas en espera',
                             style: GoogleFonts.poppins(
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -156,9 +157,9 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FB),
+                            color: AppColors.fondoSuave2,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFC7CBD3)),
+                            border: Border.all(color: AppColors.bordeSuave),
                           ),
                           child: Row(
                             children: [
@@ -183,7 +184,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                       '${sesion.tipoDocumento} · ${sesion.items.length} producto(s) · ${formatearMoneda(sesion.totalFinal)}',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11.5,
-                                        color: Colors.grey.shade600,
+                                        color: AppColors.gris600,
                                       ),
                                     ),
                                     if (sesion.fecha != null) ...[
@@ -192,7 +193,7 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                         formatoFecha.format(sesion.fecha!),
                                         style: GoogleFonts.poppins(
                                           fontSize: 10.5,
-                                          color: Colors.grey.shade400,
+                                          color: AppColors.gris400,
                                         ),
                                       ),
                                     ],
@@ -201,17 +202,17 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.lock_outline,
                                             size: 12,
-                                            color: Color(0xFF1565C0),
+                                            color: AppColors.azul,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             'Stock reservado',
                                             style: GoogleFonts.poppins(
                                               fontSize: 10.5,
-                                              color: const Color(0xFF1565C0),
+                                              color: AppColors.azul,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -222,10 +223,10 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.delete_outline,
                                   size: 20,
-                                  color: Color(0xFFC62828),
+                                  color: AppColors.rojo,
                                 ),
                                 onPressed: () =>
                                     _eliminar(context, ref, sesion),
@@ -237,8 +238,8 @@ class VentasEnEsperaDialog extends ConsumerWidget {
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: AppColors.rojo),
                 ),
                 error: (e, st) => Center(
                   child: Text(

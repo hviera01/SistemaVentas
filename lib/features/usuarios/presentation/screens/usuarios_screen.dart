@@ -5,6 +5,7 @@ import '../../data/usuario_model.dart';
 import '../../providers/usuarios_provider.dart';
 import '../widgets/usuario_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class UsuariosScreen extends ConsumerWidget {
   const UsuariosScreen({super.key});
@@ -23,7 +24,7 @@ class UsuariosScreen extends ConsumerWidget {
     final busqueda = ref.watch(usuarioBusquedaProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 640;
@@ -37,7 +38,7 @@ class UsuariosScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 19 : 22,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -72,10 +73,10 @@ class UsuariosScreen extends ConsumerWidget {
               body: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFB6BCC7),
+                    color: AppColors.borde,
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -103,13 +104,13 @@ class UsuariosScreen extends ConsumerWidget {
                               Icon(
                                 Icons.people_alt_outlined,
                                 size: 56,
-                                color: Colors.grey.shade300,
+                                color: AppColors.gris300,
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 'No hay usuarios',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade500,
+                                  color: AppColors.gris500,
                                 ),
                               ),
                             ],
@@ -122,8 +123,8 @@ class UsuariosScreen extends ConsumerWidget {
                         ? _tarjetas(context, filtrados)
                         : _tabla(context, filtrados);
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   ),
                   error: (e, st) => Center(
                     child: Text(
@@ -148,11 +149,11 @@ class UsuariosScreen extends ConsumerWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F8),
+              color: AppColors.fondoSuave4,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              border: Border(bottom: BorderSide(color: AppColors.divisorFuerte)),
             ),
             child: Row(
               children: [
@@ -163,7 +164,7 @@ class UsuariosScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -175,7 +176,7 @@ class UsuariosScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -187,7 +188,7 @@ class UsuariosScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -199,7 +200,7 @@ class UsuariosScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -212,7 +213,7 @@ class UsuariosScreen extends ConsumerWidget {
         final usuario = lista[index - 1];
         return Column(
           children: [
-            if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
+            if (index > 1) Divider(height: 1, color: AppColors.divisor),
             InkWell(
               onTap: () => _abrirFormulario(context, usuario),
               child: Padding(
@@ -228,7 +229,7 @@ class UsuariosScreen extends ConsumerWidget {
                         usuario.nombreCompleto,
                         style: GoogleFonts.poppins(
                           fontSize: 13.5,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -239,7 +240,7 @@ class UsuariosScreen extends ConsumerWidget {
                         usuario.documento,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade700,
+                          color: AppColors.gris700,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -250,7 +251,7 @@ class UsuariosScreen extends ConsumerWidget {
                         usuario.rol,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade700,
+                          color: AppColors.gris700,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -265,8 +266,8 @@ class UsuariosScreen extends ConsumerWidget {
                         constraints: const BoxConstraints(maxWidth: 80),
                         decoration: BoxDecoration(
                           color: usuario.estado
-                              ? const Color(0xFFE8F8EE)
-                              : Colors.grey.shade200,
+                              ? AppColors.verdeSuave
+                              : AppColors.gris200Fondo,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -278,7 +279,7 @@ class UsuariosScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                             color: usuario.estado
                                 ? const Color(0xFF16A34A)
-                                : Colors.grey.shade600,
+                                : AppColors.gris600,
                           ),
                         ),
                       ),
@@ -288,7 +289,7 @@ class UsuariosScreen extends ConsumerWidget {
                       child: Icon(
                         Icons.chevron_right,
                         size: 18,
-                        color: Colors.grey.shade400,
+                        color: AppColors.gris400,
                       ),
                     ),
                   ],
@@ -314,9 +315,9 @@ class UsuariosScreen extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFC7CBD3)),
+              border: Border.all(color: AppColors.bordeSuave),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,14 +331,14 @@ class UsuariosScreen extends ConsumerWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                     ),
                     Icon(
                       Icons.chevron_right,
                       size: 20,
-                      color: Colors.grey.shade400,
+                      color: AppColors.gris400,
                     ),
                   ],
                 ),
@@ -355,8 +356,8 @@ class UsuariosScreen extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: u.estado
-                            ? const Color(0xFFE8F8EE)
-                            : Colors.grey.shade200,
+                            ? AppColors.verdeSuave
+                            : AppColors.gris200Fondo,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -366,7 +367,7 @@ class UsuariosScreen extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                           color: u.estado
                               ? const Color(0xFF16A34A)
-                              : Colors.grey.shade600,
+                              : AppColors.gris600,
                         ),
                       ),
                     ),
@@ -384,14 +385,14 @@ class UsuariosScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );
@@ -402,13 +403,13 @@ class UsuariosScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -420,7 +421,7 @@ class UsuariosScreen extends ConsumerWidget {
                 hintText: 'Buscar por nombre o documento...',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: Colors.grey.shade400,
+                  color: AppColors.gris400,
                 ),
                 border: InputBorder.none,
                 isDense: true,
@@ -440,8 +441,8 @@ class UsuariosScreen extends ConsumerWidget {
       icon: const Icon(Icons.refresh, size: 18),
       label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF1A1A1A),
-        side: const BorderSide(color: Color(0xFFB6BCC7)),
+        foregroundColor: AppColors.texto,
+        side: BorderSide(color: AppColors.borde),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

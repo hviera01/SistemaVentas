@@ -8,6 +8,7 @@ import '../../data/costo_tinte_service.dart';
 import '../../data/item_venta_model.dart';
 import 'agregar_tinte_manual_dialog.dart';
 import 'campo_margen_precio_venta.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Lo que devuelve CodigosColorDialog al cerrar: la lista final de códigos
 /// de texto (igual que antes) más la lista final de tintes reales
@@ -199,7 +200,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
         constraints: const BoxConstraints(maxHeight: 620),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -235,7 +236,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
               'Esta línea puede llevar más de un código.',
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             ),
             const SizedBox(height: 12),
@@ -249,12 +250,12 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                   child: OutlinedButton.icon(
                     onPressed: _cargandoFormula ? null : _buscarFormula,
                     icon: _cargandoFormula
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFFC62828),
+                              color: AppColors.rojo,
                             ),
                           )
                         : const Icon(Icons.menu_book_outlined, size: 16),
@@ -266,7 +267,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
+                      foregroundColor: AppColors.rojo,
                       side: const BorderSide(color: Color(0xFFC62828)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -288,8 +289,8 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      foregroundColor: AppColors.texto,
+                      side: BorderSide(color: AppColors.borde),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -312,7 +313,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                           'Todavía no agregaste ningún código.',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       )
@@ -326,7 +327,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8EAF0),
+                              color: AppColors.campo,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -343,12 +344,12 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                                 InkWell(
                                   onTap: () => _quitarCodigo(i),
                                   borderRadius: BorderRadius.circular(8),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.all(2),
                                     child: Icon(
                                       Icons.close,
                                       size: 16,
-                                      color: Color(0xFFC62828),
+                                      color: AppColors.rojo,
                                     ),
                                   ),
                                 ),
@@ -357,7 +358,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                           ),
                         ),
                     const SizedBox(height: 4),
-                    Divider(height: 1, color: Colors.grey.shade300),
+                    Divider(height: 1, color: AppColors.divisorFuerte),
                     const SizedBox(height: 12),
                     Text(
                       'Tinte usado en esta línea',
@@ -371,7 +372,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                       'Esto es lo que se descuenta de verdad del inventario y se suma como costo -separado del costo del producto base.',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -382,7 +383,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                           'Sin tinte cargado todavía.',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       )
@@ -395,7 +396,7 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                     ],
@@ -438,8 +439,8 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: sinProducto
-              ? const Color(0xFFFCE9E9)
-              : const Color(0xFFF0FBF4),
+              ? AppColors.rojoSuave3
+              : AppColors.verdeSuave2,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -464,8 +465,8 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       color: sinProducto
-                          ? const Color(0xFFC62828)
-                          : Colors.grey.shade600,
+                          ? AppColors.rojo
+                          : AppColors.gris600,
                     ),
                   ),
                 ],
@@ -474,9 +475,9 @@ class _CodigosColorDialogState extends State<CodigosColorDialog> {
             InkWell(
               onTap: () => _quitarTinte(index),
               borderRadius: BorderRadius.circular(8),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(2),
-                child: Icon(Icons.close, size: 16, color: Color(0xFFC62828)),
+                child: Icon(Icons.close, size: 16, color: AppColors.rojo),
               ),
             ),
           ],
@@ -526,7 +527,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
         constraints: const BoxConstraints(maxHeight: 680),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -551,7 +552,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
               'Tamaño: ${etiquetaTamano(tamano)}',
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             ),
             const SizedBox(height: 12),
@@ -568,7 +569,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FB),
+                            color: AppColors.fondoSuave2,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
@@ -588,7 +589,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                                     '${r.onzas.toStringAsFixed(2)} oz',
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                      color: AppColors.gris600,
                                     ),
                                   ),
                                 ],
@@ -601,7 +602,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                                   fontSize: 11.5,
                                   color: r.resuelto
                                       ? const Color(0xFF1E9E5A)
-                                      : const Color(0xFFC62828),
+                                      : AppColors.rojo,
                                 ),
                               ),
                               if (r.advertencia != null)
@@ -611,7 +612,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                                     r.advertencia!,
                                     style: GoogleFonts.poppins(
                                       fontSize: 10.5,
-                                      color: const Color(0xFFB45309),
+                                      color: AppColors.ambar,
                                     ),
                                   ),
                                 ),
@@ -629,7 +630,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
             ),
             if (costoProductoBase > 0) ...[
@@ -639,11 +640,11 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF2B6CB0),
+                  color: AppColors.azul2,
                 ),
               ),
               const SizedBox(height: 6),
-              Divider(height: 1, color: Colors.grey.shade300),
+              Divider(height: 1, color: AppColors.divisorFuerte),
               const SizedBox(height: 6),
               Text(
                 'Costo total de la línea: ${formatearMoneda(costoTotalLinea)}',
@@ -660,7 +661,7 @@ class _ConfirmarTintesFormulaDialog extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
               const SizedBox(height: 8),

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../services/impresora_usb_windows_service.dart';
+import '../theme/app_colors.dart';
 
 class PdfPreviewDialog extends StatefulWidget {
   final String titulo;
@@ -122,7 +123,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
         height: kIsWeb ? null : altoDialog,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -208,8 +209,8 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1A1A1A),
-                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    foregroundColor: AppColors.texto,
+                    side: BorderSide(color: AppColors.borde),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -243,7 +244,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
       return Expanded(
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF2F3F7),
+            color: AppColors.fondo,
             borderRadius: BorderRadius.circular(12),
           ),
           child: SingleChildScrollView(
@@ -282,12 +283,12 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
         Icon(
           Icons.picture_as_pdf_outlined,
           size: 44,
-          color: Colors.grey.shade400,
+          color: AppColors.gris400,
         ),
         const SizedBox(height: 10),
         Text(
           'El documento está listo',
-          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris600),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -310,7 +311,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
               ),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1A1A1A),
+              backgroundColor: AppColors.botonOscuro,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -332,8 +333,8 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1A1A1A),
-              side: const BorderSide(color: Color(0xFFB6BCC7)),
+              foregroundColor: AppColors.texto,
+              side: BorderSide(color: AppColors.borde),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

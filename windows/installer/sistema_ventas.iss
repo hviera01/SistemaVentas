@@ -16,7 +16,7 @@
 ; ActualizacionService y version_app.dart-.
 
 #define MyAppName "Super Color Nuevo"
-#define MyAppVersion "155"
+#define MyAppVersion "156"
 #define MyAppExeName "sistema_ventas.exe"
 #define MyReleaseDir "..\..\build\windows\x64\runner\Release"
 

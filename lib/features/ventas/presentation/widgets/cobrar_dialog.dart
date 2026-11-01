@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class CobrarResultado {
   final double pagoCon;
@@ -54,7 +55,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: tamano.height * 0.85),
         padding: const EdgeInsets.all(26),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: SingleChildScrollView(
           child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -65,12 +66,12 @@ class _CobrarDialogState extends State<CobrarDialog> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: BoxDecoration(color: const Color(0xFFFBEAEA), borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: AppColors.rojoSuave, borderRadius: BorderRadius.circular(14)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFC62828), letterSpacing: 0.5)),
-                  Text(formatearMoneda(widget.total), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFFC62828))),
+                  Text('TOTAL A PAGAR', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.rojo, letterSpacing: 0.5)),
+                  Text(formatearMoneda(widget.total), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.rojo)),
                 ],
               ),
             ),
@@ -94,7 +95,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
                 labelText: 'Paga con',
                 labelStyle: GoogleFonts.poppins(fontSize: 13),
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
@@ -103,7 +104,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppColors.azulSuave, borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
                   Text('Cambio', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF3B82F6))),
@@ -120,7 +121,7 @@ class _CobrarDialogState extends State<CobrarDialog> {
             Row(
               children: [
                 const Spacer(),
-                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700))),
                 const SizedBox(width: 10),
                 FilledButton(
                   onPressed: _confirmar,

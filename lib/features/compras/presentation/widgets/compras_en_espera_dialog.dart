@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/compra_en_espera_model.dart';
 import '../../providers/compras_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ComprasEnEsperaDialog extends ConsumerWidget {
   const ComprasEnEsperaDialog({super.key});
@@ -66,7 +67,7 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -94,7 +95,7 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
               'Compras guardadas automáticamente mientras estaban en curso (por ejemplo si se cerró la app o se perdió el internet a medio armar).',
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 14),
@@ -109,13 +110,13 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                           Icon(
                             Icons.pause_circle_outline,
                             size: 48,
-                            color: Colors.grey.shade300,
+                            color: AppColors.gris300,
                           ),
                           const SizedBox(height: 10),
                           Text(
                             'No hay compras en espera',
                             style: GoogleFonts.poppins(
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -134,9 +135,9 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FB),
+                            color: AppColors.fondoSuave2,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFC7CBD3)),
+                            border: Border.all(color: AppColors.bordeSuave),
                           ),
                           child: Row(
                             children: [
@@ -158,7 +159,7 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                                       '${sesion.items.length} producto(s) · ${formatearMoneda(sesion.total)}',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11.5,
-                                        color: Colors.grey.shade600,
+                                        color: AppColors.gris600,
                                       ),
                                     ),
                                     if (sesion.fecha != null) ...[
@@ -167,7 +168,7 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                                         formatoFecha.format(sesion.fecha!),
                                         style: GoogleFonts.poppins(
                                           fontSize: 10.5,
-                                          color: Colors.grey.shade400,
+                                          color: AppColors.gris400,
                                         ),
                                       ),
                                     ],
@@ -175,10 +176,10 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.delete_outline,
                                   size: 20,
-                                  color: Color(0xFFC62828),
+                                  color: AppColors.rojo,
                                 ),
                                 onPressed: () =>
                                     _eliminar(context, ref, sesion),
@@ -190,8 +191,8 @@ class ComprasEnEsperaDialog extends ConsumerWidget {
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: AppColors.rojo),
                 ),
                 error: (e, st) => Center(
                   child: Text(

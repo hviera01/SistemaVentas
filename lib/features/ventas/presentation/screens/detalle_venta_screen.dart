@@ -33,6 +33,7 @@ import '../../../ventas_credito/providers/ventas_credito_provider.dart';
 import '../../../ventas_credito/presentation/widgets/registrar_abono_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Pantalla de consulta de una venta ya registrada: buscá por número de
 /// documento (o abrila directo desde Reportes / Ventas a Crédito pasando
@@ -793,7 +794,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   labelText: 'Motivo (opcional)',
                   labelStyle: GoogleFonts.poppins(fontSize: 12.5),
                   filled: true,
-                  fillColor: const Color(0xFFE8EAF0),
+                  fillColor: AppColors.campo,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -886,7 +887,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 19 : 22,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
           const SizedBox(height: 16),
@@ -901,9 +902,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   height: 50,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFB6BCC7)),
+                    border: Border.all(color: AppColors.borde),
                   ),
                   child: CampoTecladoCompacto(
                     controller: _busquedaController,
@@ -921,7 +922,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                         hintText: 'Número de documento...',
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade400,
+                          color: AppColors.gris400,
                         ),
                         border: InputBorder.none,
                         isDense: true,
@@ -937,9 +938,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   height: 50,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFB6BCC7)),
+                    border: Border.all(color: AppColors.borde),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String?>(
@@ -949,12 +950,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                         'Tipo (todos)',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                       ),
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                       items: [
                         DropdownMenuItem<String?>(
@@ -985,8 +986,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 icon: const Icon(Icons.search, size: 18),
                 label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1004,8 +1005,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1020,8 +1021,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: _cargando
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   )
                 : _error != null
                 ? Center(
@@ -1038,13 +1039,13 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 56,
-                          color: Colors.grey.shade300,
+                          color: AppColors.gris300,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Buscá una venta por su número de documento',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       ],
@@ -1058,11 +1059,11 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
 
     if (widget.esDialogo) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF2F3F7),
+        backgroundColor: AppColors.fondo,
         body: SafeArea(child: contenido),
       );
     }
-    return Container(color: const Color(0xFFF2F3F7), child: contenido);
+    return Container(color: AppColors.fondo, child: contenido);
   }
 
   Widget _detalle(VentaModel venta, bool esMovil) {
@@ -1142,12 +1143,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             OutlinedButton.icon(
               onPressed: _procesandoPdf ? null : _reimprimir,
               icon: _procesandoPdf
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     )
                   : const Icon(Icons.print_outlined, size: 18),
@@ -1156,8 +1157,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 14,
@@ -1170,12 +1171,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             OutlinedButton.icon(
               onPressed: _procesandoPdf ? null : _descargarPdf,
               icon: _procesandoPdf
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     )
                   : const Icon(Icons.picture_as_pdf_outlined, size: 18),
@@ -1184,8 +1185,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 14,
@@ -1199,12 +1200,12 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               OutlinedButton.icon(
                 onPressed: _procesandoGuia ? null : _imprimirGuiaEnvio,
                 icon: _procesandoGuia
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF1565C0),
+                          color: AppColors.azul,
                         ),
                       )
                     : const Icon(Icons.local_shipping_outlined, size: 18),
@@ -1215,8 +1216,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1565C0),
-                  side: const BorderSide(color: Color(0xFF1565C0)),
+                  foregroundColor: AppColors.azul,
+                  side: BorderSide(color: AppColors.azulBorde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1236,7 +1237,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF16A34A),
-                  side: const BorderSide(color: Color(0xFFBEE9CE)),
+                  side: BorderSide(color: AppColors.verdeBorde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -1254,8 +1255,8 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 14,
@@ -1329,14 +1330,14 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE4E4),
+        color: AppColors.rojoSuave2,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFC62828)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.block_outlined, color: Color(0xFFC62828)),
+          Icon(Icons.block_outlined, color: AppColors.rojo),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1347,7 +1348,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFC62828),
+                    color: AppColors.rojo,
                   ),
                 ),
                 if (venta.motivoAnulacion.isNotEmpty)
@@ -1355,7 +1356,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     'Motivo: ${venta.motivoAnulacion}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFF7A1F1F),
+                      color: AppColors.rojoOscuro,
                     ),
                   ),
                 if (venta.usuarioAnulacion.isNotEmpty ||
@@ -1369,7 +1370,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     ].join(' '),
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFF7A1F1F),
+                      color: AppColors.rojoOscuro,
                     ),
                   ),
               ],
@@ -1385,21 +1386,21 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4E0),
+        color: AppColors.ambarSuave4,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE0A63C)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.print_disabled_outlined, color: Color(0xFF9A6B0F)),
+          Icon(Icons.print_disabled_outlined, color: AppColors.ambar3),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Esta venta se guardó sin imprimir (probablemente desde el celular, sin la impresora a mano). Usá "Reimprimir" cuando tengas la impresora disponible.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: const Color(0xFF9A6B0F),
+                color: AppColors.ambar3,
               ),
             ),
           ),
@@ -1411,7 +1412,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF9A6B0F),
+                color: AppColors.ambar3,
               ),
             ),
           ),
@@ -1425,9 +1426,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: child,
     );
@@ -1444,7 +1445,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             style: GoogleFonts.poppins(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
               letterSpacing: 0.4,
             ),
           ),
@@ -1453,7 +1454,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             valor,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: const Color(0xFF1A1A1A),
+              color: AppColors.texto,
             ),
           ),
         ],
@@ -1479,7 +1480,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
+              color: activo ? Colors.white : AppColors.texto6,
             ),
           ),
         ),
@@ -1489,9 +1490,9 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1517,7 +1518,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
     final estiloEncabezado = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1551,7 +1552,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             ),
           ],
         ),
-        Divider(height: 18, color: Colors.grey.shade300),
+        Divider(height: 18, color: AppColors.divisorFuerte),
         for (final item in venta.detalle) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1584,7 +1585,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                           'Código: ${item.codigosColor.join(', ')}',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
-                            color: const Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         ),
                       if (item.reembasado)
@@ -1592,7 +1593,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                           'Reembasado',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
-                            color: Colors.grey.shade400,
+                            color: AppColors.gris400,
                           ),
                         ),
                       if (item.descuentoPorcentaje > 0)
@@ -1600,7 +1601,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                           'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
-                            color: Colors.grey.shade400,
+                            color: AppColors.gris400,
                           ),
                         ),
                     ],
@@ -1629,7 +1630,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             ),
           ),
           if (item != venta.detalle.last)
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     );
@@ -1657,7 +1658,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     'Código: ${item.codigosColor.join(', ')}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   ),
                 if (item.reembasado || item.descuentoPorcentaje > 0)
@@ -1669,7 +1670,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                     ].join(' · '),
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 const SizedBox(height: 4),
@@ -1677,14 +1678,14 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
                   '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(_precioMostrado(item))} = ${formatearMoneda(_importeMostrado(item))}',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: const Color(0xFF3F434A),
+                    color: AppColors.texto3,
                   ),
                 ),
               ],
             ),
           ),
           if (item != venta.detalle.last)
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     );
@@ -1766,7 +1767,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -1775,7 +1776,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],
@@ -1791,7 +1792,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -1800,7 +1801,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],

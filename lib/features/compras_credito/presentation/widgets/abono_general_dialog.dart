@@ -9,6 +9,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class _ProveedorConDeuda {
   final String idProveedor;
@@ -126,7 +127,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -147,7 +148,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
       child: Container(
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: altoMaximo),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -159,11 +160,11 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.call_split_outlined, color: Color(0xFFC62828)),
+                    child: Icon(Icons.call_split_outlined, color: AppColors.rojo),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Abono General por Proveedor', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text('Abono General por Proveedor', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
                   ),
                   IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
                 ],
@@ -177,14 +178,14 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                   children: [
                     Text(
                       'Ingresá un monto total y se reparte automáticamente entre las facturas pendientes del proveedor, pagando primero las que vencen antes.',
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: _idProveedorSeleccionado,
                       decoration: _decoracion('Proveedor'),
                       isExpanded: true,
-                      style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(fontSize: 14, color: AppColors.texto),
                       items: proveedores
                           .map((p) => DropdownMenuItem(value: p.idProveedor, child: Text('${p.nombreProveedor} · ${formatearMoneda(p.deudaTotal)}', overflow: TextOverflow.ellipsis)))
                           .toList(),
@@ -192,7 +193,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                     ),
                     if (_idProveedorSeleccionado != null) ...[
                       const SizedBox(height: 10),
-                      Text('Deuda total del proveedor: ${formatearMoneda(deudaTotal)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+                      Text('Deuda total del proveedor: ${formatearMoneda(deudaTotal)}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.texto)),
                     ],
                     const SizedBox(height: 14),
                     CampoTecladoCompacto(
@@ -216,14 +217,14 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                            Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.gris600),
                             const SizedBox(width: 10),
-                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
+                            Text('Fecha del abono', style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris600)),
                             const Spacer(),
-                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            Text(DateFormat('dd/MM/yyyy').format(_fecha), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto)),
                           ],
                         ),
                       ),
@@ -232,7 +233,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                     DropdownButtonFormField<String>(
                       initialValue: _metodoPago,
                       decoration: _decoracion('Método de pago'),
-                      style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.poppins(fontSize: 14, color: AppColors.texto),
                       items: _metodosPago.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       onChanged: (v) {
                         if (v == null) return;
@@ -241,13 +242,13 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                     ),
                     if (distribucion.isNotEmpty) ...[
                       const SizedBox(height: 18),
-                      Text('Así se va a repartir:', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                      Text('Así se va a repartir:', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.texto)),
                       const SizedBox(height: 8),
                       ...distribucion.map((d) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(10)),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -256,7 +257,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                                   Text('${formatearMoneda(d.montoAplicado)} → ', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF16A34A), fontWeight: FontWeight.w600)),
                                   Text(
                                     d.saldoResultante <= 0 ? 'Liquidada' : formatearMoneda(d.saldoResultante),
-                                    style: GoogleFonts.poppins(fontSize: 12, color: d.saldoResultante <= 0 ? const Color(0xFF16A34A) : Colors.grey.shade600, fontWeight: FontWeight.w600),
+                                    style: GoogleFonts.poppins(fontSize: 12, color: d.saldoResultante <= 0 ? const Color(0xFF16A34A) : AppColors.gris600, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -269,11 +270,11 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: AppColors.rojoSuave5,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.red.shade200),
+                          border: Border.all(color: AppColors.rojoBorde),
                         ),
-                        child: Text(_error!, style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12)),
+                        child: Text(_error!, style: GoogleFonts.poppins(color: AppColors.rojo700, fontSize: 12)),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -288,7 +289,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
                   const Spacer(),
                   TextButton(
                     onPressed: _guardando ? null : () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700)),
                   ),
                   const SizedBox(width: 10),
                   FilledButton(

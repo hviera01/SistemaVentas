@@ -14,6 +14,7 @@ import '../../data/formula_colortrend_model.dart';
 import '../../data/formula_tamano_utils.dart';
 import '../../providers/formulas_colortrend_provider.dart';
 import '../widgets/seleccionar_formula_dialog.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Herramienta de consulta de costo de un color preparado, SIN necesidad de
 /// hacer una venta -pedido explícito del dueño-: pura lectura, no descuenta
@@ -84,7 +85,7 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 19 : 22,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
               const SizedBox(height: 6),
@@ -96,7 +97,7 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
                   'Solo consulta -no descuenta stock ni registra nada, es para saber cuánto cuesta antes de vender.',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
               ),
@@ -131,9 +132,9 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
     );
 
     if (!widget.esDialogo)
-      return Container(color: const Color(0xFFF2F3F7), child: contenido);
+      return Container(color: AppColors.fondo, child: contenido);
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(child: contenido),
     );
   }
@@ -156,7 +157,7 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: activo ? Colors.white : const Color(0xFF666A72),
+              color: activo ? Colors.white : AppColors.texto6,
             ),
           ),
         ),
@@ -167,9 +168,9 @@ class _ConsultarCostoScreenState extends State<ConsultarCostoScreen> {
       height: 50,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -237,9 +238,9 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +268,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF666A72),
+                    foregroundColor: AppColors.texto6,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
@@ -278,7 +279,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             '"Tanto Y de tal tinte, tanto Y de tal otro..." -uno o varios tintes mezclados a ojo, sin fórmula del libro.',
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           const SizedBox(height: 12),
@@ -287,7 +288,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
               'Sin tinte cargado todavía.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             )
           else
@@ -304,7 +305,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
               ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFC62828),
+              foregroundColor: AppColors.rojo,
               side: const BorderSide(color: Color(0xFFC62828)),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -314,7 +315,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
           ),
           if (_tintes.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey.shade300),
+            Divider(height: 1, color: AppColors.divisorFuerte),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -340,7 +341,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
           ],
           if (costoTotal > 0) ...[
             const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey.shade300),
+            Divider(height: 1, color: AppColors.divisorFuerte),
             const SizedBox(height: 14),
             Text(
               '¿A cuánto puedo venderlo?',
@@ -367,7 +368,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: t.resuelto ? const Color(0xFFF8F9FB) : const Color(0xFFFCE9E9),
+          color: t.resuelto ? AppColors.fondoSuave2 : AppColors.rojoSuave3,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -392,7 +393,7 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
                       fontWeight: FontWeight.w700,
                       color: t.resuelto
                           ? const Color(0xFF1E9E5A)
-                          : const Color(0xFFC62828),
+                          : AppColors.rojo,
                     ),
                   ),
                 ],
@@ -401,9 +402,9 @@ class _ModoSoloTinteState extends State<_ModoSoloTinte> {
             InkWell(
               onTap: () => _quitarTinte(index),
               borderRadius: BorderRadius.circular(8),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(2),
-                child: Icon(Icons.close, size: 16, color: Color(0xFFC62828)),
+                child: Icon(Icons.close, size: 16, color: AppColors.rojo),
               ),
             ),
           ],
@@ -515,9 +516,9 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,7 +546,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF666A72),
+                    foregroundColor: AppColors.texto6,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
@@ -560,8 +561,8 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               style: GoogleFonts.poppins(fontSize: 12.5),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1A1A1A),
-              side: const BorderSide(color: Color(0xFFB6BCC7)),
+              foregroundColor: AppColors.texto,
+              side: BorderSide(color: AppColors.borde),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               alignment: Alignment.centerLeft,
               shape: RoundedRectangleBorder(
@@ -576,7 +577,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               'No se pudo determinar el tamaño por el nombre -elegilo a mano:',
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: const Color(0xFFB45309),
+                color: AppColors.ambar,
               ),
             ),
             const SizedBox(height: 6),
@@ -596,7 +597,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
             ),
           ],
           const SizedBox(height: 16),
-          Divider(height: 1, color: Colors.grey.shade300),
+          Divider(height: 1, color: AppColors.divisorFuerte),
           const SizedBox(height: 14),
           Text(
             'Tinte',
@@ -611,7 +612,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
               'Sin tinte cargado todavía.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             )
           else
@@ -624,7 +625,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FB),
+                    color: AppColors.fondoSuave2,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -644,7 +645,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                           fontWeight: FontWeight.w700,
                           color: t.resuelto
                               ? const Color(0xFF1E9E5A)
-                              : const Color(0xFFC62828),
+                              : AppColors.rojo,
                         ),
                       ),
                     ],
@@ -660,12 +661,12 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                       ? null
                       : _buscarFormula,
                   icon: _calculando
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         )
                       : const Icon(Icons.menu_book_outlined, size: 16),
@@ -677,7 +678,7 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFC62828),
+                    foregroundColor: AppColors.rojo,
                     side: const BorderSide(color: Color(0xFFC62828)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -699,8 +700,8 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1A1A1A),
-                    side: const BorderSide(color: Color(0xFFB6BCC7)),
+                    foregroundColor: AppColors.texto,
+                    side: BorderSide(color: AppColors.borde),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -717,12 +718,12 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
                 'Elegí un producto base primero para poder buscar una fórmula (el tamaño sale de ahí).',
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
-                  color: Colors.grey.shade500,
+                  color: AppColors.gris500,
                 ),
               ),
             ),
           const SizedBox(height: 16),
-          Divider(height: 1, color: Colors.grey.shade300),
+          Divider(height: 1, color: AppColors.divisorFuerte),
           const SizedBox(height: 8),
           _filaCosto('Costo de tinte', costoTinte, const Color(0xFFC62828)),
           const SizedBox(height: 4),
@@ -732,17 +733,17 @@ class _ModoFormulaConProductoState extends State<_ModoFormulaConProducto> {
             const Color(0xFF2B6CB0),
           ),
           const SizedBox(height: 8),
-          Divider(height: 1, color: Colors.grey.shade300),
+          Divider(height: 1, color: AppColors.divisorFuerte),
           const SizedBox(height: 8),
           _filaCosto(
             'Total combinado',
             costoCombinado,
-            const Color(0xFF1A1A1A),
+            AppColors.texto,
             grande: true,
           ),
           if (costoCombinado > 0) ...[
             const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey.shade300),
+            Divider(height: 1, color: AppColors.divisorFuerte),
             const SizedBox(height: 14),
             Text(
               '¿A cuánto puedo venderlo?',
@@ -1004,9 +1005,9 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1023,7 +1024,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
             'Promedio sobre todas las fórmulas del libro de ese tipo de base, con el costo FIFO vigente ahora mismo de cada tinte -para tener una referencia de precio base sin revisar cada fórmula una por una.',
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 16),
@@ -1037,7 +1038,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
                     'No se pudo calcular: ${promedios.error}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -1052,7 +1053,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
+                      foregroundColor: AppColors.rojo,
                       side: const BorderSide(color: Color(0xFFC62828)),
                     ),
                   ),
@@ -1062,10 +1063,10 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
           else if (promedios.value != null)
             _tabla(promedios.value!)
           else
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 28),
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                child: CircularProgressIndicator(color: AppColors.rojo),
               ),
             ),
         ],
@@ -1098,12 +1099,12 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
       child: Table(
         defaultColumnWidth: const IntrinsicColumnWidth(),
         border: TableBorder.all(
-          color: const Color(0xFFE0E2E8),
+          color: AppColors.bordeTenue2,
           borderRadius: BorderRadius.circular(8),
         ),
         children: [
           TableRow(
-            decoration: const BoxDecoration(color: Color(0xFFF2F3F7)),
+            decoration: BoxDecoration(color: AppColors.fondo),
             children: [
               _celdaEncabezado('Base'),
               for (final t in _tamanos) _celdaEncabezado(etiquetaTamano(t)),
@@ -1130,9 +1131,9 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E2E8)),
+        border: Border.all(color: AppColors.bordeTenue2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1164,7 +1165,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
               etiquetaTamano,
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
           ),
@@ -1174,7 +1175,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
                     'Sin datos',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
-                      color: Colors.grey.shade400,
+                      color: AppColors.gris400,
                     ),
                   )
                 : Column(
@@ -1192,7 +1193,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
                         _detalleValor(valor),
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                       ),
                     ],
@@ -1231,7 +1232,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
           'Sin datos',
           style: GoogleFonts.poppins(
             fontSize: 11.5,
-            color: Colors.grey.shade400,
+            color: AppColors.gris400,
           ),
         ),
       );
@@ -1254,7 +1255,7 @@ class _ModoPromediosPorBaseState extends ConsumerState<_ModoPromediosPorBase> {
             _detalleValor(valor),
             style: GoogleFonts.poppins(
               fontSize: 10,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
         ],

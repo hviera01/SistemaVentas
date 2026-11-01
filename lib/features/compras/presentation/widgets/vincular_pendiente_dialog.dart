@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/pendiente_reposicion_model.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Sentinel que VincularPendienteDialog devuelve cuando el usuario toca
 /// "Quitar vínculo" (a diferencia de cancelar, que devuelve null y no
@@ -60,7 +61,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
       child: Container(
         width: esMovil ? tamano.width - 40 : 480,
         constraints: const BoxConstraints(maxHeight: 560),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -69,7 +70,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Vincular a venta anticipada', style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text('Vincular a venta anticipada', style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
                   ),
                   IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
                 ],
@@ -79,7 +80,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
               padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
               child: Text(
                 'Elegí qué venta repone esta línea de la compra, aunque el producto vendido sea distinto al que estás comprando.',
-                style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600),
               ),
             ),
             Padding(
@@ -87,10 +88,10 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
               child: Container(
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    Icon(Icons.search, size: 18, color: Colors.grey.shade500),
+                    Icon(Icons.search, size: 18, color: AppColors.gris500),
                     const SizedBox(width: 8),
                     Expanded(
                       child: CampoTecladoCompacto(
@@ -103,7 +104,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                         enableSuggestions: false,
                         controller: _busquedaController,
                         style: GoogleFonts.poppins(fontSize: 13),
-                        decoration: InputDecoration(hintText: 'Buscar producto o factura...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400), border: InputBorder.none, isDense: true),
+                        decoration: InputDecoration(hintText: 'Buscar producto o factura...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris400), border: InputBorder.none, isDense: true),
                         onChanged: (v) => setState(() => _busqueda = v),
                       ),
                       ),
@@ -121,7 +122,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                     onPressed: () => Navigator.pop(context, quitarVinculoPendiente),
                     icon: const Icon(Icons.link_off, size: 16),
                     label: Text('Quitar vínculo actual', style: GoogleFonts.poppins(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFC62828), side: const BorderSide(color: Color(0xFFF3B9B9)), padding: const EdgeInsets.symmetric(vertical: 12)),
+                    style: OutlinedButton.styleFrom(foregroundColor: AppColors.rojo, side: BorderSide(color: AppColors.rojoBorde2), padding: const EdgeInsets.symmetric(vertical: 12)),
                   ),
                 ),
               ),
@@ -133,14 +134,14 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                       child: Text(
                         widget.pendientes.isEmpty ? 'No hay ninguna venta esperando reposición ahora mismo.' : 'Nada coincide con esa búsqueda.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris500),
                       ),
                     )
                   : ListView.separated(
                       shrinkWrap: true,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       itemCount: lista.length,
-                      separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                      separatorBuilder: (context, i) => Divider(height: 1, color: AppColors.divisor),
                       itemBuilder: (context, i) {
                         final p = lista[i];
                         final activo = p.id == widget.idVinculadoActual;
@@ -159,7 +160,7 @@ class _VincularPendienteDialogState extends State<VincularPendienteDialog> {
                                       Text(p.nombreProducto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
                                       Text(
                                         'Factura ${p.numeroDocumentoVenta} · ${_formatoFecha(p.fechaRegistro)} · Pendiente ${_formatoCantidad(p.cantidadPendiente)}',
-                                        style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                                        style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500),
                                       ),
                                     ],
                                   ),

@@ -8,6 +8,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 enum _ModoAjuste { ingreso, salida }
 
@@ -161,7 +162,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
       hintText: hint,
       labelStyle: GoogleFonts.poppins(fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );
   }
@@ -178,15 +179,15 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: tamano.height - 80),
         padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ajustar Existencia', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+              Text('Ajustar Existencia', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.texto)),
               const SizedBox(height: 6),
-              Text('Existencia actual: ${_formatoCantidad(widget.producto.stock)}', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+              Text('Existencia actual: ${_formatoCantidad(widget.producto.stock)}', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)),
               if (widget.notaSuperior != null) ...[
                 const SizedBox(height: 10),
                 widget.notaSuperior!,
@@ -225,7 +226,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
                 ),
               ] else ...[
                 const SizedBox(height: 14),
-                Text('¿De qué costo sale?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+                Text('¿De qué costo sale?', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.texto)),
                 const SizedBox(height: 8),
                 _selectorLote(),
               ],
@@ -251,7 +252,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
               Row(
                 children: [
                   const Spacer(),
-                  TextButton(onPressed: _guardando ? null : () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700))),
+                  TextButton(onPressed: _guardando ? null : () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700))),
                   const SizedBox(width: 10),
                   FilledButton(
                     onPressed: _guardando ? null : _guardar,
@@ -272,7 +273,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
   Widget _selectorModo() {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Expanded(child: _botonModo(_ModoAjuste.ingreso, 'Ingreso', Icons.add_circle_outline)),
@@ -293,9 +294,9 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icono, size: 17, color: activo ? Colors.white : Colors.grey.shade600),
+            Icon(icono, size: 17, color: activo ? Colors.white : AppColors.gris600),
             const SizedBox(width: 6),
-            Text(texto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: activo ? Colors.white : Colors.grey.shade600)),
+            Text(texto, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: activo ? Colors.white : AppColors.gris600)),
           ],
         ),
       ),
@@ -305,7 +306,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
   Widget _selectorLote() {
     final async = ref.watch(lotesProductoProvider(widget.producto.id));
     return async.when(
-      loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+      loading: () => Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: AppColors.rojo))),
       error: (e, st) => Text('No se pudieron cargar los lotes: $e', style: GoogleFonts.poppins(fontSize: 12, color: Colors.red)),
       data: (lotes) {
         final conExistencia = lotes.where((l) => l.cantidadRestante > 0).toList();
@@ -315,10 +316,10 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
         if (conExistencia.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
             child: Text(
               'Este producto no tiene lotes de costo con existencia -la salida se va a descontar del stock general, sin asociarse a un costo en particular.',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
             ),
           );
         }
@@ -344,25 +345,25 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: seleccionado ? const Color(0xFFFCE4E4) : const Color(0xFFF7F7F9),
+          color: seleccionado ? AppColors.rojoSuave2 : AppColors.fondoSuave5,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: seleccionado ? const Color(0xFFC62828) : Colors.transparent, width: 1.4),
         ),
         child: Row(
           children: [
-            Icon(seleccionado ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: seleccionado ? const Color(0xFFC62828) : Colors.grey.shade400),
+            Icon(seleccionado ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: seleccionado ? AppColors.rojo : AppColors.gris400),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(formatearMoneda(lote.costoUnitario), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
-                  Text('${_formatoCantidad(lote.cantidadRestante)} disponibles', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                  Text('${_formatoCantidad(lote.cantidadRestante)} disponibles', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris600)),
                 ],
               ),
             ),
             if (esProximo)
-              Text('Sale primero', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+              Text('Sale primero', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.rojo)),
           ],
         ),
       ),
@@ -380,15 +381,15 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: seleccionado ? const Color(0xFFFCE4E4) : const Color(0xFFF7F7F9),
+          color: seleccionado ? AppColors.rojoSuave2 : AppColors.fondoSuave5,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: seleccionado ? const Color(0xFFC62828) : Colors.transparent, width: 1.4),
         ),
         child: Row(
           children: [
-            Icon(seleccionado ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: seleccionado ? const Color(0xFFC62828) : Colors.grey.shade400),
+            Icon(seleccionado ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: seleccionado ? AppColors.rojo : AppColors.gris400),
             const SizedBox(width: 10),
-            Expanded(child: Text('Sin lote específico', style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A)))),
+            Expanded(child: Text('Sin lote específico', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.texto))),
           ],
         ),
       ),

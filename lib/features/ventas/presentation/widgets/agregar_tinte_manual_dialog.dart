@@ -10,6 +10,7 @@ import '../../../productos/providers/productos_provider.dart';
 import '../../data/costo_tinte_service.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import 'campo_cantidad_tinte.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Diálogo para cargar un tinte "a ojo" (Escenario B, sin código de fórmula
 /// conectado, ver CodigosColorDialog): el cajero elige el producto de tinte
@@ -102,7 +103,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
         width: ancho,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 10))],
         ),
@@ -117,7 +118,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
               ],
             ),
             const SizedBox(height: 4),
-            Text('Elegí el tinte real y cuántas onzas le echaste.', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+            Text('Elegí el tinte real y cuántas onzas le echaste.', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
             const SizedBox(height: 14),
             Builder(
               builder: (context) {
@@ -126,7 +127,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
                 // este diálogo -ver el mismo comentario en ConsultarCostoScreen.
                 final productosAsync = ref.watch(productosStreamProvider);
                 if (!productosAsync.hasValue) {
-                  return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))));
+                  return Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: CircularProgressIndicator(color: AppColors.rojo)));
                 }
                 final tintes = productosAsync.value!.where((p) => p.idCategoria == idCategoriaTintes && p.estado).toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
                 if (!_prefetchIniciado) {
@@ -134,15 +135,15 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
                   WidgetsBinding.instance.addPostFrameCallback((_) => _prefetchLotes(tintes));
                 }
                 if (tintes.isEmpty) {
-                  return Text('No hay productos de tinte cargados en el inventario (categoría TINTES).', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828)));
+                  return Text('No hay productos de tinte cargados en el inventario (categoría TINTES).', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.rojo));
                 }
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: AppColors.fondo, borderRadius: BorderRadius.circular(10)),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<ProductoModel>(
                       isExpanded: true,
-                      hint: Text('Elegí un tinte...', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
+                      hint: Text('Elegí un tinte...', style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris500)),
                       value: _tinteElegido,
                       items: [
                         for (final t in tintes)
@@ -163,7 +164,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
             const SizedBox(height: 12),
             CampoCantidadTinte(onChanged: _onCantidadCambiada),
             const SizedBox(height: 14),
-            if (_calculando) const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+            if (_calculando) Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(color: AppColors.rojo))),
             if (!_calculando && _calculado != null) _resumenCalculo(_calculado!),
             const SizedBox(height: 16),
             SizedBox(
@@ -188,7 +189,7 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF8F9FB), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFE0E2E8))),
+      decoration: BoxDecoration(color: AppColors.fondoSuave2, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.bordeTenue2)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -196,11 +197,11 @@ class _AgregarTinteManualDialogState extends ConsumerState<AgregarTinteManualDia
           const SizedBox(height: 4),
           Text(
             r.resuelto ? 'Costo estimado: ${formatearMoneda(r.costoTotal)}' : 'No se puede calcular el costo -sin producto en inventario.',
-            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: r.resuelto ? const Color(0xFF1E9E5A) : const Color(0xFFC62828)),
+            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: r.resuelto ? const Color(0xFF1E9E5A) : AppColors.rojo),
           ),
           if (r.advertencia != null) ...[
             const SizedBox(height: 6),
-            Text(r.advertencia!, style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFFB45309))),
+            Text(r.advertencia!, style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.ambar)),
           ],
         ],
       ),

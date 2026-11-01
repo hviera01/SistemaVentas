@@ -12,6 +12,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/pantalla_builder.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Pantalla de consulta de una compra ya registrada: buscá por número de
 /// documento o de factura (o abrila directo tocándola desde un reporte, o
@@ -186,7 +187,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   labelText: 'Motivo (opcional)',
                   labelStyle: GoogleFonts.poppins(fontSize: 12.5),
                   filled: true,
-                  fillColor: const Color(0xFFE8EAF0),
+                  fillColor: AppColors.campo,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -273,7 +274,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 19 : 22,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
           const SizedBox(height: 16),
@@ -288,9 +289,9 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   height: 50,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFB6BCC7)),
+                    border: Border.all(color: AppColors.borde),
                   ),
                   child: CampoTecladoCompacto(
                     controller: _busquedaController,
@@ -308,7 +309,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                         hintText: 'Número de documento o de factura...',
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.grey.shade400,
+                          color: AppColors.gris400,
                         ),
                         border: InputBorder.none,
                         isDense: true,
@@ -323,8 +324,8 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                 icon: const Icon(Icons.search, size: 18),
                 label: Text('Buscar', style: GoogleFonts.poppins(fontSize: 13)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -342,8 +343,8 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A1A1A),
-                  side: const BorderSide(color: Color(0xFFB6BCC7)),
+                  foregroundColor: AppColors.texto,
+                  side: BorderSide(color: AppColors.borde),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 14,
@@ -358,8 +359,8 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: _cargando
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   )
                 : _error != null
                 ? Center(
@@ -376,13 +377,13 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 56,
-                          color: Colors.grey.shade300,
+                          color: AppColors.gris300,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Buscá una compra por su número de documento',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       ],
@@ -396,11 +397,11 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
 
     if (widget.esDialogo) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF2F3F7),
+        backgroundColor: AppColors.fondo,
         body: SafeArea(child: contenido),
       );
     }
-    return Container(color: const Color(0xFFF2F3F7), child: contenido);
+    return Container(color: AppColors.fondo, child: contenido);
   }
 
   Widget _detalle(CompraModel compra, bool esMovil) {
@@ -477,8 +478,8 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 14,
@@ -530,14 +531,14 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE4E4),
+        color: AppColors.rojoSuave2,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFC62828)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.block_outlined, color: Color(0xFFC62828)),
+          Icon(Icons.block_outlined, color: AppColors.rojo),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -548,7 +549,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFC62828),
+                    color: AppColors.rojo,
                   ),
                 ),
                 if (compra.motivoAnulacion.isNotEmpty)
@@ -556,7 +557,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                     'Motivo: ${compra.motivoAnulacion}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFF7A1F1F),
+                      color: AppColors.rojoOscuro,
                     ),
                   ),
                 if (compra.usuarioAnulacion.isNotEmpty ||
@@ -570,7 +571,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                     ].join(' '),
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFF7A1F1F),
+                      color: AppColors.rojoOscuro,
                     ),
                   ),
               ],
@@ -586,9 +587,9 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: child,
     );
@@ -605,7 +606,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
             style: GoogleFonts.poppins(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
               letterSpacing: 0.4,
             ),
           ),
@@ -614,7 +615,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
             valor,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: const Color(0xFF1A1A1A),
+              color: AppColors.texto,
             ),
           ),
         ],
@@ -632,7 +633,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
     final estiloEncabezado = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,7 +675,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
             ),
           ],
         ),
-        Divider(height: 18, color: Colors.grey.shade300),
+        Divider(height: 18, color: AppColors.divisorFuerte),
         for (final item in compra.detalle) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -707,7 +708,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                           'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
-                            color: Colors.grey.shade400,
+                            color: AppColors.gris400,
                           ),
                         ),
                     ],
@@ -728,7 +729,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                     textAlign: TextAlign.right,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -747,7 +748,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
             ),
           ),
           if (item != compra.detalle.last)
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     );
@@ -775,7 +776,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                     'Descuento ${_formatoCantidad(item.descuentoPorcentaje)}%',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 const SizedBox(height: 4),
@@ -783,14 +784,14 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
                   '${_formatoCantidad(item.cantidad)} x ${formatearMoneda(item.precioCompra)} = ${formatearMoneda(item.subtotal)}',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: const Color(0xFF3F434A),
+                    color: AppColors.texto3,
                   ),
                 ),
               ],
             ),
           ),
           if (item != compra.detalle.last)
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     );
@@ -860,7 +861,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -869,7 +870,7 @@ class _DetalleCompraScreenState extends ConsumerState<DetalleCompraScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],

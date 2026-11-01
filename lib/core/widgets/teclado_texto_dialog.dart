@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_colors.dart';
 
 /// Teclado de texto en pantalla, chico y con letras y números juntos (a
 /// diferencia del teclado nativo del sistema, que en tablet ocupa media
@@ -92,7 +93,7 @@ class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
         child: AspectRatio(
           aspectRatio: flex == 1 ? 0.9 : 3.2,
           child: Material(
-            color: color ?? const Color(0xFFE8EAF0),
+            color: color ?? AppColors.campo,
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
@@ -133,7 +134,7 @@ class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
                   width: _ancho,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
                   ),
@@ -148,7 +149,7 @@ class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
                         }),
                         child: Row(
                           children: [
-                            Icon(Icons.drag_indicator, size: 18, color: Colors.grey.shade400),
+                            Icon(Icons.drag_indicator, size: 18, color: AppColors.gris400),
                             const SizedBox(width: 6),
                             Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700))),
                             IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
@@ -159,7 +160,7 @@ class _TecladoTextoDialogState extends State<TecladoTextoDialog> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                         child: Text(
                           _texto.isEmpty ? ' ' : _texto,
                           textAlign: TextAlign.left,

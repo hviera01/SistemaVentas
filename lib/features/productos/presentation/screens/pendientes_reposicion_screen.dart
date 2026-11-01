@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/pendiente_reposicion_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Lista las "ventas anticipadas" que siguen esperando la compra que las
 /// repone (ver ItemVentaModel.pendienteCompra, VentaRepository.registrarVenta
@@ -50,7 +51,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1A1A1A),
+              backgroundColor: AppColors.botonOscuro,
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Cancelar pendiente', style: GoogleFonts.poppins()),
@@ -77,7 +78,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
     final pendientesAsync = ref.watch(pendientesReposicionStreamProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
@@ -95,10 +96,10 @@ class PendientesReposicionScreen extends ConsumerWidget {
                         : Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.superficie,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFFAEB4C0),
+                                color: AppColors.bordeFuerte,
                                 width: 1.3,
                               ),
                               boxShadow: [
@@ -113,9 +114,9 @@ class PendientesReposicionScreen extends ConsumerWidget {
                                 ? _tarjetas(context, ref, pendientes)
                                 : _tabla(context, ref, pendientes),
                           ),
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ),
                     error: (e, st) => Center(
@@ -159,14 +160,14 @@ class PendientesReposicionScreen extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: esMovil ? 19 : 22,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
               Text(
                 'Ventas anticipadas esperando la compra que las repone. Se completan solas al registrar esa compra.',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -184,14 +185,14 @@ class PendientesReposicionScreen extends ConsumerWidget {
           Icon(
             Icons.check_circle_outline,
             size: 56,
-            color: Colors.grey.shade300,
+            color: AppColors.gris300,
           ),
           const SizedBox(height: 14),
           Text(
             'No hay ninguna venta esperando reposición ahora mismo.',
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
         ],
@@ -211,9 +212,9 @@ class PendientesReposicionScreen extends ConsumerWidget {
         Container(
           height: 46,
           decoration: BoxDecoration(
-            color: const Color(0xFFECEEF3),
+            color: AppColors.fondoSuave,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+            border: Border(bottom: BorderSide(color: AppColors.divisorFuerte)),
           ),
           child: Row(
             children: [
@@ -230,7 +231,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
           child: ListView.separated(
             itemCount: lista.length,
             separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey.shade200),
+                Divider(height: 1, color: AppColors.divisor),
             itemBuilder: (context, index) =>
                 _filaTabla(context, ref, lista[index]),
           ),
@@ -249,7 +250,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
           style: GoogleFonts.poppins(
             fontSize: 10.5,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade600,
+            color: AppColors.gris600,
           ),
         ),
       ),
@@ -349,7 +350,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
             flex: 1,
             child: IconButton(
               tooltip: 'Cancelar pendiente',
-              icon: Icon(Icons.close, size: 18, color: Colors.grey.shade600),
+              icon: Icon(Icons.close, size: 18, color: AppColors.gris600),
               onPressed: () => _cancelar(context, ref, p),
             ),
           ),
@@ -383,9 +384,9 @@ class PendientesReposicionScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +405,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
               ),
               IconButton(
                 tooltip: 'Cancelar pendiente',
-                icon: Icon(Icons.close, size: 18, color: Colors.grey.shade600),
+                icon: Icon(Icons.close, size: 18, color: AppColors.gris600),
                 onPressed: () => _cancelar(context, ref, p),
               ),
             ],
@@ -413,7 +414,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
             'Factura ${p.numeroDocumentoVenta} · ${_formatoFecha(p.fechaRegistro)}',
             style: GoogleFonts.poppins(
               fontSize: 11.5,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           const SizedBox(height: 10),
@@ -428,7 +429,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                     Row(
@@ -454,7 +455,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                   Text(

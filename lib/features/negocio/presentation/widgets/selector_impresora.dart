@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// El plugin `printing` solo implementa listado de impresoras del sistema
 /// operativo en Windows/macOS/Linux; en Android/iOS/web no hay method
@@ -68,7 +69,7 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
       children: [
         Row(
           children: [
-            Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)))),
+            Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.texto))),
             if (_listadoImpresorasDisponible)
               IconButton(
                 tooltip: 'Actualizar lista',
@@ -82,13 +83,13 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB6BCC7))),
+          decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borde)),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
-              hint: Text('Sin impresora seleccionada', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
+              hint: Text('Sin impresora seleccionada', style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris500)),
               value: tieneActual ? widget.urlActual : null,
-              style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+              style: GoogleFonts.poppins(fontSize: 13, color: AppColors.texto),
               items: opciones.map((p) => DropdownMenuItem(value: p.url, child: Text(p.name, overflow: TextOverflow.ellipsis))).toList(),
               onChanged: (url) {
                 if (url == null) return;
@@ -104,14 +105,14 @@ class _SelectorImpresoraState extends State<SelectorImpresora> {
             kIsWeb
                 ? 'No se puede elegir acá desde el navegador (limitación del navegador, no un error). No hace falta: si activás "Imprimir directo, sin preguntar", el navegador abre su propio diálogo de impresión con todas las impresoras del equipo.'
                 : 'No disponible en este dispositivo. En el celular usá la impresora de red (más abajo) en vez de esta lista.',
-            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500),
           ),
         ] else if (_error != null) ...[
           const SizedBox(height: 4),
-          Text(_error!, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.red.shade700)),
+          Text(_error!, style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.rojo700)),
         ] else if (!_cargando && _impresoras.isEmpty) ...[
           const SizedBox(height: 4),
-          Text('No se detectaron impresoras en este equipo', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+          Text('No se detectaron impresoras en este equipo', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
         ],
       ],
     );

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../data/reporte_financiero_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const colorVentasFinanciero = Color(0xFFC62828);
 const colorComprasFinanciero = Color(0xFFF59E0B);
@@ -20,9 +21,9 @@ Widget _tarjeta({required Widget child}) {
     width: double.infinity,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.superficie,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFC7CBD3)),
+      border: Border.all(color: AppColors.bordeSuave),
       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8))],
     ),
     child: child,
@@ -30,7 +31,7 @@ Widget _tarjeta({required Widget child}) {
 }
 
 Widget _explicacion(String texto) {
-  return Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(texto, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)));
+  return Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(texto, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)));
 }
 
 Widget _stat(String titulo, double valor, Color color, {String? sub}) {
@@ -53,7 +54,7 @@ Widget _stat(String titulo, double valor, Color color, {String? sub}) {
 Widget _flechaOperacion(IconData icono) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Icon(icono, color: Colors.grey.shade400, size: 22),
+    child: Icon(icono, color: AppColors.gris400, size: 22),
   );
 }
 
@@ -61,8 +62,8 @@ Widget _filaValor(String etiqueta, double valor) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
-      Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+      Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.4)),
+      Text(formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
     ],
   );
 }
@@ -73,7 +74,7 @@ Widget _leyenda(String texto, Color color) {
     children: [
       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
       const SizedBox(width: 6),
-      Text(texto, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+      Text(texto, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris700)),
     ],
   );
 }
@@ -110,17 +111,17 @@ Widget seccionUtilidad(ReporteFinancieroData data, bool esMovil) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _explicacion('Utilidad bruta: lo que dejan las ventas después de su costo. Utilidad neta: la utilidad bruta después de los gastos operativos registrados en Egresos.'),
-      Text('VENTAS − COSTOS = UTILIDAD BRUTA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+      Text('VENTAS − COSTOS = UTILIDAD BRUTA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.3)),
       const SizedBox(height: 10),
       filaBruta,
       const SizedBox(height: 20),
-      Text('UTILIDAD BRUTA − GASTOS = UTILIDAD NETA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+      Text('UTILIDAD BRUTA − GASTOS = UTILIDAD NETA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.3)),
       const SizedBox(height: 10),
       filaNeta,
       const SizedBox(height: 24),
       Text('Ganancia por Venta', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
-      Text('Cada venta individual del periodo, con su costo y ganancia.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      Text('Cada venta individual del periodo, con su costo y ganancia.', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
       const SizedBox(height: 10),
       _tabaGananciaPorVenta(data.gananciaPorVenta, esMovil),
     ],
@@ -129,7 +130,7 @@ Widget seccionUtilidad(ReporteFinancieroData data, bool esMovil) {
 
 Widget _tabaGananciaPorVenta(List<GananciaPorVenta> lista, bool esMovil) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Sin ventas en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Sin ventas en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final formatoFecha = DateFormat('dd/MM/yyyy');
   return _tarjeta(
@@ -145,13 +146,13 @@ Widget _tabaGananciaPorVenta(List<GananciaPorVenta> lista, bool esMovil) {
             SizedBox(width: 55, child: Text('MARGEN', textAlign: TextAlign.right, style: _estiloHeaderTabla())),
           ],
         ),
-        Divider(height: 16, color: Colors.grey.shade300),
+        Divider(height: 16, color: AppColors.divisorFuerte),
         for (final v in lista.take(50)) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               children: [
-                SizedBox(width: 90, child: Text(v.fecha != null ? formatoFecha.format(v.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+                SizedBox(width: 90, child: Text(v.fecha != null ? formatoFecha.format(v.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600))),
                 Expanded(
                   flex: 2,
                   child: Column(
@@ -159,26 +160,26 @@ Widget _tabaGananciaPorVenta(List<GananciaPorVenta> lista, bool esMovil) {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(v.numeroDocumento, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                      Text(v.cliente, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500), overflow: TextOverflow.ellipsis),
+                      Text(v.cliente, style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
                 if (!esMovil) Expanded(child: Text(formatearMoneda(v.ventas), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12))),
-                if (!esMovil) Expanded(child: Text(formatearMoneda(v.costo), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
-                Expanded(child: Text(formatearMoneda(v.ganancia), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: v.ganancia >= 0 ? const Color(0xFF16A34A) : const Color(0xFFC62828)))),
-                SizedBox(width: 55, child: Text('${v.margenPorcentaje.toStringAsFixed(0)}%', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+                if (!esMovil) Expanded(child: Text(formatearMoneda(v.costo), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600))),
+                Expanded(child: Text(formatearMoneda(v.ganancia), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: v.ganancia >= 0 ? const Color(0xFF16A34A) : AppColors.rojo))),
+                SizedBox(width: 55, child: Text('${v.margenPorcentaje.toStringAsFixed(0)}%', textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600))),
               ],
             ),
           ),
-          if (v != lista.take(50).last) Divider(height: 1, color: Colors.grey.shade200),
+          if (v != lista.take(50).last) Divider(height: 1, color: AppColors.divisor),
         ],
-        if (lista.length > 50) Padding(padding: const EdgeInsets.only(top: 10), child: Text('+ ${lista.length - 50} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500))),
+        if (lista.length > 50) Padding(padding: const EdgeInsets.only(top: 10), child: Text('+ ${lista.length - 50} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500))),
       ],
     ),
   );
 }
 
-TextStyle _estiloHeaderTabla() => GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3);
+TextStyle _estiloHeaderTabla() => GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.3);
 
 // ---------- Flujo de Efectivo ----------
 
@@ -259,7 +260,7 @@ Widget seccionComparacionMensual(ReporteFinancieroData data, bool esMovil) {
                         getTitlesWidget: (value, meta) {
                           final i = value.toInt();
                           if (i < 0 || i >= serie.length) return const SizedBox();
-                          return Padding(padding: const EdgeInsets.only(top: 8), child: Text(formatoMes.format(serie[i].mes), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade600)));
+                          return Padding(padding: const EdgeInsets.only(top: 8), child: Text(formatoMes.format(serie[i].mes), style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris600)));
                         },
                       ),
                     ),
@@ -283,8 +284,8 @@ Widget seccionComparacionMensual(ReporteFinancieroData data, bool esMovil) {
                 child: Row(
                   children: [
                     SizedBox(width: 70, child: Text(formatoMes.format(p.mes), style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600))),
-                    Expanded(child: Text('Ventas: ${formatearMoneda(p.totalVentas)}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700))),
-                    Expanded(child: Text('Compras: ${formatearMoneda(p.totalCompras)}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700))),
+                    Expanded(child: Text('Ventas: ${formatearMoneda(p.totalVentas)}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris700))),
+                    Expanded(child: Text('Compras: ${formatearMoneda(p.totalCompras)}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris700))),
                   ],
                 ),
               ),
@@ -320,7 +321,7 @@ Widget _tablaRanking(String titulo, List<RankingProducto> lista, {required bool 
       children: [
         Text(titulo, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
-        if (lista.isEmpty) Text('Sin datos en el rango', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+        if (lista.isEmpty) Text('Sin datos en el rango', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
         for (final item in lista) _filaRanking(item, maximo, esCantidad: esCantidad),
       ],
     ),
@@ -338,13 +339,13 @@ Widget _filaRanking(RankingProducto item, double maximo, {required bool esCantid
         Row(
           children: [
             Expanded(child: Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-            Text(esCantidad ? formatoCantidadFinanciero(valor) : formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+            Text(esCantidad ? formatoCantidadFinanciero(valor) : formatearMoneda(valor), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.texto)),
           ],
         ),
         const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: proporcion, minHeight: 6, backgroundColor: const Color(0xFFF0F1F5), color: colorVentasFinanciero),
+          child: LinearProgressIndicator(value: proporcion, minHeight: 6, backgroundColor: AppColors.fondoSuave6, color: colorVentasFinanciero),
         ),
       ],
     ),
@@ -361,12 +362,12 @@ Widget seccionProductosSinVenta(ReporteFinancieroData data, bool esMovil) {
       _explicacion('Productos activos que no tuvieron ninguna venta en el rango de fechas seleccionado.'),
       _tarjeta(
         child: lista.isEmpty
-            ? Text('Todos los productos activos tuvieron al menos una venta en el rango.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600))
+            ? Text('Todos los productos activos tuvieron al menos una venta en el rango.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('${lista.length} producto(s) sin movimiento — valor total en inventario: ${formatearMoneda(lista.fold<double>(0, (s, p) => s + p.valorInventario))}',
-                      style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+                      style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)),
                   const SizedBox(height: 12),
                   for (final p in lista.take(30))
                     Padding(
@@ -374,12 +375,12 @@ Widget seccionProductosSinVenta(ReporteFinancieroData data, bool esMovil) {
                       child: Row(
                         children: [
                           Expanded(child: Text(p.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5), overflow: TextOverflow.ellipsis)),
-                          SizedBox(width: 90, child: Text('Stock: ${formatoCantidadFinanciero(p.stock)}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
+                          SizedBox(width: 90, child: Text('Stock: ${formatoCantidadFinanciero(p.stock)}', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600))),
                           SizedBox(width: 110, child: Text(formatearMoneda(p.valorInventario), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600))),
                         ],
                       ),
                     ),
-                  if (lista.length > 30) Padding(padding: const EdgeInsets.only(top: 8), child: Text('+ ${lista.length - 30} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500))),
+                  if (lista.length > 30) Padding(padding: const EdgeInsets.only(top: 8), child: Text('+ ${lista.length - 30} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500))),
                 ],
               ),
       ),
@@ -392,7 +393,7 @@ Widget seccionProductosSinVenta(ReporteFinancieroData data, bool esMovil) {
 Widget seccionVentasPorUsuario(ReporteFinancieroData data, bool esMovil) {
   final lista = data.ventasPorUsuario;
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Sin ventas en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Sin ventas en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final top = lista.take(5).toList();
   final resto = lista.skip(5).toList();
@@ -436,7 +437,7 @@ Widget seccionVentasPorUsuario(ReporteFinancieroData data, bool esMovil) {
               Container(width: 10, height: 10, decoration: BoxDecoration(color: i < top.length ? _paletaUsuarios[i % _paletaUsuarios.length] : _colorOtros, borderRadius: BorderRadius.circular(3))),
               const SizedBox(width: 8),
               Expanded(child: Text(lista[i].usuario, style: GoogleFonts.poppins(fontSize: 12.5), overflow: TextOverflow.ellipsis)),
-              Text('${lista[i].cantidadTransacciones} vtas.', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+              Text('${lista[i].cantidadTransacciones} vtas.', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
               const SizedBox(width: 10),
               SizedBox(width: 100, child: Text(formatearMoneda(lista[i].totalVentas), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
             ],
@@ -526,11 +527,11 @@ Widget _tarjetaRecomendacion(String titulo, double monto, String explicacion) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(titulo.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        Text(titulo.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.4)),
         const SizedBox(height: 6),
         Text(formatearMoneda(monto), style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A))),
         const SizedBox(height: 8),
-        Text(explicacion, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+        Text(explicacion, style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600)),
       ],
     ),
   );
@@ -558,7 +559,7 @@ Widget seccionBalanceGeneral(ReporteFinancieroData data, bool esMovil) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PASIVOS Y PATRIMONIO', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFFC62828), letterSpacing: 0.4)),
+        Text('PASIVOS Y PATRIMONIO', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.rojo, letterSpacing: 0.4)),
         const SizedBox(height: 10),
         _filaBalance('Cuentas por pagar', b.cuentasPorPagar),
         _filaBalance('Patrimonio (estimado)', b.patrimonio),
@@ -604,13 +605,13 @@ Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
       const SizedBox(height: 20),
       Text('Composición de la Venta', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
-      Text('De cada Lempira vendido en el periodo, cuánto se fue en costo de venta, cuánto en gastos y cuánto quedó de utilidad neta.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      Text('De cada Lempira vendido en el periodo, cuánto se fue en costo de venta, cuánto en gastos y cuánto quedó de utilidad neta.', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
       const SizedBox(height: 10),
       _graficoComposicionVenta(data, esMovil),
       const SizedBox(height: 20),
       Text('Tendencia de Margen Bruto Mensual', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
-      Text('Margen aproximado por mes: (ventas − compras) ÷ ventas. Usa compras del mes como estimado del costo, no el costo exacto de lo vendido.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      Text('Margen aproximado por mes: (ventas − compras) ÷ ventas. Usa compras del mes como estimado del costo, no el costo exacto de lo vendido.', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
       const SizedBox(height: 10),
       _graficoTendenciaMargen(data.serieMensual),
       const SizedBox(height: 20),
@@ -618,14 +619,14 @@ Widget seccionInteligenciaNegocio(ReporteFinancieroData data, bool esMovil) {
       const SizedBox(height: 3),
       Text(
         'Productos activos que, a su ritmo de venta reciente, se agotarían en menos de $_diasUmbralReposicionTexto días. Se avisa cuando el proveedor asociado tiene cuentas vencidas.',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500),
       ),
       const SizedBox(height: 10),
       _tablaSugerenciasCompra(ia.sugerenciasCompra, esMovil),
       const SizedBox(height: 20),
       Text('Clientes que Más Compran', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
       const SizedBox(height: 3),
-      Text('Top 10 por monto comprado en el periodo (no incluye Consumidor Final).', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+      Text('Top 10 por monto comprado en el periodo (no incluye Consumidor Final).', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
       const SizedBox(height: 10),
       _tablaClientesTop(ia.clientesTop),
     ],
@@ -647,14 +648,14 @@ Widget _tarjetaPronostico(PronosticoVentas p, ReporteFinancieroData data) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PRONÓSTICO · PRÓXIMO MES', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        Text('PRONÓSTICO · PRÓXIMO MES', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.4)),
         const SizedBox(height: 8),
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
           spacing: 14,
           runSpacing: 8,
           children: [
-            Text(formatearMoneda(p.montoEstimado), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+            Text(formatearMoneda(p.montoEstimado), style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.texto)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(color: colorTendencia.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
@@ -673,13 +674,13 @@ Widget _tarjetaPronostico(PronosticoVentas p, ReporteFinancieroData data) {
           ],
         ),
         const SizedBox(height: 8),
-        Text('${p.metodo} · promedio de los últimos meses: ${formatearMoneda(p.promedioUltimosMeses)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+        Text('${p.metodo} · promedio de los últimos meses: ${formatearMoneda(p.promedioUltimosMeses)}', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
         const Divider(height: 24),
-        Text('UTILIDAD NETA PROYECTADA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        Text('UTILIDAD NETA PROYECTADA', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.4)),
         const SizedBox(height: 6),
         Text(formatearMoneda(utilidadProyectada), style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A))),
         const SizedBox(height: 4),
-        Text('Aplica el margen neto de este periodo (${(margenNetoActual * 100).toStringAsFixed(1)}%) al pronóstico de ventas. Estimado, no proyección contable.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+        Text('Aplica el margen neto de este periodo (${(margenNetoActual * 100).toStringAsFixed(1)}%) al pronóstico de ventas. Estimado, no proyección contable.', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
       ],
     ),
   );
@@ -691,7 +692,7 @@ Widget _tarjetaPronostico(PronosticoVentas p, ReporteFinancieroData data) {
 /// sin resaltar el cambio mes a mes.
 Widget _tarjetaComparacionMesAnterior(List<PuntoMensual> serie) {
   if (serie.length < 2) {
-    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para comparar.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para comparar.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final actual = serie[serie.length - 1];
   final anterior = serie[serie.length - 2];
@@ -700,7 +701,7 @@ Widget _tarjetaComparacionMesAnterior(List<PuntoMensual> serie) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${_capitalizar(formatoMes.format(actual.mes))} vs. ${_capitalizar(formatoMes.format(anterior.mes))}', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.4)),
+        Text('${_capitalizar(formatoMes.format(actual.mes))} vs. ${_capitalizar(formatoMes.format(anterior.mes))}', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.4)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 24,
@@ -728,11 +729,11 @@ Widget _comparacionVariacion(String etiqueta, double actual, double anterior, Co
       Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(formatearMoneda(actual), style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+          Text(formatearMoneda(actual), style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.texto)),
           if (variacion != null) ...[
             const SizedBox(width: 8),
-            Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
-            Text('${variacion.abs().toStringAsFixed(1)}%', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: subio ? const Color(0xFF16A34A) : const Color(0xFFC62828))),
+            Icon(subio ? Icons.arrow_upward : Icons.arrow_downward, size: 13, color: subio ? const Color(0xFF16A34A) : AppColors.rojo),
+            Text('${variacion.abs().toStringAsFixed(1)}%', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: subio ? const Color(0xFF16A34A) : AppColors.rojo)),
           ],
         ],
       ),
@@ -747,7 +748,7 @@ Widget _comparacionVariacion(String etiqueta, double actual, double anterior, Co
 Widget _graficoComposicionVenta(ReporteFinancieroData data, bool esMovil) {
   final ventas = data.ventasPeriodo;
   if (ventas <= 0) {
-    return _tarjeta(child: Text('Sin ventas en el periodo para calcular la composición.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Sin ventas en el periodo para calcular la composición.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final costo = data.costoVentas.clamp(0, ventas).toDouble();
   final gastos = data.gastosPeriodo.clamp(0, ventas).toDouble();
@@ -821,7 +822,7 @@ Widget _leyendaComposicion(List<(String, double, Color)> segmentos, double total
 /// ventas, que es lo que ya muestra "Comparación mensual").
 Widget _graficoTendenciaMargen(List<PuntoMensual> serie) {
   if (serie.length < 2) {
-    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para ver una tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Se necesitan al menos 2 meses de historial para ver una tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final formatoMes = DateFormat('MMM yy', 'es');
   final puntos = <FlSpot>[
@@ -829,7 +830,7 @@ Widget _graficoTendenciaMargen(List<PuntoMensual> serie) {
       if (serie[i].totalVentas > 0) FlSpot(i.toDouble(), ((serie[i].totalVentas - serie[i].totalCompras) / serie[i].totalVentas) * 100),
   ];
   if (puntos.length < 2) {
-    return _tarjeta(child: Text('No hay suficientes meses con ventas para calcular la tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('No hay suficientes meses con ventas para calcular la tendencia.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final minY = puntos.map((p) => p.y).reduce((a, b) => a < b ? a : b);
   final maxY = puntos.map((p) => p.y).reduce((a, b) => a > b ? a : b);
@@ -852,7 +853,7 @@ Widget _graficoTendenciaMargen(List<PuntoMensual> serie) {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 40,
-                getTitlesWidget: (value, meta) => Text('${value.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade600)),
+                getTitlesWidget: (value, meta) => Text('${value.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 10, color: AppColors.gris600)),
               ),
             ),
             bottomTitles: AxisTitles(
@@ -861,12 +862,12 @@ Widget _graficoTendenciaMargen(List<PuntoMensual> serie) {
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
                   if (i < 0 || i >= serie.length) return const SizedBox();
-                  return Padding(padding: const EdgeInsets.only(top: 8), child: Text(formatoMes.format(serie[i].mes), style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade600)));
+                  return Padding(padding: const EdgeInsets.only(top: 8), child: Text(formatoMes.format(serie[i].mes), style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris600)));
                 },
               ),
             ),
           ),
-          gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.shade200, strokeWidth: 1)),
+          gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.divisor, strokeWidth: 1)),
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
@@ -888,15 +889,15 @@ Widget _statMini(String titulo, String valor, String explicacion, Color color) {
   return Container(
     width: 230,
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC7CBD3))),
+    decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.bordeSuave)),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(titulo.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.4)),
         const SizedBox(height: 6),
-        Text(valor, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+        Text(valor, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.texto)),
         const SizedBox(height: 4),
-        Text(explicacion, style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade500)),
+        Text(explicacion, style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris500)),
       ],
     ),
   );
@@ -904,7 +905,7 @@ Widget _statMini(String titulo, String valor, String explicacion, Color color) {
 
 Widget _tablaSugerenciasCompra(List<SugerenciaCompra> lista, bool esMovil) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Ningún producto activo está por agotarse a su ritmo de venta reciente.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Ningún producto activo está por agotarse a su ritmo de venta reciente.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   return _tarjeta(
     child: Column(
@@ -921,12 +922,12 @@ Widget _tablaSugerenciasCompra(List<SugerenciaCompra> lista, bool esMovil) {
                       flex: 2,
                       child: Text(s.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
                     ),
-                    Expanded(child: Text('Stock: ${formatoCantidadFinanciero(s.stockActual)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600))),
+                    Expanded(child: Text('Stock: ${formatoCantidadFinanciero(s.stockActual)}', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600))),
                     Expanded(
                       child: Text(
                         '${s.diasParaAgotarse.toStringAsFixed(0)} día(s)',
                         textAlign: TextAlign.right,
-                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: s.diasParaAgotarse <= 3 ? const Color(0xFFC62828) : const Color(0xFFF59E0B)),
+                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: s.diasParaAgotarse <= 3 ? AppColors.rojo : const Color(0xFFF59E0B)),
                       ),
                     ),
                   ],
@@ -935,26 +936,26 @@ Widget _tablaSugerenciasCompra(List<SugerenciaCompra> lista, bool esMovil) {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(s.proveedorAlDia ? Icons.check_circle_outline : Icons.warning_amber_outlined, size: 13, color: s.proveedorAlDia ? const Color(0xFF16A34A) : const Color(0xFFC62828)),
+                      Icon(s.proveedorAlDia ? Icons.check_circle_outline : Icons.warning_amber_outlined, size: 13, color: s.proveedorAlDia ? const Color(0xFF16A34A) : AppColors.rojo),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           s.proveedorAlDia
                               ? 'Proveedor: ${s.proveedor} · al día'
                               : 'Proveedor: ${s.proveedor} · tiene cuentas vencidas por ${formatearMoneda(s.deudaVencidaProveedor)}, priorizar el pago antes de comprarle más',
-                          style: GoogleFonts.poppins(fontSize: 11, color: s.proveedorAlDia ? Colors.grey.shade600 : const Color(0xFFC62828)),
+                          style: GoogleFonts.poppins(fontSize: 11, color: s.proveedorAlDia ? AppColors.gris600 : AppColors.rojo),
                         ),
                       ),
                     ],
                   ),
                 ] else ...[
                   const SizedBox(height: 4),
-                  Text('Sin proveedor reciente registrado para este producto.', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400)),
+                  Text('Sin proveedor reciente registrado para este producto.', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris400)),
                 ],
               ],
             ),
           ),
-          if (s != lista.last) Divider(height: 1, color: Colors.grey.shade200),
+          if (s != lista.last) Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     ),
@@ -963,7 +964,7 @@ Widget _tablaSugerenciasCompra(List<SugerenciaCompra> lista, bool esMovil) {
 
 Widget _tablaClientesTop(List<ClienteTop> lista) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final maximo = lista.first.totalComprado;
   return _tarjeta(
@@ -979,7 +980,7 @@ Widget _tablaClientesTop(List<ClienteTop> lista) {
                 Row(
                   children: [
                     Expanded(child: Text(c.cliente, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                     const SizedBox(width: 10),
                     SizedBox(width: 100, child: Text(formatearMoneda(c.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
                   ],
@@ -990,7 +991,7 @@ Widget _tablaClientesTop(List<ClienteTop> lista) {
                   child: LinearProgressIndicator(
                     value: maximo <= 0 ? 0 : (c.totalComprado / maximo).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFF0F1F5),
+                    backgroundColor: AppColors.fondoSuave6,
                     color: const Color(0xFF3B82F6),
                   ),
                 ),
@@ -1018,7 +1019,7 @@ Widget seccionClientes(ReporteFinancieroData data, bool esMovil) {
       const SizedBox(height: 3),
       Text(
         'Top 10 por monto comprado en el periodo (agrupado por el cliente vinculado cuando existe; si no, por el nombre tal como se escribió). No incluye Consumidor Final.',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500),
       ),
       const SizedBox(height: 10),
       _tablaMejoresClientesConTicket(ia.clientesTop),
@@ -1027,7 +1028,7 @@ Widget seccionClientes(ReporteFinancieroData data, bool esMovil) {
       const SizedBox(height: 3),
       Text(
         'Nombres tipeados en la venta que no quedaron vinculados a ningún cliente registrado. Debería ir bajando con el tiempo, ya que las ventas nuevas con nombre se auto-registran solas.',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500),
       ),
       const SizedBox(height: 10),
       _tablaVentasNoRegistradas(ia.ventasNoRegistradas),
@@ -1036,7 +1037,7 @@ Widget seccionClientes(ReporteFinancieroData data, bool esMovil) {
       const SizedBox(height: 3),
       Text(
         'Clientes activos con más de $_diasInactivoTexto días sin comprar, o que nunca han comprado (independiente del rango de fechas de arriba: se calcula sobre la fecha de última compra de cada cliente).',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500),
       ),
       const SizedBox(height: 10),
       _listaClientesInactivos(ia.clientesInactivos),
@@ -1046,7 +1047,7 @@ Widget seccionClientes(ReporteFinancieroData data, bool esMovil) {
 
 Widget _tablaMejoresClientesConTicket(List<ClienteTop> lista) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Sin compras de clientes identificados en el rango seleccionado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   final maximo = lista.first.totalComprado;
   return _tarjeta(
@@ -1062,20 +1063,20 @@ Widget _tablaMejoresClientesConTicket(List<ClienteTop> lista) {
                 Row(
                   children: [
                     Expanded(child: Text(c.cliente, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                    Text('${c.cantidadCompras} compra(s)', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                     const SizedBox(width: 10),
                     SizedBox(width: 100, child: Text(formatearMoneda(c.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text('Ticket promedio: ${formatearMoneda(c.ticketPromedio)}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                Text('Ticket promedio: ${formatearMoneda(c.ticketPromedio)}', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: maximo <= 0 ? 0 : (c.totalComprado / maximo).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFF0F1F5),
+                    backgroundColor: AppColors.fondoSuave6,
                     color: const Color(0xFF3B82F6),
                   ),
                 ),
@@ -1089,7 +1090,7 @@ Widget _tablaMejoresClientesConTicket(List<ClienteTop> lista) {
 
 Widget _tablaVentasNoRegistradas(List<VentaSinCliente> lista) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Todas las ventas con nombre quedaron vinculadas a un cliente registrado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Todas las ventas con nombre quedaron vinculadas a un cliente registrado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   return _tarjeta(
     child: Column(
@@ -1100,13 +1101,13 @@ Widget _tablaVentasNoRegistradas(List<VentaSinCliente> lista) {
             child: Row(
               children: [
                 Expanded(child: Text(v.nombre, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                Text('${v.cantidadVentas} venta(s)', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                Text('${v.cantidadVentas} venta(s)', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                 const SizedBox(width: 10),
                 SizedBox(width: 100, child: Text(formatearMoneda(v.totalComprado), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
               ],
             ),
           ),
-          if (v != lista.last) Divider(height: 1, color: Colors.grey.shade200),
+          if (v != lista.last) Divider(height: 1, color: AppColors.divisor),
         ],
       ],
     ),
@@ -1115,13 +1116,13 @@ Widget _tablaVentasNoRegistradas(List<VentaSinCliente> lista) {
 
 Widget _listaClientesInactivos(List<ClienteInactivo> lista) {
   if (lista.isEmpty) {
-    return _tarjeta(child: Text('Ningún cliente activo lleva más de $_diasInactivoTexto días sin comprar.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)));
+    return _tarjeta(child: Text('Ningún cliente activo lleva más de $_diasInactivoTexto días sin comprar.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)));
   }
   return _tarjeta(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${lista.length} cliente(s) inactivo(s)', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+        Text('${lista.length} cliente(s) inactivo(s)', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.gris600)),
         const SizedBox(height: 10),
         for (final c in lista.take(30))
           Padding(
@@ -1131,12 +1132,12 @@ Widget _listaClientesInactivos(List<ClienteInactivo> lista) {
                 Expanded(child: Text(c.nombreCompleto, style: GoogleFonts.poppins(fontSize: 12.5), overflow: TextOverflow.ellipsis)),
                 Text(
                   c.diasSinComprar == null ? 'Nunca ha comprado' : 'Hace ${c.diasSinComprar} días',
-                  style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500),
                 ),
               ],
             ),
           ),
-        if (lista.length > 30) Padding(padding: const EdgeInsets.only(top: 8), child: Text('+ ${lista.length - 30} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500))),
+        if (lista.length > 30) Padding(padding: const EdgeInsets.only(top: 8), child: Text('+ ${lista.length - 30} más...', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500))),
       ],
     ),
   );

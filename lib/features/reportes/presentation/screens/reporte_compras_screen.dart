@@ -14,6 +14,7 @@ import '../../../usuarios/providers/usuarios_provider.dart';
 import '../../../compras/presentation/screens/detalle_compra_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ReporteComprasScreen extends ConsumerStatefulWidget {
   const ReporteComprasScreen({super.key});
@@ -182,7 +183,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
     final proveedoresAsync = ref.watch(proveedoresStreamProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 760;
@@ -201,7 +202,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: esMovil ? 19 : 22,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                       _statTotalFacturado(totalFacturado),
@@ -248,8 +249,8 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -267,8 +268,8 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -286,8 +287,8 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -308,8 +309,8 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -368,10 +369,10 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
               ],
               body: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFAEB4C0),
+                    color: AppColors.bordeFuerte,
                     width: 1.3,
                   ),
                   boxShadow: [
@@ -383,9 +384,9 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                   ],
                 ),
                 child: _cargando
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       )
                     : _error != null
@@ -403,14 +404,14 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                             Icon(
                               Icons.shopping_cart_outlined,
                               size: 56,
-                              color: Colors.grey.shade300,
+                              color: AppColors.gris300,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No se encontraron resultados',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           ],
@@ -491,9 +492,9 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.superficie,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFB6BCC7)),
+            border: Border.all(color: AppColors.borde),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -501,7 +502,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
               Icon(
                 Icons.calendar_today_outlined,
                 size: 15,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
               const SizedBox(width: 8),
               Flexible(
@@ -511,7 +512,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                   maxLines: 1,
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
               ),
@@ -527,9 +528,9 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -541,7 +542,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
           ),
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: [
             DropdownMenuItem<String?>(
@@ -577,9 +578,9 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -589,12 +590,12 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
             etiqueta,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
           ),
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: [
             DropdownMenuItem<String?>(
@@ -622,13 +623,13 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -646,7 +647,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                   hintText: 'Buscar por factura, proveedor...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -682,12 +683,12 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECEEF3),
+                  color: AppColors.fondoSuave,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: AppColors.divisorFuerte),
                   ),
                 ),
                 child: Row(
@@ -706,7 +707,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
             final c = lista[index - 1];
             return Column(
               children: [
-                if (index > 1) Divider(height: 1, color: Colors.grey.shade200),
+                if (index > 1) Divider(height: 1, color: AppColors.divisor),
                 InkWell(
                   onTap: () => _verDetalle(c.id),
                   child: Padding(
@@ -762,7 +763,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.3,
         ),
       ),
@@ -786,7 +787,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),
@@ -807,9 +808,9 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFC7CBD3)),
+              border: Border.all(color: AppColors.bordeSuave),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -828,14 +829,14 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                           Text(
                             'Factura ${c.noFactura}',
                             style: GoogleFonts.poppins(
                               fontSize: 11.5,
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -846,7 +847,7 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ],
@@ -878,14 +879,14 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );

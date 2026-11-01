@@ -6,6 +6,7 @@ import '../../data/dispositivo_model.dart';
 import '../../providers/dispositivos_provider.dart';
 import '../../../../core/services/actualizacion_service.dart';
 import '../../../negocio/providers/negocio_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class DispositivosScreen extends ConsumerStatefulWidget {
   const DispositivosScreen({super.key});
@@ -39,7 +40,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
     final formatoFecha = DateFormat('dd/MM/yyyy hh:mm a');
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: Padding(
         padding: const EdgeInsets.all(26),
         child: Column(
@@ -55,7 +56,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
                 if (_ultimaVersionPublicada != null)
@@ -65,7 +66,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.botonOscuro,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -84,7 +85,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
               'Cada equipo actualiza este registro solo al iniciar sesión: si alguien no ha abierto la app en un tiempo, su fila va a quedar vieja.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 4),
@@ -92,17 +93,17 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
               'Marcá con la estrella la PC que tiene la impresora conectada de verdad. Sin ninguna marcada (como hasta ahora), cualquier PC/laptop con la app abierta se comporta como si lo fuera -si tenés más de un equipo de escritorio, marcá el correcto para que los demás, al no poder imprimir local, le pidan a este que imprima en su lugar en vez de intentar imprimir ellos mismos-.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 18),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFAEB4C0),
+                    color: AppColors.bordeFuerte,
                     width: 1.3,
                   ),
                   boxShadow: [
@@ -120,7 +121,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                         child: Text(
                           'Todavía no hay dispositivos registrados',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       );
@@ -138,8 +139,8 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                       },
                     );
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF0F1B3D)),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: AppColors.marino),
                   ),
                   error: (e, st) => Center(
                     child: Text(
@@ -164,8 +165,8 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: desactualizado
-            ? const Color(0xFFFCE4E4)
-            : const Color(0xFFE8F8EE),
+            ? AppColors.rojoSuave2
+            : AppColors.verdeSuave,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -177,16 +178,16 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: desactualizado
-                  ? const Color(0xFFB91C1C)
+                  ? AppColors.rojoB91C1C
                   : const Color(0xFF16A34A),
             ),
           ),
           if (desactualizado) ...[
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.warning_amber_rounded,
               size: 13,
-              color: Color(0xFFB91C1C),
+              color: AppColors.rojoB91C1C,
             ),
           ],
         ],
@@ -202,7 +203,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
       onPressed: () => _alternarPcPrincipal(d.id, esPrincipal),
       icon: Icon(
         esPrincipal ? Icons.star : Icons.star_border,
-        color: esPrincipal ? const Color(0xFFE0A63C) : Colors.grey.shade400,
+        color: esPrincipal ? const Color(0xFFE0A63C) : AppColors.gris400,
         size: 22,
       ),
     );
@@ -224,11 +225,11 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFECEEF3),
+              color: AppColors.fondoSuave,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              border: Border(bottom: BorderSide(color: AppColors.divisorFuerte)),
             ),
             child: Row(
               children: [
@@ -254,7 +255,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF666A72),
+                      color: AppColors.texto6,
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -268,7 +269,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
             pcPrincipalHostname.isNotEmpty && pcPrincipalHostname == d.id;
         return Container(
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            border: Border(bottom: BorderSide(color: AppColors.divisor)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -312,13 +313,13 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: esPrincipal
-                ? const Color(0xFFFFF8E8)
-                : const Color(0xFFF8F9FB),
+                ? AppColors.ambarSuave3
+                : AppColors.fondoSuave2,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: esPrincipal
                   ? const Color(0xFFE0A63C)
-                  : const Color(0xFFC7CBD3),
+                  : AppColors.bordeSuave,
             ),
           ),
           child: Column(
@@ -333,7 +334,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                     ),
                   ),
@@ -356,7 +357,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
                 'Última conexión: ${d.ultimaConexion != null ? formatoFecha.format(d.ultimaConexion!) : '-'}',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -370,14 +371,14 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         texto,
         style: GoogleFonts.poppins(
           fontSize: 12,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );
@@ -393,7 +394,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.3,
         ),
       ),
@@ -417,7 +418,7 @@ class _DispositivosScreenState extends ConsumerState<DispositivosScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),

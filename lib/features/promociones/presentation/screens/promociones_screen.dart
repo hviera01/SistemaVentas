@@ -9,6 +9,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../widgets/promocion_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Mantenedor de "Descuentos y Promociones": alta, edición, activar/
 /// desactivar y baja. También sirve para "consultar todas las promociones
@@ -94,7 +95,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
     final busqueda = ref.watch(promocionesBusquedaProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
@@ -108,7 +109,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 19 : 22,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -116,7 +117,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                   'Armá descuentos por porcentaje, precio especial, combos por cantidad o regalos. Se ofrecen solos al vender un producto con promoción vigente.',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -178,7 +179,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                               Icon(
                                 Icons.local_offer_outlined,
                                 size: 56,
-                                color: Colors.grey.shade300,
+                                color: AppColors.gris300,
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -186,7 +187,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                                     ? 'No hay promociones vigentes ahora mismo'
                                     : 'No hay promociones registradas',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade500,
+                                  color: AppColors.gris500,
                                 ),
                               ),
                             ],
@@ -205,9 +206,9 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                             _tarjetaPromocion(lista[i]),
                       );
                     },
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ),
                     error: (e, st) => Center(
@@ -231,9 +232,9 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -241,7 +242,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: const [
             DropdownMenuItem(value: 'vigentes', child: Text('Solo vigentes')),
@@ -258,13 +259,13 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -282,7 +283,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                   hintText: 'Buscar por nombre o producto...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -320,9 +321,9 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,10 +345,10 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               PopupMenuButton<String>(
                 tooltip: 'Más acciones',
                 padding: EdgeInsets.zero,
-                icon: const Icon(
+                icon: Icon(
                   Icons.more_vert,
                   size: 19,
-                  color: Color(0xFF454950),
+                  color: AppColors.texto4,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -378,7 +379,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                       'Eliminar',
                       style: GoogleFonts.poppins(
                         fontSize: 12.5,
-                        color: const Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ),
                   ),
@@ -408,7 +409,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
             style: GoogleFonts.poppins(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFFC62828),
+              color: AppColors.rojo,
             ),
           ),
           const SizedBox(height: 4),
@@ -417,7 +418,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               _descripcionProductos(p),
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
@@ -426,7 +427,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.event_outlined, size: 13, color: Colors.grey.shade400),
+              Icon(Icons.event_outlined, size: 13, color: AppColors.gris400),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -435,7 +436,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                       : 'Del ${formatoFecha.format(p.fechaInicio)} al ${formatoFecha.format(p.fechaFin!)}',
                   style: GoogleFonts.poppins(
                     fontSize: 10.5,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -448,7 +449,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
               Icon(
                 Icons.payments_outlined,
                 size: 13,
-                color: Colors.grey.shade400,
+                color: AppColors.gris400,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -456,7 +457,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
                   '${p.alcancePago == 'Todos' ? 'Cualquier condición' : 'Solo ${p.alcancePago}'} · ${p.metodosPagoAlcance.isEmpty ? 'cualquier método de pago' : 'solo ${p.metodosPagoAlcance.join(' o ')}'}',
                   style: GoogleFonts.poppins(
                     fontSize: 10.5,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

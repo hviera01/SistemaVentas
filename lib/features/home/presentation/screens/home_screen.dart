@@ -8,6 +8,7 @@ import '../../../../core/data/modulos_menu.dart';
 import '../../../../core/utils/abrir_submodulo.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../providers/resumen_ventas_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 // Solo el navegador de un celular (no la PC, no la app de escritorio): ahí
 // es donde tiene sentido un atajo directo a "Nueva Venta" / "Nueva Compra" /
@@ -37,7 +38,7 @@ class HomeScreen extends ConsumerWidget {
     }
     showModalBottomSheet(
       context: contextPantalla,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.superficie,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -52,7 +53,7 @@ class HomeScreen extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppColors.gris300Fondo,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -62,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFC62828),
+                    color: AppColors.rojo,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -98,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
     }).toList();
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 640;
@@ -113,7 +114,7 @@ class HomeScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 20 : 24,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -121,7 +122,7 @@ class HomeScreen extends ConsumerWidget {
                     'Seleccioná una opción para comenzar',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -228,7 +229,7 @@ class HomeScreen extends ConsumerWidget {
     SubModulo sub,
   ) {
     return Material(
-      color: Colors.white,
+      color: AppColors.superficie,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -267,7 +268,7 @@ class HomeScreen extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
             ],
@@ -434,7 +435,7 @@ class HomeScreen extends ConsumerWidget {
     bool esMovil,
   ) {
     return Material(
-      color: Colors.white,
+      color: AppColors.superficie,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -477,7 +478,7 @@ class HomeScreen extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: esMovil ? 13 : 15.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.texto,
                 ),
               ),
               const SizedBox(height: 4),
@@ -485,7 +486,7 @@ class HomeScreen extends ConsumerWidget {
                 '${modulo.subModulos.where((s) => esAdmin || !s.soloAdmin).length} opciones',
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
-                  color: Colors.grey.shade500,
+                  color: AppColors.gris500,
                 ),
               ),
             ],

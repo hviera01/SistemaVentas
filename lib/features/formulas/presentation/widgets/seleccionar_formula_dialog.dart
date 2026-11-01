@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/formula_colortrend_model.dart';
 import '../../providers/formulas_colortrend_provider.dart';
 import '../../../../core/utils/texto_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Diálogo compacto para elegir UNA fórmula real del libro Color Codex
 /// (mismo buscador fuzzy que ya usa BuscarFormulaScreen, ver
@@ -42,7 +43,7 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
         constraints: const BoxConstraints(maxHeight: 560),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
         ),
@@ -57,7 +58,7 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
               ],
             ),
             const SizedBox(height: 4),
-            Text('Código, nombre o base del color del libro Color Codex.', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+            Text('Código, nombre o base del color del libro Color Codex.', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
@@ -65,10 +66,10 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
               style: GoogleFonts.poppins(fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Ej. C-104',
-                hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+                hintStyle: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris400),
                 prefixIcon: const Icon(Icons.search, size: 20),
                 filled: true,
-                fillColor: const Color(0xFFF2F3F7),
+                fillColor: AppColors.fondo,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -78,7 +79,7 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
             const SizedBox(height: 12),
             Flexible(
               child: formulasAsync.when(
-                loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))),
+                loading: () => Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: CircularProgressIndicator(color: AppColors.rojo))),
                 error: (e, st) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Center(
@@ -100,26 +101,26 @@ class _SeleccionarFormulaDialogState extends ConsumerState<SeleccionarFormulaDia
                   if (_busqueda.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 30),
-                      child: Center(child: Text('Escribí algo para buscar', style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 12.5))),
+                      child: Center(child: Text('Escribí algo para buscar', style: GoogleFonts.poppins(color: AppColors.gris500, fontSize: 12.5))),
                     );
                   }
                   final resultados = formulas.where((f) => coincideFuzzy(f.textoBusqueda, _busqueda)).toList()..sort((a, b) => a.codigo.compareTo(b.codigo));
                   if (resultados.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 30),
-                      child: Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 12.5))),
+                      child: Center(child: Text('Sin resultados para "$_busqueda"', style: GoogleFonts.poppins(color: AppColors.gris500, fontSize: 12.5))),
                     );
                   }
                   return ListView.separated(
                     shrinkWrap: true,
                     itemCount: resultados.length,
-                    separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                    separatorBuilder: (context, i) => Divider(height: 1, color: AppColors.divisor),
                     itemBuilder: (context, i) {
                       final f = resultados[i];
                       return ListTile(
                         dense: true,
                         title: Text('${f.codigo}  ·  ${f.nombre}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                        subtitle: Text('${f.base} · pág. ${f.pagina}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                        subtitle: Text('${f.base} · pág. ${f.pagina}', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                         trailing: const Icon(Icons.chevron_right, size: 18),
                         onTap: () => Navigator.pop<FormulaColortrendModel>(context, f),
                       );

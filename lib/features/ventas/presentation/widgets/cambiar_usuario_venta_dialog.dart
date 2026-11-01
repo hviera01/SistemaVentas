@@ -5,6 +5,7 @@ import '../../../auth/data/usuario_model.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Pide documento + clave de OTRO usuario y, si son válidos, retorna su
 /// UsuarioModel. Llama directo a AuthRepository.login (no a
@@ -85,7 +86,7 @@ class _CambiarUsuarioVentaDialogState
         width: esMovil ? tamano.width - 48 : 380,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -97,12 +98,12 @@ class _CambiarUsuarioVentaDialogState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF1FB),
+                    color: AppColors.azulSuave2,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.swap_horiz,
-                    color: Color(0xFF2F6FBD),
+                    color: AppColors.azul3,
                     size: 22,
                   ),
                 ),
@@ -113,7 +114,7 @@ class _CambiarUsuarioVentaDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -124,7 +125,7 @@ class _CambiarUsuarioVentaDialogState
               'Solo afecta esta venta, no la sesión: el resto del sistema sigue con tu usuario.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 18),
@@ -145,10 +146,10 @@ class _CambiarUsuarioVentaDialogState
                   hintText: 'Código de acceso',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFE8EAF0),
+                  fillColor: AppColors.campo,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -170,11 +171,11 @@ class _CambiarUsuarioVentaDialogState
                 hintText: 'Clave',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: Colors.grey.shade400,
+                  color: AppColors.gris400,
                 ),
                 errorText: _error,
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -192,8 +193,8 @@ class _CambiarUsuarioVentaDialogState
                   child: OutlinedButton(
                     onPressed: _cargando ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      foregroundColor: AppColors.texto,
+                      side: BorderSide(color: AppColors.borde),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

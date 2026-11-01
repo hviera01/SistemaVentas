@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_colors.dart';
 
 /// Check verde chico en el centro de la pantalla al terminar una venta o
 /// compra -pedido explícito del dueño-: confirma de un vistazo que la
@@ -73,7 +74,7 @@ class _ExitoTransaccionOverlayState extends State<_ExitoTransaccionOverlay> with
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 26),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 30, offset: const Offset(0, 12))],
                   ),
@@ -90,7 +91,7 @@ class _ExitoTransaccionOverlayState extends State<_ExitoTransaccionOverlay> with
                       Text(
                         widget.mensaje,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto),
                       ),
                     ],
                   ),

@@ -5,6 +5,7 @@ import '../../data/categoria_model.dart';
 import '../../providers/categorias_provider.dart';
 import '../widgets/categoria_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class CategoriasScreen extends ConsumerWidget {
   const CategoriasScreen({super.key});
@@ -23,7 +24,7 @@ class CategoriasScreen extends ConsumerWidget {
     final busqueda = ref.watch(categoriaBusquedaProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 640;
@@ -37,7 +38,7 @@ class CategoriasScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 19 : 22,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -72,10 +73,10 @@ class CategoriasScreen extends ConsumerWidget {
               body: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.superficie,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFB6BCC7),
+                    color: AppColors.borde,
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -102,13 +103,13 @@ class CategoriasScreen extends ConsumerWidget {
                             Icon(
                               Icons.category_outlined,
                               size: 56,
-                              color: Colors.grey.shade300,
+                              color: AppColors.gris300,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No hay categorías',
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           ],
@@ -126,12 +127,12 @@ class CategoriasScreen extends ConsumerWidget {
                               vertical: 14,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F8),
+                              color: AppColors.fondoSuave4,
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(16),
                               ),
                               border: Border(
-                                bottom: BorderSide(color: Colors.grey.shade300),
+                                bottom: BorderSide(color: AppColors.divisorFuerte),
                               ),
                             ),
                             child: Row(
@@ -143,7 +144,7 @@ class CategoriasScreen extends ConsumerWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.grey.shade600,
+                                      color: AppColors.gris600,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -155,7 +156,7 @@ class CategoriasScreen extends ConsumerWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.grey.shade600,
+                                      color: AppColors.gris600,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -169,7 +170,7 @@ class CategoriasScreen extends ConsumerWidget {
                         return Column(
                           children: [
                             if (index > 1)
-                              Divider(height: 1, color: Colors.grey.shade200),
+                              Divider(height: 1, color: AppColors.divisor),
                             InkWell(
                               onTap: () => _abrirFormulario(context, categoria),
                               child: Padding(
@@ -185,7 +186,7 @@ class CategoriasScreen extends ConsumerWidget {
                                         categoria.descripcion,
                                         style: GoogleFonts.poppins(
                                           fontSize: 13.5,
-                                          color: const Color(0xFF1A1A1A),
+                                          color: AppColors.texto,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -202,8 +203,8 @@ class CategoriasScreen extends ConsumerWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: categoria.estado
-                                              ? const Color(0xFFE8F8EE)
-                                              : Colors.grey.shade200,
+                                              ? AppColors.verdeSuave
+                                              : AppColors.gris200Fondo,
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -219,7 +220,7 @@ class CategoriasScreen extends ConsumerWidget {
                                             fontWeight: FontWeight.w600,
                                             color: categoria.estado
                                                 ? const Color(0xFF16A34A)
-                                                : Colors.grey.shade600,
+                                                : AppColors.gris600,
                                           ),
                                         ),
                                       ),
@@ -229,7 +230,7 @@ class CategoriasScreen extends ConsumerWidget {
                                       child: Icon(
                                         Icons.chevron_right,
                                         size: 18,
-                                        color: Colors.grey.shade400,
+                                        color: AppColors.gris400,
                                       ),
                                     ),
                                   ],
@@ -241,8 +242,8 @@ class CategoriasScreen extends ConsumerWidget {
                       },
                     );
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   ),
                   error: (e, st) => Center(
                     child: Text(
@@ -264,13 +265,13 @@ class CategoriasScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -282,7 +283,7 @@ class CategoriasScreen extends ConsumerWidget {
                 hintText: 'Buscar por descripción...',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: Colors.grey.shade400,
+                  color: AppColors.gris400,
                 ),
                 border: InputBorder.none,
                 isDense: true,
@@ -302,8 +303,8 @@ class CategoriasScreen extends ConsumerWidget {
       icon: const Icon(Icons.refresh, size: 18),
       label: Text('Refrescar', style: GoogleFonts.poppins(fontSize: 13)),
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF1A1A1A),
-        side: const BorderSide(color: Color(0xFFB6BCC7)),
+        foregroundColor: AppColors.texto,
+        side: BorderSide(color: AppColors.borde),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

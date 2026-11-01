@@ -7,6 +7,7 @@ import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Selector de productos reusado por el formulario de promociones: con
 /// [maxSeleccion] = 1 se comporta como selector único (producto base /
@@ -71,7 +72,7 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
         width: anchoDialog,
         height: altoDialog,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: productosAsync.when(
           data: (productos) {
             final activos = productos.where((p) => p.estado).toList();
@@ -82,7 +83,7 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                 Row(
                   children: [
                     Expanded(child: Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700))),
-                    Text('${_seleccionados.length} seleccionado(s)', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                    Text('${_seleccionados.length} seleccionado(s)', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
                     IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
                   ],
                 ),
@@ -90,10 +91,10 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                 Container(
                   height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: AppColors.fondo, borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     children: [
-                      Icon(Icons.search, size: 18, color: Colors.grey.shade400),
+                      Icon(Icons.search, size: 18, color: AppColors.gris400),
                       const SizedBox(width: 8),
                       Expanded(
                         child: CampoTecladoCompacto(
@@ -117,10 +118,10 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                 const SizedBox(height: 10),
                 Expanded(
                   child: filtrados.isEmpty
-                      ? Center(child: Text('Sin productos', style: GoogleFonts.poppins(color: Colors.grey.shade500)))
+                      ? Center(child: Text('Sin productos', style: GoogleFonts.poppins(color: AppColors.gris500)))
                       : ListView.separated(
                           itemCount: filtrados.length,
-                          separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                          separatorBuilder: (context, i) => Divider(height: 1, color: AppColors.divisor),
                           itemBuilder: (context, i) {
                             final p = filtrados[i];
                             final marcado = _seleccionados.contains(p.id);
@@ -130,7 +131,7 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
                               dense: true,
                               controlAffinity: ListTileControlAffinity.leading,
                               title: Text(p.nombre, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                              subtitle: Text('${p.codigo} · ${formatearMoneda(p.precioVenta)}', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade500)),
+                              subtitle: Text('${p.codigo} · ${formatearMoneda(p.precioVenta)}', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris500)),
                               activeColor: const Color(0xFFC62828),
                             );
                           },
@@ -148,7 +149,7 @@ class _SeleccionarProductosDialogState extends ConsumerState<SeleccionarProducto
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+          loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
           error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
         ),
       ),

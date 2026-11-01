@@ -12,6 +12,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class CierreCajaScreen extends ConsumerStatefulWidget {
   const CierreCajaScreen({super.key});
@@ -247,10 +248,10 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: _cargando
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.rojo),
             )
           : LayoutBuilder(
               builder: (context, constraints) {
@@ -265,7 +266,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: esMovil ? 19 : 22,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -273,7 +274,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                         'Periodo: ${formatoFecha.format(_fechaInicio)}  →  ${formatoFecha.format(_fechaFin)}',
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -298,9 +299,9 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
       width: esMovil ? anchoTotal - 28 : 420,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,8 +344,8 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                 style: GoogleFonts.poppins(fontSize: 12.5),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -362,9 +363,9 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
       width: esMovil ? anchoTotal - 28 : 420,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,7 +382,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             'Total real efectivo',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 6),
@@ -406,7 +407,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                 hintText: '0.00',
                 prefixText: 'L. ',
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -423,7 +424,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EAF0),
+              color: AppColors.campo,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -433,7 +434,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                   'Diferencia',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade700,
+                    color: AppColors.gris700,
                   ),
                 ),
                 Text(
@@ -443,7 +444,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
                     fontWeight: FontWeight.w700,
                     color: _diferencia == 0
                         ? const Color(0xFF16A34A)
-                        : const Color(0xFFC62828),
+                        : AppColors.rojo,
                   ),
                 ),
               ],
@@ -454,7 +455,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             'Observaciones',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 6),
@@ -472,7 +473,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
               decoration: InputDecoration(
                 hintText: 'Observaciones del cierre (opcional)',
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -535,7 +536,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             etiqueta,
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade700,
+              color: AppColors.gris700,
             ),
           ),
           Text(
@@ -543,7 +544,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: negrita ? FontWeight.w700 : FontWeight.w500,
-              color: color ?? const Color(0xFF1A1A1A),
+              color: color ?? AppColors.texto,
             ),
           ),
         ],

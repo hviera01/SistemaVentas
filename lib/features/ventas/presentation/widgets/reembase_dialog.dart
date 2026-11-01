@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../productos/data/producto_model.dart';
 import 'buscar_producto_dialog.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ReembaseResultado {
   final ProductoModel productoBase;
@@ -47,7 +48,7 @@ class _ReembaseDialogState extends State<ReembaseDialog> {
       child: Container(
         width: anchoDialog,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +62,7 @@ class _ReembaseDialogState extends State<ReembaseDialog> {
             const SizedBox(height: 4),
             Text(
               'No hay stock suficiente. Elegí de qué producto se va a descontar y en qué proporción.',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -70,16 +71,16 @@ class _ReembaseDialogState extends State<ReembaseDialog> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    Icon(Icons.inventory_2_outlined, size: 18, color: Colors.grey.shade600),
+                    Icon(Icons.inventory_2_outlined, size: 18, color: AppColors.gris600),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         _productoBase?.nombre ?? 'Seleccionar producto base',
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(fontSize: 13, color: _productoBase == null ? Colors.grey.shade500 : const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.poppins(fontSize: 13, color: _productoBase == null ? AppColors.gris500 : AppColors.texto),
                       ),
                     ),
                   ],
@@ -101,7 +102,7 @@ class _ReembaseDialogState extends State<ReembaseDialog> {
             Row(
               children: [
                 const Spacer(),
-                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade700))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar', style: GoogleFonts.poppins(color: AppColors.gris700))),
                 const SizedBox(width: 10),
                 FilledButton(
                   onPressed: _productoBase == null

@@ -12,6 +12,7 @@ import '../../../ventas/data/venta_export_service.dart';
 import '../../../ventas/providers/ventas_provider.dart';
 import '../../../negocio/providers/negocio_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Item consolidado para el detalle único de una factura fusionada: junta
 /// las líneas de producto de todas las facturas que se unieron, marcando de
@@ -315,7 +316,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -330,9 +331,9 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                     color: const Color(0xFFC62828).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.call_merge_outlined,
-                    color: Color(0xFFC62828),
+                    color: AppColors.rojo,
                     size: 20,
                   ),
                 ),
@@ -353,7 +354,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                         '${credito.numeroDocumento} · ${credito.nombreCliente}',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -371,7 +372,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               'Facturas unidas: ${(_numerosFacturasUnidas.isEmpty ? credito.facturasOrigen.map((f) => f.numeroDocumento) : _numerosFacturasUnidas).join(', ')}',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             if (!_cargando && _items.isNotEmpty) ...[
@@ -381,9 +382,9 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
             const SizedBox(height: 14),
             Expanded(
               child: _cargando
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     )
                   : _items.isEmpty
@@ -391,7 +392,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                       child: Text(
                         'No se encontró el detalle de productos de estas facturas',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(color: AppColors.gris500),
                       ),
                     )
                   : _tabla(),
@@ -402,7 +403,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                 'Sin detalle disponible: ${_facturasSinDetalle.join(', ')}',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: Colors.orange.shade800,
+                  color: AppColors.naranja800,
                 ),
               ),
             ],
@@ -416,7 +417,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                         : 'Suma de productos (c/ISV): ${formatearMoneda(totalItems)}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -443,8 +444,8 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                       style: GoogleFonts.poppins(fontSize: 12.5),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      foregroundColor: AppColors.texto,
+                      side: BorderSide(color: AppColors.borde),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
@@ -462,8 +463,8 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
                       style: GoogleFonts.poppins(fontSize: 12.5),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1A1A1A),
-                      side: const BorderSide(color: Color(0xFFB6BCC7)),
+                      foregroundColor: AppColors.texto,
+                      side: BorderSide(color: AppColors.borde),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
@@ -522,7 +523,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: activo ? Colors.white : const Color(0xFF4B4F58),
+                color: activo ? Colors.white : AppColors.texto5,
               ),
             ),
           ),
@@ -533,7 +534,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFECEEF3),
+        color: AppColors.fondoSuave,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -567,8 +568,8 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         },
         children: [
           TableRow(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFB6BCC7))),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borde)),
             ),
             children: [
               _celdaEncabezado('PRODUCTO'),
@@ -614,7 +615,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: Colors.grey.shade600,
+          color: AppColors.gris600,
         ),
       ),
     );
@@ -644,7 +645,7 @@ class _FacturasOrigenDialogState extends ConsumerState<FacturasOrigenDialog> {
               'Factura $numeroFacturaOrigen',
               style: GoogleFonts.poppins(
                 fontSize: 10.5,
-                color: Colors.grey.shade500,
+                color: AppColors.gris500,
               ),
             ),
         ],

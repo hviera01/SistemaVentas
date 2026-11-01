@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'consultar_costo_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// App de consulta rápida sin login -pensada para quedar como acceso
 /// directo en la pantalla de inicio del celular/tablet, mismo criterio que
@@ -22,7 +23,7 @@ class ConsultarCostoKioskScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(
         child: Column(
           children: [

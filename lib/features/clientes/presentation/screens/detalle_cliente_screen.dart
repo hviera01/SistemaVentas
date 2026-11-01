@@ -7,6 +7,7 @@ import '../../data/cliente_historial_model.dart';
 import '../../providers/clientes_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../ventas_credito/data/venta_credito_model.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Historial completo de un cliente en una sola pantalla: seguimiento de
 /// crédito, resumen de compras, compras recientes, qué compra más, historial
@@ -35,21 +36,21 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
   Widget build(BuildContext context) {
     final cliente = widget.cliente;
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.superficie,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF1A1A1A)),
+        iconTheme: IconThemeData(color: AppColors.texto),
         title: Text(
           cliente.nombreCompleto.isEmpty ? 'Detalle de Cliente' : cliente.nombreCompleto,
-          style: GoogleFonts.poppins(color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w700, fontSize: 16),
+          style: GoogleFonts.poppins(color: AppColors.texto, fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: FutureBuilder<ClienteHistorialData>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)));
+            return Center(child: CircularProgressIndicator(color: AppColors.rojo));
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}', style: GoogleFonts.poppins(color: Colors.red)));
@@ -101,9 +102,9 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       child: Column(
@@ -111,8 +112,8 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
         children: [
           Row(
             children: [
-              if (icono != null) ...[Icon(icono, size: 18, color: const Color(0xFFC62828)), const SizedBox(width: 8)],
-              Text(titulo, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+              if (icono != null) ...[Icon(icono, size: 18, color: AppColors.rojo), const SizedBox(width: 8)],
+              Text(titulo, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
             ],
           ),
           const SizedBox(height: 14),
@@ -129,9 +130,9 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade500, letterSpacing: 0.3)),
+          Text(etiqueta.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.gris500, letterSpacing: 0.3)),
           const SizedBox(height: 4),
-          Text(valor, style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A))),
+          Text(valor, style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w800, color: AppColors.texto)),
         ],
       ),
     );
@@ -166,7 +167,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       titulo: 'Seguimiento de crédito',
       icono: Icons.credit_score_outlined,
       child: sinHistorialCredito
-          ? Text('Este cliente no tiene historial de crédito.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500))
+          ? Text('Este cliente no tiene historial de crédito.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris500))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,10 +175,10 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
+                    decoration: BoxDecoration(color: AppColors.ambarSuave, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.ambarBorde)),
                     child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 20, color: Colors.orange.shade800),
+                        Icon(Icons.warning_amber_rounded, size: 20, color: AppColors.naranja800),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -195,7 +196,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                 // desaparecía por completo de esta pantalla (bug reportado
                 // por el dueño con un cliente real, Ronald Camas).
                 if (datos.creditos.isNotEmpty) ...[
-                  Text('Historial de créditos', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                  Text('Historial de créditos', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.gris600)),
                   const SizedBox(height: 8),
                   for (final credito in datos.creditos)
                     Padding(
@@ -203,7 +204,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: credito.vencida ? Colors.orange.shade50 : const Color(0xFFF2F3F7),
+                          color: credito.vencida ? AppColors.ambarSuave : AppColors.fondo,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -215,7 +216,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                                   Text('Factura ${credito.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
                                   Text(
                                     '${_fmtFecha(credito.fechaRegistro)} · Vence: ${_fmtFecha(credito.fechaVencimiento)}',
-                                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                                    style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris600),
                                   ),
                                 ],
                               ),
@@ -227,7 +228,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   credito.liquidada ? formatearMoneda(credito.montoTotal) : formatearMoneda(credito.saldoPendiente),
-                                  style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800, color: credito.vencida ? Colors.orange.shade800 : const Color(0xFF1A1A1A)),
+                                  style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800, color: credito.vencida ? AppColors.naranja800 : AppColors.texto),
                                 ),
                               ],
                             ),
@@ -238,7 +239,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                   const SizedBox(height: 4),
                 ],
                 if (datos.abonosATiempo != null && datos.abonosAtrasados != null) ...[
-                  Text('Puntualidad histórica de pago', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                  Text('Puntualidad histórica de pago', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.gris600)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -310,7 +311,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       titulo: 'Compras recientes',
       icono: Icons.receipt_long_outlined,
       child: datos.ventasRecientes.isEmpty
-          ? Text('Este cliente todavía no tiene compras registradas.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500))
+          ? Text('Este cliente todavía no tiene compras registradas.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris500))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -319,7 +320,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
                       'Algunas ventas de antes de vincular a este cliente se emparejaron solo por nombre y pueden no ser 100% exactas.',
-                      style: GoogleFonts.poppins(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey.shade500),
+                      style: GoogleFonts.poppins(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.gris500),
                     ),
                   ),
                 for (final venta in datos.ventasRecientes)
@@ -327,7 +328,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        SizedBox(width: 80, child: Text(_fmtFecha(venta.fecha), style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
+                        SizedBox(width: 80, child: Text(_fmtFecha(venta.fecha), style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600))),
                         Expanded(
                           child: Text(
                             'Factura ${venta.numeroDocumento}${venta.emparejadaPorNombre ? ' *' : ''}',
@@ -339,7 +340,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                           child: Text(
                             venta.condicion == 'Credito' ? 'Crédito' : venta.metodoPago,
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+                            style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600),
                           ),
                         ),
                         SizedBox(
@@ -361,7 +362,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       titulo: 'Qué compra más',
       icono: Icons.star_outline,
       child: datos.productosTop.isEmpty
-          ? Text('Todavía no hay suficientes compras para saberlo.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500))
+          ? Text('Todavía no hay suficientes compras para saberlo.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris500))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -371,7 +372,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                     child: Row(
                       children: [
                         Expanded(child: Text(producto.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600))),
-                        Text('x${_formatoCantidad(producto.cantidad)}', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600)),
+                        Text('x${_formatoCantidad(producto.cantidad)}', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600)),
                       ],
                     ),
                   ),
@@ -392,7 +393,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       titulo: 'Historial de códigos de color',
       icono: Icons.palette_outlined,
       child: datos.historialColores.isEmpty
-          ? Text('Este cliente no tiene códigos de color registrados.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500))
+          ? Text('Este cliente no tiene códigos de color registrados.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris500))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -402,17 +403,17 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: 80, child: Text(_fmtFecha(item.fecha), style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
+                        SizedBox(width: 80, child: Text(_fmtFecha(item.fecha), style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600))),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(item.nombreProducto, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                              Text(item.codigosColor.join(', '), style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFC62828), fontWeight: FontWeight.w600)),
+                              Text(item.codigosColor.join(', '), style: GoogleFonts.poppins(fontSize: 12, color: AppColors.rojo, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
-                        Text('Fact. ${item.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)),
+                        Text('Fact. ${item.numeroDocumento}', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500)),
                       ],
                     ),
                   ),
@@ -432,18 +433,18 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       titulo: 'Referido por',
       icono: Icons.handshake_outlined,
       child: referidor == null
-          ? Text('Este cliente no tiene un referidor registrado.', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500))
+          ? Text('Este cliente no tiene un referidor registrado.', style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris500))
           : Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(referidor.nombreCompleto, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                      Text(referidor.nombreCompleto, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.texto)),
                       if (referidor.telefono.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child: Text(referidor.telefono, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                          child: Text(referidor.telefono, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
                         ),
                     ],
                   ),
@@ -451,8 +452,8 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
                 if (!referidor.estado)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
-                    child: Text('Inactivo', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                    decoration: BoxDecoration(color: AppColors.gris200Fondo, borderRadius: BorderRadius.circular(8)),
+                    child: Text('Inactivo', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.gris600)),
                   ),
               ],
             ),
@@ -467,7 +468,7 @@ class _DetalleClienteScreenState extends ConsumerState<DetalleClienteScreen> {
       icono: Icons.payments_outlined,
       child: Text(
         datos.metodoPagoPreferido ?? 'Sin datos suficientes',
-        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.texto),
       ),
     );
   }

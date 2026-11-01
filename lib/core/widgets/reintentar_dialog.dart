@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_colors.dart';
 
 /// Ejecuta [accion] y, si falla (por ejemplo por un timeout de red), muestra
 /// un diálogo bien visible en el centro de la pantalla explicando que
@@ -33,7 +34,7 @@ Future<T?> ejecutarConReintento<T>(
           ),
           title: Row(
             children: [
-              const Icon(Icons.wifi_off_outlined, color: Color(0xFFC62828)),
+              Icon(Icons.wifi_off_outlined, color: AppColors.rojo),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

@@ -29,6 +29,7 @@ import '../widgets/escanear_factura_dialog.dart';
 import 'detalle_compra_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const _metodosPago = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 
@@ -503,7 +504,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
         icon: Icon(
           Icons.link,
           size: 18,
-          color: vinculado ? const Color(0xFF16A34A) : Colors.grey.shade400,
+          color: vinculado ? const Color(0xFF16A34A) : AppColors.gris400,
         ),
         onPressed: () => _abrirVincularPendiente(index),
       ),
@@ -557,8 +558,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           icono,
           size: 16,
           color: onPressed == null
-              ? Colors.grey.shade300
-              : Colors.grey.shade700,
+              ? AppColors.gris300
+              : AppColors.gris700,
         ),
       ),
     );
@@ -931,7 +932,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       canRequestFocus: true,
       skipTraversal: true,
       child: Container(
-        color: const Color(0xFFF2F3F7),
+        color: AppColors.fondo,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final esMovil = constraints.maxWidth < 900;
@@ -976,7 +977,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           style: GoogleFonts.poppins(
             fontSize: esMovil ? 19 : 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         OutlinedButton.icon(
@@ -1018,8 +1019,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
 
   ButtonStyle _estiloBotonSecundario() {
     return OutlinedButton.styleFrom(
-      foregroundColor: const Color(0xFF1A1A1A),
-      side: const BorderSide(color: Color(0xFFB6BCC7)),
+      foregroundColor: AppColors.texto,
+      side: BorderSide(color: AppColors.borde),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
@@ -1030,9 +1031,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -1052,10 +1053,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       hintStyle: GoogleFonts.poppins(
         fontSize: 11.5,
-        color: Colors.grey.shade400,
+        color: AppColors.gris400,
       ),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -1100,7 +1101,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EAF0),
+                      color: AppColors.campo,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -1108,7 +1109,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 16,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                         const SizedBox(width: 10),
                         Flexible(
@@ -1117,7 +1118,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: const Color(0xFF1A1A1A),
+                              color: AppColors.texto,
                             ),
                           ),
                         ),
@@ -1139,7 +1140,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                       decoration: _decoracion('Proveedor'),
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: const Color(0xFF1A1A1A),
+                        color: AppColors.texto,
                       ),
                       items: proveedores
                           .map(
@@ -1197,7 +1198,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   decoration: _decoracion('Condición'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Contado', child: Text('Contado')),
@@ -1236,7 +1237,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                         vertical: 14,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8EAF0),
+                        color: AppColors.campo,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1244,7 +1245,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                           Icon(
                             Icons.event_outlined,
                             size: 16,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                           const SizedBox(width: 10),
                           Flexible(
@@ -1253,7 +1254,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: const Color(0xFF1A1A1A),
+                                color: AppColors.texto,
                               ),
                             ),
                           ),
@@ -1273,7 +1274,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     decoration: _decoracion('Método de pago'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                     items: _metodosPago
                         .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -1303,7 +1304,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                       Icon(
@@ -1311,7 +1312,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             ? Icons.expand_less
                             : Icons.expand_more,
                         size: 20,
-                        color: const Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     ],
                   ),
@@ -1330,13 +1331,13 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Divider(color: Colors.grey.shade200),
+                        Divider(color: AppColors.divisor),
                         const SizedBox(height: 14),
                         Text(
                           'Descuento global, ISV y ajuste manual',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1486,9 +1487,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -1550,8 +1551,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF1A1A1A),
-                              side: const BorderSide(color: Color(0xFFB6BCC7)),
+                              foregroundColor: AppColors.texto,
+                              side: BorderSide(color: AppColors.borde),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 13,
@@ -1582,7 +1583,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF0F1B3D),
+                            foregroundColor: AppColors.marino,
                             side: const BorderSide(color: Color(0xFF0F1B3D)),
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             shape: RoundedRectangleBorder(
@@ -1608,7 +1609,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                       tooltip: 'Ver la tabla más grande',
                       onPressed: _expandirTablaProductos,
                       icon: const Icon(Icons.open_in_full, size: 18),
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                     const Spacer(),
                     FilledButton.icon(
@@ -1638,7 +1639,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           const SizedBox(height: 14),
           if (!esMovil) ...[
             _encabezadoTablaCarrito(),
-            Divider(height: 18, color: Colors.grey.shade300),
+            Divider(height: 18, color: AppColors.divisorFuerte),
           ],
           if (carrito.items.isEmpty)
             Center(
@@ -1647,7 +1648,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 child: Text(
                   'Todavía no agregaste productos.\nUsá "Agregar Producto" para buscar del inventario.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(color: AppColors.gris500),
                 ),
               ),
             )
@@ -1658,7 +1659,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             Column(
               children: [
                 for (var i = 0; i < carrito.items.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                  if (i > 0) Divider(height: 1, color: AppColors.divisor),
                   _filaCarritoMovil(
                     i,
                     carrito.items[i],
@@ -1677,7 +1678,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               child: Center(
                 child: Text(
                   'Viendo la tabla ampliada…',
-                  style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                  style: GoogleFonts.poppins(color: AppColors.gris400),
                 ),
               ),
             )
@@ -1686,7 +1687,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               child: ListView.separated(
                 itemCount: carrito.items.length,
                 separatorBuilder: (context, i) =>
-                    Divider(height: 1, color: Colors.grey.shade200),
+                    Divider(height: 1, color: AppColors.divisor),
                 itemBuilder: (context, i) => _filaCarritoTabla(
                   i,
                   carrito.items[i],
@@ -1720,7 +1721,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             height: tamano.height - 16,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.superficie,
               borderRadius: BorderRadius.circular(14),
             ),
             child: StatefulBuilder(
@@ -1753,8 +1754,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1A1A1A),
-                            side: const BorderSide(color: Color(0xFFB6BCC7)),
+                            foregroundColor: AppColors.texto,
+                            side: BorderSide(color: AppColors.borde),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
@@ -1774,14 +1775,14 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                     ),
                     const SizedBox(height: 14),
                     _encabezadoTablaCarrito(),
-                    Divider(height: 18, color: Colors.grey.shade300),
+                    Divider(height: 18, color: AppColors.divisorFuerte),
                     Expanded(
                       child: carrito.items.isEmpty
                           ? Center(
                               child: Text(
                                 'Todavía no agregaste productos.',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade500,
+                                  color: AppColors.gris500,
                                 ),
                               ),
                             )
@@ -1789,7 +1790,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                               itemCount: carrito.items.length,
                               separatorBuilder: (context, i) => Divider(
                                 height: 1,
-                                color: Colors.grey.shade200,
+                                color: AppColors.divisor,
                               ),
                               itemBuilder: (context, i) => _filaCarritoTabla(
                                 i,
@@ -1828,7 +1829,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             style: GoogleFonts.poppins(
               fontSize: 9,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
               letterSpacing: 0.3,
             ),
           ),
@@ -1838,8 +1839,8 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               fontSize: destacado ? 15 : 12.5,
               fontWeight: FontWeight.w800,
               color: destacado
-                  ? const Color(0xFFC62828)
-                  : const Color(0xFF1A1A1A),
+                  ? AppColors.rojo
+                  : AppColors.texto,
             ),
           ),
         ],
@@ -1849,7 +1850,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F3F7),
+        color: AppColors.fondo,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1865,7 +1866,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarCompra,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A1A),
+                backgroundColor: AppColors.botonOscuro,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1899,7 +1900,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
     final estilo = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Row(
       children: [
@@ -2037,10 +2038,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           prefixText: prefijo,
           prefixStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade600,
+            color: AppColors.gris600,
           ),
           filled: true,
-          fillColor: const Color(0xFFE8EAF0),
+          fillColor: AppColors.campo,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
@@ -2082,7 +2083,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       children: [
         Text(
           etiqueta,
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 10, color: AppColors.gris500),
         ),
         const SizedBox(height: 4),
         _campoInlineNumero(
@@ -2140,7 +2141,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   producto?.codigo ?? '-',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
               ),
@@ -2200,7 +2201,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                   textAlign: TextAlign.right,
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
               ),
@@ -2219,10 +2220,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               SizedBox(
                 width: 40,
                 child: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_outline,
                     size: 18,
-                    color: Color(0xFFC62828),
+                    color: AppColors.rojo,
                   ),
                   onPressed: () => _quitarItem(index),
                 ),
@@ -2309,9 +2310,9 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2335,7 +2336,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                       producto?.codigo ?? '-',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                   ],
@@ -2343,10 +2344,10 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
               ),
               _botonVincularPendiente(index, item as ItemCompraModel),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline,
                   size: 18,
-                  color: Color(0xFFC62828),
+                  color: AppColors.rojo,
                 ),
                 onPressed: () => _quitarItem(index),
               ),
@@ -2424,7 +2425,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
                 'Descuento: ${formatearMoneda(_descuentoLineaMonto(item))}',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
               Text(
@@ -2523,7 +2524,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
             child: FilledButton(
               onPressed: _guardando ? null : _confirmarCompra,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A1A),
+                backgroundColor: AppColors.botonOscuro,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -2562,7 +2563,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
             letterSpacing: 0.4,
           ),
         ),
@@ -2571,7 +2572,7 @@ class _RegistrarCompraScreenState extends ConsumerState<RegistrarCompraScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
       ],

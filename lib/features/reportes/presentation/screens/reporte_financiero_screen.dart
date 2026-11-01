@@ -7,6 +7,7 @@ import '../../data/reporte_financiero_export_service.dart';
 import '../../providers/reportes_provider.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/reporte_financiero_secciones.dart';
+import '../../../../core/theme/app_colors.dart';
 
 typedef _SeccionBuilder =
     Widget Function(ReporteFinancieroData data, bool esMovil);
@@ -130,7 +131,7 @@ class _ReporteFinancieroScreenState
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 900;
@@ -142,9 +143,9 @@ class _ReporteFinancieroScreenState
                 child: _encabezado(esMovil),
               ),
               if (_cargando)
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                    child: CircularProgressIndicator(color: AppColors.rojo),
                   ),
                 ),
               if (_error != null)
@@ -174,7 +175,7 @@ class _ReporteFinancieroScreenState
       child: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: AppColors.superficie,
             child: Builder(
               builder: (context) {
                 // Con tantas pestañas (llegó "Clientes" al final) no entran
@@ -190,7 +191,7 @@ class _ReporteFinancieroScreenState
                     IconButton(
                       tooltip: 'Pestaña anterior',
                       icon: const Icon(Icons.chevron_left, size: 20),
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                       onPressed: () {
                         final i = controlador.index;
                         if (i > 0) controlador.animateTo(i - 1);
@@ -199,8 +200,8 @@ class _ReporteFinancieroScreenState
                     Expanded(
                       child: TabBar(
                         isScrollable: true,
-                        labelColor: const Color(0xFFC62828),
-                        unselectedLabelColor: Colors.grey.shade600,
+                        labelColor: AppColors.rojo,
+                        unselectedLabelColor: AppColors.gris600,
                         indicatorColor: const Color(0xFFC62828),
                         labelStyle: GoogleFonts.poppins(
                           fontSize: 13,
@@ -216,7 +217,7 @@ class _ReporteFinancieroScreenState
                     IconButton(
                       tooltip: 'Siguiente pestaña',
                       icon: const Icon(Icons.chevron_right, size: 20),
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                       onPressed: () {
                         final i = controlador.index;
                         if (i < _tabs.length - 1) controlador.animateTo(i + 1);
@@ -255,7 +256,7 @@ class _ReporteFinancieroScreenState
           style: GoogleFonts.poppins(
             fontSize: esMovil ? 19 : 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         _campoFecha(
@@ -275,8 +276,8 @@ class _ReporteFinancieroScreenState
           icon: const Icon(Icons.refresh, size: 18),
           label: Text('Generar', style: GoogleFonts.poppins(fontSize: 13)),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -317,9 +318,9 @@ class _ReporteFinancieroScreenState
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFB6BCC7)),
+          border: Border.all(color: AppColors.borde),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -327,14 +328,14 @@ class _ReporteFinancieroScreenState
             Icon(
               Icons.calendar_today_outlined,
               size: 15,
-              color: Colors.grey.shade500,
+              color: AppColors.gris500,
             ),
             const SizedBox(width: 8),
             Text(
               '$label: ${formato.format(fecha)}',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.texto,
               ),
             ),
           ],

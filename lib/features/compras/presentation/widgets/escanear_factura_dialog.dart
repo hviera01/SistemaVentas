@@ -15,6 +15,7 @@ import '../../../ventas/presentation/widgets/teclado_numerico_dialog.dart';
 import 'buscar_producto_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Un producto de la factura ya emparejado con el inventario, listo para
 /// agregarse al carrito de compra tal cual lo devuelve este diálogo.
@@ -354,11 +355,11 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.superficie,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: AppColors.texto,
         title: Text(
           'Escanear Factura',
           style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700),
@@ -382,7 +383,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             'Tomá una foto por cada página de la factura, en orden. Cuando termines, tocá "Procesar factura".',
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 16),
@@ -407,12 +408,12 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                     Icon(
                       Icons.receipt_long_outlined,
                       size: 56,
-                      color: Colors.grey.shade300,
+                      color: AppColors.gris300,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Todavía no agregaste ninguna foto',
-                      style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                      style: GoogleFonts.poppins(color: AppColors.gris500),
                     ),
                   ],
                 ),
@@ -424,15 +425,15 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: AppColors.rojoSuave5,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: AppColors.rojoBorde),
               ),
               child: Text(
                 _errorProceso!,
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
-                  color: Colors.red.shade700,
+                  color: AppColors.rojo700,
                 ),
               ),
             ),
@@ -450,8 +451,8 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A1A1A),
-                side: const BorderSide(color: Color(0xFFB6BCC7)),
+                foregroundColor: AppColors.texto,
+                side: BorderSide(color: AppColors.borde),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -577,7 +578,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.superficie,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -601,7 +602,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                   ),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A1A),
+                  backgroundColor: AppColors.botonOscuro,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -622,9 +623,9 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,7 +642,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             'Revisá y corregí lo que haga falta.',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
           ),
           const SizedBox(height: 14),
@@ -658,7 +659,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                       'Proveedor${_proveedorIdMatch == null ? ' (no se encontró, elegí uno)' : ''}',
                   labelStyle: GoogleFonts.poppins(fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFFE8EAF0),
+                  fillColor: AppColors.campo,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -699,7 +700,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                 labelText: 'No. Factura',
                 labelStyle: GoogleFonts.poppins(fontSize: 12),
                 filled: true,
-                fillColor: const Color(0xFFE8EAF0),
+                fillColor: AppColors.campo,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -728,7 +729,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EAF0),
+                      color: AppColors.campo,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -736,7 +737,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 15,
-                          color: Colors.grey.shade500,
+                          color: AppColors.gris500,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -757,7 +758,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                     labelText: 'Condición',
                     labelStyle: GoogleFonts.poppins(fontSize: 12),
                     filled: true,
-                    fillColor: const Color(0xFFE8EAF0),
+                    fillColor: AppColors.campo,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -802,7 +803,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8EAF0),
+                  color: AppColors.campo,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -810,7 +811,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                     Icon(
                       Icons.event_outlined,
                       size: 15,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -837,10 +838,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: fila.incluida ? const Color(0xFFC7CBD3) : Colors.grey.shade200,
+          color: fila.incluida ? AppColors.bordeSuave : AppColors.divisor,
         ),
       ),
       child: Opacity(
@@ -875,7 +876,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                           'Código leído: ${fila.original.codigo}',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                     ],
@@ -891,7 +892,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FBF4),
+                  color: AppColors.verdeSuave2,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -934,7 +935,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFCE4E4),
+                  color: AppColors.rojoSuave2,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -942,10 +943,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           size: 14,
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                         const SizedBox(width: 6),
                         Expanded(
@@ -953,7 +954,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                             'Sin coincidencia en el inventario',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: const Color(0xFFC62828),
+                              color: AppColors.rojo,
                             ),
                           ),
                         ),
@@ -966,7 +967,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
                           child: OutlinedButton(
                             onPressed: () => _buscarManual(fila),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFC62828),
+                              foregroundColor: AppColors.rojo,
                               side: const BorderSide(color: Color(0xFFC62828)),
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               minimumSize: const Size(0, 0),
@@ -1060,7 +1061,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
           etiqueta,
           style: GoogleFonts.poppins(
             fontSize: 9.5,
-            color: Colors.grey.shade500,
+            color: AppColors.gris500,
           ),
         ),
         const SizedBox(height: 3),
@@ -1131,10 +1132,10 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             prefixText: prefijo,
             prefixStyle: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: Colors.grey.shade600,
+              color: AppColors.gris600,
             ),
             filled: true,
-            fillColor: const Color(0xFFE8EAF0),
+            fillColor: AppColors.campo,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,

@@ -7,6 +7,7 @@ import '../../data/abono_model.dart';
 import '../../providers/ventas_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import 'editar_abono_dialog.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class HistorialAbonosDialog extends ConsumerWidget {
   final VentaCreditoModel credito;
@@ -80,7 +81,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: 'Más acciones',
       padding: EdgeInsets.zero,
-      icon: Icon(Icons.more_vert, size: 19, color: Colors.grey.shade600),
+      icon: Icon(Icons.more_vert, size: 19, color: AppColors.gris600),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (valor) {
         if (valor == 'editar') _editar(context, ref, abono);
@@ -91,10 +92,10 @@ class HistorialAbonosDialog extends ConsumerWidget {
           value: 'editar',
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.edit_outlined,
                 size: 18,
-                color: Color(0xFF4B4F58),
+                color: AppColors.texto5,
               ),
               const SizedBox(width: 10),
               Text('Editar', style: GoogleFonts.poppins(fontSize: 12.5)),
@@ -105,10 +106,10 @@ class HistorialAbonosDialog extends ConsumerWidget {
           value: 'eliminar',
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.delete_outline,
                 size: 18,
-                color: Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
               const SizedBox(width: 10),
               Text('Eliminar', style: GoogleFonts.poppins(fontSize: 12.5)),
@@ -137,7 +138,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -166,14 +167,14 @@ class HistorialAbonosDialog extends ConsumerWidget {
               credito.nombreCliente,
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 14),
             Expanded(
               child: abonosAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: AppColors.rojo),
                 ),
                 error: (e, st) => Center(
                   child: Text(
@@ -187,7 +188,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                       child: Text(
                         'Todavía no hay abonos registrados',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(color: AppColors.gris500),
                       ),
                     );
                   }
@@ -207,15 +208,15 @@ class HistorialAbonosDialog extends ConsumerWidget {
     final formatoFecha = DateFormat('dd/MM/yyyy HH:mm');
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFECEEF3),
+            decoration: BoxDecoration(
+              color: AppColors.fondoSuave,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -236,7 +237,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
             child: ListView.separated(
               itemCount: abonos.length,
               separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: Colors.grey.shade200),
+                  Divider(height: 1, color: AppColors.divisor),
               itemBuilder: (context, index) {
                 final a = abonos[index];
                 return Padding(
@@ -294,7 +295,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: Colors.grey.shade600,
+          color: AppColors.gris600,
         ),
       ),
     );
@@ -317,7 +318,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
           style: GoogleFonts.poppins(
             fontSize: 12,
             fontWeight: peso,
-            color: color ?? const Color(0xFF1A1A1A),
+            color: color ?? AppColors.texto,
           ),
         ),
       ),
@@ -338,9 +339,9 @@ class HistorialAbonosDialog extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FB),
+            color: AppColors.fondoSuave2,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFC7CBD3)),
+            border: Border.all(color: AppColors.bordeSuave),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,7 +361,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                     a.fecha != null ? formatoFecha.format(a.fecha!) : '-',
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                   _menuAcciones(context, ref, a),
@@ -371,7 +372,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                 'Saldo anterior: ${formatearMoneda(a.saldoAnterior)} → Saldo pendiente: ${formatearMoneda(a.saldoPendiente)}',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade700,
+                  color: AppColors.gris700,
                 ),
               ),
               if (a.interes > 0) ...[
@@ -380,7 +381,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                   'Interés aplicado: ${formatearMoneda(a.interes)}',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.grey.shade700,
+                    color: AppColors.gris700,
                   ),
                 ),
               ],
@@ -391,7 +392,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                     a.metodoPago,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                   if (a.numeroRecibo.isNotEmpty)
@@ -399,7 +400,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                       ' · Recibo: ${a.numeroRecibo}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                   if (a.usuario.isNotEmpty)
@@ -407,7 +408,7 @@ class HistorialAbonosDialog extends ConsumerWidget {
                       ' · ${a.usuario}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                 ],

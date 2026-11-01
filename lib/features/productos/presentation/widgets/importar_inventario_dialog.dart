@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/producto_import_service.dart';
 import '../../data/producto_repository.dart';
 import '../../providers/productos_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ImportarInventarioDialog extends ConsumerStatefulWidget {
   const ImportarInventarioDialog({super.key});
@@ -84,7 +85,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
       child: Container(
         width: anchoDialog,
         constraints: BoxConstraints(maxHeight: tamano.height - 80),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -96,11 +97,11 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(color: const Color(0xFFC62828).withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.upload_file_outlined, color: Color(0xFFC62828)),
+                    child: Icon(Icons.upload_file_outlined, color: AppColors.rojo),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Importar Inventario desde Excel', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                    child: Text('Importar Inventario desde Excel', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: AppColors.texto)),
                   ),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ],
@@ -128,7 +129,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
       children: [
         Text(
           'El archivo debe tener una fila de encabezado con columnas: Código, Nombre, Descripción, Categoría, Stock (o Existencia), Precio Venta, Precio Compra y Estado. El código y la categoría emparejan con lo que ya existe; si una categoría no existe, se crea sola.',
-          style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.gris600),
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
@@ -137,18 +138,18 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.description_outlined, size: 18),
           label: Text(_cargando ? 'Leyendo...' : (_nombreArchivo == null ? 'Elegir archivo .xlsx' : 'Elegir otro archivo'), style: GoogleFonts.poppins(fontSize: 13)),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: OutlinedButton.styleFrom(foregroundColor: AppColors.texto, side: BorderSide(color: AppColors.borde), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
         if (_nombreArchivo != null && !_cargando) ...[
           const SizedBox(height: 8),
-          Text(_nombreArchivo!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+          Text(_nombreArchivo!, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris500)),
         ],
         if (_error != null) ...[
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFFCE9E9), borderRadius: BorderRadius.circular(10)),
-            child: Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFFC62828))),
+            decoration: BoxDecoration(color: AppColors.rojoSuave3, borderRadius: BorderRadius.circular(10)),
+            child: Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.rojo)),
           ),
         ],
         if (_filas != null) ...[
@@ -180,14 +181,14 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
     final filas = _filas!;
     return Container(
       constraints: const BoxConstraints(maxHeight: 320),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFC7CBD3))),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.bordeSuave)),
       child: SingleChildScrollView(
         child: Column(
           children: filas.map((f) {
-            final color = f.valido ? const Color(0xFF1A1A1A) : const Color(0xFFC62828);
+            final color = f.valido ? AppColors.texto : AppColors.rojo;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divisor))),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -205,7 +206,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
                           f.valido
                               ? 'Código: ${f.codigo.isEmpty ? '(auto)' : f.codigo} · Categoría: ${f.categoria} · Stock: ${f.stock} · Venta: ${f.precioVenta} · Compra: ${f.precioCompra}'
                               : f.error!,
-                          style: GoogleFonts.poppins(fontSize: 11.5, color: f.valido ? Colors.grey.shade600 : const Color(0xFFC62828)),
+                          style: GoogleFonts.poppins(fontSize: 11.5, color: f.valido ? AppColors.gris600 : AppColors.rojo),
                         ),
                       ],
                     ),
@@ -245,7 +246,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+          Text(etiqueta, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.gris700)),
           Text('$valor', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700)),
         ],
       ),
@@ -268,7 +269,7 @@ class _ImportarInventarioDialogState extends ConsumerState<ImportarInventarioDia
         Expanded(
           child: OutlinedButton(
             onPressed: _importando ? null : () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1A1A1A), side: const BorderSide(color: Color(0xFFB6BCC7)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.texto, side: BorderSide(color: AppColors.borde), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: Text('Cancelar', style: GoogleFonts.poppins(fontSize: 13.5)),
           ),
         ),

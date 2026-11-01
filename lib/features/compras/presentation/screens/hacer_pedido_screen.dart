@@ -11,6 +11,7 @@ import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Pedido de compra: agregás productos y la cantidad que necesitás, y se
 /// genera un PDF listo para enviarle al proveedor. No se guarda nada en
@@ -141,7 +142,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       labelText: label,
       labelStyle: GoogleFonts.poppins(fontSize: 12.5),
       filled: true,
-      fillColor: const Color(0xFFE8EAF0),
+      fillColor: AppColors.campo,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -156,9 +157,9 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -174,7 +175,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 900;
@@ -212,7 +213,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                       ),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A1A1A),
+                      backgroundColor: AppColors.botonOscuro,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -239,7 +240,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           style: GoogleFonts.poppins(
             fontSize: esMovil ? 19 : 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
         ),
         OutlinedButton.icon(
@@ -247,8 +248,8 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           icon: const Icon(Icons.delete_sweep_outlined, size: 18),
           label: Text('Limpiar', style: GoogleFonts.poppins(fontSize: 13)),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFFB6BCC7)),
+            foregroundColor: AppColors.texto,
+            side: BorderSide(color: AppColors.borde),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -277,7 +278,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                   decoration: _decoracion('Proveedor (opcional)'),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.texto,
                   ),
                   items: [
                     DropdownMenuItem<ProveedorModel?>(
@@ -381,19 +382,19 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                 child: Text(
                   'Todavía no agregaste productos.\nUsá "Agregar Producto" para buscar del inventario.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(color: AppColors.gris500),
                 ),
               ),
             )
           else ...[
             if (!esMovil) ...[
               _encabezadoTabla(),
-              Divider(height: 18, color: Colors.grey.shade300),
+              Divider(height: 18, color: AppColors.divisorFuerte),
             ],
             for (var i = 0; i < _items.length; i++) ...[
               esMovil ? _filaMovil(i, _items[i]) : _filaTabla(i, _items[i]),
               if (i != _items.length - 1)
-                Divider(height: 1, color: Colors.grey.shade200),
+                Divider(height: 1, color: AppColors.divisor),
             ],
           ],
         ],
@@ -405,7 +406,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
     final estilo = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Row(
       children: [
@@ -456,7 +457,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
         style: GoogleFonts.poppins(fontSize: 13),
         decoration: InputDecoration(
           filled: true,
-          fillColor: const Color(0xFFE8EAF0),
+          fillColor: AppColors.campo,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
@@ -485,7 +486,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
               item.codigo.isEmpty ? '-' : item.codigo,
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
           ),
@@ -507,7 +508,7 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
           ),
@@ -521,10 +522,10 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
           SizedBox(
             width: 40,
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
                 size: 18,
-                color: Color(0xFFC62828),
+                color: AppColors.rojo,
               ),
               onPressed: () => _quitarItem(index),
             ),
@@ -539,9 +540,9 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: AppColors.fondoSuave2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC7CBD3)),
+        border: Border.all(color: AppColors.bordeSuave),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,17 +564,17 @@ class _HacerPedidoScreenState extends ConsumerState<HacerPedidoScreen> {
                       '${item.codigo.isEmpty ? '-' : item.codigo} · Stock: ${_formatoCantidad(item.stockActual)}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: AppColors.gris500,
                       ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline,
                   size: 18,
-                  color: Color(0xFFC62828),
+                  color: AppColors.rojo,
                 ),
                 onPressed: () => _quitarItem(index),
               ),

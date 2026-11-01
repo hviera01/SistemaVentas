@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Lo que arma el diálogo -pedido explícito del dueño: "un modal de cuando
 /// es envío... datos de envío y la opción de si imprimir guía de envío"-.
@@ -90,14 +91,14 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
       child: Container(
         width: anchoDialog,
         padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.local_shipping_outlined, color: Color(0xFF1565C0)),
+                Icon(Icons.local_shipping_outlined, color: AppColors.azul),
                 const SizedBox(width: 10),
                 Expanded(child: Text('Datos de envío', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700))),
                 IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
@@ -106,7 +107,7 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
             const SizedBox(height: 4),
             Text(
               'Se prellenan del cliente si tenía -podés cambiarlos si el envío es para otra persona/dirección.',
-              style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600),
             ),
             const SizedBox(height: 16),
             _campo('Nombre de quien recibe', _ctrlNombre, icono: Icons.person_outline, mayusculas: true),
@@ -115,7 +116,7 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
             const SizedBox(height: 10),
             _campo('Teléfono', _ctrlTelefono, icono: Icons.phone_outlined, teclado: TextInputType.phone),
             const SizedBox(height: 14),
-            Text('Formato de la guía', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+            Text('Formato de la guía', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600)),
             const SizedBox(height: 6),
             Row(
               children: [
@@ -163,15 +164,15 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: activo ? const Color(0xFF1565C0) : const Color(0xFFF2F3F7),
+          color: activo ? const Color(0xFF1565C0) : AppColors.fondo,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: activo ? const Color(0xFF1565C0) : const Color(0xFFB6BCC7)),
+          border: Border.all(color: activo ? AppColors.azulBorde : AppColors.borde),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: activo ? Colors.white : const Color(0xFF1A1A1A))),
-            Text(subtitulo, style: GoogleFonts.poppins(fontSize: 10.5, color: activo ? Colors.white.withValues(alpha: 0.85) : Colors.grey.shade600)),
+            Text(titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: activo ? Colors.white : AppColors.texto)),
+            Text(subtitulo, style: GoogleFonts.poppins(fontSize: 10.5, color: activo ? Colors.white.withValues(alpha: 0.85) : AppColors.gris600)),
           ],
         ),
       ),
@@ -192,7 +193,7 @@ class _DatosEnvioDialogState extends State<DatosEnvioDialog> {
         labelStyle: GoogleFonts.poppins(fontSize: 12.5),
         prefixIcon: Icon(icono, size: 19),
         filled: true,
-        fillColor: const Color(0xFFF2F3F7),
+        fillColor: AppColors.fondo,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),

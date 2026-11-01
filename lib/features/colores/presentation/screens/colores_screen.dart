@@ -13,6 +13,7 @@ import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../formulas/presentation/screens/buscar_formula_screen.dart';
 import '../../../formulas/presentation/widgets/panel_flotante_consultar_costo.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -127,13 +128,13 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
       height: 42,
       child: Row(
         children: [
-          Icon(icono, size: 18, color: const Color(0xFF4B4F58)),
+          Icon(icono, size: 18, color: AppColors.texto5),
           const SizedBox(width: 10),
           Text(
             texto,
             style: GoogleFonts.poppins(
               fontSize: 12.5,
-              color: const Color(0xFF25272B),
+              color: AppColors.texto2,
             ),
           ),
         ],
@@ -155,7 +156,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
     final vista = ref.watch(coloresVistaProvider);
 
     return Container(
-      color: const Color(0xFFF2F3F7),
+      color: AppColors.fondo,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final esMovil = constraints.maxWidth < 720;
@@ -169,7 +170,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: esMovil ? 19 : 22,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -195,8 +196,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -214,8 +215,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -233,8 +234,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -257,8 +258,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -276,8 +277,8 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                           style: GoogleFonts.poppins(fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1A1A1A),
-                          side: const BorderSide(color: Color(0xFFB6BCC7)),
+                          foregroundColor: AppColors.texto,
+                          side: BorderSide(color: AppColors.borde),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 14,
@@ -333,10 +334,10 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 60),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.superficie,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFFAEB4C0),
+                                color: AppColors.bordeFuerte,
                                 width: 1.3,
                               ),
                               boxShadow: [
@@ -354,7 +355,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                                   Icon(
                                     Icons.palette_outlined,
                                     size: 56,
-                                    color: Colors.grey.shade300,
+                                    color: AppColors.gris300,
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
@@ -363,7 +364,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                                         : 'No hay colores encontrados',
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.poppins(
-                                      color: Colors.grey.shade500,
+                                      color: AppColors.gris500,
                                     ),
                                   ),
                                 ],
@@ -377,10 +378,10 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                     return [
                       DecoratedSliver(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.superficie,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFAEB4C0),
+                            color: AppColors.bordeFuerte,
                             width: 1.3,
                           ),
                           boxShadow: [
@@ -398,12 +399,12 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                     ];
                   },
                   loading: () => [
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 80),
                         child: Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         ),
                       ),
@@ -437,9 +438,9 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -447,7 +448,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
           isExpanded: true,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.texto,
           ),
           items: const [
             DropdownMenuItem(
@@ -470,13 +471,13 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.superficie,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 20, color: Colors.grey.shade400),
+          Icon(Icons.search, size: 20, color: AppColors.gris400),
           const SizedBox(width: 8),
           Expanded(
             child: CampoTecladoCompacto(
@@ -494,7 +495,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                   hintText: 'Buscar por código, cliente o descripción...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 12.5,
-                    color: Colors.grey.shade400,
+                    color: AppColors.gris400,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -532,11 +533,11 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFECEEF3),
+              color: AppColors.fondoSuave,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              border: Border(bottom: BorderSide(color: AppColors.divisorFuerte)),
             ),
             child: Row(
               children: [
@@ -561,15 +562,15 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
             ].where((s) => s.isNotEmpty).join(' · ');
             return Column(
               children: [
-                if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
+                if (index > 0) Divider(height: 1, color: AppColors.divisor),
                 InkWell(
                   onTap: () => setState(
                     () => _filaSeleccionada = seleccionada ? null : color.id,
                   ),
                   child: Container(
                     color: seleccionada
-                        ? const Color(0xFFFBEAEA)
-                        : Colors.white,
+                        ? AppColors.rojoSuave
+                        : AppColors.superficie,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -632,7 +633,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF666A72),
+          color: AppColors.texto6,
           letterSpacing: 0.35,
         ),
       ),
@@ -656,7 +657,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: peso,
-            color: gris ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
+            color: gris ? AppColors.gris600 : AppColors.texto,
           ),
         ),
       ),
@@ -671,11 +672,11 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+          color: AppColors.fondoSuave3,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: const Color(0xFFDFE1E6)),
+          border: Border.all(color: AppColors.bordeTenue),
         ),
-        child: const Icon(Icons.more_vert, size: 19, color: Color(0xFF454950)),
+        child: Icon(Icons.more_vert, size: 19, color: AppColors.texto4),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
@@ -712,12 +713,12 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: seleccionada ? const Color(0xFFFBEAEA) : Colors.white,
+          color: seleccionada ? AppColors.rojoSuave : AppColors.superficie,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: seleccionada
                 ? const Color(0xFFC62828)
-                : const Color(0xFFC7CBD3),
+                : AppColors.bordeSuave,
           ),
         ),
         child: Column(
@@ -732,7 +733,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1A1A),
+                      color: AppColors.texto,
                     ),
                   ),
                 ),
@@ -745,7 +746,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                 color.descripcion,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppColors.gris600,
                 ),
               ),
             ],
@@ -770,7 +771,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
                 color.observaciones,
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
-                  color: Colors.grey.shade500,
+                  color: AppColors.gris500,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -785,14 +786,14 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF0),
+        color: AppColors.campo,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         '$label: $valor',
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          color: const Color(0xFF3F434A),
+          color: AppColors.texto3,
         ),
       ),
     );

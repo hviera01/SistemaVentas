@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/negocio_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const _tamanoMaximoBytes = 700 * 1024;
 
@@ -61,15 +62,15 @@ class _NegocioLogoPickerState extends ConsumerState<NegocioLogoPicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+        Text(widget.titulo, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.texto)),
         const SizedBox(height: 8),
         Container(
           width: 128,
           height: 128,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EAF0),
+            color: AppColors.campo,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFB6BCC7)),
+            border: Border.all(color: AppColors.borde),
           ),
           clipBehavior: Clip.antiAlias,
           child: _construirVistaPrevia(),
@@ -80,12 +81,12 @@ class _NegocioLogoPickerState extends ConsumerState<NegocioLogoPicker> {
           child: OutlinedButton.icon(
             onPressed: _subiendo ? null : _subir,
             icon: _subiendo
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC62828)))
+                ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.rojo))
                 : const Icon(Icons.upload_outlined, size: 16),
             label: Text(_subiendo ? 'Guardando...' : 'Subir', style: GoogleFonts.poppins(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1A1A1A),
-              side: const BorderSide(color: Color(0xFFB6BCC7)),
+              foregroundColor: AppColors.texto,
+              side: BorderSide(color: AppColors.borde),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -97,17 +98,17 @@ class _NegocioLogoPickerState extends ConsumerState<NegocioLogoPicker> {
 
   Widget _construirVistaPrevia() {
     if (widget.base64Actual.isEmpty) {
-      return Icon(Icons.image_outlined, size: 34, color: Colors.grey.shade400);
+      return Icon(Icons.image_outlined, size: 34, color: AppColors.gris400);
     }
     try {
       final bytes = base64Decode(widget.base64Actual);
       return Image.memory(
         bytes,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image_outlined, size: 30, color: Colors.grey.shade400),
+        errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image_outlined, size: 30, color: AppColors.gris400),
       );
     } catch (_) {
-      return Icon(Icons.broken_image_outlined, size: 30, color: Colors.grey.shade400);
+      return Icon(Icons.broken_image_outlined, size: 30, color: AppColors.gris400);
     }
   }
 }

@@ -9,6 +9,7 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../negocio/providers/negocio_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Una fila del estado de cuenta: o una factura nueva (aumenta la deuda) o
 /// el total abonado en un día (sin importar si el pago se repartió entre
@@ -273,7 +274,7 @@ class _EstadoCuentaProveedorDialogState
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 14 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -290,14 +291,14 @@ class _EstadoCuentaProveedorDialogState
                         style: GoogleFonts.poppins(
                           fontSize: esMovil ? 16 : 18,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.texto,
                         ),
                       ),
                       Text(
                         widget.nombreProveedor,
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
-                          color: Colors.grey.shade600,
+                          color: AppColors.gris600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -307,10 +308,10 @@ class _EstadoCuentaProveedorDialogState
                 if (!_cargando && _error == null && _movimientos.isNotEmpty)
                   IconButton(
                     tooltip: 'Descargar PDF',
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.picture_as_pdf_outlined,
                       size: 22,
-                      color: Color(0xFFC62828),
+                      color: AppColors.rojo,
                     ),
                     onPressed: _exportarPdf,
                   ),
@@ -325,9 +326,9 @@ class _EstadoCuentaProveedorDialogState
             const SizedBox(height: 14),
             Expanded(
               child: _cargando
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                     )
                   : _error != null
@@ -341,7 +342,7 @@ class _EstadoCuentaProveedorDialogState
                   ? Center(
                       child: Text(
                         'No hay movimientos para este proveedor',
-                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(color: AppColors.gris500),
                       ),
                     )
                   : (esMovil ? _listaMovil() : _tabla()),
@@ -436,10 +437,10 @@ class _EstadoCuentaProveedorDialogState
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.group_outlined,
               size: 13,
-              color: Color(0xFF2B6CB0),
+              color: AppColors.azul2,
             ),
             const SizedBox(width: 4),
             Text(
@@ -447,7 +448,7 @@ class _EstadoCuentaProveedorDialogState
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF2B6CB0),
+                color: AppColors.azul2,
               ),
             ),
           ],
@@ -459,7 +460,7 @@ class _EstadoCuentaProveedorDialogState
   Widget _celdaDetalle(_MovimientoCuenta m) {
     final texto = Text(
       m.subtitulo,
-      style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+      style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600),
       overflow: TextOverflow.ellipsis,
       maxLines: 2,
     );
@@ -471,15 +472,15 @@ class _EstadoCuentaProveedorDialogState
     final formatoFecha = DateFormat('dd/MM/yyyy');
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFB6BCC7)),
+        border: Border.all(color: AppColors.borde),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFECEEF3),
+            decoration: BoxDecoration(
+              color: AppColors.fondoSuave,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -491,7 +492,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -502,7 +503,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -513,7 +514,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -525,7 +526,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -537,7 +538,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -549,7 +550,7 @@ class _EstadoCuentaProveedorDialogState
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -560,7 +561,7 @@ class _EstadoCuentaProveedorDialogState
             child: ListView.separated(
               itemCount: _movimientos.length,
               separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: Colors.grey.shade200),
+                  Divider(height: 1, color: AppColors.divisor),
               itemBuilder: (context, index) {
                 final m = _movimientos[index];
                 final saldo = _saldosCorrientes[index];
@@ -607,7 +608,7 @@ class _EstadoCuentaProveedorDialogState
                           style: GoogleFonts.poppins(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFFC62828),
+                            color: AppColors.rojo,
                           ),
                         ),
                       ),
@@ -656,9 +657,9 @@ class _EstadoCuentaProveedorDialogState
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FB),
+            color: AppColors.fondoSuave2,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFC7CBD3)),
+            border: Border.all(color: AppColors.bordeSuave),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,7 +679,7 @@ class _EstadoCuentaProveedorDialogState
                     formatoFecha.format(m.fecha),
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
-                      color: Colors.grey.shade500,
+                      color: AppColors.gris500,
                     ),
                   ),
                 ],
@@ -696,7 +697,7 @@ class _EstadoCuentaProveedorDialogState
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: m.esCargo
-                          ? const Color(0xFFC62828)
+                          ? AppColors.rojo
                           : const Color(0xFF16A34A),
                     ),
                   ),
@@ -709,7 +710,7 @@ class _EstadoCuentaProveedorDialogState
                 'Saldo después de este movimiento: ${formatearMoneda(saldo)}',
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
-                  color: Colors.grey.shade700,
+                  color: AppColors.gris700,
                   fontWeight: FontWeight.w600,
                 ),
               ),

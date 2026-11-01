@@ -9,6 +9,7 @@ import '../../../../core/utils/webauthn.dart';
 import '../../../../core/widgets/face_id_icon.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
 
 // Solo el navegador de un celular/tablet (no la PC, no la app de
 // escritorio): ahí conviene el teclado numérico porque el código de acceso
@@ -173,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             height: 108,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: AppColors.superficie,
                               border: Border.all(color: const Color(0xFF0F1B3D), width: 3),
                               boxShadow: [
                                 BoxShadow(
@@ -199,7 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F1B3D),
+                              color: AppColors.marino,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -207,7 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             'Ingresá con tu código de acceso',
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade600,
+                              color: AppColors.gris600,
                             ),
                           ),
                           const SizedBox(height: 34),
@@ -223,7 +224,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               labelStyle: GoogleFonts.poppins(fontSize: 13),
                               prefixIcon: const Icon(Icons.badge_outlined, size: 20),
                               filled: true,
-                              fillColor: const Color(0xFFE8EAF0),
+                              fillColor: AppColors.campo,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,
@@ -249,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 onPressed: () => setState(() => _ocultarClave = !_ocultarClave),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFE8EAF0),
+                              fillColor: AppColors.campo,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,
@@ -262,18 +263,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: AppColors.rojoSuave5,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.red.shade200),
+                                border: Border.all(color: AppColors.rojoBorde),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
+                                  Icon(Icons.error_outline, color: AppColors.rojo700, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       authState.error!,
-                                      style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 12),
+                                      style: GoogleFonts.poppins(color: AppColors.rojo700, fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -309,7 +310,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: Column(
                                 children: [
                                   Material(
-                                    color: const Color(0xFFE8EAF0),
+                                    color: AppColors.campo,
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
@@ -317,22 +318,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(14),
                                         child: _verificandoFaceId
-                                            ? const SizedBox(
+                                            ? SizedBox(
                                                 width: 26,
                                                 height: 26,
-                                                child: CircularProgressIndicator(strokeWidth: 2.4, color: Color(0xFF0F1B3D)),
+                                                child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.marino),
                                               )
-                                            : const FaceIdIcon(size: 26, color: Color(0xFF0F1B3D)),
+                                            : FaceIdIcon(size: 26, color: AppColors.marino),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text('Entrar con Face ID', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                                  Text('Entrar con Face ID', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600)),
                                   TextButton(
                                     onPressed: _olvidarFaceId,
                                     child: Text(
                                       '¿No sos vos? Olvidar Face ID',
-                                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                                      style: GoogleFonts.poppins(fontSize: 11, color: AppColors.gris500),
                                     ),
                                   ),
                                 ],
@@ -344,7 +345,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             'SUPERCOLOR · La decisión correcta',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                               letterSpacing: 0.6,
                             ),
                           ),

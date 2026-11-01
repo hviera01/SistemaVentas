@@ -7,6 +7,7 @@ import '../../../clientes/presentation/widgets/cliente_form_dialog.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class BuscarClienteDialog extends ConsumerStatefulWidget {
   const BuscarClienteDialog({super.key});
@@ -85,7 +86,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.superficie,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -113,7 +114,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
               'Escribí y presioná Enter para buscar por DNI o nombre.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: AppColors.gris600,
               ),
             ),
             const SizedBox(height: 12),
@@ -124,16 +125,16 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                     height: 46,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EAF0),
+                      color: AppColors.campo,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFB6BCC7)),
+                      border: Border.all(color: AppColors.borde),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.search,
                           size: 20,
-                          color: Colors.grey.shade400,
+                          color: AppColors.gris400,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -153,7 +154,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                                 hintText: 'Buscar por DNI o nombre...',
                                 hintStyle: GoogleFonts.poppins(
                                   fontSize: 12.5,
-                                  color: Colors.grey.shade400,
+                                  color: AppColors.gris400,
                                 ),
                                 border: InputBorder.none,
                                 isDense: true,
@@ -172,7 +173,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   onPressed: _buscar,
                   icon: const Icon(Icons.arrow_forward),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFE8EAF0),
+                    backgroundColor: AppColors.campo,
                     padding: const EdgeInsets.all(12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -192,7 +193,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFC62828),
+                  foregroundColor: AppColors.rojo,
                   side: const BorderSide(color: Color(0xFFC62828)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -217,13 +218,13 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                           Icon(
                             Icons.search,
                             size: 48,
-                            color: Colors.grey.shade300,
+                            color: AppColors.gris300,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'Escribí algo y presioná Enter para buscar',
                             style: GoogleFonts.poppins(
-                              color: Colors.grey.shade500,
+                              color: AppColors.gris500,
                             ),
                           ),
                         ],
@@ -246,14 +247,14 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                     return Center(
                       child: Text(
                         'No se encontraron clientes',
-                        style: GoogleFonts.poppins(color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(color: AppColors.gris500),
                       ),
                     );
                   }
                   return ListView.separated(
                     itemCount: lista.length,
                     separatorBuilder: (context, i) =>
-                        Divider(height: 1, color: Colors.grey.shade200),
+                        Divider(height: 1, color: AppColors.divisor),
                     itemBuilder: (context, i) {
                       final c = lista[i];
                       return InkWell(
@@ -275,7 +276,7 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                                   'DNI: ${c.dni}',
                                   style: GoogleFonts.poppins(
                                     fontSize: 11.5,
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.gris500,
                                   ),
                                 ),
                             ],
@@ -285,8 +286,8 @@ class _BuscarClienteDialogState extends ConsumerState<BuscarClienteDialog> {
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: AppColors.rojo),
                 ),
                 error: (e, st) => Center(
                   child: Text(

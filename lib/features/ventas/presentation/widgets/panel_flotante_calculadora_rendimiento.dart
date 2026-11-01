@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/widgets/route_panel_flotante.dart';
 import '../../data/rendimiento_pintura_data.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Calculadora de cuánta pintura hace falta según el área a pintar, como
 /// panel flotante minimizable -pedido explícito del dueño: "pongamos esa
@@ -206,13 +207,13 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: ancho, maxHeight: tamano.height - 48),
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: AppColors.fondo, borderRadius: BorderRadius.circular(20)),
         clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              color: Colors.white,
+              color: AppColors.superficie,
               padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
               child: Row(
                 children: [
@@ -230,7 +231,7 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
                   children: [
                     Text(
                       'Estimado según el área y el tipo de producto -pedí confirmación para proyectos grandes.',
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
                     ),
                     const SizedBox(height: 14),
                     Wrap(
@@ -262,16 +263,16 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
                     else
                       _campo('Área (m²)', _ctrlM2),
                     const SizedBox(height: 10),
-                    Text('Tipo de producto', style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+                    Text('Tipo de producto', style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600)),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB6BCC7))),
+                      decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.borde)),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<TipoProductoPintura>(
                           value: _tipo,
                           isExpanded: true,
-                          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+                          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.texto),
                           items: [
                             for (final t in TipoProductoPintura.values)
                               DropdownMenuItem(value: t, child: Text(etiquetaTipoProductoPintura(t))),
@@ -295,7 +296,7 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
-                      Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFFC62828))),
+                      Text(_error!, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.rojo)),
                     ],
                     if (_resultado != null) ...[const SizedBox(height: 14), _resumenResultado(_resultado!)],
                   ],
@@ -315,8 +316,8 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(color: activo ? const Color(0xFF1565C0) : Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: activo ? const Color(0xFF1565C0) : const Color(0xFFB6BCC7))),
-        child: Text(texto, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : const Color(0xFF666A72))),
+        decoration: BoxDecoration(color: activo ? const Color(0xFF1565C0) : AppColors.superficie, borderRadius: BorderRadius.circular(8), border: Border.all(color: activo ? AppColors.azulBorde : AppColors.borde)),
+        child: Text(texto, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: activo ? Colors.white : AppColors.texto6)),
       ),
     );
   }
@@ -325,7 +326,7 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(etiqueta, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+        Text(etiqueta, style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.gris600)),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
@@ -333,9 +334,9 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
           style: GoogleFonts.poppins(fontSize: 13),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFB6BCC7))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFB6BCC7))),
+            fillColor: AppColors.superficie,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.borde)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.borde)),
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
@@ -352,7 +353,7 @@ class _ContenidoCalculadoraState extends State<_ContenidoCalculadora> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFFE8F5EC), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.verdeSuave3, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

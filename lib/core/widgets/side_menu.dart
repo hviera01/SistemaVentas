@@ -7,6 +7,7 @@ import '../services/actualizacion_service.dart';
 import '../utils/abrir_submodulo.dart';
 import '../widgets/actualizacion_dialog.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../theme/app_colors.dart';
 
 class SideMenu extends ConsumerWidget {
   final VoidCallback onCerrar;
@@ -47,7 +48,7 @@ class SideMenu extends ConsumerWidget {
     }).toList();
 
     return Material(
-      color: Colors.white,
+      color: AppColors.superficie,
       elevation: 20,
       child: SizedBox(
         width: 300,
@@ -140,13 +141,13 @@ class SideMenu extends ConsumerWidget {
                             leading: Icon(
                               sub.icono,
                               size: 18,
-                              color: Colors.grey.shade600,
+                              color: AppColors.gris600,
                             ),
                             title: Text(
                               sub.titulo,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: Colors.grey.shade800,
+                                color: AppColors.gris800,
                               ),
                             ),
                             onTap: () {
@@ -175,7 +176,7 @@ class SideMenu extends ConsumerWidget {
                             : Icons.system_update_alt,
                         color: hayActualizacion
                             ? colorVerde
-                            : Colors.grey.shade600,
+                            : AppColors.gris600,
                         size: 20,
                       ),
                       title: Text(
@@ -189,7 +190,7 @@ class SideMenu extends ConsumerWidget {
                               : FontWeight.w400,
                           color: hayActualizacion
                               ? colorVerde
-                              : Colors.grey.shade700,
+                              : AppColors.gris700,
                         ),
                       ),
                       subtitle: hayActualizacion

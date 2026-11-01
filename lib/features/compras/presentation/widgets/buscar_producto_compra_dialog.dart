@@ -11,6 +11,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/imagen_zoom_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Buscador de productos para Compras: a diferencia del de Ventas no maneja
 /// niveles de precio de venta, sino el costo de compra registrado en el
@@ -191,7 +192,7 @@ class _BuscarProductoCompraDialogState
     final esMovil = tamano.width < 720;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: AppColors.fondo,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(esMovil ? 14 : 24),
@@ -223,7 +224,7 @@ class _BuscarProductoCompraDialogState
                   'Enter en el buscador busca · doble clic o Enter en la lista agrega el producto resaltado',
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 11.5 : 12.5,
-                    color: Colors.grey.shade500,
+                    color: AppColors.gris500,
                   ),
                 ),
               ),
@@ -239,16 +240,16 @@ class _BuscarProductoCompraDialogState
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.superficie,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFB6BCC7)),
+                        border: Border.all(color: AppColors.borde),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.search,
                             size: 20,
-                            color: Colors.grey.shade400,
+                            color: AppColors.gris400,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -269,7 +270,7 @@ class _BuscarProductoCompraDialogState
                                       'Escribí y presioná Enter para buscar...',
                                   hintStyle: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.grey.shade400,
+                                    color: AppColors.gris400,
                                   ),
                                   border: InputBorder.none,
                                   isDense: true,
@@ -295,7 +296,7 @@ class _BuscarProductoCompraDialogState
                       style: GoogleFonts.poppins(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
+                      foregroundColor: AppColors.rojo,
                       side: const BorderSide(color: Color(0xFFC62828)),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -314,9 +315,9 @@ class _BuscarProductoCompraDialogState
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.superficie,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFC7CBD3)),
+                    border: Border.all(color: AppColors.bordeSuave),
                   ),
                   child: Focus(
                     focusNode: _focusNodeLista,
@@ -332,13 +333,13 @@ class _BuscarProductoCompraDialogState
                                 Icon(
                                   Icons.search,
                                   size: 48,
-                                  color: Colors.grey.shade300,
+                                  color: AppColors.gris300,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Escribí algo y presioná Enter para buscar',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.gris500,
                                   ),
                                 ),
                               ],
@@ -353,7 +354,7 @@ class _BuscarProductoCompraDialogState
                             child: Text(
                               'No se encontraron productos',
                               style: GoogleFonts.poppins(
-                                color: Colors.grey.shade500,
+                                color: AppColors.gris500,
                               ),
                             ),
                           );
@@ -364,14 +365,14 @@ class _BuscarProductoCompraDialogState
                             if (!esMovil) ...[
                               _encabezadoTabla(),
                               const SizedBox(height: 10),
-                              Divider(height: 1, color: Colors.grey.shade300),
+                              Divider(height: 1, color: AppColors.divisorFuerte),
                             ],
                             Expanded(
                               child: ListView.separated(
                                 itemCount: lista.length,
                                 separatorBuilder: (context, i) => Divider(
                                   height: 1,
-                                  color: Colors.grey.shade200,
+                                  color: AppColors.divisor,
                                 ),
                                 itemBuilder: (context, i) {
                                   final p = lista[i];
@@ -384,9 +385,9 @@ class _BuscarProductoCompraDialogState
                           ],
                         );
                       },
-                      loading: () => const Center(
+                      loading: () => Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                       ),
                       error: (e, st) => Center(
@@ -410,7 +411,7 @@ class _BuscarProductoCompraDialogState
     final estilo = GoogleFonts.poppins(
       fontSize: 12,
       fontWeight: FontWeight.w700,
-      color: Colors.grey.shade600,
+      color: AppColors.gris600,
     );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -450,7 +451,7 @@ class _BuscarProductoCompraDialogState
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
-            color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
+            color: seleccionada ? AppColors.rojoSuave : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: seleccionada
                 ? Border.all(color: const Color(0xFFC62828), width: 1.4)
@@ -465,7 +466,7 @@ class _BuscarProductoCompraDialogState
                   p.codigo,
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: AppColors.gris600,
                   ),
                 ),
               ),
@@ -492,7 +493,7 @@ class _BuscarProductoCompraDialogState
                     softWrap: true,
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
-                      color: Colors.grey.shade600,
+                      color: AppColors.gris600,
                     ),
                   ),
                 ),
@@ -505,7 +506,7 @@ class _BuscarProductoCompraDialogState
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2B6CB0),
+                    color: AppColors.azul2,
                   ),
                 ),
               ),
@@ -518,7 +519,7 @@ class _BuscarProductoCompraDialogState
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FBF4),
+                      color: AppColors.verdeSuave2,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -540,10 +541,10 @@ class _BuscarProductoCompraDialogState
                     ? null
                     : IconButton(
                         tooltip: 'Ver foto',
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.photo_outlined,
                           size: 18,
-                          color: Color(0xFFC62828),
+                          color: AppColors.rojo,
                         ),
                         onPressed: () => _verFoto(p),
                       ),
@@ -575,7 +576,7 @@ class _BuscarProductoCompraDialogState
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: seleccionada ? const Color(0xFFFBEAEA) : Colors.transparent,
+            color: seleccionada ? AppColors.rojoSuave : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
             border: seleccionada
                 ? Border.all(color: const Color(0xFFC62828), width: 1.4)
@@ -604,7 +605,7 @@ class _BuscarProductoCompraDialogState
                           softWrap: true,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: AppColors.gris500,
                           ),
                         ),
                       ],
@@ -616,7 +617,7 @@ class _BuscarProductoCompraDialogState
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FBF4),
+                      color: AppColors.verdeSuave2,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -639,17 +640,17 @@ class _BuscarProductoCompraDialogState
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF2B6CB0),
+                        color: AppColors.azul2,
                       ),
                     ),
                   ),
                   if (p.imagenUrl.isNotEmpty)
                     IconButton(
                       tooltip: 'Ver foto',
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.photo_outlined,
                         size: 18,
-                        color: Color(0xFFC62828),
+                        color: AppColors.rojo,
                       ),
                       onPressed: () => _verFoto(p),
                     ),

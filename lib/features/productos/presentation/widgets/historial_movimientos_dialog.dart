@@ -8,6 +8,7 @@ import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../../compras/presentation/screens/detalle_compra_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Fila normalizada para mostrar en la tabla, sea de venta o de compra.
 class _FilaHistorial {
@@ -103,7 +104,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
         width: anchoDialog,
         height: altoDialog,
         padding: EdgeInsets.all(esMovil ? 16 : 22),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.superficie, borderRadius: BorderRadius.circular(24)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -141,7 +142,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
   Widget _contenidoVentas(DateFormat formatoFecha) {
     final async = ref.watch(historialVentasProductoProvider(widget.producto.id));
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+      loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
       data: (data) {
         final filas = _filtrar(data
@@ -162,7 +163,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
   Widget _contenidoCompras(DateFormat formatoFecha) {
     final async = ref.watch(historialPreciosCompraProvider(widget.producto.id));
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+      loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
       data: (data) {
         final filas = _filtrar(data
@@ -187,7 +188,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
   Widget _contenidoLotes(DateFormat formatoDia) {
     final async = ref.watch(lotesProductoProvider(widget.producto.id));
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
+      loading: () => Center(child: CircularProgressIndicator(color: AppColors.rojo)),
       error: (e, st) => Center(child: Text('Error: $e', style: GoogleFonts.poppins(color: Colors.red))),
       data: (data) {
         final lotes = data.where((l) {
@@ -196,7 +197,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
           return true;
         }).toList();
         if (lotes.isEmpty) {
-          return Center(child: Text('Sin lotes de costo registrados para este producto', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+          return Center(child: Text('Sin lotes de costo registrados para este producto', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: AppColors.gris500)));
         }
         final totalRestante = lotes.fold<double>(0, (s, l) => s + l.cantidadRestante);
         final idPrimerLoteVigente = lotes.firstWhere((l) => l.cantidadRestante > 0, orElse: () => lotes.first).id;
@@ -207,7 +208,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 'Existencia total: ${_formatoCantidad(totalRestante)} unidades repartidas en ${lotes.where((l) => l.cantidadRestante > 0).length} lote(s) — se vende primero el que está arriba. Usá las flechas para cambiar el orden.',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600),
               ),
             ),
             Expanded(child: _tablaLotes(lotes, formatoDia, idPrimerLoteVigente)),
@@ -245,11 +246,11 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
   }
 
   Widget _tablaLotes(List<LoteCostoModel> lotes, DateFormat formatoDia, String idPrimerLoteVigente) {
-    final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600);
     final activos = lotes.where((l) => l.cantidadRestante > 0).toList();
     const anchoTabla = 750.0;
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.borde), borderRadius: BorderRadius.circular(12)),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
@@ -258,7 +259,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                decoration: BoxDecoration(color: AppColors.fondoSuave, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                 child: Row(
                   children: [
                     SizedBox(width: 110, child: Text('FECHA', style: estiloHeader)),
@@ -274,7 +275,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
               Expanded(
                 child: ListView.separated(
                   itemCount: lotes.length,
-                  separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                  separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divisor),
                   itemBuilder: (context, index) {
                     final l = lotes[index];
                     final agotado = l.cantidadRestante <= 0;
@@ -283,22 +284,22 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                     return InkWell(
                       onTap: () => _verDetalleLote(l),
                       child: Container(
-                        color: esProximo ? const Color(0xFFFCE4E4) : null,
+                        color: esProximo ? AppColors.rojoSuave2 : null,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         child: Row(
                           children: [
-                            SizedBox(width: 110, child: Text(formatoDia.format(l.fecha), style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
-                            SizedBox(width: 90, child: Text(l.origen == 'compra' ? 'Compra' : 'Ajuste', style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
-                            SizedBox(width: 110, child: Text(_formatoCantidad(l.cantidadOriginal), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(width: 110, child: Text(formatoDia.format(l.fecha), style: GoogleFonts.poppins(fontSize: 12, color: agotado ? AppColors.gris400 : null))),
+                            SizedBox(width: 90, child: Text(l.origen == 'compra' ? 'Compra' : 'Ajuste', style: GoogleFonts.poppins(fontSize: 12, color: agotado ? AppColors.gris400 : null))),
+                            SizedBox(width: 110, child: Text(_formatoCantidad(l.cantidadOriginal), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, color: agotado ? AppColors.gris400 : null))),
                             SizedBox(
                               width: 110,
                               child: Text(
                                 _formatoCantidad(l.cantidadRestante),
                                 textAlign: TextAlign.right,
-                                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? Colors.grey.shade400 : const Color(0xFF1A1A1A)),
+                                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? AppColors.gris400 : AppColors.texto),
                               ),
                             ),
-                            SizedBox(width: 100, child: Text(formatearMoneda(l.costoUnitario), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? Colors.grey.shade400 : null))),
+                            SizedBox(width: 100, child: Text(formatearMoneda(l.costoUnitario), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: agotado ? AppColors.gris400 : null))),
                             SizedBox(
                               width: 70,
                               child: indiceActivo < 0
@@ -312,7 +313,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                                           visualDensity: VisualDensity.compact,
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                                          color: indiceActivo == 0 ? Colors.grey.shade300 : const Color(0xFFC62828),
+                                          color: indiceActivo == 0 ? AppColors.gris300 : AppColors.rojo,
                                           onPressed: indiceActivo == 0 ? null : () => _moverLote(activos, indiceActivo, -1),
                                         ),
                                         IconButton(
@@ -321,7 +322,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                                           visualDensity: VisualDensity.compact,
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                                          color: indiceActivo == activos.length - 1 ? Colors.grey.shade300 : const Color(0xFFC62828),
+                                          color: indiceActivo == activos.length - 1 ? AppColors.gris300 : AppColors.rojo,
                                           onPressed: indiceActivo == activos.length - 1 ? null : () => _moverLote(activos, indiceActivo, 1),
                                         ),
                                       ],
@@ -331,9 +332,9 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                               child: esProximo
                                   ? Padding(
                                       padding: const EdgeInsets.only(left: 8),
-                                      child: Text('Se vende primero', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: const Color(0xFFC62828))),
+                                      child: Text('Se vende primero', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.rojo)),
                                     )
-                                  : (agotado ? Padding(padding: const EdgeInsets.only(left: 8), child: Text('Agotado', style: GoogleFonts.poppins(fontSize: 10.5, color: Colors.grey.shade400))) : const SizedBox()),
+                                  : (agotado ? Padding(padding: const EdgeInsets.only(left: 8), child: Text('Agotado', style: GoogleFonts.poppins(fontSize: 10.5, color: AppColors.gris400))) : const SizedBox()),
                             ),
                           ],
                         ),
@@ -358,12 +359,12 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
     required String vacio,
   }) {
     if (filas.isEmpty) {
-      return Center(child: Text(vacio, textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.grey.shade500)));
+      return Center(child: Text(vacio, textAlign: TextAlign.center, style: GoogleFonts.poppins(color: AppColors.gris500)));
     }
-    final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600);
+    final estiloHeader = GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.gris600);
     const anchoTabla = 640.0;
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFB6BCC7)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.borde), borderRadius: BorderRadius.circular(12)),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
@@ -372,7 +373,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(color: Color(0xFFECEEF3), borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                decoration: BoxDecoration(color: AppColors.fondoSuave, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                 child: Row(
                   children: [
                     SizedBox(width: 140, child: Text('FECHA', style: estiloHeader)),
@@ -387,7 +388,7 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
               Expanded(
                 child: ListView.separated(
                   itemCount: filas.length,
-                  separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                  separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divisor),
                   itemBuilder: (context, index) {
                     final r = filas[index];
                     return InkWell(
@@ -398,14 +399,14 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
                           children: [
                             SizedBox(width: 140, child: Text(r.fecha != null ? formatoFecha.format(r.fecha!) : '-', style: GoogleFonts.poppins(fontSize: 12))),
                             SizedBox(width: 130, child: Text(r.documento, style: GoogleFonts.poppins(fontSize: 12), overflow: TextOverflow.ellipsis)),
-                            Expanded(child: Text(r.contraparte, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis)),
+                            Expanded(child: Text(r.contraparte, style: GoogleFonts.poppins(fontSize: 12, color: AppColors.gris600), overflow: TextOverflow.ellipsis)),
                             SizedBox(width: 70, child: Text(_formatoCantidad(r.cantidad), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12))),
                             SizedBox(width: 100, child: Text(formatearMoneda(r.precio), textAlign: TextAlign.right, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700))),
                             SizedBox(
                               width: 48,
                               child: IconButton(
                                 tooltip: 'Ver detalle',
-                                icon: const Icon(Icons.receipt_long_outlined, size: 18, color: Color(0xFFC62828)),
+                                icon: Icon(Icons.receipt_long_outlined, size: 18, color: AppColors.rojo),
                                 onPressed: () => _verDetalle(r),
                               ),
                             ),
@@ -434,13 +435,13 @@ class _HistorialMovimientosDialogState extends ConsumerState<HistorialMovimiento
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: const Color(0xFFE8EAF0), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB6BCC7))),
+        decoration: BoxDecoration(color: AppColors.campo, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.borde)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 15, color: Color(0xFF6B7280)),
+            Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.texto7),
             const SizedBox(width: 8),
-            Text(fecha != null ? '$label: ${formato.format(fecha)}' : label, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF1A1A1A))),
+            Text(fecha != null ? '$label: ${formato.format(fecha)}' : label, style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.texto)),
           ],
         ),
       ),

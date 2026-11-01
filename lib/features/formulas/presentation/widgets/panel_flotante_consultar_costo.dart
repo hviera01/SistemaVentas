@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/widgets/route_panel_flotante.dart';
 import '../screens/consultar_costo_screen.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Controla un panel flotante de Consultar Costo (Venta, Colores) -pedido
 /// explícito del dueño: "no en pantalla completa" y "que se pueda
@@ -156,12 +157,12 @@ class PanelFlotanteConsultarCosto extends StatelessWidget {
       width: ancho,
       height: alto,
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFFF2F3F7), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: AppColors.fondo, borderRadius: BorderRadius.circular(20)),
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
             Container(
-              color: Colors.white,
+              color: AppColors.superficie,
               padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
               child: Row(
                 children: [

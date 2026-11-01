@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/promocion_model.dart';
 import '../../../../core/utils/formato_moneda.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Diálogo interactivo que se muestra al agregar (o al ajustar la cantidad
 /// de) un producto que cumple una promoción vigente y aplicable a la
@@ -57,16 +58,16 @@ class PromocionDetectadaDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: Row(
         children: [
-          const Icon(Icons.celebration_outlined, color: Color(0xFFC62828)),
+          Icon(Icons.celebration_outlined, color: AppColors.rojo),
           const SizedBox(width: 10),
           Expanded(child: Text(_titulo, style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700))),
         ],
       ),
-      content: Text(_detalle, style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF4B4F58))),
+      content: Text(_detalle, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.texto5)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: Text('No, precio normal', style: GoogleFonts.poppins(color: Colors.grey.shade600)),
+          child: Text('No, precio normal', style: GoogleFonts.poppins(color: AppColors.gris600)),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
