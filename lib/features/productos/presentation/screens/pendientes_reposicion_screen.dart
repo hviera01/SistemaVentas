@@ -5,6 +5,7 @@ import '../../data/pendiente_reposicion_model.dart';
 import '../../providers/productos_provider.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 /// Lista las "ventas anticipadas" que siguen esperando la compra que las
 /// repone (ver ItemVentaModel.pendienteCompra, VentaRepository.registrarVenta
@@ -63,6 +64,7 @@ class PendientesReposicionScreen extends ConsumerWidget {
     await ref
         .read(pendienteReposicionRepositoryProvider)
         .cancelar(pendiente.id);
+    mostrarExito('Pendiente cancelado');
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

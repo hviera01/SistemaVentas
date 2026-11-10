@@ -7,6 +7,7 @@ import '../../../../core/constants/roles.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class UsuarioFormDialog extends ConsumerStatefulWidget {
   final UsuarioModel? usuario;
@@ -84,6 +85,7 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
           clave.isEmpty ? null : clave,
         );
       }
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -126,6 +128,7 @@ class _UsuarioFormDialogState extends ConsumerState<UsuarioFormDialog> {
     setState(() => _guardando = true);
     try {
       await ref.read(usuarioRepositoryProvider).eliminar(widget.usuario!.id);
+      mostrarExito('Eliminado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {

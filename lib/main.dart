@@ -10,6 +10,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'core/widgets/app_shell.dart';
 import 'core/widgets/splash_screen.dart';
 import 'core/widgets/imagen_producto_network.dart';
+import 'core/widgets/animacion_impresion.dart';
 import 'features/ventas/presentation/screens/escaneo_remoto_screen.dart';
 import 'features/formulas/presentation/screens/formulas_kiosk_screen.dart';
 import 'features/formulas/presentation/screens/consultar_costo_kiosk_screen.dart';
@@ -121,6 +122,8 @@ class _SistemaVentasAppState extends ConsumerState<SistemaVentasApp>
       darkTheme: temaOscuro(),
       themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
       themeAnimationDuration: Duration.zero,
+      builder: (context, child) =>
+          AnimacionImpresionHost(child: child ?? const SizedBox.shrink()),
       locale: const Locale('es'),
       supportedLocales: const [Locale('es')],
       localizationsDelegates: const [

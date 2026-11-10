@@ -22,6 +22,7 @@ import '../widgets/importar_creditos_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ComprasCreditoScreen extends ConsumerStatefulWidget {
   const ComprasCreditoScreen({super.key});
@@ -175,6 +176,7 @@ class _ComprasCreditoScreenState extends ConsumerState<ComprasCreditoScreen> {
     );
     if (confirmar != true) return;
     await ref.read(compraCreditoRepositoryProvider).eliminar(compra.id);
+    mostrarExito('Eliminado correctamente');
   }
 
   void _manejarAccion(String valor, CompraCreditoModel compra) {

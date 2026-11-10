@@ -8,6 +8,7 @@ import '../../providers/productos_provider.dart';
 import '../../../ventas/presentation/screens/detalle_venta_screen.dart';
 import '../../../compras/presentation/screens/detalle_compra_screen.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 class HistorialStockDialog extends ConsumerStatefulWidget {
   final ProductoModel producto;
@@ -23,7 +24,7 @@ class _HistorialStockDialogState extends ConsumerState<HistorialStockDialog> {
   DateTime? _fechaFin;
 
   Future<void> _seleccionarFecha(bool esInicio) async {
-    final fecha = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime(2100));
+    final fecha = await seleccionarFechaRapida(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime(2100));
     if (fecha == null) return;
     setState(() {
       if (esInicio) {

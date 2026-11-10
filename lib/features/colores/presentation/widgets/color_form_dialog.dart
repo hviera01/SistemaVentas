@@ -7,6 +7,8 @@ import '../../providers/colores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ColorFormDialog extends ConsumerStatefulWidget {
   final ColorModel? color;
@@ -58,7 +60,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fechaRegistro ?? DateTime.now(),
       firstDate: DateTime(2000),
@@ -102,6 +104,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
           observaciones: _observacionesController.text.trim(),
         );
       }
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -144,6 +147,7 @@ class _ColorFormDialogState extends ConsumerState<ColorFormDialog> {
     setState(() => _guardando = true);
     try {
       await ref.read(colorRepositoryProvider).eliminar(widget.color!.id);
+      mostrarExito('Eliminado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {

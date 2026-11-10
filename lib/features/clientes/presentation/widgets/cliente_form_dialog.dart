@@ -6,6 +6,7 @@ import '../../providers/clientes_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ClienteFormDialog extends ConsumerStatefulWidget {
   final ClienteModel? cliente;
@@ -93,6 +94,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
         // nuevo", item 5 del pedido del dueño. Quien abrió este formulario
         // sin que le importe el resultado (editar desde Clientes, o
         // "Completar datos" desde la venta) simplemente ignora el valor.
+        mostrarExito('Guardado correctamente');
         if (mounted) Navigator.pop(context, creado);
       } else {
         await repo.actualizar(
@@ -105,6 +107,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
           idReferidor: _idReferidor,
           esReferidor: _esReferidor,
         );
+        mostrarExito('Guardado correctamente');
         if (mounted) Navigator.pop(context);
       }
     } catch (e) {
@@ -148,6 +151,7 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     setState(() => _guardando = true);
     try {
       await ref.read(clienteRepositoryProvider).eliminar(widget.cliente!.id);
+      mostrarExito('Eliminado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {

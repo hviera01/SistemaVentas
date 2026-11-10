@@ -34,6 +34,7 @@ import '../../../ventas_credito/presentation/widgets/registrar_abono_dialog.dart
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 /// Pantalla de consulta de una venta ya registrada: buscá por número de
 /// documento (o abrila directo desde Reportes / Ventas a Crédito pasando
@@ -831,6 +832,7 @@ class _DetalleVentaScreenState extends ConsumerState<DetalleVentaScreen> {
             usuario: usuario,
             motivo: motivoController.text.trim(),
           );
+      mostrarExito('Venta anulada');
       if (!mounted) return;
       await _buscarPorId(venta.id);
       if (mounted) {

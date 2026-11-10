@@ -16,6 +16,7 @@ import 'buscar_producto_compra_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 /// Un producto de la factura ya emparejado con el inventario, listo para
 /// agregarse al carrito de compra tal cual lo devuelve este diálogo.
@@ -714,7 +715,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
               Expanded(
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(
+                    final fecha = await seleccionarFechaRapida(
                       context: context,
                       initialDate: _fecha,
                       firstDate: DateTime(2020),
@@ -786,7 +787,7 @@ class _EscanearFacturaDialogState extends ConsumerState<EscanearFacturaDialog> {
             const SizedBox(height: 10),
             InkWell(
               onTap: () async {
-                final fecha = await showDatePicker(
+                final fecha = await seleccionarFechaRapida(
                   context: context,
                   initialDate:
                       _fechaVencimiento ?? _fecha.add(const Duration(days: 30)),

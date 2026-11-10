@@ -44,6 +44,7 @@ import '../../../../core/utils/codigo_barras_utils.dart';
 import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
 import '../../../../core/widgets/exito_transaccion_overlay.dart';
+import '../../../../core/widgets/animacion_impresion.dart';
 import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../widgets/buscar_producto_dialog.dart';
 import '../widgets/panel_buscador_grid.dart';
@@ -71,6 +72,7 @@ import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/utils/texto_utils.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 const _metodosPago = [
   'Efectivo',
@@ -2334,6 +2336,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
             ? 'Venta en espera actualizada.'
             : 'Venta guardada en espera.',
       );
+      mostrarExito('Venta en espera guardada');
     } catch (e) {
       _mostrarMensaje('No se pudo guardar en espera: $e');
       return;
@@ -3112,6 +3115,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
         url: negocio.impresoraTermicaUrl,
         name: negocio.impresoraTermicaNombre,
       );
+      AnimacionImpresion.mostrar();
       await Printing.directPrintPdf(
         printer: impresora,
         onLayout: (formato) => _servicioExport.generarPdfFactura(
@@ -5122,7 +5126,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 width: esMovil ? double.infinity : 160,
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(
+                    final fecha = await seleccionarFechaRapida(
                       context: context,
                       initialDate: carrito.fecha,
                       firstDate: DateTime(2020),
@@ -5253,7 +5257,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                   width: esMovil ? double.infinity : 160,
                   child: InkWell(
                     onTap: () async {
-                      final fecha = await showDatePicker(
+                      final fecha = await seleccionarFechaRapida(
                         context: context,
                         initialDate:
                             carrito.fechaVencimiento ??
@@ -5468,7 +5472,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                 width: esMovil ? double.infinity : 160,
                 child: InkWell(
                   onTap: () async {
-                    final fecha = await showDatePicker(
+                    final fecha = await seleccionarFechaRapida(
                       context: context,
                       initialDate: carrito.fecha,
                       firstDate: DateTime(2020),
@@ -5790,7 +5794,7 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
                                 width: esMovil ? double.infinity : 160,
                                 child: InkWell(
                                   onTap: () async {
-                                    final fecha = await showDatePicker(
+                                    final fecha = await seleccionarFechaRapida(
                                       context: context,
                                       initialDate:
                                           carrito.fechaVencimiento ??

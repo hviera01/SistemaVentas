@@ -8,6 +8,7 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../proveedores/providers/proveedores_provider.dart';
 import 'estado_cuenta_proveedor_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 class _FilaResumen {
   final DateTime? dia;
@@ -117,19 +118,16 @@ class _ResumenAbonosDialogState extends ConsumerState<ResumenAbonosDialog> {
   }
 
   Future<void> _seleccionarFecha(bool esInicio) async {
-    final fecha = await showDatePicker(
+    final rango = await seleccionarRangoRapido(
       context: context,
-      initialDate: esInicio ? _fechaInicio : _fechaFin,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      esInicio: esInicio,
+      inicio: _fechaInicio,
+      fin: _fechaFin,
     );
-    if (fecha == null) return;
+    if (rango == null) return;
     setState(() {
-      if (esInicio) {
-        _fechaInicio = fecha;
-      } else {
-        _fechaFin = fecha;
-      }
+      _fechaInicio = rango.inicio;
+      _fechaFin = rango.fin;
     });
   }
 

@@ -23,6 +23,8 @@ import '../../../../core/utils/tablet_utils_stub.dart'
     as tactil;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/tema_app.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 // Específicamente el navegador de un celular/tablet (no la PC, no la app de
 // escritorio): ver _tarjetaFaceId, donde vive el mismo Face ID/Touch ID que
@@ -419,6 +421,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
         _proximoFacturaActual = valor;
         _guardandoProximoFactura = false;
       });
+      mostrarExito('Guardado correctamente');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -482,6 +485,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
             rangoHasta: _rangoHastaController.text.trim(),
             fechaLimiteEmision: _fechaLimite,
           );
+      mostrarExito('Guardado correctamente');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Datos del negocio guardados')),
@@ -495,7 +499,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fechaLimite ?? DateTime.now(),
       firstDate: DateTime(2020),
@@ -520,6 +524,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     try {
       await ref.read(negocioRepositoryProvider).establecerClave(clave);
       _claveController.clear();
+      mostrarExito('Guardado correctamente');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Clave especial actualizada')),
@@ -533,6 +538,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
     setState(() => _guardandoClave = true);
     try {
       await ref.read(negocioRepositoryProvider).quitarClave();
+      mostrarExito('Eliminado correctamente');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Clave especial eliminada')),
@@ -626,6 +632,7 @@ class _NegocioFormState extends ConsumerState<_NegocioForm> {
       await ref
           .read(negocioRepositoryProvider)
           .actualizarImpresoraRed(ip, puerto);
+      mostrarExito('Guardado correctamente');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impresora de red guardada')),

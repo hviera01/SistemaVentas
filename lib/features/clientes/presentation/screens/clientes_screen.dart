@@ -9,6 +9,7 @@ import 'detalle_cliente_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ClientesScreen extends ConsumerStatefulWidget {
   const ClientesScreen({super.key});
@@ -77,6 +78,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
     );
     if (confirmar != true) return;
     await ref.read(clienteRepositoryProvider).eliminar(cliente.id);
+    mostrarExito('Eliminado correctamente');
   }
 
   void _verDetalle(ClienteModel cliente) {

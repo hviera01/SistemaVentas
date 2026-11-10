@@ -10,6 +10,8 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class RegistrarAbonoDialog extends ConsumerStatefulWidget {
   final VentaCreditoModel credito;
@@ -49,7 +51,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fecha,
       firstDate: DateTime(2000),
@@ -87,6 +89,7 @@ class _RegistrarAbonoDialogState extends ConsumerState<RegistrarAbonoDialog> {
             usuario: usuario,
             fecha: _fecha,
           );
+      mostrarExito('Abono registrado');
       if (!mounted) return;
       Navigator.pop(
         context,

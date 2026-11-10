@@ -16,6 +16,7 @@ import '../../../../core/widgets/imagen_producto_network.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 /// Un componente agregado a la receta de un combo mientras se está armando
 /// en el formulario (antes de guardar). [cantidad] vive en un controller
@@ -374,6 +375,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
         setState(() => _guardando = false);
         return;
       }
+      mostrarExito('Guardado correctamente');
       Navigator.pop(context, creado);
       return;
     }
@@ -406,6 +408,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
       setState(() => _guardando = false);
       return;
     }
+    mostrarExito('Guardado correctamente');
     Navigator.pop(context);
   }
 
@@ -449,6 +452,7 @@ class _ProductoFormDialogState extends ConsumerState<ProductoFormDialog> {
     });
     if (!mounted) return;
     if (ok == true) {
+      mostrarExito('Eliminado correctamente');
       Navigator.pop(context);
     } else {
       setState(() => _guardando = false);

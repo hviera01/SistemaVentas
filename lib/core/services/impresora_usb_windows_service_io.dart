@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
+import '../widgets/animacion_impresion.dart' show AnimacionImpresion;
 
 /// Envío de tickets ESC/POS crudos directo a una impresora térmica USB en
 /// Windows (por su nombre en el sistema, ej. "POS-80"), sin pasar por el
@@ -23,6 +24,7 @@ class ImpresoraUsbWindowsService {
   /// desconectada, nombre inválido, spooler ocupado, etc.) para que quien
   /// llama decida qué hacer sin bloquear el flujo de la venta.
   bool imprimir({required String nombreImpresora, required List<int> bytes}) {
+    AnimacionImpresion.mostrar();
     if (nombreImpresora.trim().isEmpty || bytes.isEmpty) return false;
 
     final phPrinter = calloc<IntPtr>();

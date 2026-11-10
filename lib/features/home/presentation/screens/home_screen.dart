@@ -38,6 +38,8 @@ class HomeScreen extends ConsumerWidget {
     }
     showModalBottomSheet(
       context: contextPantalla,
+      isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.superficie,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -67,19 +69,26 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...disponibles.map((sub) {
-                  return ListTile(
-                    leading: Icon(sub.icono, color: modulo.color),
-                    title: Text(
-                      sub.titulo,
-                      style: GoogleFonts.poppins(fontSize: 14),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: disponibles.map((sub) {
+                        return ListTile(
+                          leading: Icon(sub.icono, color: modulo.color),
+                          title: Text(
+                            sub.titulo,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            abrirSubModulo(contextPantalla, ref, sub);
+                          },
+                        );
+                      }).toList(),
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      abrirSubModulo(contextPantalla, ref, sub);
-                    },
-                  );
-                }),
+                  ),
+                ),
               ],
             ),
           ),

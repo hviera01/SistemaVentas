@@ -1,6 +1,7 @@
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
+import '../widgets/animacion_impresion.dart' show AnimacionImpresion;
 
 // Impresión térmica ESC/POS crudo directo desde el navegador, vía WebUSB
 // (navigator.usb) -sin pedirle nada a la PC principal-. Interop directo con
@@ -92,6 +93,7 @@ class ImpresoraWebUsbService {
   Future<bool> imprimir({required List<int> bytes}) async {
     final dispositivos = await _dispositivosVinculados();
     if (dispositivos.isEmpty) return false;
+    AnimacionImpresion.mostrar();
     final dispositivo = dispositivos.first;
     var abierto = false;
     try {

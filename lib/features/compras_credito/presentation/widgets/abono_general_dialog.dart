@@ -10,6 +10,8 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class _ProveedorConDeuda {
   final String idProveedor;
@@ -75,7 +77,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fecha,
       firstDate: DateTime(2000),
@@ -113,6 +115,7 @@ class _AbonoGeneralDialogState extends ConsumerState<AbonoGeneralDialog> {
             usuario: usuario,
             fecha: _fecha,
           );
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       setState(() {

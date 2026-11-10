@@ -9,6 +9,8 @@ import 'seleccionar_productos_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 const _opcionesMetodoPago = ['Todos', 'Efectivo', 'Tarjeta', 'Transferencia'];
 
@@ -168,7 +170,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
   }
 
   Future<void> _elegirFecha(bool esInicio) async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: esInicio
           ? _fechaInicio
@@ -289,6 +291,7 @@ class _PromocionFormDialogState extends ConsumerState<PromocionFormDialog> {
       } else {
         await repo.crear(promocion);
       }
+      mostrarExito('Guardado correctamente');
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {

@@ -13,6 +13,7 @@ import '../../../../core/widgets/pdf_preview_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class CierreCajaScreen extends ConsumerStatefulWidget {
   const CierreCajaScreen({super.key});
@@ -134,6 +135,7 @@ class _CierreCajaScreenState extends ConsumerState<CierreCajaScreen> {
       await ref.read(cierreCajaRepositoryProvider).registrarCierre(cierre);
       if (!mounted) return;
       _mostrarMensaje('Cierre de caja registrado correctamente');
+      mostrarExito('Cierre registrado');
       await _preguntarReporte(cierre);
       if (!mounted) return;
       setState(() {

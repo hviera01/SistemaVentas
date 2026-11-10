@@ -11,6 +11,7 @@ import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../reportes/data/historico_venta_service.dart';
 import 'detalle_venta_screen.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 /// "Ver Facturas" -pedido explícito del dueño: reemplaza al viejo botón
 /// "Ver Detalle" (que solo dejaba buscar UNA venta por número). Arranca
@@ -200,19 +201,16 @@ class _VerFacturasScreenState extends ConsumerState<VerFacturasScreen> {
   }
 
   Future<void> _seleccionarFecha(bool esInicio) async {
-    final fecha = await showDatePicker(
+    final rango = await seleccionarRangoRapido(
       context: context,
-      initialDate: esInicio ? _fechaInicio : _fechaFin,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      esInicio: esInicio,
+      inicio: _fechaInicio,
+      fin: _fechaFin,
     );
-    if (fecha == null) return;
+    if (rango == null) return;
     setState(() {
-      if (esInicio) {
-        _fechaInicio = fecha;
-      } else {
-        _fechaFin = fecha;
-      }
+      _fechaInicio = rango.inicio;
+      _fechaFin = rango.fin;
     });
   }
 

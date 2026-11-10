@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import '../../../core/services/impresora_red_service.dart';
 import '../../../core/services/impresora_usb_windows_service.dart';
+import '../../../core/widgets/animacion_impresion.dart';
 import '../../../core/widgets/pdf_preview_dialog.dart';
 import '../presentation/widgets/ticket_escpos_preview.dart';
 import '../../negocio/data/negocio_model.dart';
@@ -143,6 +144,7 @@ class ImpresionPendienteService {
         url: negocio.impresoraTermicaUrl,
         name: negocio.impresoraTermicaNombre,
       );
+      AnimacionImpresion.mostrar();
       await Printing.directPrintPdf(
         printer: impresora,
         onLayout: (formato) => _servicioExport.generarPdfFactura(

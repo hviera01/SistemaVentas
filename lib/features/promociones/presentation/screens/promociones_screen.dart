@@ -10,6 +10,7 @@ import '../widgets/promocion_form_dialog.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 /// Mantenedor de "Descuentos y Promociones": alta, edición, activar/
 /// desactivar y baja. También sirve para "consultar todas las promociones
@@ -87,6 +88,7 @@ class _PromocionesScreenState extends ConsumerState<PromocionesScreen> {
     );
     if (confirmar != true) return;
     await ref.read(promocionRepositoryProvider).eliminar(p.id);
+    mostrarExito('Eliminado correctamente');
   }
 
   @override

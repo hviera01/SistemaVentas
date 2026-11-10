@@ -14,6 +14,7 @@ import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../formulas/presentation/screens/buscar_formula_screen.dart';
 import '../../../formulas/presentation/widgets/panel_flotante_consultar_costo.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ColoresScreen extends ConsumerStatefulWidget {
   const ColoresScreen({super.key});
@@ -94,6 +95,7 @@ class _ColoresScreenState extends ConsumerState<ColoresScreen> {
     );
     if (confirmar != true) return;
     await ref.read(colorRepositoryProvider).eliminar(color.id);
+    mostrarExito('Eliminado correctamente');
   }
 
   void _manejarAccion(String valor, ColorModel color) {

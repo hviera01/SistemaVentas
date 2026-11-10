@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import '../widgets/animacion_impresion.dart' show AnimacionImpresion;
 
 /// Envío de tickets ESC/POS a una impresora térmica de red (socket TCP,
 /// puerto 9100 típico). Es la única vía de impresión térmica que funciona
@@ -18,6 +19,7 @@ class ImpresoraRedService {
   /// qué hacer (marcar pendiente de impresión, avisar, etc.) sin que la
   /// venta se bloquee.
   Future<bool> imprimir({required String ip, required int puerto, required List<int> bytes}) async {
+    if (bytes.length > 4) AnimacionImpresion.mostrar();
     if (ip.trim().isEmpty) return false;
     Socket? socket;
     try {

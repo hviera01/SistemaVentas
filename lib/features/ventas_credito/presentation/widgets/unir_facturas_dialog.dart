@@ -8,6 +8,8 @@ import '../../../../core/utils/formato_moneda.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class UnirFacturasDialog extends ConsumerStatefulWidget {
   final List<VentaCreditoModel> facturas;
@@ -44,7 +46,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
   double get _totalUnificado => widget.facturas.fold<double>(0, (s, f) => s + f.saldoPendiente);
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fechaVencimiento,
       firstDate: DateTime(2000),
@@ -71,6 +73,7 @@ class _UnirFacturasDialogState extends ConsumerState<UnirFacturasDialog> {
             nombreCliente: nombre,
             fechaVencimiento: _fechaVencimiento,
           );
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       setState(() {

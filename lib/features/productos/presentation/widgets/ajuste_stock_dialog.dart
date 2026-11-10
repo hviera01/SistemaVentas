@@ -9,6 +9,7 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 enum _ModoAjuste { ingreso, salida }
 
@@ -142,6 +143,7 @@ class _AjusteStockDialogState extends ConsumerState<AjusteStockDialog> {
           motivo: _motivoController.text.trim(),
         );
       }
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {

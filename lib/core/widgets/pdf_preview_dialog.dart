@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../services/impresora_usb_windows_service.dart';
 import '../theme/app_colors.dart';
+import 'animacion_impresion.dart';
 
 class PdfPreviewDialog extends StatefulWidget {
   final String titulo;
@@ -76,6 +77,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
     final impresora = widget.impresora;
     if (impresora == null) return;
     setState(() => _imprimiendo = true);
+    AnimacionImpresion.mostrar();
     try {
       if (_usaEscPosEnWindows) {
         final bytes = await widget.generarTicketEscPos!();
@@ -268,6 +270,7 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
           // que sigue pasando por el PDF y el driver de Windows, así que
           // conviene que solo quede el botón de arriba, que sí usa la vía
           // confiable.
+          onPrinted: (_) => AnimacionImpresion.mostrar(),
           allowPrinting: widget.generarTicketEscPos == null,
           allowSharing: true,
           useActions: true,
@@ -323,10 +326,13 @@ class _PdfPreviewDialogState extends State<PdfPreviewDialog> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () => Printing.layoutPdf(
-              onLayout: (format) => widget.generarPdf(),
-              name: widget.nombreArchivo,
-            ),
+            onPressed: () {
+              AnimacionImpresion.mostrar();
+              Printing.layoutPdf(
+                onLayout: (format) => widget.generarPdf(),
+                name: widget.nombreArchivo,
+              );
+            },
             icon: const Icon(Icons.print_outlined, size: 18),
             label: Text(
               'Ver / imprimir',

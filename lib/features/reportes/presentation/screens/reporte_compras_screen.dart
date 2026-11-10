@@ -15,6 +15,7 @@ import '../../../compras/presentation/screens/detalle_compra_screen.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
 
 class ReporteComprasScreen extends ConsumerStatefulWidget {
   const ReporteComprasScreen({super.key});
@@ -119,19 +120,16 @@ class _ReporteComprasScreenState extends ConsumerState<ReporteComprasScreen> {
   }
 
   Future<void> _seleccionarFecha(bool esInicio) async {
-    final fecha = await showDatePicker(
+    final rango = await seleccionarRangoRapido(
       context: context,
-      initialDate: esInicio ? _fechaInicio : _fechaFin,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      esInicio: esInicio,
+      inicio: _fechaInicio,
+      fin: _fechaFin,
     );
-    if (fecha == null) return;
+    if (rango == null) return;
     setState(() {
-      if (esInicio) {
-        _fechaInicio = fecha;
-      } else {
-        _fechaFin = fecha;
-      }
+      _fechaInicio = rango.inicio;
+      _fechaFin = rango.fin;
     });
   }
 

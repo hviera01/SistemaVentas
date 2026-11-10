@@ -8,6 +8,8 @@ import '../../providers/compras_credito_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/selector_fecha_rapida.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 /// Corrige un abono ya registrado (monto, interés, fecha, método, recibo) —
 /// pensado para arreglar errores de captura (fecha equivocada, monto mal
@@ -59,7 +61,7 @@ class _EditarAbonoCompraDialogState extends ConsumerState<EditarAbonoCompraDialo
   double get _interes => _parseDouble(_interesController.text);
 
   Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
+    final fecha = await seleccionarFechaRapida(
       context: context,
       initialDate: _fecha,
       firstDate: DateTime(2000),
@@ -89,6 +91,7 @@ class _EditarAbonoCompraDialogState extends ConsumerState<EditarAbonoCompraDialo
             metodoPago: _metodoPago,
             numeroRecibo: _numeroReciboController.text.trim(),
           );
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       setState(() {

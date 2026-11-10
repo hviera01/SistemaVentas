@@ -6,6 +6,7 @@ import '../../providers/proveedores_provider.dart';
 import '../../../../core/utils/mayusculas_input_formatter.dart';
 import '../../../../core/widgets/campo_teclado_compacto.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/exito_transaccion_overlay.dart';
 
 class ProveedorFormDialog extends ConsumerStatefulWidget {
   final ProveedorModel? proveedor;
@@ -78,6 +79,7 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
           estado: _activo,
         );
       }
+      mostrarExito('Guardado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -122,6 +124,7 @@ class _ProveedorFormDialogState extends ConsumerState<ProveedorFormDialog> {
       await ref
           .read(proveedorRepositoryProvider)
           .eliminar(widget.proveedor!.id);
+      mostrarExito('Eliminado correctamente');
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() {
