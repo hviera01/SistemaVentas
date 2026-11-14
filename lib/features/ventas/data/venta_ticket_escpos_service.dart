@@ -322,7 +322,7 @@ class VentaTicketEscPosService {
 
     List<int> bytes = [];
 
-    if (logo != null) bytes += generador.image(logo);
+    if (logo != null) bytes += rasterEscPos(logo);
     if (negocio.nombre.isNotEmpty) {
       bytes += _texto(generador, negocio.nombre.toUpperCase(), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
     }
