@@ -31,7 +31,10 @@ class _Efecto {
 class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
     with SingleTickerProviderStateMixin {
   static const _duracionImpresion = Duration(milliseconds: 1500);
-  static const _duracionExito = Duration(milliseconds: 1100);
+  // Con 1100ms el check quedaba bien visible apenas ~0.6s y no se
+  // alcanzaba a leer -pedido del dueño-: ahora queda quieto ~1.7s (las
+  // proporciones de entrada/salida en EscenaExito están ajustadas a esto).
+  static const _duracionExito = Duration(milliseconds: 2200);
   static const _maxCola = 4;
 
   late final AnimationController _controlador;

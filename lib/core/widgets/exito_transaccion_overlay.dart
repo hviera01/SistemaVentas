@@ -46,11 +46,14 @@ class EscenaExito extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entrada = Curves.easeOutBack.transform((t / 0.2).clamp(0.0, 1.0));
-    final aparicion = Curves.easeOut.transform((t / 0.2).clamp(0.0, 1.0));
-    final salida = Curves.easeIn.transform(((t - 0.8) / 0.2).clamp(0.0, 1.0));
+    // Proporciones para una duración total de ~2.2s (ver _duracionExito en
+    // AnimacionImpresionHost): entra en ~220ms, el check se dibuja en
+    // ~350ms, queda quieto para poder leerlo y sale en ~260ms.
+    final entrada = Curves.easeOutBack.transform((t / 0.1).clamp(0.0, 1.0));
+    final aparicion = Curves.easeOut.transform((t / 0.1).clamp(0.0, 1.0));
+    final salida = Curves.easeIn.transform(((t - 0.88) / 0.12).clamp(0.0, 1.0));
     final opacidad = (aparicion * (1 - salida)).clamp(0.0, 1.0);
-    final check = Curves.easeOut.transform(((t - 0.1) / 0.3).clamp(0.0, 1.0));
+    final check = Curves.easeOut.transform(((t - 0.05) / 0.16).clamp(0.0, 1.0));
 
     return Center(
       child: Opacity(
