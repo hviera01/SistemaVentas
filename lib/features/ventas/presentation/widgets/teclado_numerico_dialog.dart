@@ -28,11 +28,16 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
   final _focusNode = FocusNode();
   // Posición libre en pantalla (se puede arrastrar desde el título, ver
   // _tecla del título más abajo): útil en tablet para dejarlo donde no tape
-  // ni la mano ni lo que se está viendo detrás. null hasta el primer build,
-  // que la centra según el tamaño de pantalla disponible ahí.
+  // ni la mano ni lo que se está viendo detrás. null mientras no se haya
+  // arrastrado: ahí se dibuja centrado de verdad (con Center) en el área
+  // donde vive el diálogo. Antes se calculaba con MediaQuery (el tamaño de
+  // TODA la ventana) pero el diálogo se dibuja solo dentro del área de la
+  // pestaña (useRootNavigator: false), que empieza más abajo -por eso salía
+  // corrido hacia abajo-.
   Offset? _posicion;
+  final _claveArea = GlobalKey();
+  final _claveTarjeta = GlobalKey();
   static const _ancho = 300.0;
-  static const _altoEstimado = 480.0;
 
   @override
   void initState() {
@@ -163,25 +168,44 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final tamano = MediaQuery.sizeOf(context);
-    // Se centra recién en el primer build (ahí ya se conoce el tamaño real
-    // de la pantalla); de ahí en adelante, arrastrar desde el título es lo
-    // único que la mueve.
-    _posicion ??= Offset(
-      ((tamano.width - _ancho) / 2).clamp(0, tamano.width - _ancho),
-      ((tamano.height - _altoEstimado) / 2).clamp(0, tamano.height - _altoEstimado),
-    );
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (node, event) => _manejarTeclaFisica(node, event),
-      child: SizedBox.expand(
-        child: Stack(
-          children: [
-            Positioned(
-              left: _posicion!.dx,
-              top: _posicion!.dy,
-              child: Material(
+      child: LayoutBuilder(
+        builder: (context, restricciones) {
+          final tamano = restricciones.biggest;
+          final tarjeta = _tarjeta(tamano);
+          return SizedBox.expand(
+            key: _claveArea,
+            child: _posicion == null
+                // SingleChildScrollView: en una ventana muy baja, que se
+                // pueda deslizar en vez de cortarse.
+                ? Center(child: SingleChildScrollView(child: tarjeta))
+                : Stack(
+                    children: [
+                      Positioned(left: _posicion!.dx, top: _posicion!.dy, child: tarjeta),
+                    ],
+                  ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Posición actual de la tarjeta dentro del área del diálogo (la real,
+  /// medida, mientras todavía está centrada sin haberse arrastrado).
+  Offset _posicionActual() {
+    if (_posicion != null) return _posicion!;
+    final area = _claveArea.currentContext?.findRenderObject() as RenderBox?;
+    final tarjeta = _claveTarjeta.currentContext?.findRenderObject() as RenderBox?;
+    if (area == null || tarjeta == null) return Offset.zero;
+    return tarjeta.localToGlobal(Offset.zero, ancestor: area);
+  }
+
+  Widget _tarjeta(Size tamano) {
+    return Material(
+                key: _claveTarjeta,
                 color: Colors.transparent,
                 child: Container(
                   width: _ancho,
@@ -197,7 +221,7 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onPanUpdate: (detalle) => setState(() {
-                          final nuevo = _posicion! + detalle.delta;
+                          final nuevo = _posicionActual() + detalle.delta;
                           _posicion = Offset(nuevo.dx.clamp(0, tamano.width - _ancho), nuevo.dy.clamp(0, tamano.height - 60));
                         }),
                         child: Row(
@@ -254,11 +278,6 @@ class _TecladoNumericoDialogState extends State<TecladoNumericoDialog> {
                     ],
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+              );
   }
 }

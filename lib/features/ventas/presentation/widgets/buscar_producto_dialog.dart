@@ -129,6 +129,24 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       _columnaOrden = 'existencia';
       _ordenAscendente = false;
     }
+    // Flechas arriba/abajo desde el mismo cuadro de búsqueda mueven el
+    // producto resaltado (sin tener que hacer clic en la lista), para que
+    // buscar -> elegir -> Enter se pueda hacer todo con el teclado.
+    _focusBusqueda.onKeyEvent = (node, event) {
+      if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+        return KeyEventResult.ignored;
+      }
+      if (_listaActual.isEmpty) return KeyEventResult.ignored;
+      if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        _moverSeleccion(1);
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        _moverSeleccion(-1);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusBusqueda.requestFocus();
     });
@@ -311,6 +329,18 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
 
   void _buscar({bool exacta = false}) {
     var texto = _busquedaController.text.trim();
+    // Segundo Enter con el mismo texto ya buscado -pedido del dueño-: agrega
+    // el producto resaltado (el primero de la lista, que queda resaltado
+    // solo al buscar, o el que se haya elegido con las flechas). El primer
+    // Enter solo busca; nunca se agrega nada sin este segundo Enter.
+    if (!exacta &&
+        texto.isNotEmpty &&
+        texto == _busquedaAplicada &&
+        !_busquedaExacta &&
+        _listaActual.isNotEmpty) {
+      _seleccionarAlPresionarEnter();
+      return;
+    }
     final productos = ref.read(productosStreamProvider).value ?? [];
     // Si la búsqueda viene de un código escaneado y no matchea a nada, se
     // prueban otras variantes válidas del mismo código (ver
@@ -334,6 +364,13 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
       _clavesFila.clear();
     });
     if (texto.isEmpty) return;
+    // Deja resaltado el primer producto de la lista ya filtrada (y en el
+    // orden que se ve en pantalla, que lo arma build -> _filtrar), listo
+    // para agregarlo con otro Enter.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _filaSeleccionada != null || _listaActual.isEmpty) return;
+      setState(() => _filaSeleccionada = _listaActual.first.id);
+    });
     final coincidencias = productos
         .where((p) => p.estado && _coincide(p, texto))
         .toList();
@@ -462,7 +499,7 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
               Padding(
                 padding: EdgeInsets.only(left: esMovil ? 0 : 54),
                 child: Text(
-                  'Enter en el buscador busca · doble clic o Enter en la lista agrega el producto resaltado',
+                  'Enter busca · Enter de nuevo agrega el producto resaltado (↑ ↓ para cambiarlo) · doble clic también agrega',
                   style: GoogleFonts.poppins(
                     fontSize: esMovil ? 11.5 : 12.5,
                     color: AppColors.gris500,
