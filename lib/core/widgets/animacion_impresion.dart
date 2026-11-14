@@ -80,12 +80,22 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
       return;
     }
     if (_cola.any((e) => !e.esImpresion && e.mensaje == evento.mensaje)) return;
-    _encolar(_Efecto.exito(evento.mensaje));
+    _encolar(_Efecto.exito(evento.mensaje), antesDeImpresiones: true);
   }
 
-  void _encolar(_Efecto efecto) {
+  // El check verde va siempre antes que una impresión que todavía esté
+  // esperando en la cola -pedido del dueño: primero el check, después la
+  // animación de impresión normal-.
+  void _encolar(_Efecto efecto, {bool antesDeImpresiones = false}) {
     if (_cola.length >= _maxCola) return;
-    _cola.add(efecto);
+    final indiceImpresion = antesDeImpresiones
+        ? _cola.indexWhere((e) => e.esImpresion)
+        : -1;
+    if (indiceImpresion >= 0) {
+      _cola.insert(indiceImpresion, efecto);
+    } else {
+      _cola.add(efecto);
+    }
     if (_actual == null) _siguiente();
   }
 
