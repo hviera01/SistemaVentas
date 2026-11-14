@@ -55,8 +55,9 @@ class EscenaExito extends StatelessWidget {
     final opacidad = (aparicion * (1 - salida)).clamp(0.0, 1.0);
     final check = Curves.easeOut.transform(((t - 0.05) / 0.16).clamp(0.0, 1.0));
 
-    return Center(
-      child: Opacity(
+    // Sin Center: lo ubica el host (AnimacionImpresionHost), centrado solo o
+    // al lado de la animación de impresión.
+    return Opacity(
           opacity: opacidad,
           child: Transform.scale(
             scale: entrada.clamp(0.0, 1.2),
@@ -102,8 +103,7 @@ class EscenaExito extends StatelessWidget {
               ),
             ),
           ),
-        ),
-    );
+        );
   }
 }
 

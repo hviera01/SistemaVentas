@@ -20,34 +20,41 @@ class AnimacionImpresionHost extends StatefulWidget {
   State<AnimacionImpresionHost> createState() => _AnimacionImpresionHostState();
 }
 
-class _Efecto {
-  final bool esImpresion;
-  final String mensaje;
-
-  const _Efecto.impresion() : esImpresion = true, mensaje = '';
-  const _Efecto.exito(this.mensaje) : esImpresion = false;
-}
-
+/// El check verde y la animación de impresión corren cada uno por su lado
+/// (su propio controlador) -pedido del dueño-: si al terminar una venta
+/// también se imprime, la impresora sale A LA PAR del check (al costado, o
+/// debajo en pantallas angostas) en vez de una tras otra a las apuradas. Si
+/// no hay impresión, sale solo el check como siempre.
 class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const _duracionImpresion = Duration(milliseconds: 1500);
   // Con 1100ms el check quedaba bien visible apenas ~0.6s y no se
   // alcanzaba a leer -pedido del dueño-: ahora queda quieto ~1.7s (las
   // proporciones de entrada/salida en EscenaExito están ajustadas a esto).
   static const _duracionExito = Duration(milliseconds: 2200);
-  static const _maxCola = 4;
+  static const _maxColaExito = 3;
 
-  late final AnimationController _controlador;
-  final List<_Efecto> _cola = [];
-  _Efecto? _actual;
+  late final AnimationController _ctrlExito;
+  late final AnimationController _ctrlImpresion;
+  // Mensajes de éxito distintos que llegan seguidos se muestran uno por
+  // uno (cola); la impresión, en cambio, a lo sumo deja una pendiente.
+  final List<String> _colaExito = [];
+  String? _exitoActual;
+  bool _imprimiendo = false;
+  bool _impresionPendiente = false;
 
   @override
   void initState() {
     super.initState();
-    _controlador = AnimationController(vsync: this);
-    _controlador.addStatusListener((estado) {
-      if (estado == AnimationStatus.completed) _siguiente();
-    });
+    _ctrlExito = AnimationController(vsync: this, duration: _duracionExito)
+      ..addStatusListener((estado) {
+        if (estado == AnimationStatus.completed) _siguienteExito();
+      });
+    _ctrlImpresion =
+        AnimationController(vsync: this, duration: _duracionImpresion)
+          ..addStatusListener((estado) {
+            if (estado == AnimationStatus.completed) _finImpresion();
+          });
     AnimacionImpresion._disparo.addListener(_alImprimir);
     ExitoTransaccion.eventos.addListener(_alExito);
   }
@@ -56,78 +63,130 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
   void dispose() {
     AnimacionImpresion._disparo.removeListener(_alImprimir);
     ExitoTransaccion.eventos.removeListener(_alExito);
-    _controlador.dispose();
+    _ctrlExito.dispose();
+    _ctrlImpresion.dispose();
     super.dispose();
   }
 
   void _alImprimir() {
     if (!mounted) return;
-    final actual = _actual;
-    if (actual != null && actual.esImpresion && _controlador.value < 0.7) return;
-    if (_cola.any((e) => e.esImpresion)) return;
-    _encolar(const _Efecto.impresion());
+    if (_imprimiendo) {
+      // Varias impresiones casi juntas se muestran como una sola.
+      if (_ctrlImpresion.value >= 0.7) _impresionPendiente = true;
+      return;
+    }
+    setState(() => _imprimiendo = true);
+    _ctrlImpresion.forward(from: 0);
+  }
+
+  void _finImpresion() {
+    if (!mounted) return;
+    if (_impresionPendiente) {
+      _impresionPendiente = false;
+      _ctrlImpresion.forward(from: 0);
+      return;
+    }
+    setState(() => _imprimiendo = false);
   }
 
   void _alExito() {
     if (!mounted) return;
     final evento = ExitoTransaccion.eventos.value;
     if (evento == null) return;
-    final actual = _actual;
-    if (actual != null &&
-        !actual.esImpresion &&
-        actual.mensaje == evento.mensaje &&
-        _controlador.value < 0.6) {
-      return;
-    }
-    if (_cola.any((e) => !e.esImpresion && e.mensaje == evento.mensaje)) return;
-    _encolar(_Efecto.exito(evento.mensaje), antesDeImpresiones: true);
+    if (_exitoActual == evento.mensaje && _ctrlExito.value < 0.6) return;
+    if (_colaExito.contains(evento.mensaje)) return;
+    if (_colaExito.length >= _maxColaExito) return;
+    _colaExito.add(evento.mensaje);
+    if (_exitoActual == null) _siguienteExito();
   }
 
-  // El check verde va siempre antes que una impresión que todavía esté
-  // esperando en la cola -pedido del dueño: primero el check, después la
-  // animación de impresión normal-.
-  void _encolar(_Efecto efecto, {bool antesDeImpresiones = false}) {
-    if (_cola.length >= _maxCola) return;
-    final indiceImpresion = antesDeImpresiones
-        ? _cola.indexWhere((e) => e.esImpresion)
-        : -1;
-    if (indiceImpresion >= 0) {
-      _cola.insert(indiceImpresion, efecto);
-    } else {
-      _cola.add(efecto);
-    }
-    if (_actual == null) _siguiente();
-  }
-
-  void _siguiente() {
+  void _siguienteExito() {
     if (!mounted) return;
-    if (_cola.isEmpty) {
-      setState(() => _actual = null);
+    if (_colaExito.isEmpty) {
+      setState(() => _exitoActual = null);
       return;
     }
-    final efecto = _cola.removeAt(0);
-    setState(() => _actual = efecto);
-    _controlador.duration = efecto.esImpresion
-        ? _duracionImpresion
-        : _duracionExito;
-    _controlador.forward(from: 0);
+    setState(() => _exitoActual = _colaExito.removeAt(0));
+    _ctrlExito.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final efecto = _actual;
+    final mensaje = _exitoActual;
+    final imprimiendo = _imprimiendo;
     return Stack(
       children: [
         Positioned.fill(child: widget.child),
-        if (efecto != null)
+        if (mensaje != null || imprimiendo)
           Positioned.fill(
             child: IgnorePointer(
               child: AnimatedBuilder(
-                animation: _controlador,
+                animation: Listenable.merge([_ctrlExito, _ctrlImpresion]),
                 builder: (context, _) {
-                  final t = _controlador.value;
-                  if (efecto.esImpresion) return _EscenaImpresion(t: t);
-                  return EscenaExito(t: t, mensaje: efecto.mensaje);
+                  final opacidadFondo = imprimiendo
+                      ? _EscenaImpresion.opacidad(_ctrlImpresion.value)
+                      : 0.0;
+                  return Stack(
+                    children: [
+                      // Oscurece el fondo solo mientras se ve la impresora
+                      // (el check solo, como siempre, no oscurece nada).
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color: Color.fromRGBO(0, 0, 0, 0.38 * opacidadFondo),
+                        ),
+                      ),
+                      LayoutBuilder(
+                        builder: (context, restricciones) {
+                          final enFila = restricciones.maxWidth >= 640;
+                          final piezas = <Widget>[
+                            if (mensaje != null)
+                              EscenaExito(
+                                t: _ctrlExito.value,
+                                mensaje: mensaje,
+                              ),
+                            // AnimatedSize: al aparecer la impresora, el
+                            // check se corre suave para hacerle lugar en vez
+                            // de saltar de golpe.
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              child: imprimiendo
+                                  ? Padding(
+                                      padding: mensaje == null
+                                          ? EdgeInsets.zero
+                                          : (enFila
+                                                ? const EdgeInsets.only(
+                                                    left: 36,
+                                                  )
+                                                : const EdgeInsets.only(
+                                                    top: 20,
+                                                  )),
+                                      child: _EscenaImpresion(
+                                        t: _ctrlImpresion.value,
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ];
+                          return Center(
+                            child: SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              scrollDirection: enFila
+                                  ? Axis.horizontal
+                                  : Axis.vertical,
+                              child: Flex(
+                                direction: enFila
+                                    ? Axis.horizontal
+                                    : Axis.vertical,
+                                mainAxisSize: MainAxisSize.min,
+                                children: piezas,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
                 },
               ),
             ),
@@ -141,6 +200,12 @@ class _EscenaImpresion extends StatelessWidget {
   final double t;
 
   const _EscenaImpresion({required this.t});
+
+  static double opacidad(double t) {
+    final entrada = _tramo(t, 0.0, 0.14, Curves.easeOutCubic);
+    final salida = _tramo(t, 0.86, 1.0, Curves.easeIn);
+    return (entrada * (1 - salida)).clamp(0.0, 1.0);
+  }
 
   static double _tramo(
     double t,
@@ -162,15 +227,10 @@ class _EscenaImpresion extends StatelessWidget {
     final opacidad = (entrada * (1 - salida)).clamp(0.0, 1.0);
     final escala = 0.88 + 0.12 * entrada;
 
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: ColoredBox(
-            color: Color.fromRGBO(0, 0, 0, 0.38 * opacidad),
-          ),
-        ),
-        Center(
-          child: Opacity(
+    // El fondo oscuro y el centrado los pone el host (ver
+    // _AnimacionImpresionHostState.build), para poder ubicarla al lado del
+    // check verde.
+    return Opacity(
             opacity: opacidad,
             child: Transform.translate(
               offset: Offset(0, salida * 14),
@@ -207,10 +267,7 @@ class _EscenaImpresion extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        ),
-      ],
-    );
+          );
   }
 }
 
