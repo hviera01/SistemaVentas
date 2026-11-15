@@ -6,6 +6,7 @@ import 'item_venta_model.dart';
 import 'pago_detalle_model.dart';
 import '../../../core/utils/formato_moneda.dart';
 import '../../../core/utils/texto_utils.dart';
+import '../../../core/widgets/animacion_impresion.dart';
 import '../../productos/data/lote_costo_repository.dart';
 import '../../productos/data/tinte_lookup.dart';
 
@@ -679,6 +680,7 @@ class VentaRepository {
   // solicitudImpresionEsCopia.
   Future<void> marcarSolicitudImpresionEnVivo(String id, bool valor, {bool? esCopia}) async {
     try {
+      if (valor) AnimacionImpresion.mostrar();
       await _colVentas.doc(id).update({'solicitudImpresionEnVivo': valor, 'solicitudImpresionEsCopia': esCopia});
     } on FirebaseException catch (e) {
       if (e.code != 'not-found' && e.code != 'invalid-argument') rethrow;
@@ -702,6 +704,7 @@ class VentaRepository {
   /// que la PC principal sepa qué formato imprimir (ver AppShell).
   Future<void> marcarSolicitudImpresionGuiaEnvio(String id, bool valor, {bool grande = false}) async {
     try {
+      if (valor) AnimacionImpresion.mostrar();
       await _colVentas.doc(id).update({'solicitudImpresionGuiaEnvio': valor, 'solicitudImpresionGuiaGrande': grande});
     } on FirebaseException catch (e) {
       if (e.code != 'not-found' && e.code != 'invalid-argument') rethrow;

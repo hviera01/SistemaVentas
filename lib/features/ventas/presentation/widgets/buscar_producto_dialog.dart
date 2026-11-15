@@ -327,6 +327,20 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
   bool _coincideExacto(ProductoModel p, String texto) =>
       p.codigoBarras.trim() == texto || p.codigo.trim() == texto;
 
+  // Enter en el campo de búsqueda. Por defecto un TextField pierde el foco
+  // al hacer Enter, y entonces el SEGUNDO Enter (el que agrega el producto
+  // resaltado, ver _buscar) no llegaba a ningún lado. En escritorio el foco
+  // se queda en el campo; en celular se baja el teclado para ver la lista.
+  void _buscarConEnter() {
+    final movil = MediaQuery.of(context).size.width < 720 || _esPlataformaMovil;
+    if (movil) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    } else {
+      _focusBusqueda.requestFocus();
+    }
+    _buscar();
+  }
+
   void _buscar({bool exacta = false}) {
     var texto = _busquedaController.text.trim();
     // Segundo Enter con el mismo texto ya buscado -pedido del dueño-: agrega
@@ -553,7 +567,8 @@ class _BuscarProductoDialogState extends ConsumerState<BuscarProductoDialog> {
                                   border: InputBorder.none,
                                   isDense: true,
                                 ),
-                                onSubmitted: (_) => _buscar(),
+                                onEditingComplete: () {},
+                                onSubmitted: (_) => _buscarConEnter(),
                               ),
                             ),
                           ),

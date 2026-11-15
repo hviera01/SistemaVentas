@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'exito_transaccion_overlay.dart';
 
@@ -40,6 +41,7 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
   // uno (cola); la impresión, en cambio, a lo sumo deja una pendiente.
   final List<String> _colaExito = [];
   String? _exitoActual;
+  int _turnoExito = 0;
   bool _imprimiendo = false;
   bool _impresionPendiente = false;
 
@@ -76,7 +78,24 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
       return;
     }
     setState(() => _imprimiendo = true);
-    _ctrlImpresion.forward(from: 0);
+    _ctrlImpresion.value = 0;
+    _arrancarTrasFrameLiviano(_ctrlImpresion, () => _imprimiendo);
+  }
+
+  // Cuando se pide un efecto, casi siempre la pantalla de abajo acaba de
+  // limpiarse o cerrarse y se está reconstruyendo: arrancar la animación en
+  // ese mismo frame hace que su entrada caiga justo en el frame más pesado
+  // y se vea trabada. Se espera a que ese frame termine (y uno más) y se
+  // arranca desde cero ya con el hilo liviano.
+  Future<void> _arrancarTrasFrameLiviano(
+    AnimationController ctrl,
+    bool Function() sigueVigente,
+  ) async {
+    await SchedulerBinding.instance.endOfFrame;
+    if (!mounted || !sigueVigente()) return;
+    await SchedulerBinding.instance.endOfFrame;
+    if (!mounted || !sigueVigente()) return;
+    ctrl.forward(from: 0);
   }
 
   void _finImpresion() {
@@ -106,8 +125,11 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
       setState(() => _exitoActual = null);
       return;
     }
-    setState(() => _exitoActual = _colaExito.removeAt(0));
-    _ctrlExito.forward(from: 0);
+    final mensaje = _colaExito.removeAt(0);
+    final turno = ++_turnoExito;
+    setState(() => _exitoActual = mensaje);
+    _ctrlExito.value = 0;
+    _arrancarTrasFrameLiviano(_ctrlExito, () => turno == _turnoExito);
   }
 
   @override
@@ -116,78 +138,94 @@ class _AnimacionImpresionHostState extends State<AnimacionImpresionHost>
     final imprimiendo = _imprimiendo;
     return Stack(
       children: [
-        Positioned.fill(child: widget.child),
+        Positioned.fill(child: RepaintBoundary(child: widget.child)),
         if (mensaje != null || imprimiendo)
           Positioned.fill(
             child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_ctrlExito, _ctrlImpresion]),
-                builder: (context, _) {
-                  final opacidadFondo = imprimiendo
-                      ? _EscenaImpresion.opacidad(_ctrlImpresion.value)
-                      : 0.0;
-                  return Stack(
-                    children: [
-                      // Oscurece el fondo solo mientras se ve la impresora
-                      // (el check solo, como siempre, no oscurece nada).
-                      Positioned.fill(
-                        child: ColoredBox(
-                          color: Color.fromRGBO(0, 0, 0, 0.38 * opacidadFondo),
-                        ),
-                      ),
-                      LayoutBuilder(
-                        builder: (context, restricciones) {
-                          final enFila = restricciones.maxWidth >= 640;
-                          final piezas = <Widget>[
-                            if (mensaje != null)
-                              EscenaExito(
-                                t: _ctrlExito.value,
-                                mensaje: mensaje,
-                              ),
-                            // AnimatedSize: al aparecer la impresora, el
-                            // check se corre suave para hacerle lugar en vez
-                            // de saltar de golpe.
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOutCubic,
-                              child: imprimiendo
-                                  ? Padding(
-                                      padding: mensaje == null
-                                          ? EdgeInsets.zero
-                                          : (enFila
-                                                ? const EdgeInsets.only(
-                                                    left: 36,
-                                                  )
-                                                : const EdgeInsets.only(
-                                                    top: 20,
-                                                  )),
-                                      child: _EscenaImpresion(
-                                        t: _ctrlImpresion.value,
+              child: RepaintBoundary(
+                child: Builder(
+                  builder: (context) {
+                    return Stack(
+                      children: [
+                        // Oscurece el fondo solo mientras se ve la impresora
+                        // (el check solo, como siempre, no oscurece nada).
+                        if (imprimiendo)
+                          Positioned.fill(
+                            child: AnimatedBuilder(
+                              animation: _ctrlImpresion,
+                              builder: (context, _) => ColoredBox(
+                                color: Color.fromRGBO(
+                                  0,
+                                  0,
+                                  0,
+                                  0.38 *
+                                      _EscenaImpresion.opacidad(
+                                        _ctrlImpresion.value,
                                       ),
-                                    )
-                                  : const SizedBox.shrink(),
+                                ),
+                              ),
                             ),
-                          ];
-                          return Center(
-                            child: SingleChildScrollView(
-                              physics: const NeverScrollableScrollPhysics(),
-                              scrollDirection: enFila
-                                  ? Axis.horizontal
-                                  : Axis.vertical,
-                              child: Flex(
-                                direction: enFila
+                          ),
+                        LayoutBuilder(
+                          builder: (context, restricciones) {
+                            final enFila = restricciones.maxWidth >= 640;
+                            final piezas = <Widget>[
+                              if (mensaje != null)
+                                EscenaExito(
+                                  animacion: _ctrlExito,
+                                  mensaje: mensaje,
+                                ),
+                              // AnimatedSize: al aparecer la impresora, el
+                              // check se corre suave para hacerle lugar en vez
+                              // de saltar de golpe.
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeOutCubic,
+                                child: imprimiendo
+                                    ? Padding(
+                                        padding: mensaje == null
+                                            ? EdgeInsets.zero
+                                            : (enFila
+                                                  ? const EdgeInsets.only(
+                                                      left: 36,
+                                                    )
+                                                  : const EdgeInsets.only(
+                                                      top: 20,
+                                                    )),
+                                        child: RepaintBoundary(
+                                          child: AnimatedBuilder(
+                                            animation: _ctrlImpresion,
+                                            builder: (context, _) =>
+                                                _EscenaImpresion(
+                                                  t: _ctrlImpresion.value,
+                                                ),
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ];
+                            return Center(
+                              child: SingleChildScrollView(
+                                physics: const NeverScrollableScrollPhysics(),
+                                scrollDirection: enFila
                                     ? Axis.horizontal
                                     : Axis.vertical,
-                                mainAxisSize: MainAxisSize.min,
-                                children: piezas,
+                                child: Flex(
+                                  direction: enFila
+                                      ? Axis.horizontal
+                                      : Axis.vertical,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: piezas,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -231,43 +269,43 @@ class _EscenaImpresion extends StatelessWidget {
     // _AnimacionImpresionHostState.build), para poder ubicarla al lado del
     // check verde.
     return Opacity(
-            opacity: opacidad,
-            child: Transform.translate(
-              offset: Offset(0, salida * 14),
-              child: Transform.scale(
-                scale: escala,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        listo > 0.35 ? 'Listo' : 'Imprimiendo…',
-                        style: GoogleFonts.poppins(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: 220,
-                        height: 270,
-                        child: CustomPaint(
-                          painter: _ImpresoraPainter(
-                            avance: avance,
-                            listo: listo,
-                            tiempo: t,
-                          ),
-                        ),
-                      ),
-                    ],
+      opacity: opacidad,
+      child: Transform.translate(
+        offset: Offset(0, salida * 14),
+        child: Transform.scale(
+          scale: escala,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  listo > 0.35 ? 'Listo' : 'Imprimiendo…',
+                  style: GoogleFonts.poppins(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
                   ),
                 ),
-              ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: 220,
+                  height: 270,
+                  child: CustomPaint(
+                    painter: _ImpresoraPainter(
+                      avance: avance,
+                      listo: listo,
+                      tiempo: t,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          );
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -367,7 +405,12 @@ class _ImpresoraPainter extends CustomPainter {
     }
   }
 
-  void _dibujarPapel(Canvas canvas, double centroX, double ranuraY, double largo) {
+  void _dibujarPapel(
+    Canvas canvas,
+    double centroX,
+    double ranuraY,
+    double largo,
+  ) {
     const ancho = 128.0;
     final izq = centroX - ancho / 2;
     final der = centroX + ancho / 2;

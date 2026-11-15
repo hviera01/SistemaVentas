@@ -2794,6 +2794,12 @@ class _RegistrarVentaScreenState extends ConsumerState<RegistrarVentaScreen> {
     bool imprimirGuiaAlConfirmar = false,
     bool formatoGuiaGrande = false,
   }) async {
+    // El check verde se está animando justo ahora: el guardado (armar
+    // documentos, escribir en Firestore) compite por el mismo hilo y lo
+    // hacía verse trabado. Se arranca cuando el check ya entró.
+    if (!esCotizacion) {
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+    }
     try {
       final venta = await ventaRepo.registrarVenta(
         tipoDocumento: carrito.tipoDocumento,
